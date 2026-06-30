@@ -1,0 +1,1 @@
+"""Assembly parity benchmark stage."""

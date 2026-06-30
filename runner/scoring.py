@@ -43,6 +43,40 @@ def source_similarity(source: str, decompiled: str) -> float:
     return round(difflib.SequenceMatcher(None, a, b).ratio(), 4)
 
 
+def extract_function_source(source: str, function_name: str) -> str:
+    """
+    Extract one C function body from a source file.
+
+    This deliberately avoids a full C parser, but it handles the corpus style:
+    top-level function definitions with balanced braces and no preprocessor tricks
+    inside signatures. If extraction fails, callers can fall back to whole-file
+    source so benchmark runs keep producing data.
+    """
+    pattern = re.compile(
+        rf"(^|\n)\s*[\w\s\*]+?\b{re.escape(function_name)}\s*\([^;{{}}]*\)\s*\{{",
+        re.MULTILINE,
+    )
+    match = pattern.search(source)
+    if not match:
+        return ""
+
+    start = match.start()
+    brace_start = source.find("{", match.end() - 1)
+    if brace_start == -1:
+        return ""
+
+    depth = 0
+    for idx in range(brace_start, len(source)):
+        ch = source[idx]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start : idx + 1].strip()
+    return ""
+
+
 def count_gotos(code: str) -> int:
     return len(re.findall(r"\bgoto\b", code))
 

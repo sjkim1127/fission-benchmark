@@ -1,0 +1,113 @@
+{
+  "_comment": "Generated addresses are maintained by scripts/build_corpus.py",
+  "functions": [
+    {
+      "name": "count_bits",
+      "source": "source/control_flow.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/control_flow_gcc_O0",
+          "addr": "0x100000378"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/control_flow_gcc_O2",
+          "addr": "0x100000378"
+        }
+      ]
+    },
+    {
+      "name": "clamp",
+      "source": "source/control_flow.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/control_flow_gcc_O0",
+          "addr": "0x1000003c4"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/control_flow_gcc_O2",
+          "addr": "0x1000003a0"
+        }
+      ]
+    },
+    {
+      "name": "signum",
+      "source": "source/control_flow.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/control_flow_gcc_O0",
+          "addr": "0x10000042c"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/control_flow_gcc_O2",
+          "addr": "0x1000003b4"
+        }
+      ]
+    },
+    {
+      "name": "checksum",
+      "source": "source/control_flow.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/control_flow_gcc_O0",
+          "addr": "0x10000047c"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/control_flow_gcc_O2",
+          "addr": "0x1000003c4"
+        }
+      ]
+    },
+    {
+      "name": "classify_range",
+      "source": "source/control_flow.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/control_flow_gcc_O0",
+          "addr": "0x1000004e4"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/control_flow_gcc_O2",
+          "addr": "0x1000004b0"
+        }
+      ]
+    },
+    {
+      "name": "saturating_add",
+      "source": "source/control_flow.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/control_flow_gcc_O0",
+          "addr": "0x100000564"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/control_flow_gcc_O2",
+          "addr": "0x1000004e4"
+        }
+      ]
+    }
+  ]
+}

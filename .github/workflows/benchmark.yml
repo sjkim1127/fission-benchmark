@@ -46,6 +46,9 @@ jobs:
       - name: Install Python deps
         run: pip install httpx fastapi uvicorn jinja2 rich typer
 
+      - name: Build corpus binaries
+        run: python scripts/build_corpus.py --split dev
+
       - name: Start decompiler containers
         run: |
           docker compose up -d ghidra retdec radare2

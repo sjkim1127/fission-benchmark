@@ -30,5 +30,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install ruff
-      - run: ruff check runner/ docker/
+      - run: pip install ruff pytest
+      - run: ruff check benchmark/ runner/ docker/ scripts/ tests/
+      - run: pytest -q

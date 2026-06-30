@@ -17,6 +17,7 @@ class CompilerVariant:
     compiler: str           # "gcc", "clang", "msvc"
     opt: str                # "-O0", "-O2"
     binary: str             # relative path under corpus/
+    addr: str = "0x0"       # function entry address in this binary
 
 
 @dataclass
@@ -89,7 +90,12 @@ def split_corpus_to_holdout(
                     "name": fn.name,
                     "source": fn.source,
                     "compiler_variants": [
-                        {"compiler": v.compiler, "opt": v.opt, "binary": v.binary}
+                        {
+                            "compiler": v.compiler,
+                            "opt": v.opt,
+                            "binary": v.binary,
+                            "addr": v.addr,
+                        }
                         for v in fn.compiler_variants
                     ],
                 }

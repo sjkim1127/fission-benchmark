@@ -55,3 +55,41 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  angr:
+    profiles: ["experimental"]
+    build: ./docker/angr
+    ports: ["8004:8000"]
+    volumes:
+      - ./corpus:/corpus:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  snowman:
+    profiles: ["experimental"]
+    build: ./docker/snowman
+    platform: linux/amd64
+    ports: ["8005:8000"]
+    volumes:
+      - ./corpus:/corpus:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  revng:
+    profiles: ["experimental"]
+    build: ./docker/revng
+    platform: linux/amd64
+    ports: ["8006:8000"]
+    volumes:
+      - ./corpus:/corpus:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

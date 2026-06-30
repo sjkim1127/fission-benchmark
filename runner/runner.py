@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import os
 import sys
 import time
 from dataclasses import asdict
@@ -26,6 +27,7 @@ from corpus import CORPUS_ROOT, Corpus
 from scoring import (
     FunctionScore,
     assign_consensus_ranks,
+    extract_function_source,
     source_similarity,
     structural_score,
 )
@@ -33,15 +35,41 @@ from report import generate_report
 
 app = typer.Typer(pretty_exceptions_enable=False)
 
-DECOMPILERS: dict[str, str] = {
+CORE_DECOMPILERS: dict[str, str] = {
     "fission":  "http://localhost:8000",
     "ghidra":   "http://localhost:8001",
     "retdec":   "http://localhost:8002",
     "radare2":  "http://localhost:8003",
 }
 
+OPTIONAL_DECOMPILERS: dict[str, str] = {
+    "angr":     "http://localhost:8004",
+    "snowman":  "http://localhost:8005",
+    "revng":    "http://localhost:8006",
+}
+
+DECOMPILERS: dict[str, str] = {**CORE_DECOMPILERS, **OPTIONAL_DECOMPILERS}
+
 RESULTS_DIR = Path(__file__).parent.parent / "results"
 RESULTS_DIR.mkdir(exist_ok=True)
+
+
+def configured_decompilers(requested: set[str] | None = None) -> dict[str, str]:
+    """Apply NAME_ENDPOINT overrides and skip markers from the environment."""
+    configured: dict[str, str] = {}
+    for name, default_url in DECOMPILERS.items():
+        if requested is None and name in OPTIONAL_DECOMPILERS:
+            env_key = f"{name.upper()}_ENDPOINT"
+            if env_key not in os.environ:
+                continue
+        if requested is not None and name not in requested:
+            continue
+        env_key = f"{name.upper()}_ENDPOINT"
+        endpoint = os.environ.get(env_key, default_url)
+        if endpoint.lower() in {"", "skip", "disabled", "off"}:
+            continue
+        configured[name] = endpoint
+    return configured
 
 
 async def call_decompiler(
@@ -79,6 +107,7 @@ async def run_all(
         for fn in fn_list:
             source_path = CORPUS_ROOT / corpus_split / fn.source
             source_code = source_path.read_text(errors="replace") if source_path.exists() else ""
+            function_source = extract_function_source(source_code, fn.name) or source_code
 
             for variant in fn.compiler_variants:
                 binary_path = CORPUS_ROOT / corpus_split / variant.binary
@@ -90,8 +119,7 @@ async def run_all(
                 typer.echo(f"▶ {fn.name} [{variant_label}]")
 
                 # Parallel decompile requests
-                # We need an addr per variant — stored in manifest (see corpus schema)
-                addr = getattr(variant, "addr", "0x0")
+                addr = variant.addr
 
                 tasks = {
                     dname: call_decompiler(client, dname, url, binary_path, addr)
@@ -102,7 +130,7 @@ async def run_all(
 
                 for dname, res in result_map.items():
                     code = res.get("code", "")
-                    sim = source_similarity(source_code, code) if source_code else 0.0
+                    sim = source_similarity(function_source, code) if function_source else 0.0
                     gotos, depth = structural_score(code)
                     scores.append(FunctionScore(
                         decompiler=dname,
@@ -132,10 +160,16 @@ def main(
         corpus = "holdout"
         typer.echo("⚠️  Running holdout evaluation — results are final", err=True)
 
-    selected = DECOMPILERS
+    requested = {name.strip() for name in decompilers.split(",") if name.strip()} if decompilers else None
+    unknown = sorted((requested or set()) - set(DECOMPILERS))
+    if unknown:
+        raise typer.BadParameter(f"Unknown decompiler(s): {', '.join(unknown)}")
+
+    selected = configured_decompilers(requested)
     if decompilers:
-        selected = {k: v for k, v in DECOMPILERS.items() if k in decompilers.split(",")}
         typer.echo(f"Using decompilers: {list(selected)}")
+    if not selected:
+        raise typer.BadParameter("No decompilers selected. Check --decompilers or *_ENDPOINT=skip.")
 
     typer.echo(f"Loading corpus: {corpus}")
     c = Corpus.load_all(split=corpus)

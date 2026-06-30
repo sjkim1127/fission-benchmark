@@ -93,3 +93,13 @@ int process_code(int code) {
     if (code >= 400 && code < 500) return -1;
     return 0;
 }
+
+int main(void) {
+    int values[] = {1, 3, 5, 7, 9};
+    int sortable[] = {5, 4, 3, 2, 1};
+    bubble_sort(sortable, 5);
+    return fibonacci(6) + fibonacci_iter(6) + max(3, 9) +
+           linear_search(values, 5, 7) + binary_search(values, 5, 7) +
+           (int)factorial(5) + gcd(48, 18) + (int)power(2, 8) +
+           process_code(100) + sortable[0];
+}

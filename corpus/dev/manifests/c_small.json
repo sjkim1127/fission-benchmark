@@ -1,76 +1,184 @@
 {
-  "_comment": "Initial corpus: math.c functions. addr fields are populated after binary build via scripts/update_addrs.py",
+  "_comment": "Initial corpus: math.c functions. addr fields are populated by scripts/build_corpus.py",
   "functions": [
     {
       "name": "fibonacci",
       "source": "source/math.c",
       "compiler_variants": [
-        { "compiler": "gcc", "opt": "-O0", "binary": "binaries/math_gcc_O0.exe", "addr": "0x0" },
-        { "compiler": "gcc", "opt": "-O2", "binary": "binaries/math_gcc_O2.exe", "addr": "0x0" }
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x100000460"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x100000460"
+        }
       ]
     },
     {
       "name": "fibonacci_iter",
       "source": "source/math.c",
       "compiler_variants": [
-        { "compiler": "gcc", "opt": "-O0", "binary": "binaries/math_gcc_O0.exe", "addr": "0x0" },
-        { "compiler": "gcc", "opt": "-O2", "binary": "binaries/math_gcc_O2.exe", "addr": "0x0" }
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x1000004cc"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x1000004b4"
+        }
       ]
     },
     {
       "name": "max",
       "source": "source/math.c",
       "compiler_variants": [
-        { "compiler": "gcc", "opt": "-O0", "binary": "binaries/math_gcc_O0.exe", "addr": "0x0" },
-        { "compiler": "gcc", "opt": "-O2", "binary": "binaries/math_gcc_O2.exe", "addr": "0x0" }
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x100000568"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x1000004e0"
+        }
       ]
     },
     {
       "name": "bubble_sort",
       "source": "source/math.c",
       "compiler_variants": [
-        { "compiler": "gcc", "opt": "-O0", "binary": "binaries/math_gcc_O0.exe", "addr": "0x0" },
-        { "compiler": "gcc", "opt": "-O2", "binary": "binaries/math_gcc_O2.exe", "addr": "0x0" }
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x1000005ac"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x1000004ec"
+        }
+      ]
+    },
+    {
+      "name": "linear_search",
+      "source": "source/math.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x10000069c"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x100000560"
+        }
       ]
     },
     {
       "name": "binary_search",
       "source": "source/math.c",
       "compiler_variants": [
-        { "compiler": "gcc", "opt": "-O0", "binary": "binaries/math_gcc_O0.exe", "addr": "0x0" },
-        { "compiler": "gcc", "opt": "-O2", "binary": "binaries/math_gcc_O2.exe", "addr": "0x0" }
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x10000071c"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x100000594"
+        }
       ]
     },
     {
       "name": "factorial",
       "source": "source/math.c",
       "compiler_variants": [
-        { "compiler": "gcc", "opt": "-O0", "binary": "binaries/math_gcc_O0.exe", "addr": "0x0" },
-        { "compiler": "gcc", "opt": "-O2", "binary": "binaries/math_gcc_O2.exe", "addr": "0x0" }
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x1000007f4"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x1000005dc"
+        }
       ]
     },
     {
       "name": "gcd",
       "source": "source/math.c",
       "compiler_variants": [
-        { "compiler": "gcc", "opt": "-O0", "binary": "binaries/math_gcc_O0.exe", "addr": "0x0" },
-        { "compiler": "gcc", "opt": "-O2", "binary": "binaries/math_gcc_O2.exe", "addr": "0x0" }
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x100000854"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x100000678"
+        }
       ]
     },
     {
       "name": "power",
       "source": "source/math.c",
       "compiler_variants": [
-        { "compiler": "gcc", "opt": "-O0", "binary": "binaries/math_gcc_O0.exe", "addr": "0x0" },
-        { "compiler": "gcc", "opt": "-O2", "binary": "binaries/math_gcc_O2.exe", "addr": "0x0" }
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x1000008a8"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x100000698"
+        }
       ]
     },
     {
       "name": "process_code",
       "source": "source/math.c",
       "compiler_variants": [
-        { "compiler": "gcc", "opt": "-O0", "binary": "binaries/math_gcc_O0.exe", "addr": "0x0" },
-        { "compiler": "gcc", "opt": "-O2", "binary": "binaries/math_gcc_O2.exe", "addr": "0x0" }
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x10000091c"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x1000006d4"
+        }
       ]
     }
   ]

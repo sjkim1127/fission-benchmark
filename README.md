@@ -4,7 +4,7 @@
 
 **Multi-decompiler comparison benchmark for [Fission](https://github.com/sjkim1127/Fission)**
 
-Fission · Ghidra · RetDec · Radare2+r2ghidra
+Fission · Ghidra · RetDec · Radare2+r2ghidra · optional angr/Snowman/rev.ng
 
 [![Benchmark](https://github.com/sjkim1127/fission-benchmark/actions/workflows/benchmark.yml/badge.svg)](https://github.com/sjkim1127/fission-benchmark/actions/workflows/benchmark.yml)
 [![Docker Build](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml/badge.svg)](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml)
@@ -29,6 +29,7 @@ Binary + Source (ground truth)
 │  │ Fission │  │ Ghidra  │  │ RetDec  │  │Radare2  │  │
 │  │ :8000   │  │ :8001   │  │ :8002   │  │ :8003   │  │
 │  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘  │
+│  optional: angr :8004 · Snowman :8005 · rev.ng :8006   │
 └───────┼────────────┼────────────┼─────────────┼───────┘
         └─────────────────────────┘
                      ↓
@@ -51,6 +52,7 @@ Binary + Source (ground truth)
 
 - Docker + Docker Compose
 - Python 3.11+
+- GCC-compatible C compiler + `nm` (for corpus binary/address generation)
 - `pip install httpx fastapi uvicorn jinja2 rich typer`
 
 ### Run
@@ -58,6 +60,9 @@ Binary + Source (ground truth)
 ```bash
 # Build decompiler containers
 docker compose build
+
+# Build corpus binaries and populate per-function addresses
+python scripts/build_corpus.py --split dev
 
 # Start containers
 docker compose up -d
@@ -84,6 +89,15 @@ python runner/runner.py --corpus dev --limit 1
 # Specific decompilers only
 python runner/runner.py --corpus dev --decompilers fission,ghidra
 
+# Experimental open-source backends
+docker compose --profile experimental build angr snowman revng
+docker compose --profile experimental up -d angr snowman revng
+python runner/runner.py --corpus dev --decompilers fission,ghidra,angr,snowman,revng
+
+# Skip an unavailable service, or point one at a custom endpoint
+FISSION_ENDPOINT=skip python runner/runner.py --corpus dev
+GHIDRA_ENDPOINT=http://localhost:9001 python runner/runner.py --corpus dev
+
 # Holdout evaluation (release only — never during development)
 python runner/runner.py --use-holdout
 ```
@@ -92,16 +106,27 @@ python runner/runner.py --use-holdout
 
 ```
 fission-benchmark/
+├── benchmark/
+│   ├── assembly_parity/  Instruction listing parity runner
+│   ├── pcode_parity/     Raw p-code parity runner
+│   ├── telemetry/        JSONL result aggregation
+│   ├── decompiler_quality/  Current output-quality stage marker
+│   └── common/           Shared schemas, providers, JSONL helpers
 ├── docker/
 │   ├── ghidra/      Ghidra 12.x headless + FastAPI
 │   ├── retdec/      RetDec 5.x + FastAPI
 │   ├── radare2/     Radare2 + r2ghidra + FastAPI
-│   └── fission/     Fission CLI + FastAPI (downloads from Releases)
+│   ├── fission/     Fission CLI + FastAPI (downloads from Releases)
+│   ├── angr/        Optional angr decompiler + FastAPI
+│   ├── snowman/     Optional Snowman/nocode + FastAPI
+│   └── revng/       Optional rev.ng + FastAPI
 ├── runner/
 │   ├── runner.py    Main orchestrator
 │   ├── corpus.py    Corpus management + holdout split
 │   ├── scoring.py   Source similarity + structural scoring
 │   └── report.py    Markdown + HTML report generation
+├── scripts/
+│   └── build_corpus.py  Compile corpus binaries + update function addresses
 ├── corpus/
 │   ├── dev/         80% — development corpus (source + manifests)
 │   └── holdout/     20% — holdout corpus (release evaluation only)
@@ -132,6 +157,64 @@ Response: { "status": "ok", "decompiler": "ghidra", "version": "12.0" }
 2. Add the service to `docker-compose.yml` on the next available port
 3. Add to `DECOMPILERS` dict in `runner/runner.py`
 4. Add to `build-check.yml` matrix
+
+## Optional Open-Source Backends
+
+The default benchmark keeps the stable baseline to Fission, Ghidra, RetDec, and
+Radare2+r2ghidra. These optional backends are available for local experiments
+and self-hosted runners:
+
+| Backend | Port | Notes |
+|---|---:|---|
+| `angr` | 8004 | Python API, function-address oriented, useful independent baseline |
+| `snowman` | 8005 | Uses `nocode`; legacy baseline, x86-64 image is amd64-only |
+| `revng` | 8006 | Uses `decompile-to-single-file`; output is whole-program oriented |
+
+Optional backends are not selected unless `--decompilers` names them or their
+`*_ENDPOINT` environment variable is set. This keeps hosted CI from pulling
+large experimental images by default.
+
+## Layered Quality Gates
+
+Decompiler similarity is the final benchmark layer. Lower-level gates should be
+run first when diagnosing Fission regressions:
+
+1. `benchmark/assembly_parity` compares instruction bytes, mnemonics, operands,
+   lengths, and branch targets from two assembly-listing providers.
+2. `benchmark/pcode_parity` compares raw p-code op sequences from two providers,
+   typically Ghidra raw p-code vs Fission SLEIGH runtime output.
+3. `benchmark/telemetry` aggregates JSONL rows by stage, status, mismatch kind,
+   compiler, and optimization level.
+4. `runner/` remains the decompiler-output quality benchmark.
+
+Parity runners accept command templates. Templates can use corpus subject fields
+such as `{binary}`, `{addr}`, `{function}`, `{compiler}`, and `{opt}` and must
+print JSON to stdout.
+
+```bash
+python -m benchmark.assembly_parity.run \
+  --reference-command 'python tools/ref_asm.py {binary} {addr}' \
+  --candidate-command 'python tools/fission_asm.py {binary} {addr}'
+
+python -m benchmark.pcode_parity.run \
+  --reference-command 'python tools/ghidra_pcode.py {binary} {addr}' \
+  --candidate-command 'python tools/fission_pcode.py {binary} {addr}'
+
+python -m benchmark.telemetry.aggregate \
+  results/assembly_parity/latest.jsonl \
+  results/pcode_parity/latest.jsonl
+```
+
+## Adding Corpus Cases
+
+1. Add a C source file under `corpus/dev/source/`
+2. Add a manifest under `corpus/dev/manifests/` with one entry per function
+3. Use stable compiler variants such as `gcc -O0` and `gcc -O2`
+4. Run `python scripts/build_corpus.py --split dev` before benchmarking
+
+The build script compiles ignored local binaries under `corpus/dev/binaries/`
+and refreshes each variant `addr` using `nm`. The runner scores against the
+matching source function, not the whole source file.
 
 ## Scoring Metrics
 

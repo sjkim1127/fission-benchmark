@@ -35,16 +35,16 @@ def _md_table(headers: list[str], rows: list[list[str]]) -> str:
 def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
     ts = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
     lines = [
-        f"# Fission Benchmark Report",
-        f"",
+        "# Fission Benchmark Report",
+        "",
         f"**Generated:** {ts}  ",
         f"**Corpus:** `{corpus_split}`  ",
         f"**Functions evaluated:** {len(set(s.function_name for s in scores))}",
-        f"",
-        f"---",
-        f"",
-        f"## Summary — Average Source Similarity",
-        f"",
+        "",
+        "---",
+        "",
+        "## Summary — Average Source Similarity",
+        "",
     ]
 
     # Per-decompiler average
