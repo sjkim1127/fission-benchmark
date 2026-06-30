@@ -1,0 +1,57 @@
+# fission-benchmark: Multi-decompiler comparison benchmark
+# Each decompiler runs as an isolated container exposing a uniform HTTP API.
+#
+# Usage:
+#   docker compose build
+#   docker compose up -d
+#   python runner/runner.py --corpus dev
+
+services:
+  fission:
+    build: ./docker/fission
+    ports: ["8000:8000"]
+    volumes:
+      - ./corpus:/corpus:ro
+      # Mount local Sleigh specs (required for decompilation)
+      # Adjust path if your utils/ is elsewhere.
+      - ${FISSION_SLEIGH_SPEC_DIR:-/Users/sjkim1127/Fission/utils/sleigh-specs}:/sleigh-specs:ro
+    environment:
+      - FISSION_SLEIGH_SPEC_DIR=/sleigh-specs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ghidra:
+    build: ./docker/ghidra
+    ports: ["8001:8000"]
+    volumes:
+      - ./corpus:/corpus:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  retdec:
+    build: ./docker/retdec
+    ports: ["8002:8000"]
+    volumes:
+      - ./corpus:/corpus:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  radare2:
+    build: ./docker/radare2
+    ports: ["8003:8000"]
+    volumes:
+      - ./corpus:/corpus:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

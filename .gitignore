@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+dist/
+*.egg-info/
+
+# Results (generated, not committed)
+results/
+!results/.gitkeep
+
+# Corpus binaries (compiled locally)
+corpus/*/binaries/
+
+# Docker build cache
+.docker/
+
+# OS
+.DS_Store
