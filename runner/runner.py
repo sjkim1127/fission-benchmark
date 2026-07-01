@@ -33,6 +33,7 @@ def configured_decompilers() -> dict[str, str]:
     defaults = {
         "fission": os.environ.get("FISSION_ENDPOINT", "http://localhost:8000"),
         "ghidra": "http://localhost:8001",
+        "boomerang": "http://localhost:8002",
         "radare2": "http://localhost:8003",
         "angr": "http://localhost:8004",
         "snowman": "http://localhost:8005",
