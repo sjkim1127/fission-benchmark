@@ -1,5 +1,7 @@
 # Full benchmark run + GitHub Pages deployment.
 # Runs on: push to main, weekly schedule, manual dispatch.
+# Images are pulled from ghcr.io (pre-built by publish-images.yml).
+# Falls back to local build if an image is not yet published.
 name: Benchmark & Deploy
 
 env:
@@ -8,6 +10,8 @@ env:
   CORPUS_TARGET: windows-x86_64
   CORPUS_SPLIT: ${{ github.event.inputs.corpus || 'dev' }}
   BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,boomerang,radare2,angr,snowman,revng' }}
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/fission-benchmark
   PYTHONPATH: .
 
 on:
@@ -41,6 +45,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  packages: read
 
 concurrency:
   group: benchmark-${{ github.ref }}
@@ -67,24 +72,9 @@ jobs:
             echo "Stale benchmark run: ${GITHUB_SHA}; current ${remote_ref} is ${current_sha}"
           fi
 
-  build-images:
-    name: Build Docker images
-    needs: preflight
-    if: ${{ needs.preflight.outputs.is_current == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        service: [fission, ghidra, boomerang, radare2, angr, snowman, revng]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build ${{ matrix.service }}
-        run: docker compose build ${{ matrix.service }}
-
   run-benchmark:
     name: Run benchmark
-    needs: [preflight, build-images]
+    needs: preflight
     if: ${{ needs.preflight.outputs.is_current == 'true' }}
     outputs:
       is_current: ${{ steps.current.outputs.is_current }}
@@ -97,6 +87,32 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Pull or build decompiler images
+        run: |
+          SERVICES="fission ghidra boomerang radare2 angr snowman revng"
+          for svc in $SERVICES; do
+            REMOTE="${IMAGE_PREFIX}-${svc}:latest"
+            echo "==> Trying to pull ${REMOTE}..."
+            if docker pull "${REMOTE}" 2>/dev/null; then
+              # Tag as compose expects
+              docker tag "${REMOTE}" "fission-benchmark-${svc}"
+              echo "  ✓ Pulled ${svc} from ghcr.io"
+            else
+              echo "  ⚠  Not found on ghcr.io — building ${svc} locally"
+              docker compose build "${svc}"
+            fi
+          done
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -106,9 +122,6 @@ jobs:
 
       - name: Build corpus binaries
         run: docker compose --profile tools run --rm --build corpus-builder
-
-      - name: Build benchmark containers
-        run: docker compose build fission ghidra boomerang radare2 angr snowman revng
 
       - name: Start decompiler containers
         run: |

@@ -1,4 +1,5 @@
-# Validates that all Docker images build successfully on every PR.
+# Validates that Docker images build successfully on every PR.
+# Only rebuilds services whose docker/ subdirectory changed.
 name: Docker Build Check
 
 env:
@@ -13,19 +14,93 @@ on:
     branches: [main]
 
 jobs:
+  detect-changes:
+    name: Detect changed services
+    runs-on: ubuntu-latest
+    outputs:
+      fission: ${{ steps.filter.outputs.fission }}
+      ghidra: ${{ steps.filter.outputs.ghidra }}
+      boomerang: ${{ steps.filter.outputs.boomerang }}
+      radare2: ${{ steps.filter.outputs.radare2 }}
+      angr: ${{ steps.filter.outputs.angr }}
+      snowman: ${{ steps.filter.outputs.snowman }}
+      revng: ${{ steps.filter.outputs.revng }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            fission:
+              - 'docker/fission/**'
+            ghidra:
+              - 'docker/ghidra/**'
+            boomerang:
+              - 'docker/boomerang/**'
+            radare2:
+              - 'docker/radare2/**'
+            angr:
+              - 'docker/angr/**'
+            snowman:
+              - 'docker/snowman/**'
+            revng:
+              - 'docker/revng/**'
+
   build:
     name: Build ${{ matrix.service }}
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs[matrix.service] == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         service: [fission, ghidra, boomerang, radare2, angr, snowman, revng]
+        # Skip services that have no changes
+        exclude:
+          - service: fission
+            fission: ${{ needs.detect-changes.outputs.fission != 'true' }}
+          - service: ghidra
+            ghidra: ${{ needs.detect-changes.outputs.ghidra != 'true' }}
+          - service: boomerang
+            boomerang: ${{ needs.detect-changes.outputs.boomerang != 'true' }}
+          - service: radare2
+            radare2: ${{ needs.detect-changes.outputs.radare2 != 'true' }}
+          - service: angr
+            angr: ${{ needs.detect-changes.outputs.angr != 'true' }}
+          - service: snowman
+            snowman: ${{ needs.detect-changes.outputs.snowman != 'true' }}
+          - service: revng
+            revng: ${{ needs.detect-changes.outputs.revng != 'true' }}
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache-${{ matrix.service }}
+          key: buildx-${{ matrix.service }}-${{ hashFiles(format('docker/{0}/**', matrix.service)) }}
+          restore-keys: |
+            buildx-${{ matrix.service }}-
+
       - name: Build ${{ matrix.service }} image
-        run: docker compose build ${{ matrix.service }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./docker/${{ matrix.service }}
+          push: false
+          load: true
+          tags: fission-benchmark-${{ matrix.service }}:pr
+          cache-from: type=local,src=/tmp/.buildx-cache-${{ matrix.service }}
+          cache-to: type=local,dest=/tmp/.buildx-cache-${{ matrix.service }}-new,mode=max
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache-${{ matrix.service }}
+          mv /tmp/.buildx-cache-${{ matrix.service }}-new /tmp/.buildx-cache-${{ matrix.service }}
 
   lint:
     name: Lint Python
