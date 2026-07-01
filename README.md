@@ -52,7 +52,7 @@ Binary + Source (ground truth)
 
 - Docker + Docker Compose
 - Python 3.11+
-- GCC-compatible C compiler + `nm` (for corpus binary/address generation)
+- GCC-compatible C compiler + `nm` (for corpus binary/address generation), or the Dockerized corpus builder below
 - `pip install httpx fastapi uvicorn jinja2 rich typer`
 
 ### Run
@@ -63,6 +63,10 @@ docker compose build
 
 # Build corpus binaries and populate per-function addresses
 python scripts/build_corpus.py --split dev
+
+# On macOS/Apple Silicon, build Windows x86-64 PE corpus binaries instead.
+# Fission v0.1.0 rejects local Mach-O and Linux ELF inputs in this benchmark path.
+docker compose --profile tools run --rm corpus-builder
 
 # Start containers
 docker compose up -d
@@ -107,8 +111,13 @@ python runner/runner.py --use-holdout
 ```
 fission-benchmark/
 ├── benchmark/
+│   ├── decode_parity/    Instruction decoder parity runner
 │   ├── assembly_parity/  Instruction listing parity runner
 │   ├── pcode_parity/     Raw p-code parity runner
+│   ├── cfg_parity/       Basic block/edge parity runner
+│   ├── function_discovery/  Binary-level function discovery parity
+│   ├── ir_invariants/    Fission-internal IR invariant checks
+│   ├── golden_repros/    Fixed regression canary runner
 │   ├── telemetry/        JSONL result aggregation
 │   ├── decompiler_quality/  Current output-quality stage marker
 │   └── common/           Shared schemas, providers, JSONL helpers
@@ -181,11 +190,18 @@ run first when diagnosing Fission regressions:
 
 1. `benchmark/assembly_parity` compares instruction bytes, mnemonics, operands,
    lengths, and branch targets from two assembly-listing providers.
-2. `benchmark/pcode_parity` compares raw p-code op sequences from two providers,
+2. `benchmark/decode_parity` compares decode fields such as instruction length,
+   prefixes, ModRM/SIB, displacement, and immediate values.
+3. `benchmark/pcode_parity` compares raw p-code op sequences from two providers,
    typically Ghidra raw p-code vs Fission SLEIGH runtime output.
-3. `benchmark/telemetry` aggregates JSONL rows by stage, status, mismatch kind,
+4. `benchmark/cfg_parity` compares basic blocks and control-flow edges.
+5. `benchmark/function_discovery` compares binary-level function discovery.
+6. `benchmark/ir_invariants` checks Fission internal IR/NIR/HIR invariants
+   without an external reference provider.
+7. `benchmark/golden_repros` runs fixed regression canaries.
+8. `benchmark/telemetry` aggregates JSONL rows by stage, status, mismatch kind,
    compiler, and optimization level.
-4. `runner/` remains the decompiler-output quality benchmark.
+9. `runner/` remains the decompiler-output quality benchmark.
 
 Parity runners accept command templates. Templates can use corpus subject fields
 such as `{binary}`, `{addr}`, `{function}`, `{compiler}`, and `{opt}` and must
@@ -196,11 +212,29 @@ python -m benchmark.assembly_parity.run \
   --reference-command 'python tools/ref_asm.py {binary} {addr}' \
   --candidate-command 'python tools/fission_asm.py {binary} {addr}'
 
+python -m benchmark.decode_parity.run \
+  --reference-command 'python tools/ref_decode.py {binary} {addr}' \
+  --candidate-command 'python tools/fission_decode.py {binary} {addr}'
+
 python -m benchmark.pcode_parity.run \
   --reference-command 'python tools/ghidra_pcode.py {binary} {addr}' \
   --candidate-command 'python tools/fission_pcode.py {binary} {addr}'
 
+python -m benchmark.cfg_parity.run \
+  --reference-command 'python tools/ref_cfg.py {binary} {addr}' \
+  --candidate-command 'python tools/fission_cfg.py {binary} {addr}'
+
+python -m benchmark.function_discovery.run \
+  --reference-command 'python tools/ref_functions.py {binary}' \
+  --candidate-command 'python tools/fission_functions.py {binary}'
+
+python -m benchmark.ir_invariants.run \
+  --candidate-command 'python tools/fission_ir_invariants.py {binary} {addr}'
+
+python -m benchmark.golden_repros.run benchmark/golden_repros/manifest.json
+
 python -m benchmark.telemetry.aggregate \
+  results/decode_parity/latest.jsonl \
   results/assembly_parity/latest.jsonl \
   results/pcode_parity/latest.jsonl
 ```
