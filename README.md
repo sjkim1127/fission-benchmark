@@ -4,7 +4,7 @@
 
 **Multi-decompiler comparison benchmark for [Fission](https://github.com/sjkim1127/Fission)**
 
-Fission · Ghidra · Boomerang · Radare2+r2ghidra · optional angr/Snowman/rev.ng
+Fission · Ghidra · Boomerang · Radare2+r2ghidra · angr · Snowman · rev.ng · Reko
 
 [![Benchmark](https://github.com/sjkim1127/fission-benchmark/actions/workflows/benchmark.yml/badge.svg)](https://github.com/sjkim1127/fission-benchmark/actions/workflows/benchmark.yml)
 [![Docker Build](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml/badge.svg)](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml)
@@ -23,15 +23,12 @@ A Python runner sends decompile requests in parallel, scores results against ori
 ```
 Binary + Source (ground truth)
         ↓
-┌───────────────────────────────────────────────────────┐
-│  runner.py  (parallel httpx requests)                 │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  │
-│  │ Fission │  │ Ghidra  │  │Boomerang│  │Radare2  │  │
-│  │ :8000   │  │ :8001   │  │ :8002   │  │ :8003   │  │
-│  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘  │
-│  optional: angr :8004 · Snowman :8005 · rev.ng :8006   │
-└───────┼────────────┼────────────┼─────────────┼───────┘
-        └─────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  runner.py  (parallel httpx requests)                        │
+│  Fission :8000 · Ghidra :8001 · Boomerang :8002 · Radare2    │
+│  angr :8004 · Snowman :8005 · rev.ng :8006 · Reko :8008      │
+└──────────────────────────────┬───────────────────────────────┘
+                               │
                      ↓
               scoring.py (source similarity + consensus)
                      ↓
@@ -53,7 +50,7 @@ Binary + Source (ground truth)
 - Docker + Docker Compose
 - Python 3.11+
 - GCC-compatible C compiler + `nm` (for corpus binary/address generation), or the Dockerized corpus builder below
-- `pip install httpx fastapi uvicorn jinja2 rich typer`
+- `pip install -e ".[dev]"`
 
 ### Run
 
@@ -93,10 +90,8 @@ python runner/runner.py --corpus dev --limit 1
 # Specific decompilers only
 python runner/runner.py --corpus dev --decompilers fission,ghidra
 
-# Experimental open-source backends
-docker compose --profile experimental build angr snowman revng
-docker compose --profile experimental up -d angr snowman revng
-python runner/runner.py --corpus dev --decompilers fission,ghidra,angr,snowman,revng
+# Full core decompiler set
+python runner/runner.py --corpus dev --decompilers fission,ghidra,boomerang,radare2,angr,snowman,revng,reko
 
 # Skip an unavailable service, or point one at a custom endpoint
 FISSION_ENDPOINT=skip python runner/runner.py --corpus dev
@@ -119,6 +114,7 @@ fission-benchmark/
 │   ├── ir_invariants/    Fission-internal IR invariant checks
 │   ├── golden_repros/    Fixed regression canary runner
 │   ├── telemetry/        JSONL result aggregation
+│   ├── readability/      Readability proxy metrics and human-study plan
 │   ├── decompiler_quality/  Current output-quality stage marker
 │   └── common/           Shared schemas, providers, JSONL helpers
 ├── docker/
@@ -126,13 +122,15 @@ fission-benchmark/
 │   ├── retdec/      RetDec 5.x + FastAPI
 │   ├── radare2/     Radare2 + r2ghidra + FastAPI
 │   ├── fission/     Fission CLI + FastAPI (downloads from Releases)
-│   ├── angr/        Optional angr decompiler + FastAPI
-│   ├── snowman/     Optional Snowman/nocode + FastAPI
-│   └── revng/       Optional rev.ng + FastAPI
+│   ├── angr/        angr decompiler + FastAPI
+│   ├── snowman/     Snowman/nocode + FastAPI
+│   ├── revng/       rev.ng + FastAPI
+│   └── reko/        Reko + FastAPI
 ├── runner/
 │   ├── runner.py    Main orchestrator
 │   ├── corpus.py    Corpus management + holdout split
 │   ├── scoring.py   Source similarity + structural scoring
+│   ├── readability.py  AST-based readability proxy metrics
 │   └── report.py    Markdown + HTML report generation
 ├── scripts/
 │   └── build_corpus.py  Compile corpus binaries + update function addresses
@@ -183,21 +181,21 @@ Response: { "status": "ok", "decompiler": "ghidra", "version": "12.0" }
 3. Add to `DECOMPILERS` dict in `runner/runner.py`
 4. Add to `build-check.yml` matrix
 
-## Optional Open-Source Backends
+## Core Open-Source Backends
 
-The default benchmark keeps the stable baseline to Fission, Ghidra, Boomerang, and
-Radare2+r2ghidra. These optional backends are available for local experiments
-and self-hosted runners:
+The benchmark treats every configured open-source backend as part of the core
+comparison set. Individual services can still be skipped explicitly for local
+debugging with `*_ENDPOINT=skip` or by passing a narrower `--decompilers` list.
 
 | Backend | Port | Notes |
 |---|---:|---|
 | `angr` | 8004 | Python API, function-address oriented, useful independent baseline |
 | `snowman` | 8005 | Uses `nocode`; legacy baseline, x86-64 image is amd64-only |
 | `revng` | 8006 | Uses `decompile-to-single-file`; output is whole-program oriented |
+| `reko` | 8008 | Reko decompiler baseline |
 
-Optional backends are not selected unless `--decompilers` names them or their
-`*_ENDPOINT` environment variable is set. This keeps hosted CI from pulling
-large experimental images by default.
+Hosted CI runs the full core set by default and pulls prebuilt GHCR images when
+available before falling back to local builds.
 
 ## Layered Quality Gates
 

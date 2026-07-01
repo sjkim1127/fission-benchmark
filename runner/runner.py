@@ -24,6 +24,7 @@ from scoring import (
 )
 from semantic import verify_semantic_correctness
 from report import generate_report
+from readability import analyze_readability, ast_structure_similarity
 
 app = typer.Typer(help="Fission decompiler benchmark runner.")
 
@@ -139,6 +140,12 @@ async def decompile_batch_and_score(
         sim = source_similarity(function_source, code) if function_source and not error else 0.0
         gotos, depth = structural_score(code) if not error else (0, 0)
         uses_intrin = check_uses_intrinsics(code) if code else False
+        readability_metrics = analyze_readability(code, dname) if code and not error else {}
+        ast_similarity = (
+            ast_structure_similarity(function_source, code)
+            if function_source and code and not error
+            else {}
+        )
 
         if not error:
             sem_score, sem_err, fail_cat, cases_passed, cases_total = verify_semantic_correctness(
@@ -163,6 +170,8 @@ async def decompile_batch_and_score(
             cases_total=cases_total,
             uses_intrinsics=uses_intrin,
             decompiled_code=code[:8000] if code else "",  # cap at 8KB for dashboard
+            readability_metrics=readability_metrics,
+            ast_similarity=ast_similarity,
         ))
 
         # Direct feedback output

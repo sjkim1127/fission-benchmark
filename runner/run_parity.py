@@ -8,7 +8,6 @@ import argparse
 import json
 from pathlib import Path
 import requests
-import sys
 
 from benchmark.assembly_parity.run import compare_assembly
 from benchmark.cfg_parity.run import compare_cfg

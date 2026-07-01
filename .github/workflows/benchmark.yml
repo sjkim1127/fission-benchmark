@@ -31,7 +31,7 @@ on:
       decompilers:
         description: "Comma-separated decompilers to run"
         type: string
-        default: "fission,ghidra,boomerang,radare2,reko"
+        default: "fission,ghidra,boomerang,radare2,angr,snowman,revng,reko"
       publish_results:
         description: "Commit results and deploy GitHub Pages"
         type: boolean

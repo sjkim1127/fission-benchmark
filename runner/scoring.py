@@ -13,6 +13,7 @@ from __future__ import annotations
 import difflib
 import re
 from dataclasses import dataclass, field
+from typing import Any
 
 
 # Intrinsic functions that may affect semantic score validity
@@ -39,6 +40,8 @@ class FunctionScore:
     consensus_rank: int | None = None   # set after all decompilers run
     uses_intrinsics: bool = False       # True if decompiled code uses __carry/__scarry etc.
     decompiled_code: str = ""           # raw decompiled output (truncated for dashboard)
+    readability_metrics: dict[str, Any] = field(default_factory=dict)
+    ast_similarity: dict[str, Any] = field(default_factory=dict)
 
 
 # ── Composite Score ───────────────────────────────────────────────────────────

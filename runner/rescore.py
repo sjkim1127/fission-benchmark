@@ -66,7 +66,7 @@ def rescore(input_path: Path, show_top: int = 20) -> None:
         groups[key].append(r)
 
     print(f"\n{'='*90}")
-    print(f"  RESCORE DIFF  |  Old rank = source_similarity rank  |  New rank = composite_score rank")
+    print("  RESCORE DIFF  |  Old rank = source_similarity rank  |  New rank = composite_score rank")
     print(f"  Weights: semantic={WEIGHT_SEMANTIC:.0%}  similarity={WEIGHT_SIMILARITY:.0%}  structural={WEIGHT_STRUCTURAL:.0%}")
     print(f"{'='*90}")
     print(f"{'Function':20s} {'Variant':16s} {'Decomp':10s} {'OldSim':8s} {'OldRk':6s} {'NewCmp':8s} {'NewRk':6s} {'Δ':4s}  {'Change':20s}")
@@ -140,8 +140,8 @@ def rescore(input_path: Path, show_top: int = 20) -> None:
         delta = avg_comp - avg_sim
         print(f"{d:12s} {avg_sim:10.3f} {avg_comp:10.3f} {delta:+8.3f}")
 
-    print(f"\n📝 Note: negative Δ means composite is lower than similarity (semantic failures penalized)")
-    print(f"📝 Note: positive Δ means composite is higher (strong semantic scores lift ranking)")
+    print("\n📝 Note: negative Δ means composite is lower than similarity (semantic failures penalized)")
+    print("📝 Note: positive Δ means composite is higher (strong semantic scores lift ranking)")
 
 
 def main():

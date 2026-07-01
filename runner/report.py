@@ -26,6 +26,28 @@ DECOMPILER_COLORS = {
 }
 
 
+def _readability_summary(metrics: dict) -> str:
+    if not metrics:
+        return "—"
+    gnr = metrics.get("generic_naming_ratio", {}).get("raw", {}).get("ratio")
+    typ = metrics.get("type_specificity", {}).get("normalized")
+    expr = metrics.get("expression_complexity", {}).get("normalized")
+    cf = metrics.get("structured_control_flow", {}).get("normalized")
+    artifacts = metrics.get("unresolved_artifacts", {}).get("raw", {}).get("total")
+    values = []
+    if gnr is not None:
+        values.append(f"GNR {gnr:.2f}")
+    if typ is not None:
+        values.append(f"type {typ:.2f}")
+    if expr is not None:
+        values.append(f"expr {expr:.2f}")
+    if cf is not None:
+        values.append(f"cf {cf:.2f}")
+    if artifacts is not None:
+        values.append(f"art {artifacts}")
+    return "<br>".join(values) if values else "—"
+
+
 # ── Markdown ──────────────────────────────────────────────────────────────────
 
 def _md_table(headers: list[str], rows: list[list[str]]) -> str:
@@ -48,7 +70,9 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
         "",
         "---",
         "",
-        "## Summary — Average Source Similarity",
+        "## Summary — Correctness-Oriented Composite",
+        "",
+        "> Readability metrics are recorded as unvalidated raw proxies. They are not combined into a final readability score until the human validation study is complete.",
         "",
     ]
 
@@ -122,10 +146,14 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
                 f"{s.source_similarity:.3f}",
                 sem_str + intrin_flag, rank,
                 str(s.goto_count), str(s.nesting_depth),
+                _readability_summary(getattr(s, "readability_metrics", {}) or {}),
                 f"{s.time_ms}ms", status_icon,
             ])
         lines.append(_md_table(
-            ["Decompiler", "Variant", "Composite ⭐", "Similarity", "Semantic", "Rank", "Gotos", "Depth", "Time", "Status"],
+            [
+                "Decompiler", "Variant", "Composite ⭐", "Similarity", "Semantic", "Rank",
+                "Gotos", "Depth", "Readability Proxies", "Time", "Status",
+            ],
             rows,
         ))
         lines.append("")
@@ -198,6 +226,8 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
         "structural_penalty": getattr(s, "structural_penalty", 0.0),
         "uses_intrinsics": getattr(s, "uses_intrinsics", False),
         "decompiled_code": getattr(s, "decompiled_code", "") or "",
+        "readability_metrics": getattr(s, "readability_metrics", {}) or {},
+        "ast_similarity": getattr(s, "ast_similarity", {}) or {},
         "goto_count": s.goto_count,
         "nesting_depth": s.nesting_depth,
         "consensus_rank": s.consensus_rank,
@@ -377,6 +407,17 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
     border-radius: 12px;
     padding: 1.5rem;
     backdrop-filter: blur(12px);
+  }
+
+  .notice {
+    background: rgba(245, 158, 11, 0.10);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #fcd34d;
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    line-height: 1.45;
   }
   
   .card-header {
@@ -637,6 +678,12 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
 </header>
 
 <!-- KPI Cards -->
+<div class="notice">
+  Readability values shown below are unvalidated proxy metrics. They are recorded as raw evidence only;
+  no final readability composite is published until the human comprehension study validates which proxies correlate with accuracy and response time.
+</div>
+
+<!-- KPI Cards -->
 <div class="kpi-grid" id="kpiContainer"></div>
 
 <!-- Charts Section -->
@@ -702,6 +749,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
           <th data-key="decompiler">Decompiler</th>
           <th data-key="composite_score">Composite ⭐</th>
           <th data-key="semantic_score">Semantic</th>
+          <th>Readability Proxies</th>
           <th data-key="consensus_rank">Rank</th>
           <th data-key="goto_count">Gotos</th>
           <th data-key="time_ms">Time</th>
@@ -876,11 +924,18 @@ if (fnNames.length > 0) updatePerFuncChart(fnNames[0]);
 // ── Export Functions ──────────────────────────────────────────────────────────
 
 function toCSVRow(s) {
+  const rm = s.readability_metrics || {};
+  const gnr = rm.generic_naming_ratio?.raw?.ratio ?? '';
+  const typeScore = rm.type_specificity?.normalized ?? '';
+  const exprScore = rm.expression_complexity?.normalized ?? '';
+  const cfScore = rm.structured_control_flow?.normalized ?? '';
+  const artifactCount = rm.unresolved_artifacts?.raw?.total ?? '';
   const fields = [
     s.function_name, s.compiler_variant, s.decompiler,
     (s.composite_score || 0).toFixed(4),
     s.source_similarity.toFixed(4),
     (s.semantic_score || 0).toFixed(4),
+    gnr, typeScore, exprScore, cfScore, artifactCount,
     s.cases_passed || 0, s.cases_total || 0,
     s.fail_category || '',
     s.consensus_rank || '', s.goto_count, s.nesting_depth,
@@ -889,7 +944,7 @@ function toCSVRow(s) {
   return fields.map(f => `"${String(f).replace(/"/g, '""')}"`).join(',');
 }
 
-const CSV_HEADER = '"function","variant","decompiler","composite","similarity","semantic","cases_passed","cases_total","fail_category","rank","gotos","depth","time_ms","error","uses_intrinsics"';
+const CSV_HEADER = '"function","variant","decompiler","composite","similarity","semantic","gnr","type_specificity","expression_complexity","structured_control_flow","unresolved_artifacts","cases_passed","cases_total","fail_category","rank","gotos","depth","time_ms","error","uses_intrinsics"';
 
 function exportCSV() {
   const rows = [CSV_HEADER, ...currentFiltered.map(toCSVRow)].join('\n');
@@ -1002,6 +1057,24 @@ function getRankBadge(rank) {
   return '<span class="rank-badge rank-other">—</span>';
 }
 
+function readabilityProxyHtml(s) {
+  const rm = s.readability_metrics || {};
+  if (!rm || Object.keys(rm).length === 0) return '<span style="color:#6b7280">—</span>';
+  const gnr = rm.generic_naming_ratio?.raw?.ratio;
+  const typeScore = rm.type_specificity?.normalized;
+  const exprScore = rm.expression_complexity?.normalized;
+  const cfScore = rm.structured_control_flow?.normalized;
+  const artifacts = rm.unresolved_artifacts?.raw?.total;
+  const parse = rm.parse_ok === false ? ' parse-fail' : '';
+  return `<span style="font-size:0.75rem;line-height:1.35;display:inline-block;color:#d1d5db;">`
+    + `${gnr === undefined ? '' : `GNR ${Number(gnr).toFixed(2)}<br>`}`
+    + `${typeScore === undefined ? '' : `type ${Number(typeScore).toFixed(2)}<br>`}`
+    + `${exprScore === undefined ? '' : `expr ${Number(exprScore).toFixed(2)}<br>`}`
+    + `${cfScore === undefined ? '' : `cf ${Number(cfScore).toFixed(2)}<br>`}`
+    + `${artifacts === undefined ? '' : `art ${artifacts}`}`
+    + `<span style="color:#9ca3af">${parse}</span></span>`;
+}
+
 function renderTable() {
   const tbody = document.querySelector('#resultsTable tbody');
   tbody.innerHTML = '';
@@ -1071,6 +1144,7 @@ function renderTable() {
         <small style="color:#9ca3af;font-size:0.75em;">sim:${s.source_similarity.toFixed(3)}</small>
       </td>
       <td>${semHtml}</td>
+      <td>${readabilityProxyHtml(s)}</td>
       <td>${rankLabel}</td>
       <td>${s.goto_count}</td>
       <td>${s.time_ms}ms</td>
