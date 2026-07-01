@@ -23,6 +23,7 @@ class FunctionScore:
     nesting_depth: int
     time_ms: int
     error: str | None = None
+    semantic_score: float = 0.0
     consensus_rank: int | None = None   # set after all decompilers run
 
 

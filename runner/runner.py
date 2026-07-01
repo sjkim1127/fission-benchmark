@@ -31,6 +31,7 @@ from scoring import (
     source_similarity,
     structural_score,
 )
+from semantic import verify_semantic_correctness
 from report import generate_report
 
 app = typer.Typer(pretty_exceptions_enable=False)
@@ -132,6 +133,12 @@ async def run_all(
                     code = res.get("code", "")
                     sim = source_similarity(function_source, code) if function_source else 0.0
                     gotos, depth = structural_score(code)
+                    
+                    if not res.get("error"):
+                        sem_score = verify_semantic_correctness(fn.name, code)
+                    else:
+                        sem_score = 0.0
+
                     scores.append(FunctionScore(
                         decompiler=dname,
                         function_name=fn.name,
@@ -141,9 +148,10 @@ async def run_all(
                         nesting_depth=depth,
                         time_ms=res.get("time_ms", 0),
                         error=res.get("error"),
+                        semantic_score=sem_score,
                     ))
                     status = "✓" if not res.get("error") else "✗"
-                    typer.echo(f"  {status} {dname:10s} sim={sim:.3f} gotos={gotos} {res.get('time_ms',0)}ms")
+                    typer.echo(f"  {status} {dname:10s} sim={sim:.3f} sem={sem_score:.0f} gotos={gotos} {res.get('time_ms',0)}ms")
 
     return assign_consensus_ranks(scores)
 

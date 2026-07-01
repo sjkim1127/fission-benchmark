@@ -52,15 +52,19 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
 
     # Per-decompiler average
     by_decomp: dict[str, list[float]] = defaultdict(list)
+    by_decomp_sem: dict[str, list[float]] = defaultdict(list)
     for s in scores:
         if s.error is None:
             by_decomp[s.decompiler].append(s.source_similarity)
+            by_decomp_sem[s.decompiler].append(s.semantic_score)
 
     rows = []
     for d, sims in sorted(by_decomp.items(), key=lambda x: -sum(x[1]) / len(x[1])):
         avg = sum(sims) / len(sims)
-        rows.append([f"**{d}**", f"{avg:.3f}", f"{len(sims)}"])
-    lines.append(_md_table(["Decompiler", "Avg Similarity", "Functions"], rows))
+        sems = by_decomp_sem[d]
+        avg_sem = sum(sems) / len(sems) if sems else 0.0
+        rows.append([f"**{d}**", f"{avg:.3f}", f"{avg_sem * 100:.1f}%", f"{len(sims)}"])
+    lines.append(_md_table(["Decompiler", "Avg Similarity", "Semantic Pass", "Functions"], rows))
     lines += ["", "---", "", "## Per-Function Results", ""]
 
     # Per function
@@ -76,12 +80,12 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
             err = f"❌ {s.error[:40]}" if s.error else "✓"
             rows.append([
                 s.decompiler, s.compiler_variant,
-                f"{s.source_similarity:.3f}", rank,
+                f"{s.source_similarity:.3f}", f"{s.semantic_score:.0f}", rank,
                 str(s.goto_count), str(s.nesting_depth),
                 f"{s.time_ms}ms", err,
             ])
         lines.append(_md_table(
-            ["Decompiler", "Variant", "Similarity", "Rank", "Gotos", "Depth", "Time", "Status"],
+            ["Decompiler", "Variant", "Similarity", "Semantic", "Rank", "Gotos", "Depth", "Time", "Status"],
             rows,
         ))
         lines.append("")
@@ -129,9 +133,11 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
     ts = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
 
     by_decomp: dict[str, list[float]] = defaultdict(list)
+    by_decomp_sem: dict[str, list[float]] = defaultdict(list)
     for s in scores:
         if s.error is None:
             by_decomp[s.decompiler].append(s.source_similarity)
+            by_decomp_sem[s.decompiler].append(s.semantic_score)
 
 
 
@@ -143,6 +149,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
         "function_name": s.function_name,
         "compiler_variant": s.compiler_variant,
         "source_similarity": s.source_similarity,
+        "semantic_score": s.semantic_score,
         "goto_count": s.goto_count,
         "consensus_rank": s.consensus_rank,
         "time_ms": s.time_ms,
@@ -617,6 +624,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
           <th data-key="compiler_variant">Variant</th>
           <th data-key="decompiler">Decompiler</th>
           <th data-key="source_similarity">Similarity</th>
+          <th data-key="semantic_score">Semantic</th>
           <th data-key="consensus_rank">Rank</th>
           <th data-key="goto_count">Gotos</th>
           <th data-key="time_ms">Time</th>
@@ -686,12 +694,13 @@ decompilers.forEach(d => {
   const decScores = SCORES.filter(s => s.decompiler === d);
   const validScores = decScores.filter(s => s.error === null);
   const avgSim = validScores.length ? validScores.reduce((sum, s) => sum + s.source_similarity, 0) / validScores.length : 0;
+  const avgSem = validScores.length ? validScores.reduce((sum, s) => sum + (s.semantic_score || 0), 0) / validScores.length : 0;
   const successCount = decScores.filter(s => s.error === null).length;
   const successRate = decScores.length ? (successCount / decScores.length) * 100 : 0;
   const totalGotos = decScores.reduce((sum, s) => sum + (s.goto_count || 0), 0);
   const avgTime = decScores.length ? decScores.reduce((sum, s) => sum + s.time_ms, 0) / decScores.length : 0;
   
-  stats[d] = { avgSim, successRate, totalGotos, avgTime };
+  stats[d] = { avgSim, avgSem, successRate, totalGotos, avgTime };
 });
 
 // Render KPI Cards
@@ -707,7 +716,7 @@ decompilers.forEach(d => {
       <span class="kpi-title">${d}</span>
       <span class="kpi-color-dot" style="background-color: ${color}"></span>
     </div>
-    <div class="kpi-value">${(s.avgSim * 100).toFixed(1)}%</div>
+    <div class="kpi-value">${(s.avgSim * 100).toFixed(1)}% <span style="font-size: 0.85rem; color: var(--muted); font-weight: normal;">(Sem: ${(s.avgSem * 100).toFixed(0)}%)</span></div>
     <div class="kpi-bar-bg">
       <div class="kpi-bar-fill" style="width: ${s.avgSim * 100}%; background-color: ${color}"></div>
     </div>
@@ -860,6 +869,9 @@ function renderTable() {
             <div class="sim-bar-fill ${simClass}" style="width: ${s.source_similarity * 100}%"></div>
           </div>
         </div>
+      </td>
+      <td>
+        <span class="badge ${s.semantic_score >= 1.0 ? "success" : "error"}">${s.semantic_score >= 1.0 ? "Pass" : "Fail"}</span>
       </td>
       <td>${rankLabel}</td>
       <td>${s.goto_count}</td>
