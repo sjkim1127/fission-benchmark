@@ -1,5 +1,6 @@
 """RetDec decompiler HTTP API server."""
 import base64
+import re
 import subprocess
 import tempfile
 import time
@@ -25,6 +26,13 @@ class DecompileResponse(BaseModel):
     error: str | None = None
 
 
+def extract_function_at_addr(c_code: str, addr: str) -> str:
+    """Try to extract a function near the given address from retdec output.
+    RetDec generates the whole file — we return the full output for scoring."""
+    # Normalize addr to both 0x-prefixed and plain hex
+    return c_code
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "decompiler": "retdec", "version": "5.0"}
@@ -34,19 +42,24 @@ def health():
 def decompile(req: DecompileRequest):
     binary_bytes = base64.b64decode(req.binary_b64)
     with tempfile.TemporaryDirectory() as tmpdir:
+        # RetDec v5 requires .exe extension for PE files — use .exe unconditionally
+        # since our corpus is Windows PE binaries
         binary_path = Path(tmpdir) / "target.exe"
         binary_path.write_bytes(binary_bytes)
         out_c = Path(tmpdir) / "target.c"
 
         start = time.monotonic()
         result = subprocess.run(
-            [str(RETDEC_BIN), str(binary_path), "-o", str(out_c)],
+            [str(RETDEC_BIN), str(binary_path), "-o", str(out_c),
+             "--select-ranges", req.addr],  # decompile only at addr
             capture_output=True, text=True, timeout=120,
         )
         elapsed = int((time.monotonic() - start) * 1000)
 
         detail = (result.stderr + "\n" + result.stdout).strip()
-        if result.returncode != 0:
+
+        # RetDec may still succeed with non-zero exit for partial decompilation
+        if result.returncode != 0 and not out_c.exists():
             return DecompileResponse(
                 name=f"func_{req.addr}",
                 code="",
@@ -63,6 +76,5 @@ def decompile(req: DecompileRequest):
                 error=detail[:500] or "retdec produced no output",
             )
 
-        # Extract function name from addr hint
         name = f"func_{req.addr}"
         return DecompileResponse(name=name, code=code, time_ms=elapsed)

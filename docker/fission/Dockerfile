@@ -11,32 +11,35 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Download fission-cli and runtime specs from GitHub Releases.
+# Download fission-cli and runtime utils from GitHub Releases.
+# v0.1.1+: assets are:
+#   fission-linux-x64.tar.gz        (contains: fission_cli + utils/)
+#   fission_cli-x86_64-unknown-linux-gnu  (raw benchmark binary, same release)
 ARG FISSION_VERSION=latest
-ARG FISSION_ASSETS_TAG=assets-v1
 RUN set -eux; \
     if [ "$FISSION_VERSION" = "latest" ]; then \
-        URL=$(curl -sf https://api.github.com/repos/sjkim1127/Fission/releases/latest \
+        RELEASE_JSON=$(curl -sf https://api.github.com/repos/sjkim1127/Fission/releases/latest); \
+        CLI_URL=$(echo "$RELEASE_JSON" \
               | grep '"browser_download_url"' \
-              | grep 'fission_cli-x86_64-unknown-linux' \
+              | grep 'fission-linux-x64\.tar\.gz' \
               | head -1 \
               | sed 's/.*"\(https[^"]*\)".*/\1/'); \
     else \
-        URL="https://github.com/sjkim1127/Fission/releases/download/${FISSION_VERSION}/fission_cli-x86_64-unknown-linux-gnu"; \
+        CLI_URL="https://github.com/sjkim1127/Fission/releases/download/${FISSION_VERSION}/fission-linux-x64.tar.gz"; \
     fi; \
-    echo "Downloading fission-cli from: $URL"; \
-    curl -L "$URL" -o /usr/local/bin/fission_cli; \
+    echo "Downloading fission bundle from: $CLI_URL"; \
+    curl -L "$CLI_URL" -o /tmp/fission-bundle.tar.gz; \
+    mkdir -p /opt/fission-utils; \
+    tar --warning=no-unknown-keyword -xzf /tmp/fission-bundle.tar.gz -C /opt/fission-utils; \
+    # The tar contains: fission_cli + utils/
+    find /opt/fission-utils -name 'fission_cli' -exec cp {} /usr/local/bin/fission_cli \; ; \
     chmod +x /usr/local/bin/fission_cli; \
     /usr/local/bin/fission_cli --version; \
-    curl -L "https://github.com/sjkim1127/Fission/releases/download/${FISSION_ASSETS_TAG}/fission-utils.tar.gz" \
-      -o /tmp/fission-utils.tar.gz; \
-    mkdir -p /opt/fission-utils; \
-    tar --warning=no-unknown-keyword -xzf /tmp/fission-utils.tar.gz -C /opt/fission-utils; \
-    ln -s /opt/fission-utils/utils/sleigh-specs /sleigh-specs; \
+    ln -sf /opt/fission-utils/utils/sleigh-specs /sleigh-specs; \
     test -d /sleigh-specs/languages; \
     test -d /opt/fission-utils/utils/ghidra-data; \
     test -d /opt/fission-utils/utils/signatures; \
-    rm /tmp/fission-utils.tar.gz
+    rm /tmp/fission-bundle.tar.gz
 
 # Python FastAPI server
 COPY requirements.txt .

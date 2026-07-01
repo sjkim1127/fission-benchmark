@@ -12,10 +12,22 @@
           "addr": "0x140001530"
         },
         {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/control_flow_gcc-m32_O0.exe",
+          "addr": "0x4015b0"
+        },
+        {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/control_flow_gcc_O2.exe",
           "addr": "0x140001530"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/control_flow_gcc-m32_O2.exe",
+          "addr": "0x4015b0"
         }
       ]
     },
@@ -30,10 +42,22 @@
           "addr": "0x14000155f"
         },
         {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/control_flow_gcc-m32_O0.exe",
+          "addr": "0x4015d6"
+        },
+        {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/control_flow_gcc_O2.exe",
           "addr": "0x140001550"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/control_flow_gcc-m32_O2.exe",
+          "addr": "0x4015d0"
         }
       ]
     },
@@ -48,10 +72,22 @@
           "addr": "0x14000158c"
         },
         {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/control_flow_gcc-m32_O0.exe",
+          "addr": "0x4015f8"
+        },
+        {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/control_flow_gcc_O2.exe",
           "addr": "0x140001560"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/control_flow_gcc-m32_O2.exe",
+          "addr": "0x4015f0"
         }
       ]
     },
@@ -66,10 +102,22 @@
           "addr": "0x1400015b4"
         },
         {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/control_flow_gcc-m32_O0.exe",
+          "addr": "0x40161c"
+        },
+        {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/control_flow_gcc_O2.exe",
           "addr": "0x140001580"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/control_flow_gcc-m32_O2.exe",
+          "addr": "0x401610"
         }
       ]
     },
@@ -84,10 +132,22 @@
           "addr": "0x14000160b"
         },
         {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/control_flow_gcc-m32_O0.exe",
+          "addr": "0x40165e"
+        },
+        {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/control_flow_gcc_O2.exe",
           "addr": "0x1400015b0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/control_flow_gcc-m32_O2.exe",
+          "addr": "0x401650"
         }
       ]
     },
@@ -102,10 +162,22 @@
           "addr": "0x140001660"
         },
         {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/control_flow_gcc-m32_O0.exe",
+          "addr": "0x4016af"
+        },
+        {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/control_flow_gcc_O2.exe",
           "addr": "0x1400015e0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/control_flow_gcc-m32_O2.exe",
+          "addr": "0x401680"
         }
       ]
     }

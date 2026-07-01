@@ -23,7 +23,6 @@ services:
       context: ./docker/fission
       args:
         FISSION_VERSION: ${FISSION_VERSION:-latest}
-        FISSION_ASSETS_TAG: ${FISSION_ASSETS_TAG:-assets-v1}
     platform: linux/amd64
     ports: ["${FISSION_HOST_PORT:-8000}:8000"]
     volumes:
@@ -74,7 +73,6 @@ services:
       retries: 5
 
   angr:
-    profiles: ["experimental"]
     build: ./docker/angr
     ports: ["8004:8000"]
     volumes:
@@ -86,7 +84,6 @@ services:
       retries: 5
 
   snowman:
-    profiles: ["experimental"]
     build: ./docker/snowman
     platform: linux/amd64
     ports: ["8005:8000"]
@@ -99,7 +96,6 @@ services:
       retries: 5
 
   revng:
-    profiles: ["experimental"]
     build: ./docker/revng
     platform: linux/amd64
     ports: ["8006:8000"]

@@ -1,5 +1,6 @@
 """Radare2 + r2ghidra decompiler HTTP API server."""
 import base64
+import re
 import tempfile
 import time
 from pathlib import Path
@@ -22,6 +23,21 @@ class DecompileResponse(BaseModel):
     code: str
     time_ms: int
     error: str | None = None
+
+
+def clean_r2_output(code: str) -> str:
+    """Remove r2-specific noise: comment headers, address annotations, and preamble."""
+    lines = code.splitlines()
+    cleaned = []
+    for line in lines:
+        # Skip r2dec header comments (/* r2dec ... */ style)
+        if re.match(r"\s*/\*\s*(r2dec|nocode|WARNING|XREFS|Function|\/tmp|\/proc)", line):
+            continue
+        # Skip #include lines injected by r2ghidra
+        if re.match(r"\s*#include\s*<", line):
+            continue
+        cleaned.append(line)
+    return "\n".join(cleaned).strip()
 
 
 @app.get("/health")
@@ -52,6 +68,7 @@ def decompile(req: DecompileRequest):
         if not code.strip():
             return DecompileResponse(name=name, code="", time_ms=elapsed, error="empty output")
 
+        code = clean_r2_output(code)
         return DecompileResponse(name=name, code=code, time_ms=elapsed)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

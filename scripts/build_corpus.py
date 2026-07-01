@@ -19,8 +19,9 @@ CORPUS_TARGET = os.environ.get("CORPUS_TARGET", "host")
 
 
 def target_tool(compiler: str, tool: str) -> str:
-    if CORPUS_TARGET == "windows-x86_64" and compiler in {"gcc", "clang"}:
-        return f"x86_64-w64-mingw32-{tool}"
+    if CORPUS_TARGET == "windows-x86_64":
+        if compiler == "gcc": return f"x86_64-w64-mingw32-{tool}"
+        if compiler == "gcc-m32": return f"i686-w64-mingw32-{tool}"
     return compiler if tool == "gcc" else tool
 
 
