@@ -1,2 +1,6 @@
-fastapi>=0.111
-uvicorn[standard]>=0.30
+fastapi==0.95.2
+uvicorn==0.22.0
+pefile
+pyelftools
+capstone
+setuptools

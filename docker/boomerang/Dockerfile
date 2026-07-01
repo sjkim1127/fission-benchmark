@@ -26,11 +26,12 @@ RUN git clone --depth 1 https://github.com/BoomerangDecompiler/boomerang.git /op
     && make install \
     && ldconfig
 
-# Install FastAPI and Uvicorn
-RUN pip install --no-cache-dir fastapi uvicorn pydantic
+# Install FastAPI, Uvicorn, and disassembly helper libraries
+RUN pip install --no-cache-dir fastapi uvicorn pydantic pefile pyelftools capstone
 
 WORKDIR /app
 COPY server.py .
+COPY disasm_helper.py .
 
 EXPOSE 8000
 CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]

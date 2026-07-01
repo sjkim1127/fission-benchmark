@@ -27,6 +27,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY server.py .
 COPY DecompileFunction.java /opt/ghidra_scripts/
+COPY ExportParity.java /opt/ghidra_scripts/
 
 EXPOSE 8000
 CMD ["python3", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -147,6 +147,9 @@ jobs:
       - name: Run benchmark
         run: python runner/runner.py --corpus "$CORPUS_SPLIT" --decompilers "$BENCHMARK_DECOMPILERS"
 
+      - name: Run parity benchmarks
+        run: python runner/run_parity.py --corpus "$CORPUS_SPLIT"
+
       - name: Write benchmark summary
         if: always()
         run: |

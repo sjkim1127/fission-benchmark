@@ -19,3 +19,6 @@ corpus/*/binaries/
 
 # OS
 .DS_Store
+
+# Local environment config
+.env

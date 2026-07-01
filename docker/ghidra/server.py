@@ -1,4 +1,4 @@
-"""Ghidra headless decompiler HTTP API server with batch support."""
+"""Ghidra headless decompiler and parity diagnostic API server."""
 import base64
 import json
 import os
@@ -16,11 +16,9 @@ GHIDRA_HOME = Path("/opt/ghidra")
 GHIDRA_HEADLESS = GHIDRA_HOME / "support" / "analyzeHeadless"
 SCRIPT_DIR = Path("/opt/ghidra_scripts")
 
-
 class DecompileRequest(BaseModel):
     binary_b64: str
     addr: str
-
 
 class DecompileResponse(BaseModel):
     decompiler: str = "ghidra"
@@ -29,11 +27,9 @@ class DecompileResponse(BaseModel):
     time_ms: int
     error: Optional[str] = None
 
-
 class BatchDecompileRequest(BaseModel):
     binary_b64: str
     addresses: List[str]
-
 
 class DecompileResultItem(BaseModel):
     addr: str
@@ -41,21 +37,77 @@ class DecompileResultItem(BaseModel):
     code: str = ""
     error: Optional[str] = None
 
-
 class BatchDecompileResponse(BaseModel):
     decompiler: str = "ghidra"
     results: List[DecompileResultItem]
     time_ms: int
 
-
 @app.get("/health")
 def health():
     return {"status": "ok", "decompiler": "ghidra", "version": "12.0"}
 
+def run_export_parity(binary_path: str, mode: str, addr: str = ""):
+    if binary_path.startswith("corpus/"):
+        binary_path = "/" + binary_path
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        project_dir = Path(tmpdir) / "proj"
+        project_dir.mkdir()
+        
+        args = [
+            str(GHIDRA_HEADLESS), str(project_dir), "TempProject",
+            "-import", binary_path,
+            "-scriptPath", str(SCRIPT_DIR),
+            "-postScript", "ExportParity.java", mode, addr,
+            "-deleteProject"
+        ]
+        result = subprocess.run(args, capture_output=True, text=True, timeout=120)
+        for line in result.stdout.splitlines():
+            if line.startswith("===RESULT==="):
+                res = json.loads(line.replace("===RESULT===", ""))
+                if isinstance(res, dict) and "error" in res:
+                    raise HTTPException(status_code=500, detail=res["error"])
+                return res
+        raise HTTPException(status_code=500, detail=f"Headless script failed: {result.stderr or result.stdout}")
+
+@app.get("/functions")
+def functions(binary: str):
+    return run_export_parity(binary, "functions")
+
+@app.get("/disasm")
+def disasm(binary: str, addr: str):
+    return run_export_parity(binary, "disasm", addr)
+
+@app.get("/decode")
+def decode(binary: str, addr: str):
+    # Map Ghidra disasm output to decode schema
+    disasm_data = run_export_parity(binary, "disasm", addr)
+    res = []
+    for inst in disasm_data:
+        b = inst.get("bytes", "")
+        res.append({
+            "address": inst.get("address"),
+            "bytes": b,
+            "length": inst.get("length", len(b) // 2),
+            "mnemonic": inst.get("mnemonic", ""),
+            "prefixes": [],
+            "modrm": None,
+            "sib": None,
+            "displacement": None,
+            "immediate": None
+        })
+    return res
+
+@app.get("/pcode")
+def pcode(binary: str, addr: str):
+    return run_export_parity(binary, "pcode", addr)
+
+@app.get("/cfg")
+def cfg(binary: str, addr: str):
+    return run_export_parity(binary, "cfg", addr)
 
 @app.post("/decompile", response_model=DecompileResponse)
 def decompile(req: DecompileRequest):
-    # Backward compatibility
     batch_req = BatchDecompileRequest(binary_b64=req.binary_b64, addresses=[req.addr])
     start = time.monotonic()
     try:
@@ -68,7 +120,6 @@ def decompile(req: DecompileRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.post("/decompile_batch", response_model=BatchDecompileResponse)
 def decompile_batch(req: BatchDecompileRequest):
     binary_bytes = base64.b64decode(req.binary_b64)
@@ -79,7 +130,6 @@ def decompile_batch(req: BatchDecompileRequest):
         project_dir.mkdir()
 
         start = time.monotonic()
-        # Build analyzeHeadless arguments passing all addresses
         args = [
             str(GHIDRA_HEADLESS), str(project_dir), "TempProject",
             "-import", str(binary_path),
@@ -90,37 +140,18 @@ def decompile_batch(req: BatchDecompileRequest):
             "-deleteProject",
         ]
 
-        result = subprocess.run(
-            args,
-            env=os.environ,
-            capture_output=True, text=True, timeout=300,
-        )
+        result = subprocess.run(args, capture_output=True, text=True, timeout=300)
         elapsed = int((time.monotonic() - start) * 1000)
 
-        # Parse batch stdout looking for the ===BATCH_RESULT=== marker
         for line in result.stdout.splitlines():
-            line = line.strip()
-            marker = "===BATCH_RESULT==="
-            if marker in line:
+            if line.startswith("===BATCH_RESULT==="):
                 try:
-                    # Extract the exact JSON array between [ and ] to avoid suffixes like ' (GhidraScript)'
-                    start_idx = line.find("[")
-                    end_idx = line.rfind("]")
-                    if start_idx == -1 or end_idx == -1 or end_idx < start_idx:
-                        raise ValueError("Invalid array format in batch result line")
-                    json_str = line[start_idx:end_idx + 1]
-                    data = json.loads(json_str)
-                    results = []
-                    for item in data:
-                        results.append(DecompileResultItem(
-                            addr=item.get("addr"),
-                            name=item.get("name", "?"),
-                            code=item.get("code", ""),
-                            error=item.get("error")
-                        ))
-                    return BatchDecompileResponse(results=results, time_ms=elapsed)
-                except (json.JSONDecodeError, ValueError) as e:
-                    raise HTTPException(status_code=500, detail=f"Failed to decode batch JSON: {e}\nStdout: {result.stdout[:500]}")
+                    res_json = line.replace("===BATCH_RESULT===", "").strip()
+                    if res_json.endswith("(GhidraScript)"):
+                        res_json = res_json[:-len("(GhidraScript)")].strip()
+                    res_list = json.loads(res_json)
+                    return BatchDecompileResponse(results=res_list, time_ms=elapsed)
+                except Exception as e:
+                    raise HTTPException(status_code=500, detail=f"Failed to parse GhidraScript JSON: {str(e)}")
 
-        detail = (result.stderr + "\n" + result.stdout)[-2000:]
-        raise HTTPException(status_code=500, detail=f"Batch marker not found in output.\nLog details:\n{detail}")
+        raise HTTPException(status_code=500, detail=f"Ghidra batch decompilation script output marker not found. Output: {result.stdout}")
