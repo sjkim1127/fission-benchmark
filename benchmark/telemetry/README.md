@@ -11,7 +11,12 @@ Run example:
 
 ```bash
 python -m benchmark.telemetry.aggregate \
+  results/decode_parity/latest.jsonl \
   results/assembly_parity/latest.jsonl \
   results/pcode_parity/latest.jsonl \
+  results/cfg_parity/latest.jsonl \
+  results/function_discovery/latest.jsonl \
+  results/ir_invariants/latest.jsonl \
+  results/golden_repros/latest.jsonl \
   --output results/telemetry/latest.json
 ```

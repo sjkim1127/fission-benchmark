@@ -1,0 +1,1 @@
+"""Golden repro benchmark stage."""

@@ -1,0 +1,1 @@
+"""CFG parity benchmark stage."""
