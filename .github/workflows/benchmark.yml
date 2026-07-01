@@ -44,11 +44,33 @@ permissions:
 
 concurrency:
   group: benchmark-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
+  preflight:
+    name: Check benchmark currency
+    runs-on: ubuntu-latest
+    outputs:
+      is_current: ${{ steps.current.outputs.is_current }}
+    steps:
+      - id: current
+        name: Check current branch head
+        run: |
+          set -eu
+          remote_ref="refs/heads/${GITHUB_REF_NAME:-main}"
+          current_sha="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" "$remote_ref" | awk '{print $1}')"
+          if [ -z "$current_sha" ] || [ "$GITHUB_SHA" = "$current_sha" ]; then
+            echo "is_current=true" >> "$GITHUB_OUTPUT"
+            echo "Current benchmark run for ${GITHUB_SHA}"
+          else
+            echo "is_current=false" >> "$GITHUB_OUTPUT"
+            echo "Stale benchmark run: ${GITHUB_SHA}; current ${remote_ref} is ${current_sha}"
+          fi
+
   build-images:
     name: Build Docker images
+    needs: preflight
+    if: ${{ needs.preflight.outputs.is_current == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -62,10 +84,17 @@ jobs:
 
   run-benchmark:
     name: Run benchmark
-    needs: build-images
+    needs: [preflight, build-images]
+    if: ${{ needs.preflight.outputs.is_current == 'true' }}
+    outputs:
+      is_current: ${{ steps.current.outputs.is_current }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
+      - id: current
+        name: Export current-run state
+        run: echo "is_current=${{ needs.preflight.outputs.is_current }}" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
@@ -153,7 +182,7 @@ jobs:
   deploy-pages:
     name: Deploy GitHub Pages
     needs: run-benchmark
-    if: ${{ github.event.inputs.publish_results != 'false' }}
+    if: ${{ needs.run-benchmark.outputs.is_current == 'true' && github.event.inputs.publish_results != 'false' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
