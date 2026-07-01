@@ -1,6 +1,5 @@
 """RetDec decompiler HTTP API server."""
 import base64
-import re
 import subprocess
 import tempfile
 import time
