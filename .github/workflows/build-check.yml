@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [fission, ghidra, retdec, radare2]
+        service: [fission, ghidra, retdec, radare2, angr, snowman, revng]
     steps:
       - uses: actions/checkout@v4
 

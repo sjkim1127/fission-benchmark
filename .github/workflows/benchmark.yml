@@ -7,7 +7,7 @@ env:
   FISSION_ASSETS_TAG: assets-v1
   CORPUS_TARGET: windows-x86_64
   CORPUS_SPLIT: ${{ github.event.inputs.corpus || 'dev' }}
-  BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,retdec,radare2' }}
+  BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,retdec,radare2,angr,snowman,revng' }}
   PYTHONPATH: .
 
 on:
@@ -76,7 +76,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [fission, ghidra, retdec, radare2]
+        service: [fission, ghidra, retdec, radare2, angr, snowman, revng]
     steps:
       - uses: actions/checkout@v4
       - name: Build ${{ matrix.service }}
@@ -108,12 +108,12 @@ jobs:
         run: docker compose --profile tools run --rm --build corpus-builder
 
       - name: Build benchmark containers
-        run: docker compose build fission ghidra retdec radare2
+        run: docker compose build fission ghidra retdec radare2 angr snowman revng
 
       - name: Start decompiler containers
         run: |
-          docker compose up -d fission ghidra retdec radare2
-          for port in 8000 8001 8002 8003; do
+          docker compose up -d fission ghidra retdec radare2 angr snowman revng
+          for port in 8000 8001 8002 8003 8004 8005 8006; do
             ready=0
             for i in $(seq 1 30); do
               if curl -sf http://localhost:$port/health; then
