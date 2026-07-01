@@ -33,7 +33,7 @@ COPY --from=builder /tmp/reko/src/Drivers/CmdLine/bin/x64/Release/net8.0 /opt/re
 
 # Copy server files
 WORKDIR /app
-COPY docker/reko/server.py /app/server.py
+COPY server.py /app/server.py
 
 # Create virtual environment and install python dependencies
 RUN python3 -m venv /opt/venv

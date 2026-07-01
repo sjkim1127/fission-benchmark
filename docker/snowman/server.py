@@ -1,11 +1,9 @@
 """Snowman decompiler and parity diagnostic API server."""
 import base64
-import json
 import os
 import subprocess
 import tempfile
 import time
-from pathlib import Path
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException

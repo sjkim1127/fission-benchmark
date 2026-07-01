@@ -1,7 +1,7 @@
 """Shared Capstone PE/ELF disassembly helper for basic decompiler containers."""
-import sys
 from pathlib import Path
-from capstone import *
+
+from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
 import pefile
 from elftools.elf.elffile import ELFFile
 

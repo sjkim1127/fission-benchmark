@@ -1,7 +1,6 @@
 """Ghidra headless decompiler and parity diagnostic API server."""
 import base64
 import json
-import os
 import subprocess
 import tempfile
 import time
