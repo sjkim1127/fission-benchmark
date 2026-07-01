@@ -4,7 +4,7 @@
 
 **Multi-decompiler comparison benchmark for [Fission](https://github.com/sjkim1127/Fission)**
 
-Fission · Ghidra · RetDec · Radare2+r2ghidra · optional angr/Snowman/rev.ng
+Fission · Ghidra · Radare2+r2ghidra · optional angr/Snowman/rev.ng
 
 [![Benchmark](https://github.com/sjkim1127/fission-benchmark/actions/workflows/benchmark.yml/badge.svg)](https://github.com/sjkim1127/fission-benchmark/actions/workflows/benchmark.yml)
 [![Docker Build](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml/badge.svg)](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml)
@@ -26,9 +26,9 @@ Binary + Source (ground truth)
 ┌───────────────────────────────────────────────────────┐
 │  runner.py  (parallel httpx requests)                 │
 │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  │
-│  │ Fission │  │ Ghidra  │  │ RetDec  │  │Radare2  │  │
-│  │ :8000   │  │ :8001   │  │ :8002   │  │ :8003   │  │
-│  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘  │
+│  │ Fission │  │ Ghidra  │  │Radare2  │  │
+│  │ :8000   │  │ :8001   │  │ :8003   │  │
+│  └────┬────┘  └────┬────┘  └────┬────┘  │
 │  optional: angr :8004 · Snowman :8005 · rev.ng :8006   │
 └───────┼────────────┼────────────┼─────────────┼───────┘
         └─────────────────────────┘
@@ -73,7 +73,6 @@ docker compose up -d
 
 # Wait for health checks
 curl http://localhost:8001/health  # Ghidra
-curl http://localhost:8002/health  # RetDec
 curl http://localhost:8003/health  # Radare2
 
 # Run benchmark (dev corpus)
@@ -185,7 +184,7 @@ Response: { "status": "ok", "decompiler": "ghidra", "version": "12.0" }
 
 ## Optional Open-Source Backends
 
-The default benchmark keeps the stable baseline to Fission, Ghidra, RetDec, and
+The default benchmark keeps the stable baseline to Fission, Ghidra, and
 Radare2+r2ghidra. These optional backends are available for local experiments
 and self-hosted runners:
 

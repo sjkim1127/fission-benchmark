@@ -16,7 +16,6 @@ DOCS_DIR = Path(__file__).parent.parent / "docs"
 DECOMPILER_COLORS = {
     "fission":  "#6366f1",
     "ghidra":   "#f59e0b",
-    "retdec":   "#10b981",
     "radare2":  "#ef4444",
     "angr":     "#06b6d4",
     "snowman":  "#8b5cf6",

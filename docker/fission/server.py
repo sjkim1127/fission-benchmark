@@ -1,4 +1,4 @@
-"""Fission decompiler HTTP API server."""
+"""Fission decompiler HTTP API server with batch support."""
 import base64
 import json
 import os
@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
+from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -19,7 +20,7 @@ GHIDRA_DATA_DIR = os.environ.get("FISSION_GHIDRA_DATA_DIR", "/opt/fission-utils/
 
 class DecompileRequest(BaseModel):
     binary_b64: str
-    addr: str  # hex string e.g. "0x1400010a0"
+    addr: str
 
 
 class DecompileResponse(BaseModel):
@@ -27,7 +28,25 @@ class DecompileResponse(BaseModel):
     name: str
     code: str
     time_ms: int
-    error: str | None = None
+    error: Optional[str] = None
+
+
+class BatchDecompileRequest(BaseModel):
+    binary_b64: str
+    addresses: List[str]
+
+
+class DecompileResultItem(BaseModel):
+    addr: str
+    name: str = "?"
+    code: str = ""
+    error: Optional[str] = None
+
+
+class BatchDecompileResponse(BaseModel):
+    decompiler: str = "fission"
+    results: List[DecompileResultItem]
+    time_ms: int
 
 
 @app.get("/health")
@@ -43,10 +62,34 @@ def health():
 
 @app.post("/decompile", response_model=DecompileResponse)
 def decompile(req: DecompileRequest):
+    # Backward compatibility
+    batch_req = BatchDecompileRequest(binary_b64=req.binary_b64, addresses=[req.addr])
+    start = time.monotonic()
+    try:
+        resp = decompile_batch(batch_req)
+        elapsed = int((time.monotonic() - start) * 1000)
+        item = resp.results[0]
+        if item.error:
+            return DecompileResponse(name="?", code="", time_ms=elapsed, error=item.error)
+        return DecompileResponse(name=item.name, code=item.code, time_ms=elapsed)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/decompile_batch", response_model=BatchDecompileResponse)
+def decompile_batch(req: BatchDecompileRequest):
     binary_bytes = base64.b64decode(req.binary_b64)
-    with tempfile.NamedTemporaryFile(suffix=".bin", delete=False) as f:
-        f.write(binary_bytes)
-        tmp_path = f.name
+    
+    # Write binary
+    with tempfile.NamedTemporaryFile(suffix=".bin", delete=False) as f_bin:
+        f_bin.write(binary_bytes)
+        tmp_bin_path = f_bin.name
+
+    # Write addresses file (one hex address per line)
+    with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", delete=False) as f_addrs:
+        for addr in req.addresses:
+            f_addrs.write(f"{addr}\n")
+        tmp_addrs_path = f_addrs.name
 
     env = {
         **os.environ,
@@ -57,23 +100,31 @@ def decompile(req: DecompileRequest):
     start = time.monotonic()
     try:
         result = subprocess.run(
-            [str(FISSION_BIN), "decomp", tmp_path, "--addr", req.addr, "--json", "--resource-root", RESOURCE_ROOT],
-            capture_output=True, text=True, timeout=120, env=env,
+            [
+                str(FISSION_BIN), "decomp", tmp_bin_path,
+                "--addresses-file", tmp_addrs_path,
+                "--json", "--resource-root", RESOURCE_ROOT
+            ],
+            capture_output=True, text=True, timeout=300, env=env,
         )
         elapsed = int((time.monotonic() - start) * 1000)
 
         if result.returncode != 0:
-            raise HTTPException(status_code=500, detail=result.stderr[:500])
+            raise HTTPException(status_code=500, detail=f"Fission CLI batch run failed: {result.stderr[:1000]}")
 
-        data = json.loads(result.stdout)
-        if isinstance(data, list):
-            data = data[0]
-
-        return DecompileResponse(
-            name=data.get("name", "?"),
-            code=data.get("code", ""),
-            time_ms=elapsed,
-            error=data.get("error"),
-        )
+        try:
+            data = json.loads(result.stdout)
+            results = []
+            for entry in data:
+                results.append(DecompileResultItem(
+                    addr=entry.get("address"),
+                    name=entry.get("name", "?"),
+                    code=entry.get("code", ""),
+                    error=entry.get("error")
+                ))
+            return BatchDecompileResponse(results=results, time_ms=elapsed)
+        except json.JSONDecodeError as e:
+            raise HTTPException(status_code=500, detail=f"Failed to decode batch JSON: {e}\nStdout: {result.stdout[:500]}")
     finally:
-        Path(tmp_path).unlink(missing_ok=True)
+        Path(tmp_bin_path).unlink(missing_ok=True)
+        Path(tmp_addrs_path).unlink(missing_ok=True)

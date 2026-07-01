@@ -49,17 +49,6 @@ services:
       timeout: 10s
       retries: 5
 
-  retdec:
-    build: ./docker/retdec
-    platform: linux/amd64
-    ports: ["8002:8000"]
-    volumes:
-      - ./corpus:/corpus:ro
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   radare2:
     build: ./docker/radare2

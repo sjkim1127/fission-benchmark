@@ -1,35 +1,55 @@
-// GhidraScript: Decompile a single function at a given address and print JSON to stdout.
+// GhidraScript: Decompile multiple functions and print JSON.
 import ghidra.app.script.GhidraScript;
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.decompiler.DecompileResults;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
+import java.util.ArrayList;
 
 public class DecompileFunction extends GhidraScript {
     @Override
     public void run() throws Exception {
         String[] args = getScriptArgs();
-        String addrStr = args.length > 0 ? args[0] : System.getProperty("decomp.addr", "");
-        if (addrStr.isEmpty()) {
-            println("{\"error\": \"decomp.addr not set\"}");
+        if (args.length == 0) {
+            println("{\"error\": \"no addresses specified\"}");
             return;
         }
-        Address addr = currentProgram.getAddressFactory().getAddress(addrStr);
-        Function func = currentProgram.getFunctionManager().getFunctionAt(addr);
-        if (func == null) {
-            println("{\"error\": \"no function at " + addrStr + "\"}");
-            return;
-        }
+
         DecompInterface decomp = new DecompInterface();
         decomp.openProgram(currentProgram);
-        DecompileResults res = decomp.decompileFunction(func, 60, monitor);
-        if (!res.decompileCompleted()) {
-            println("{\"error\": \"decompile failed\"}");
-            return;
+
+        ArrayList<String> jsonResults = new ArrayList<>();
+
+        for (String addrStr : args) {
+            try {
+                Address addr = currentProgram.getAddressFactory().getAddress(addrStr);
+                Function func = currentProgram.getFunctionManager().getFunctionAt(addr);
+                if (func == null) {
+                    jsonResults.add("{\"addr\": \"" + addrStr + "\", \"error\": \"no function at " + addrStr + "\"}");
+                    continue;
+                }
+                DecompileResults res = decomp.decompileFunction(func, 60, monitor);
+                if (!res.decompileCompleted()) {
+                    jsonResults.add("{\"addr\": \"" + addrStr + "\", \"error\": \"decompile failed\"}");
+                    continue;
+                }
+                String code = res.getDecompiledFunction().getC();
+                code = code.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\n");
+                jsonResults.add("{\"addr\": \"" + addrStr + "\", \"name\": \"" + func.getName() + "\", \"code\": \"" + code + "\"}");
+            } catch (Exception e) {
+                jsonResults.add("{\"addr\": \"" + addrStr + "\", \"error\": \"" + e.getMessage() + "\"}");
+            }
         }
-        String code = res.getDecompiledFunction().getC();
-        // JSON-escape the code
-        code = code.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "");
-        println("{\"name\": \"" + func.getName() + "\", \"code\": \"" + code + "\"}");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        for (int i = 0; i < jsonResults.size(); i++) {
+            sb.append(jsonResults.get(i));
+            if (i < jsonResults.size() - 1) {
+                sb.append(",");
+            }
+        }
+        sb.append("]");
+        println("===BATCH_RESULT===" + sb.toString());
     }
 }

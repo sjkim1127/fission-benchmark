@@ -1,14 +1,4 @@
-"""
-fission-benchmark runner
-Sends decompile requests to all containers in parallel and collects results.
-
-Usage:
-  python runner/runner.py --corpus dev
-  python runner/runner.py --corpus dev --limit 1 --decompilers fission,ghidra
-  python runner/runner.py --use-holdout   # only for release evaluation
-"""
-from __future__ import annotations
-
+"""Benchmark runner to decompile and score binaries."""
 import asyncio
 import base64
 import json
@@ -17,7 +7,7 @@ import sys
 import time
 from dataclasses import asdict
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 import httpx
 import typer
@@ -34,98 +24,105 @@ from scoring import (
 from semantic import verify_semantic_correctness
 from report import generate_report
 
-app = typer.Typer(pretty_exceptions_enable=False)
-
-CORE_DECOMPILERS: dict[str, str] = {
-    "fission":  "http://localhost:8000",
-    "ghidra":   "http://localhost:8001",
-    "retdec":   "http://localhost:8002",
-    "radare2":  "http://localhost:8003",
-}
-
-OPTIONAL_DECOMPILERS: dict[str, str] = {
-    "angr":     "http://localhost:8004",
-    "snowman":  "http://localhost:8005",
-    "revng":    "http://localhost:8006",
-}
-
-DECOMPILERS: dict[str, str] = {**CORE_DECOMPILERS, **OPTIONAL_DECOMPILERS}
-
-RESULTS_DIR = Path(__file__).parent.parent / "results"
-RESULTS_DIR.mkdir(exist_ok=True)
+app = typer.Typer(help="Fission decompiler benchmark runner.")
 
 
-def configured_decompilers(requested: set[str] | None = None) -> dict[str, str]:
-    """Apply NAME_ENDPOINT overrides and skip markers from the environment."""
-    configured: dict[str, str] = {}
-    for name, default_url in DECOMPILERS.items():
-        if requested is None and name in OPTIONAL_DECOMPILERS:
-            env_key = f"{name.upper()}_ENDPOINT"
-            if env_key not in os.environ:
-                continue
-        if requested is not None and name not in requested:
-            continue
-        env_key = f"{name.upper()}_ENDPOINT"
-        endpoint = os.environ.get(env_key, default_url)
-        if endpoint.lower() in {"", "skip", "disabled", "off"}:
-            continue
-        configured[name] = endpoint
-    return configured
+def configured_decompilers() -> dict[str, str]:
+    """Get configured decompiler HTTP endpoints from environment."""
+    # Default local dev ports mapped in docker-compose.yml
+    defaults = {
+        "fission": os.environ.get("FISSION_ENDPOINT", "http://localhost:8000"),
+        "ghidra": "http://localhost:8001",
+        "radare2": "http://localhost:8003",
+        "angr": "http://localhost:8004",
+        "snowman": "http://localhost:8005",
+        "revng": "http://localhost:8006",
+    }
+    return defaults
 
 
-async def call_decompiler(
+async def decompile_batch_and_score(
     client: httpx.AsyncClient,
-    name: str,
-    base_url: str,
+    dname: str,
+    url: str,
     binary_path: Path,
-    addr: str,
-    timeout: float = 180.0,
-) -> dict:
-    binary_b64 = base64.b64encode(binary_path.read_bytes()).decode()
-    try:
-        resp = await client.post(
-            f"{base_url}/decompile",
-            json={"binary_b64": binary_b64, "addr": addr},
-            timeout=timeout,
-        )
-        resp.raise_for_status()
-        return resp.json()
-    except Exception as e:
-        return {"name": "?", "code": "", "time_ms": 0, "error": str(e), "decompiler": name}
-
-
-async def decompile_and_score(
-    client: httpx.AsyncClient,
-    fn,
-    variant,
-    function_source,
-    decompilers: dict[str, str],
-    corpus_split: str,
+    targets: List[tuple],  # list of (fn_object, variant_object, function_source)
     sem: asyncio.Semaphore,
-) -> list[FunctionScore]:
-    binary_path = CORPUS_ROOT / corpus_split / variant.binary
-    if not binary_path.exists():
-        return []
+) -> List[FunctionScore]:
+    addresses = [t[1].addr for t in targets]
+    
+    try:
+        binary_b64 = base64.b64encode(binary_path.read_bytes()).decode()
+    except Exception as e:
+        return [
+            FunctionScore(
+                decompiler=dname,
+                function_name=t[0].name,
+                compiler_variant=f"{t[1].compiler} {t[1].opt}",
+                source_similarity=0.0,
+                goto_count=0,
+                nesting_depth=0,
+                time_ms=0,
+                error=f"Failed to read binary: {e}",
+            ) for t in targets
+        ]
 
-    variant_label = f"{variant.compiler} {variant.opt}"
-    addr = variant.addr
-
+    # Post to batch endpoint under semaphore
     async with sem:
-        tasks = {
-            dname: call_decompiler(client, dname, url, binary_path, addr)
-            for dname, url in decompilers.items()
-        }
-        results = await asyncio.gather(*tasks.values())
+        try:
+            resp = await client.post(
+                f"{url}/decompile_batch",
+                json={
+                    "binary_b64": binary_b64,
+                    "addresses": addresses,
+                },
+                timeout=300.0,
+            )
+            if resp.status_code != 200:
+                raise Exception(f"HTTP status {resp.status_code}: {resp.text[:500]}")
+            data = resp.json()
+            batch_results = data.get("results", [])
+        except Exception as e:
+            return [
+                FunctionScore(
+                    decompiler=dname,
+                    function_name=t[0].name,
+                    compiler_variant=f"{t[1].compiler} {t[1].opt}",
+                    source_similarity=0.0,
+                    goto_count=0,
+                    nesting_depth=0,
+                    time_ms=0,
+                    error=f"Batch decompile error: {e}",
+                ) for t in targets
+            ]
 
-    result_map = dict(zip(tasks.keys(), results))
+    # Map batch results back
+    results_by_addr = {item.get("addr"): item for item in batch_results}
     fn_scores = []
 
-    for dname, res in result_map.items():
-        code = res.get("code", "")
-        sim = source_similarity(function_source, code) if function_source else 0.0
-        gotos, depth = structural_score(code)
+    for fn, variant, function_source in targets:
+        variant_label = f"{variant.compiler} {variant.opt}"
+        item = results_by_addr.get(variant.addr)
 
-        if not res.get("error"):
+        if not item:
+            fn_scores.append(FunctionScore(
+                decompiler=dname,
+                function_name=fn.name,
+                compiler_variant=variant_label,
+                source_similarity=0.0,
+                goto_count=0,
+                nesting_depth=0,
+                time_ms=0,
+                error="Address missing from batch result",
+            ))
+            continue
+
+        code = item.get("code", "")
+        error = item.get("error")
+        sim = source_similarity(function_source, code) if function_source and not error else 0.0
+        gotos, depth = structural_score(code) if not error else (0, 0)
+
+        if not error:
             sem_score, sem_err = verify_semantic_correctness(fn.name, code)
         else:
             sem_score, sem_err = 0.0, None
@@ -137,17 +134,15 @@ async def decompile_and_score(
             source_similarity=sim,
             goto_count=gotos,
             nesting_depth=depth,
-            time_ms=res.get("time_ms", 0),
-            error=res.get("error"),
+            time_ms=data.get("time_ms", 0) // len(targets),
+            error=error,
             semantic_score=sem_score,
             semantic_error=sem_err,
         ))
 
-    # Output status as soon as this function-variant finishes
-    typer.echo(f"▶ {fn.name} [{variant_label}]")
-    for s in fn_scores:
-        status = "✓" if not s.error else "✗"
-        typer.echo(f"  {status} {s.decompiler:10s} sim={s.source_similarity:.3f} sem={s.semantic_score:.0f} gotos={s.goto_count} {s.time_ms}ms")
+        # Direct feedback output
+        status = "✓" if not error else "✗"
+        typer.echo(f"  {status} {dname:10s} {fn.name:15s} [{variant_label}] sim={sim:.3f} sem={sem_score:.0f} gotos={gotos}")
 
     return fn_scores
 
@@ -160,25 +155,39 @@ async def run_all(
 ) -> list[FunctionScore]:
     fn_list = functions[:limit] if limit else functions
     
+    # 1. Group decompile requests by (decompiler, binary_path)
+    groups = {}
+    for fn in fn_list:
+        source_path = CORPUS_ROOT / corpus_split / fn.source
+        source_code = source_path.read_text(errors="replace") if source_path.exists() else ""
+        function_source = extract_function_source(source_code, fn.name) or source_code
+
+        for variant in fn.compiler_variants:
+            binary_path = CORPUS_ROOT / corpus_split / variant.binary
+            if not binary_path.exists():
+                continue
+            
+            for dname, url in decompilers.items():
+                key = (dname, url, binary_path)
+                if key not in groups:
+                    groups[key] = []
+                groups[key].append((fn, variant, function_source))
+
+    # Concurrency limit based on CPU count
     concurrency = os.cpu_count() or 4
     sem = asyncio.Semaphore(concurrency)
-    typer.echo(f"Starting benchmark run with concurrency limit of {concurrency} workers.")
+    typer.echo(f"Starting batch benchmark run with concurrency limit of {concurrency} workers.")
 
     all_scores: list[FunctionScore] = []
     
     async with httpx.AsyncClient() as client:
         tasks = []
-        for fn in fn_list:
-            source_path = CORPUS_ROOT / corpus_split / fn.source
-            source_code = source_path.read_text(errors="replace") if source_path.exists() else ""
-            function_source = extract_function_source(source_code, fn.name) or source_code
-
-            for variant in fn.compiler_variants:
-                tasks.append(
-                    decompile_and_score(
-                        client, fn, variant, function_source, decompilers, corpus_split, sem
-                    )
+        for (dname, url, binary_path), targets in groups.items():
+            tasks.append(
+                decompile_batch_and_score(
+                    client, dname, url, binary_path, targets, sem
                 )
+            )
 
         results = await asyncio.gather(*tasks)
         for r in results:
@@ -188,49 +197,50 @@ async def run_all(
 
 
 @app.command()
-def main(
-    corpus: str = typer.Option("dev", help="Corpus split to use: dev or holdout"),
-    use_holdout: bool = typer.Option(False, "--use-holdout", help="Evaluate holdout set (release only)"),
-    limit: Optional[int] = typer.Option(None, help="Limit number of functions"),
-    decompilers: Optional[str] = typer.Option(None, help="Comma-separated list of decompilers"),
-    output: Optional[Path] = typer.Option(None, help="Output JSON path"),
+def run(
+    corpus: str = typer.Option("dev", help="Corpus split name (dev, full)"),
+    limit: Optional[int] = typer.Option(None, help="Limit number of functions analyzed"),
+    decompilers: Optional[str] = typer.Option(None, help="Comma-separated decompiler list"),
 ):
-    if use_holdout:
-        corpus = "holdout"
-        typer.echo("⚠️  Running holdout evaluation — results are final", err=True)
-
-    requested = {name.strip() for name in decompilers.split(",") if name.strip()} if decompilers else None
-    unknown = sorted((requested or set()) - set(DECOMPILERS))
-    if unknown:
-        raise typer.BadParameter(f"Unknown decompiler(s): {', '.join(unknown)}")
-
-    selected = configured_decompilers(requested)
+    """Run decompiler benchmark and generate report."""
+    start_time = time.monotonic()
+    
+    # Select decompilers
+    all_dec = configured_decompilers()
     if decompilers:
-        typer.echo(f"Using decompilers: {list(selected)}")
-    if not selected:
-        raise typer.BadParameter("No decompilers selected. Check --decompilers or *_ENDPOINT=skip.")
+        selected = [d.strip() for d in decompilers.split(",")]
+        dec_map = {d: all_dec[d] for d in selected if d in all_dec}
+    else:
+        dec_map = all_dec
 
+    typer.echo(f"Using decompilers: {list(dec_map.keys())}")
+
+    # Load corpus using load_all
+    c = Corpus.load_all(corpus)
     typer.echo(f"Loading corpus: {corpus}")
-    c = Corpus.load_all(split=corpus)
     typer.echo(f"  {len(c.functions)} functions loaded")
 
-    start = time.monotonic()
-    scores = asyncio.run(run_all(c.functions, selected, corpus, limit))
-    elapsed = time.monotonic() - start
-
-    # Save raw JSON
-    ts = time.strftime("%Y%m%d_%H%M%S")
-    out_path = output or (RESULTS_DIR / f"{ts}.json")
-    raw = [asdict(s) for s in scores]
-    out_path.write_text(json.dumps(raw, indent=2))
-    typer.echo(f"\n✅ Results saved to {out_path} ({elapsed:.1f}s)")
-
-    # Save latest.json symlink
-    (RESULTS_DIR / "latest.json").unlink(missing_ok=True)
-    (RESULTS_DIR / "latest.json").write_text(json.dumps(raw, indent=2))
-
-    # Generate report
-    generate_report(scores, corpus_split=corpus)
+    # Run event loop
+    scores = asyncio.run(run_all(c.functions, dec_map, corpus, limit))
+    
+    elapsed = time.monotonic() - start_time
+    
+    # Save JSON and generate report
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    results_dir = Path(__file__).parent.parent / "results"
+    results_dir.mkdir(exist_ok=True)
+    
+    # Save definitive run results
+    json_path = results_dir / f"{timestamp}.json"
+    latest_json = results_dir / "latest.json"
+    
+    serialized = [asdict(s) for s in scores]
+    for path in [json_path, latest_json]:
+        path.write_text(json.dumps(serialized, indent=2), encoding="utf-8")
+        
+    generate_report(scores)
+    
+    typer.echo(f"\n✅ Results saved to {json_path} ({elapsed:.1f}s)")
     typer.echo("📊 Report generated: results/latest.md, docs/index.html")
 
 
