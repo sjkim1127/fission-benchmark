@@ -3,7 +3,7 @@
 name: Benchmark & Deploy
 
 env:
-  FISSION_VERSION: v0.1.1
+  FISSION_VERSION: ${{ github.event.client_payload.fission_version || github.event.inputs.fission_version || 'latest' }}
   FISSION_ASSETS_TAG: assets-v1
   CORPUS_TARGET: windows-x86_64
   CORPUS_SPLIT: ${{ github.event.inputs.corpus || 'dev' }}
@@ -15,6 +15,10 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
+      fission_version:
+        description: "Fission release tag to benchmark"
+        type: string
+        default: "latest"
       corpus:
         description: "Corpus split to benchmark"
         type: choice
@@ -28,6 +32,8 @@ on:
         description: "Commit results and deploy GitHub Pages"
         type: boolean
         default: true
+  repository_dispatch:
+    types: [fission-release]
   schedule:
     - cron: '0 0 * * 0'  # Every Sunday midnight UTC
 
@@ -105,6 +111,7 @@ jobs:
           {
             echo "## Fission Benchmark"
             echo
+            echo "- Fission version: \`$FISSION_VERSION\`"
             echo "- Corpus: \`$CORPUS_SPLIT\`"
             echo "- Decompilers: \`$BENCHMARK_DECOMPILERS\`"
             echo

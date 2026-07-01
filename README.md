@@ -65,7 +65,7 @@ docker compose build
 python scripts/build_corpus.py --split dev
 
 # On macOS/Apple Silicon, build Windows x86-64 PE corpus binaries instead.
-# Fission v0.1.1 benchmark runs use this cross-built corpus path.
+# Benchmark runs use the latest Fission release and this cross-built corpus path by default.
 docker compose --profile tools run --rm corpus-builder
 
 # Start containers
@@ -146,6 +146,22 @@ fission-benchmark/
         ├── benchmark.yml     Weekly run + Pages deploy
         └── build-check.yml   Docker build validation
 ```
+
+## Fission Release Tracking
+
+CI uses `FISSION_VERSION=latest` by default, so scheduled and manual benchmark
+runs pull the latest published Fission release. The benchmark workflow also
+accepts a cross-repository dispatch event so the Fission release pipeline can
+trigger a run immediately after publishing:
+
+```bash
+gh api repos/sjkim1127/fission-benchmark/dispatches \
+  -f event_type=fission-release \
+  -f client_payload='{"fission_version":"v0.1.2"}'
+```
+
+Manual workflow runs can override `fission_version` with a specific tag for
+reproducibility.
 
 ## API Contract
 

@@ -22,7 +22,7 @@ services:
     build:
       context: ./docker/fission
       args:
-        FISSION_VERSION: ${FISSION_VERSION:-v0.1.1}
+        FISSION_VERSION: ${FISSION_VERSION:-latest}
         FISSION_ASSETS_TAG: ${FISSION_ASSETS_TAG:-assets-v1}
     platform: linux/amd64
     ports: ["${FISSION_HOST_PORT:-8000}:8000"]

@@ -2,7 +2,7 @@
 name: Docker Build Check
 
 env:
-  FISSION_VERSION: v0.1.1
+  FISSION_VERSION: latest
   FISSION_ASSETS_TAG: assets-v1
   PYTHONPATH: .
 
