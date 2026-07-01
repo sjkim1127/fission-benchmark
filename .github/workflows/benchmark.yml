@@ -10,6 +10,7 @@ env:
   CORPUS_TARGET: windows-x86_64
   CORPUS_SPLIT: ${{ github.event.inputs.corpus || 'dev' }}
   BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,boomerang,radare2,angr,snowman,revng,reko' }}
+  PARITY_LIMIT: ${{ github.event.inputs.parity_limit || '10' }}
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/fission-benchmark
   PYTHONPATH: .
@@ -32,6 +33,10 @@ on:
         description: "Comma-separated decompilers to run"
         type: string
         default: "fission,ghidra,boomerang,radare2,angr,snowman,revng,reko"
+      parity_limit:
+        description: "Parity benchmark subject limit; use 0 for full parity"
+        type: string
+        default: "10"
       publish_results:
         description: "Commit results and deploy GitHub Pages"
         type: boolean
@@ -161,7 +166,12 @@ jobs:
             echo "⚠️ Overfitting detected — check overfitting_report.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run parity benchmarks
-        run: python runner/run_parity.py --corpus "$CORPUS_SPLIT"
+        run: |
+          if [ -n "$PARITY_LIMIT" ] && [ "$PARITY_LIMIT" != "0" ]; then
+            python runner/run_parity.py --corpus "$CORPUS_SPLIT" --limit "$PARITY_LIMIT"
+          else
+            python runner/run_parity.py --corpus "$CORPUS_SPLIT"
+          fi
 
       - name: Write benchmark summary
         if: always()
