@@ -2,7 +2,7 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl python3 python3-pip python3-venv wget \
+    curl python3 python3-pip python3-venv wget xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Install RetDec from GitHub Releases

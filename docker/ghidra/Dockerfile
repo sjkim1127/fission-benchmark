@@ -7,9 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /opt
 
 # Download Ghidra 12.x
-ARG GHIDRA_VERSION=12.0
+ARG GHIDRA_VERSION=12.0.3
+ARG GHIDRA_ZIP=ghidra_12.0.3_PUBLIC_20260210.zip
 ARG GHIDRA_SHA=PLACEHOLDER
-RUN wget -q "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${GHIDRA_VERSION}_build/ghidra_${GHIDRA_VERSION}_PUBLIC.zip" \
+RUN wget -q "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${GHIDRA_VERSION}_build/${GHIDRA_ZIP}" \
     -O ghidra.zip \
     && unzip -q ghidra.zip \
     && rm ghidra.zip \
@@ -17,8 +18,12 @@ RUN wget -q "https://github.com/NationalSecurityAgency/ghidra/releases/download/
 
 WORKDIR /app
 
+ENV VIRTUAL_ENV=/opt/ghidra-server-venv
+RUN python3 -m venv "${VIRTUAL_ENV}"
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
+
 COPY requirements.txt .
-RUN python3 -m pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY server.py .
 COPY DecompileFunction.java /opt/ghidra_scripts/

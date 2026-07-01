@@ -65,7 +65,7 @@ docker compose build
 python scripts/build_corpus.py --split dev
 
 # On macOS/Apple Silicon, build Windows x86-64 PE corpus binaries instead.
-# Fission v0.1.0 rejects local Mach-O and Linux ELF inputs in this benchmark path.
+# Fission v0.1.1 benchmark runs use this cross-built corpus path.
 docker compose --profile tools run --rm corpus-builder
 
 # Start containers

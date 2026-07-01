@@ -19,7 +19,11 @@ services:
     profiles: ["tools"]
 
   fission:
-    build: ./docker/fission
+    build:
+      context: ./docker/fission
+      args:
+        FISSION_VERSION: ${FISSION_VERSION:-v0.1.1}
+        FISSION_ASSETS_TAG: ${FISSION_ASSETS_TAG:-assets-v1}
     platform: linux/amd64
     ports: ["${FISSION_HOST_PORT:-8000}:8000"]
     volumes:
