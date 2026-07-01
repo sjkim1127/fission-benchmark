@@ -146,11 +146,11 @@ jobs:
 
       - name: Run dev benchmark
         run: |
-          python runner/runner.py run --corpus dev --decompilers "$BENCHMARK_DECOMPILERS" --output results/dev_latest.json
+          python runner/runner.py --corpus dev --decompilers "$BENCHMARK_DECOMPILERS" --output results/dev_latest.json
 
       - name: Run holdout benchmark
         run: |
-          python runner/runner.py run --corpus holdout --decompilers "$BENCHMARK_DECOMPILERS" --output results/holdout_latest.json
+          python runner/runner.py --corpus holdout --decompilers "$BENCHMARK_DECOMPILERS" --output results/holdout_latest.json
 
       - name: Run overfitting check
         run: |
