@@ -14,12 +14,13 @@ on:
       - 'docker/angr/**'
       - 'docker/snowman/**'
       - 'docker/revng/**'
+      - 'docker/reko/**'
   workflow_dispatch:
     inputs:
       services:
         description: "Comma-separated services to rebuild (e.g. fission,ghidra)"
         type: string
-        default: "fission,ghidra,boomerang,radare2,angr,snowman,revng"
+        default: "fission,ghidra,boomerang,radare2,angr,snowman,revng,reko"
 
 env:
   REGISTRY: ghcr.io

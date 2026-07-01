@@ -9,7 +9,7 @@ env:
   FISSION_ASSETS_TAG: assets-v1
   CORPUS_TARGET: windows-x86_64
   CORPUS_SPLIT: ${{ github.event.inputs.corpus || 'dev' }}
-  BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,boomerang,radare2,angr,snowman,revng' }}
+  BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,boomerang,radare2,angr,snowman,revng,reko' }}
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/fission-benchmark
   PYTHONPATH: .
@@ -31,7 +31,7 @@ on:
       decompilers:
         description: "Comma-separated decompilers to run"
         type: string
-        default: "fission,ghidra,boomerang,radare2"
+        default: "fission,ghidra,boomerang,radare2,reko"
       publish_results:
         description: "Commit results and deploy GitHub Pages"
         type: boolean
@@ -99,7 +99,7 @@ jobs:
 
       - name: Pull or build decompiler images
         run: |
-          SERVICES="fission ghidra boomerang radare2 angr snowman revng"
+          SERVICES="fission ghidra boomerang radare2 angr snowman revng reko"
           for svc in $SERVICES; do
             REMOTE="${IMAGE_PREFIX}-${svc}:latest"
             echo "==> Trying to pull ${REMOTE}..."
@@ -125,8 +125,8 @@ jobs:
 
       - name: Start decompiler containers
         run: |
-          docker compose up -d fission ghidra boomerang radare2 angr snowman revng
-          for port in 8000 8001 8002 8003 8004 8005 8006; do
+          docker compose up -d fission ghidra boomerang radare2 angr snowman revng reko
+          for port in 8000 8001 8002 8003 8004 8005 8006 8008; do
             ready=0
             for i in $(seq 1 30); do
               if curl -sf http://localhost:$port/health; then

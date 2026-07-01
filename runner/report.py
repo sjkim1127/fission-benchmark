@@ -22,6 +22,7 @@ DECOMPILER_COLORS = {
     "angr":     "#06b6d4",
     "snowman":  "#8b5cf6",
     "revng":    "#ec4899",
+    "reko":     "#f97316",
 }
 
 

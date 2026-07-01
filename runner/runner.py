@@ -53,7 +53,7 @@ def configured_decompilers() -> dict[str, str]:
         "angr": "http://localhost:8004",
         "snowman": "http://localhost:8005",
         "revng": "http://localhost:8006",
-        "reko": "http://localhost:8007",
+        "reko": "http://localhost:8008",
     }
     return defaults
 
