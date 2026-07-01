@@ -13,6 +13,8 @@ RUN apt-get update \
         gcc-mingw-w64-i686 \
         libc6-dev \
         python3 \
+        clang \
+        llvm \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace

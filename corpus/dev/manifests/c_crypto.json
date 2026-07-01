@@ -1,0 +1,167 @@
+{
+  "_comment": "Crypto algorithm corpus",
+  "functions": [
+    {
+      "name": "rc4_init",
+      "source": "source/crypto.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/crypto_gcc_O0.exe",
+          "addr": "0x140001530"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/crypto_gcc_O2.exe",
+          "addr": "0x140001530"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/crypto_gcc-m32_O0.exe",
+          "addr": "0x4015b0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/crypto_gcc-m32_O2.exe",
+          "addr": "0x4015b0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/crypto_clang_O0.exe",
+          "addr": "0x140001510"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/crypto_clang_O2.exe",
+          "addr": "0x140001510"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O0",
+          "binary": "binaries/crypto_clang-m32_O0.exe",
+          "addr": "0x4014e0"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O2",
+          "binary": "binaries/crypto_clang-m32_O2.exe",
+          "addr": "0x4014e0"
+        }
+      ]
+    },
+    {
+      "name": "rc4_crypt",
+      "source": "source/crypto.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/crypto_gcc_O0.exe",
+          "addr": "0x140001624"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/crypto_gcc_O2.exe",
+          "addr": "0x140001670"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/crypto_gcc-m32_O0.exe",
+          "addr": "0x40166a"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/crypto_gcc-m32_O2.exe",
+          "addr": "0x401620"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/crypto_clang_O0.exe",
+          "addr": "0x1400015f0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/crypto_clang_O2.exe",
+          "addr": "0x140001640"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O0",
+          "binary": "binaries/crypto_clang-m32_O0.exe",
+          "addr": "0x4015b0"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O2",
+          "binary": "binaries/crypto_clang-m32_O2.exe",
+          "addr": "0x401590"
+        }
+      ]
+    },
+    {
+      "name": "crc32",
+      "source": "source/crypto.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/crypto_gcc_O0.exe",
+          "addr": "0x140001745"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/crypto_gcc_O2.exe",
+          "addr": "0x1400016e0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/crypto_gcc-m32_O0.exe",
+          "addr": "0x40174c"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/crypto_gcc-m32_O2.exe",
+          "addr": "0x401690"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/crypto_clang_O0.exe",
+          "addr": "0x1400016f0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/crypto_clang_O2.exe",
+          "addr": "0x1400016e0"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O0",
+          "binary": "binaries/crypto_clang-m32_O0.exe",
+          "addr": "0x401690"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O2",
+          "binary": "binaries/crypto_clang-m32_O2.exe",
+          "addr": "0x401620"
+        }
+      ]
+    }
+  ]
+}

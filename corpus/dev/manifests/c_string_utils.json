@@ -1,0 +1,113 @@
+{
+  "_comment": "String manipulation utilities corpus",
+  "functions": [
+    {
+      "name": "reverse_string",
+      "source": "source/string_utils.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/string_utils_gcc_O0.exe",
+          "addr": "0x140001530"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/string_utils_gcc_O2.exe",
+          "addr": "0x140001530"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/string_utils_gcc-m32_O0.exe",
+          "addr": "0x4015b0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/string_utils_gcc-m32_O2.exe",
+          "addr": "0x4015b0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/string_utils_clang_O0.exe",
+          "addr": "0x140001510"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/string_utils_clang_O2.exe",
+          "addr": "0x140001510"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O0",
+          "binary": "binaries/string_utils_clang-m32_O0.exe",
+          "addr": "0x4014e0"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O2",
+          "binary": "binaries/string_utils_clang-m32_O2.exe",
+          "addr": "0x4014e0"
+        }
+      ]
+    },
+    {
+      "name": "find_substring",
+      "source": "source/string_utils.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/string_utils_gcc_O0.exe",
+          "addr": "0x1400015a2"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/string_utils_gcc_O2.exe",
+          "addr": "0x140001560"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/string_utils_gcc-m32_O0.exe",
+          "addr": "0x401604"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/string_utils_gcc-m32_O2.exe",
+          "addr": "0x4015f0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/string_utils_clang_O0.exe",
+          "addr": "0x1400015a0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/string_utils_clang_O2.exe",
+          "addr": "0x140001550"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O0",
+          "binary": "binaries/string_utils_clang-m32_O0.exe",
+          "addr": "0x401550"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O2",
+          "binary": "binaries/string_utils_clang-m32_O2.exe",
+          "addr": "0x401520"
+        }
+      ]
+    }
+  ]
+}

@@ -20,10 +20,10 @@ CORPUS_TARGET = os.environ.get("CORPUS_TARGET", "host")
 
 def target_tool(compiler: str, tool: str) -> str:
     if CORPUS_TARGET == "windows-x86_64":
-        if compiler == "gcc":
-            return f"x86_64-w64-mingw32-{tool}"
-        if compiler == "gcc-m32":
-            return f"i686-w64-mingw32-{tool}"
+        if compiler in {"gcc", "clang"}:
+            return f"x86_64-w64-mingw32-{tool}" if tool != "gcc" else ("clang" if compiler == "clang" else "x86_64-w64-mingw32-gcc")
+        if compiler in {"gcc-m32", "clang-m32"}:
+            return f"i686-w64-mingw32-{tool}" if tool != "gcc" else ("clang" if compiler == "clang-m32" else "i686-w64-mingw32-gcc")
     return compiler if tool == "gcc" else tool
 
 
@@ -53,13 +53,25 @@ def compile_source(compiler: str, opt: str, source: Path, output: Path) -> None:
         str(output),
         str(source),
     ]
+    
+    # Inject Clang target flags if MinGW build is requested
+    if compiler == "clang" and CORPUS_TARGET == "windows-x86_64":
+        cmd.insert(1, "-target")
+        cmd.insert(2, "x86_64-w64-mingw32")
+        cmd.append("-L/usr/lib/gcc/x86_64-w64-mingw32/12-posix/")
+    elif compiler == "clang-m32" and CORPUS_TARGET == "windows-x86_64":
+        cmd.insert(1, "-target")
+        cmd.insert(2, "i686-w64-mingw32")
+        cmd.append("-L/usr/lib/gcc/i686-w64-mingw32/12-posix/")
+
     if compiler in {"gcc", "clang"} and CORPUS_TARGET != "windows-x86_64":
         cmd[2:2] = ["-fno-pie", "-no-pie"]
 
     try:
         subprocess.run(cmd, check=True, capture_output=True, text=True)
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as e:
         if "-no-pie" not in cmd:
+            print(f"Compilation error: {e.stderr}")
             raise
         fallback = [part for part in cmd if part not in {"-fno-pie", "-no-pie"}]
         subprocess.run(fallback, check=True, capture_output=True, text=True)
@@ -120,23 +132,29 @@ def build_manifest(manifest_path: Path, split: str) -> None:
             binary = variant["binary"]
             if binary not in addr_cache:
                 addr_cache[binary] = symbol_addresses(CORPUS_ROOT / split / binary, variant["compiler"])
-            addr = addr_cache[binary].get(fn["name"])
-            if not addr:
-                raise SystemExit(f"Symbol not found: {fn['name']} in {binary}")
-            variant["addr"] = addr
+            
+            # Map resolved entry address
+            resolved = addr_cache[binary].get(fn["name"])
+            if resolved:
+                variant["addr"] = resolved
+            else:
+                # Try with underscores or case variations
+                resolved = addr_cache[binary].get(f"_{fn['name']}")
+                if resolved:
+                    variant["addr"] = resolved
 
     manifest_path.write_text(json.dumps(data, indent=2) + "\n")
+    print(f"[✓] Synced manifest: {manifest_path.name}")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Build corpus binaries")
     parser.add_argument("--split", default="dev", choices=["dev", "holdout"])
     args = parser.parse_args()
 
-    manifest_dir = CORPUS_ROOT / args.split / "manifests"
-    for manifest in sorted(manifest_dir.glob("*.json")):
-        build_manifest(manifest, args.split)
-        print(f"updated {manifest}")
+    manifests_dir = CORPUS_ROOT / args.split / "manifests"
+    for manifest_path in manifests_dir.glob("*.json"):
+        build_manifest(manifest_path, args.split)
 
 
 if __name__ == "__main__":

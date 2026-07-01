@@ -1,0 +1,113 @@
+{
+  "_comment": "Memory layouts, bitfields and matrix math corpus",
+  "functions": [
+    {
+      "name": "manipulate_bitfields",
+      "source": "source/memory_layouts.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/memory_layouts_gcc_O0.exe",
+          "addr": "0x140001530"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/memory_layouts_gcc_O2.exe",
+          "addr": "0x140001530"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/memory_layouts_gcc-m32_O0.exe",
+          "addr": "0x4015b0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/memory_layouts_gcc-m32_O2.exe",
+          "addr": "0x4015b0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/memory_layouts_clang_O0.exe",
+          "addr": "0x140001510"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/memory_layouts_clang_O2.exe",
+          "addr": "0x140001510"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O0",
+          "binary": "binaries/memory_layouts_clang-m32_O0.exe",
+          "addr": "0x4014e0"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O2",
+          "binary": "binaries/memory_layouts_clang-m32_O2.exe",
+          "addr": "0x4014e0"
+        }
+      ]
+    },
+    {
+      "name": "matrix_multiply",
+      "source": "source/memory_layouts.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/memory_layouts_gcc_O0.exe",
+          "addr": "0x1400015b8"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/memory_layouts_gcc_O2.exe",
+          "addr": "0x140001570"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/memory_layouts_gcc-m32_O0.exe",
+          "addr": "0x40162a"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/memory_layouts_gcc-m32_O2.exe",
+          "addr": "0x4015f0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/memory_layouts_clang_O0.exe",
+          "addr": "0x1400015b0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/memory_layouts_clang_O2.exe",
+          "addr": "0x140001550"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O0",
+          "binary": "binaries/memory_layouts_clang-m32_O0.exe",
+          "addr": "0x401560"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O2",
+          "binary": "binaries/memory_layouts_clang-m32_O2.exe",
+          "addr": "0x401520"
+        }
+      ]
+    }
+  ]
+}
