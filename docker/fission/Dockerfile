@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Download fission-cli and runtime specs from GitHub Releases.
-ARG FISSION_VERSION=v0.1.0
+ARG FISSION_VERSION=v0.2.0
 ARG FISSION_ASSETS_TAG=assets-v1
 RUN set -eux; \
     if [ "$FISSION_VERSION" = "latest" ]; then \

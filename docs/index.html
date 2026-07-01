@@ -2,22 +2,519 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fission Benchmark Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
-  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-serif;
-         display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-  .center { text-align: center; }
-  h1 { font-size: 2rem; margin-bottom: 1rem; }
-  p { color: #8b949e; }
-  a { color: #6366f1; }
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #6366f1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 2rem; }
+  h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
+  .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 2rem; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; }
+  .card h2 { font-size: 1rem; color: var(--muted); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  canvas { max-height: 280px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 1rem; }
+  th { color: var(--muted); text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: rgba(255,255,255,0.03); }
+  .badge { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .gap { background: #7f1d1d; color: #fca5a5; }
+  .hard { background: #1c1917; color: #a8a29e; }
+  .ok { background: #14532d; color: #86efac; }
+  @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
-<div class="center">
-  <h1>🔬 Fission Benchmark</h1>
-  <p>No benchmark results yet.</p>
-  <p>Run <code>python runner/runner.py --corpus dev</code> to generate results.</p>
-  <p><a href="https://github.com/sjkim1127/fission-benchmark">GitHub →</a></p>
+<h1>🔬 Fission Benchmark</h1>
+<p class="meta">Generated: 2026-07-01 04:50 UTC &nbsp;·&nbsp; Corpus: <strong>dev</strong> &nbsp;·&nbsp; Functions: <strong>21</strong></p>
+
+<div class="grid">
+  <div class="card">
+    <h2>Average Source Similarity</h2>
+    <canvas id="barChart"></canvas>
+  </div>
+  <div class="card">
+    <h2>Per-Function Similarity</h2>
+    <canvas id="scatterChart"></canvas>
+  </div>
 </div>
+
+<div class="card">
+  <h2>Detailed Results</h2>
+  <table id="resultsTable">
+    <thead><tr><th>Function</th><th>Variant</th><th>Decompiler</th><th>Similarity</th><th>Rank</th><th>Gotos</th><th>Time</th><th>Status</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+const SCORES = [
+  {
+    "decompiler": "fission",
+    "function_name": "count_bits",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.1178,
+    "goto_count": 1,
+    "consensus_rank": 1,
+    "time_ms": 1407,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "count_bits",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.1333,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1258,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "clamp",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.179,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1163,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "clamp",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.5354,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1082,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "signum",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.0571,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1143,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "signum",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.4895,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1047,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "checksum",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.1028,
+    "goto_count": 2,
+    "consensus_rank": 1,
+    "time_ms": 1599,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "checksum",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.1695,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1224,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "classify_range",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.1037,
+    "goto_count": 8,
+    "consensus_rank": 1,
+    "time_ms": 1517,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "classify_range",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.5126,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1098,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "saturating_add",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.0615,
+    "goto_count": 2,
+    "consensus_rank": 1,
+    "time_ms": 1528,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "saturating_add",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.2901,
+    "goto_count": 1,
+    "consensus_rank": 1,
+    "time_ms": 1197,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "sum_array",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.1051,
+    "goto_count": 1,
+    "consensus_rank": 1,
+    "time_ms": 1336,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "sum_array",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.3569,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1209,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "reverse_in_place",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.1106,
+    "goto_count": 2,
+    "consensus_rank": 1,
+    "time_ms": 2019,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "reverse_in_place",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.1522,
+    "goto_count": 2,
+    "consensus_rank": 1,
+    "time_ms": 1469,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "find_pair_value",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.095,
+    "goto_count": 3,
+    "consensus_rank": 1,
+    "time_ms": 1524,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "find_pair_value",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.165,
+    "goto_count": 3,
+    "consensus_rank": 1,
+    "time_ms": 1203,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "accumulate_pairs",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.1277,
+    "goto_count": 2,
+    "consensus_rank": 1,
+    "time_ms": 1768,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "accumulate_pairs",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.1829,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1446,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "pointer_stride_sum",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.1352,
+    "goto_count": 1,
+    "consensus_rank": 1,
+    "time_ms": 1283,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "pointer_stride_sum",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.3185,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1287,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "fibonacci",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.0439,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1631,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "fibonacci",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.1723,
+    "goto_count": 1,
+    "consensus_rank": 1,
+    "time_ms": 1753,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "fibonacci_iter",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.1632,
+    "goto_count": 2,
+    "consensus_rank": 1,
+    "time_ms": 1463,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "fibonacci_iter",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.2453,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1318,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "max",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.3646,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1102,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "max",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.5785,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1106,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "bubble_sort",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.0076,
+    "goto_count": 4,
+    "consensus_rank": 1,
+    "time_ms": 2432,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "bubble_sort",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.1052,
+    "goto_count": 4,
+    "consensus_rank": 1,
+    "time_ms": 2410,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "linear_search",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.1243,
+    "goto_count": 3,
+    "consensus_rank": 1,
+    "time_ms": 1499,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "linear_search",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.1544,
+    "goto_count": 3,
+    "consensus_rank": 1,
+    "time_ms": 1197,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "binary_search",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.0511,
+    "goto_count": 6,
+    "consensus_rank": 1,
+    "time_ms": 2919,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "binary_search",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.1379,
+    "goto_count": 3,
+    "consensus_rank": 1,
+    "time_ms": 1549,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "factorial",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.0345,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1478,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "factorial",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.244,
+    "goto_count": 1,
+    "consensus_rank": 1,
+    "time_ms": 1259,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "gcd",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.0814,
+    "goto_count": 1,
+    "consensus_rank": 1,
+    "time_ms": 1418,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "gcd",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.1074,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1495,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "power",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.0761,
+    "goto_count": 1,
+    "consensus_rank": 1,
+    "time_ms": 1558,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "power",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.0808,
+    "goto_count": 2,
+    "consensus_rank": 1,
+    "time_ms": 1249,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "process_code",
+    "compiler_variant": "gcc -O0",
+    "source_similarity": 0.0487,
+    "goto_count": 4,
+    "consensus_rank": 1,
+    "time_ms": 1502,
+    "error": null
+  },
+  {
+    "decompiler": "fission",
+    "function_name": "process_code",
+    "compiler_variant": "gcc -O2",
+    "source_similarity": 0.3306,
+    "goto_count": 0,
+    "consensus_rank": 1,
+    "time_ms": 1243,
+    "error": null
+  }
+];
+const FN_NAMES = ["accumulate_pairs", "binary_search", "bubble_sort", "checksum", "clamp", "classify_range", "count_bits", "factorial", "fibonacci", "fibonacci_iter", "find_pair_value", "gcd", "linear_search", "max", "pointer_stride_sum", "power", "process_code", "reverse_in_place", "saturating_add", "signum", "sum_array"];
+
+// Bar chart
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: ["fission"],
+    datasets: [{ label: 'Avg Similarity', data: [0.1822],
+      backgroundColor: ["#6366f1"], borderRadius: 4 }]
+  },
+  options: { plugins: { legend: { display: false } },
+    scales: { y: { min: 0, max: 1, grid: { color: '#30363d' }, ticks: { color: '#8b949e' } },
+               x: { grid: { display: false }, ticks: { color: '#8b949e' } } } }
+});
+
+// Scatter
+new Chart(document.getElementById('scatterChart'), {
+  type: 'scatter',
+  data: { datasets: [{"label": "fission", "data": [{"x": 0, "y": 0.1553}, {"x": 1, "y": 0.0945}, {"x": 2, "y": 0.0564}, {"x": 3, "y": 0.1361}, {"x": 4, "y": 0.3572}, {"x": 5, "y": 0.3081}, {"x": 6, "y": 0.1255}, {"x": 7, "y": 0.1392}, {"x": 8, "y": 0.1081}, {"x": 9, "y": 0.2042}, {"x": 10, "y": 0.13}, {"x": 11, "y": 0.0944}, {"x": 12, "y": 0.1394}, {"x": 13, "y": 0.4716}, {"x": 14, "y": 0.2268}, {"x": 15, "y": 0.0784}, {"x": 16, "y": 0.1897}, {"x": 17, "y": 0.1314}, {"x": 18, "y": 0.1758}, {"x": 19, "y": 0.2733}, {"x": 20, "y": 0.231}], "backgroundColor": "#6366f1"}] },
+  options: {
+    scales: {
+      x: { ticks: { callback: v => FN_NAMES[v] || v, color: '#8b949e' }, grid: { color: '#30363d' } },
+      y: { min: 0, max: 1, grid: { color: '#30363d' }, ticks: { color: '#8b949e' } }
+    }
+  }
+});
+
+// Table
+const tbody = document.querySelector('#resultsTable tbody');
+SCORES.forEach(s => {
+  const tr = document.createElement('tr');
+  const rankLabel = s.consensus_rank ? `#${s.consensus_rank}` : '—';
+  const statusClass = s.error ? 'gap' : (s.source_similarity > 0.5 ? 'ok' : '');
+  const statusText = s.error ? '❌' : '✓';
+  tr.innerHTML = `<td>${s.function_name}</td><td>${s.compiler_variant}</td>
+    <td>${s.decompiler}</td><td>${s.source_similarity.toFixed(3)}</td>
+    <td>${rankLabel}</td><td>${s.goto_count}</td><td>${s.time_ms}ms</td>
+    <td><span class="badge ${statusClass}">${statusText}</span></td>`;
+  tbody.appendChild(tr);
+});
+</script>
 </body>
 </html>
