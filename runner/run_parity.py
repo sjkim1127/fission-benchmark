@@ -20,7 +20,7 @@ from benchmark.common.schema import BenchmarkResult, BenchmarkSubject
 
 # Port mapping of decompiler containers
 PORT_MAPPING = {
-    "fission": 8007,
+    "fission": 8000,
     "reko": 8008,
     "ghidra": 8001,
     "boomerang": 8002,
