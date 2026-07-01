@@ -38,6 +38,7 @@ class FunctionScore:
     composite_score: float = 0.0        # primary ranking metric (computed after all scores)
     consensus_rank: int | None = None   # set after all decompilers run
     uses_intrinsics: bool = False       # True if decompiled code uses __carry/__scarry etc.
+    decompiled_code: str = ""           # raw decompiled output (truncated for dashboard)
 
 
 # ── Composite Score ───────────────────────────────────────────────────────────

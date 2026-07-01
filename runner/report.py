@@ -196,6 +196,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
         "composite_score": getattr(s, "composite_score", 0.0),
         "structural_penalty": getattr(s, "structural_penalty", 0.0),
         "uses_intrinsics": getattr(s, "uses_intrinsics", False),
+        "decompiled_code": getattr(s, "decompiled_code", "") or "",
         "goto_count": s.goto_count,
         "nesting_depth": s.nesting_depth,
         "consensus_rank": s.consensus_rank,
@@ -563,6 +564,28 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
   .rank-bronze { background: rgba(180, 83, 9, 0.2); color: #f97316; border: 1px solid rgba(180, 83, 9, 0.4); }
   .rank-other { color: var(--muted); }
 
+  /* ── Export buttons ── */
+  .export-btn { background: #1f2937; border: 1px solid #374151; color: #d1d5db; padding: 0.4rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: all 0.15s; white-space: nowrap; }
+  .export-btn:hover { background: #374151; border-color: #6366f1; color: #fff; }
+  .export-btn.copied { background: #065f46; border-color: #10b981; color: #6ee7b7; }
+  .code-btn { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 3px 10px; border-radius: 5px; cursor: pointer; font-size: 0.78rem; transition: all 0.15s; }
+  .code-btn:hover { background: #334155; color: #e2e8f0; border-color: #6366f1; }
+  /* ── Code Viewer Modal ── */
+  #codeModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; justify-content:center; align-items:center; }
+  #codeModal.open { display:flex; }
+  .code-modal-inner { background:#0f172a; border:1px solid #334155; border-radius:14px; width:90%; max-width:1000px; max-height:88vh; display:flex; flex-direction:column; box-shadow:0 25px 50px rgba(0,0,0,0.7); }
+  .code-modal-header { padding:1rem 1.5rem; border-bottom:1px solid #1e293b; display:flex; justify-content:space-between; align-items:center; background:#1e293b; border-radius:14px 14px 0 0; }
+  .code-modal-header h3 { font-size:0.95rem; font-weight:600; color:#e2e8f0; margin:0; }
+  .code-modal-body { flex:1; overflow:auto; }
+  .code-modal-body pre { margin:0; padding:1.5rem; font-family:'JetBrains Mono','Fira Code','Cascadia Code',monospace; font-size:0.82rem; line-height:1.6; color:#e2e8f0; background:#090d16; white-space:pre; overflow-x:auto; }
+  .code-modal-footer { padding:0.75rem 1.5rem; border-top:1px solid #1e293b; display:flex; gap:0.75rem; align-items:center; justify-content:space-between; background:#0f172a; border-radius:0 0 14px 14px; }
+  /* ── Syntax highlighting ── */
+  .code-keyword { color:#c792ea; font-weight:600; }
+  .code-type { color:#82aaff; }
+  .code-number { color:#f78c6c; }
+  .code-comment { color:#637777; font-style:italic; }
+  .code-string { color:#c3e88d; }
+
   .pagination-container {
     display: flex;
     justify-content: space-between;
@@ -661,6 +684,12 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
       <option value="hard">Objectively Hard</option>
       <option value="gotos">Fission with Gotos</option>
     </select>
+  <div class="export-buttons" style="display:flex;gap:0.5rem;align-items:center;flex-shrink:0;">
+    <button onclick="exportJSON()" class="export-btn" title="Download full results as JSON">⬇ JSON</button>
+    <button onclick="exportCSV()" class="export-btn" title="Download filtered results as CSV">⬇ CSV</button>
+    <button onclick="copyJSON()" class="export-btn copy-btn" id="copyJsonBtn" title="Copy filtered results JSON to clipboard">📋 Copy JSON</button>
+    <button onclick="copyCSV()" class="export-btn copy-btn" id="copyCsvBtn" title="Copy filtered results CSV to clipboard">📋 Copy CSV</button>
+  </div>
   </div>
   
   <div class="table-container">
@@ -670,12 +699,13 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
           <th data-key="function_name">Function</th>
           <th data-key="compiler_variant">Variant</th>
           <th data-key="decompiler">Decompiler</th>
-          <th data-key="source_similarity">Similarity</th>
+          <th data-key="composite_score">Composite ⭐</th>
           <th data-key="semantic_score">Semantic</th>
           <th data-key="consensus_rank">Rank</th>
           <th data-key="goto_count">Gotos</th>
           <th data-key="time_ms">Time</th>
           <th>Status</th>
+          <th>Code</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -842,6 +872,113 @@ function updatePerFuncChart(funcName) {
 fnChartSel.addEventListener('change', (e) => updatePerFuncChart(e.target.value));
 if (fnNames.length > 0) updatePerFuncChart(fnNames[0]);
 
+// ── Export Functions ──────────────────────────────────────────────────────────
+
+function toCSVRow(s) {
+  const fields = [
+    s.function_name, s.compiler_variant, s.decompiler,
+    (s.composite_score || 0).toFixed(4),
+    s.source_similarity.toFixed(4),
+    (s.semantic_score || 0).toFixed(4),
+    s.cases_passed || 0, s.cases_total || 0,
+    s.fail_category || '',
+    s.consensus_rank || '', s.goto_count, s.nesting_depth,
+    s.time_ms, s.error || '', s.uses_intrinsics ? 'true' : 'false'
+  ];
+  return fields.map(f => `"${String(f).replace(/"/g, '""')}"`).join(',');
+}
+
+const CSV_HEADER = '"function","variant","decompiler","composite","similarity","semantic","cases_passed","cases_total","fail_category","rank","gotos","depth","time_ms","error","uses_intrinsics"';
+
+function exportCSV() {
+  const rows = [CSV_HEADER, ...currentFiltered.map(toCSVRow)].join('\n');
+  downloadBlob(rows, 'benchmark_results.csv', 'text/csv');
+}
+function exportJSON() {
+  const data = JSON.stringify(currentFiltered, null, 2);
+  downloadBlob(data, 'benchmark_results.json', 'application/json');
+}
+function copyCSV() {
+  const rows = [CSV_HEADER, ...currentFiltered.map(toCSVRow)].join('\n');
+  copyToClipboard(rows, 'copyCsvBtn');
+}
+function copyJSON() {
+  const data = JSON.stringify(currentFiltered, null, 2);
+  copyToClipboard(data, 'copyJsonBtn');
+}
+function downloadBlob(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+function copyToClipboard(text, btnId) {
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── Code Viewer Modal ─────────────────────────────────────────────────────────
+
+function syntaxHighlight(code) {
+  // Simple C syntax highlighting
+  const keywords = /\b(int|void|char|float|double|long|short|unsigned|signed|return|if|else|while|for|do|switch|case|break|continue|goto|struct|typedef|static|const|extern|sizeof|NULL|true|false|uint8_t|uint16_t|uint32_t|uint64_t|int8_t|int16_t|int32_t|int64_t)\b/g;
+  const types = /\b(dword|qword|byte|word|undefined[0-9]?|ulong|ulonglong|longlong|uchar|ushort|uint)\b/g;
+  const comments = /(\/\/[^\n]*)|(\/\*[\s\S]*?\*\/)/g;
+  const numbers = /\b(0x[0-9a-fA-F]+|\d+)\b/g;
+  const strings = /"([^"\\]|\\.)*"/g;
+  
+  let escaped = code
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  
+  escaped = escaped
+    .replace(comments, m => `<span class="code-comment">${m}</span>`)
+    .replace(strings, m => `<span class="code-string">${m}</span>`)
+    .replace(types, m => `<span class="code-type">${m}</span>`)
+    .replace(keywords, m => `<span class="code-keyword">${m}</span>`)
+    .replace(numbers, m => `<span class="code-number">${m}</span>`);
+  return escaped;
+}
+
+let currentCodeData = null;
+
+function showCode(evt, code, decompiler, funcName, variant) {
+  evt.stopPropagation();
+  currentCodeData = { code, decompiler, funcName, variant };
+  document.getElementById('codeModalTitle').textContent = `${decompiler} — ${funcName} [${variant}]`;
+  const pre = document.getElementById('codeModalPre');
+  if (code && code.trim()) {
+    pre.innerHTML = syntaxHighlight(code);
+  } else {
+    pre.innerHTML = '<span style="color:#6b7280;font-style:italic;">No decompiled output available.</span>';
+  }
+  document.getElementById('codeModal').classList.add('open');
+}
+
+function closeCodeModal() {
+  document.getElementById('codeModal').classList.remove('open');
+}
+
+function copyCodeToClipboard() {
+  if (!currentCodeData) return;
+  copyToClipboard(currentCodeData.code, 'copyCodeBtn');
+}
+
+function downloadCode() {
+  if (!currentCodeData) return;
+  const { code, decompiler, funcName, variant } = currentCodeData;
+  const safe = variant.replace(/[^a-zA-Z0-9_-]/g, '_');
+  downloadBlob(code || '', `${decompiler}_${funcName}_${safe}.c`, 'text/plain');
+}
+
 // Table Pagination, Search and Sort Logic
 let currentFiltered = [...SCORES];
 let currentPage = 1;
@@ -937,6 +1074,7 @@ function renderTable() {
       <td>${s.goto_count}</td>
       <td>${s.time_ms}ms</td>
       <td><span class="badge ${statusClass}">${statusText}</span></td>
+      <td>${s.decompiled_code ? `<button class="code-btn" onclick="showCode(event, ${JSON.stringify(s.decompiled_code).replace(/\\/g,'\\\\')}, '${s.decompiler}', '${s.function_name}', '${s.compiler_variant}')">🔬 View</button>` : '<span style="color:#6b7280">—</span>'}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -1040,8 +1178,33 @@ window.addEventListener('click', (e) => {
   if (e.target === modal) closeModal();
 });
 
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeCodeModal(); }
+});
+
 renderTable();
 </script>
+
+<!-- Code Viewer Modal -->
+<div id="codeModal" onclick="if(event.target===this)closeCodeModal()">
+  <div class="code-modal-inner">
+    <div class="code-modal-header">
+      <h3 id="codeModalTitle">Decompiled Code</h3>
+      <div style="display:flex;gap:0.5rem;align-items:center;">
+        <button onclick="copyCodeToClipboard()" class="export-btn copy-btn" id="copyCodeBtn" style="font-size:0.78rem;">📋 Copy</button>
+        <button onclick="downloadCode()" class="export-btn" style="font-size:0.78rem;">⬇ .c</button>
+        <button onclick="closeCodeModal()" style="background:none;border:none;color:#9ca3af;font-size:1.4rem;cursor:pointer;line-height:1;padding:0 0.25rem;">&times;</button>
+      </div>
+    </div>
+    <div class="code-modal-body">
+      <pre id="codeModalPre"></pre>
+    </div>
+    <div class="code-modal-footer" style="justify-content:space-between;">
+      <span style="color:#6b7280;font-size:0.78rem;">💡 Click outside or × to close &nbsp;|&nbsp; Syntax highlighting is approximate</span>
+      <span id="codeLineCount" style="color:#6b7280;font-size:0.78rem;"></span>
+    </div>
+  </div>
+</div>
 
 <!-- Modal overlay -->
 <div id="errorModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">

@@ -162,6 +162,7 @@ async def decompile_batch_and_score(
             cases_passed=cases_passed,
             cases_total=cases_total,
             uses_intrinsics=uses_intrin,
+            decompiled_code=code[:8000] if code else "",  # cap at 8KB for dashboard
         ))
 
         # Direct feedback output
