@@ -1,68 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fission Benchmark Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-<style>
-  :root {
-    --bg: #0d1117; --surface: #161b22; --border: #30363d;
-    --text: #e6edf3; --muted: #8b949e; --accent: #6366f1;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 2rem; }
-  h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
-  .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 2rem; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; }
-  .card h2 { font-size: 1rem; color: var(--muted); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
-  canvas { max-height: 280px; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 1rem; }
-  th { color: var(--muted); text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
-  td { padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
-  tr:hover td { background: rgba(255,255,255,0.03); }
-  .badge { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-  .gap { background: #7f1d1d; color: #fca5a5; }
-  .hard { background: #1c1917; color: #a8a29e; }
-  .ok { background: #14532d; color: #86efac; }
-  @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
-</style>
-</head>
-<body>
-<h1>🔬 Fission Benchmark</h1>
-<p class="meta">Generated: 2026-07-01 15:25 UTC &nbsp;·&nbsp; Corpus: <strong>dev</strong> &nbsp;·&nbsp; Functions: <strong>21</strong></p>
-
-<div class="grid">
-  <div class="card">
-    <h2>Average Source Similarity</h2>
-    <canvas id="barChart"></canvas>
-  </div>
-  <div class="card">
-    <h2>Per-Function Similarity</h2>
-    <canvas id="scatterChart"></canvas>
-  </div>
-</div>
-
-<div class="card">
-  <h2>Detailed Results</h2>
-  <table id="resultsTable">
-    <thead><tr><th>Function</th><th>Variant</th><th>Decompiler</th><th>Similarity</th><th>Rank</th><th>Gotos</th><th>Time</th><th>Status</th></tr></thead>
-    <tbody></tbody>
-  </table>
-</div>
-
-<script>
-const SCORES = [
+[
   {
     "decompiler": "fission",
     "function_name": "count_bits",
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1178,
     "goto_count": 1,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 6255,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -70,9 +16,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -80,9 +27,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -90,9 +38,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0091,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 318,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -100,9 +49,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.1333,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 3,
     "time_ms": 1809,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -110,9 +60,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -120,9 +71,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -130,9 +82,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0079,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 305,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -140,9 +93,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.179,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 1672,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -150,9 +104,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -160,9 +115,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -170,9 +126,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0048,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 311,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -180,9 +137,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.5354,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 1,
     "time_ms": 1496,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -190,9 +148,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -200,9 +159,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -210,9 +170,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0059,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 302,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -220,9 +181,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0571,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 3,
     "time_ms": 1554,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -230,9 +192,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -240,9 +203,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -250,9 +214,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0037,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 298,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -260,9 +225,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.4895,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 1,
     "time_ms": 1508,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -270,9 +236,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -280,9 +247,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -290,9 +258,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0034,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 299,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -300,9 +269,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1028,
     "goto_count": 2,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 2362,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -310,9 +280,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -320,9 +291,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -330,9 +302,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0121,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 348,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -340,9 +313,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.1695,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 3,
     "time_ms": 1754,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -350,9 +324,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -360,9 +335,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -370,9 +346,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0124,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 303,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -380,9 +357,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0928,
     "goto_count": 9,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 2160,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -390,9 +368,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -400,9 +379,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -410,9 +390,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.008,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 318,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -420,9 +401,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.5126,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 3,
     "time_ms": 1593,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -430,9 +412,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -440,9 +423,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -450,9 +434,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0088,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 322,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -460,9 +445,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0615,
     "goto_count": 2,
-    "consensus_rank": 1,
+    "nesting_depth": 3,
     "time_ms": 2270,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -470,9 +456,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -480,9 +467,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -490,9 +478,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.011,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 312,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -500,9 +489,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.2938,
     "goto_count": 1,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 1777,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -510,9 +500,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -520,9 +511,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -530,9 +522,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0122,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 364,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -540,9 +533,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1051,
     "goto_count": 1,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 1915,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -550,9 +544,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -560,9 +555,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -570,9 +566,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0078,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 289,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -580,9 +577,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.3569,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 3,
     "time_ms": 1732,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -590,9 +588,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -600,9 +599,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -610,9 +610,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0083,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 307,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -620,9 +621,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1058,
     "goto_count": 2,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 2898,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -630,9 +632,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -640,9 +643,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -650,9 +654,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0059,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 294,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -660,9 +665,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.131,
     "goto_count": 2,
-    "consensus_rank": 1,
+    "nesting_depth": 3,
     "time_ms": 2139,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -670,9 +676,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -680,9 +687,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -690,9 +698,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0059,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 309,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -700,9 +709,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.095,
     "goto_count": 3,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 2079,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -710,9 +720,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -720,9 +731,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -730,9 +742,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0055,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 296,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -740,9 +753,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.165,
     "goto_count": 3,
-    "consensus_rank": 1,
+    "nesting_depth": 4,
     "time_ms": 1715,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -750,9 +764,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -760,9 +775,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -770,9 +786,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0051,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 291,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -780,9 +797,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1277,
     "goto_count": 2,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 2536,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -790,9 +808,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -800,9 +819,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -810,9 +830,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0086,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 306,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -820,9 +841,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.1386,
     "goto_count": 2,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 2185,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -830,9 +852,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -840,9 +863,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -850,9 +874,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0088,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 286,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -860,9 +885,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1352,
     "goto_count": 1,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 1906,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -870,9 +896,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -880,9 +907,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -890,9 +918,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0054,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 331,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -900,9 +929,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.3185,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 3,
     "time_ms": 1900,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -910,9 +940,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -920,9 +951,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -930,9 +962,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0058,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 306,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -940,9 +973,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0439,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 3,
     "time_ms": 2347,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -950,9 +984,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -960,9 +995,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -970,9 +1006,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0041,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 322,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -980,9 +1017,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.1723,
     "goto_count": 1,
-    "consensus_rank": 1,
+    "nesting_depth": 3,
     "time_ms": 2490,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -990,9 +1028,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1000,9 +1039,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1010,9 +1050,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0038,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 326,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1020,9 +1061,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.176,
     "goto_count": 4,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 2090,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1030,9 +1072,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1040,9 +1083,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1050,9 +1094,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0074,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 333,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1060,9 +1105,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.2453,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 1822,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1070,9 +1116,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1080,9 +1127,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1090,9 +1138,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.008,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 331,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1100,9 +1149,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.3646,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 1,
     "time_ms": 1576,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1110,9 +1160,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1120,9 +1171,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1130,9 +1182,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0016,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 332,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1140,9 +1193,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.5785,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 1,
     "time_ms": 1531,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1150,9 +1204,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1160,9 +1215,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1170,9 +1226,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0017,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 314,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1180,9 +1237,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0076,
     "goto_count": 4,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 3324,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1190,9 +1248,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1200,9 +1259,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1210,9 +1270,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0064,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 313,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1220,9 +1281,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.1052,
     "goto_count": 4,
-    "consensus_rank": 1,
+    "nesting_depth": 3,
     "time_ms": 3157,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1230,9 +1292,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1240,9 +1303,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1250,9 +1314,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0067,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 291,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1260,9 +1325,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1243,
     "goto_count": 3,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 2071,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1270,9 +1336,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1280,9 +1347,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1290,9 +1358,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0046,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 302,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1300,9 +1369,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.1544,
     "goto_count": 3,
-    "consensus_rank": 1,
+    "nesting_depth": 4,
     "time_ms": 1735,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1310,9 +1380,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1320,9 +1391,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1330,9 +1402,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0051,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 320,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1340,9 +1413,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0623,
     "goto_count": 6,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 4354,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1350,9 +1424,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1360,9 +1435,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1370,9 +1446,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0063,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 320,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1380,9 +1457,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0564,
     "goto_count": 6,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 2373,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1390,9 +1468,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1400,9 +1479,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1410,9 +1490,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0086,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 309,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1420,9 +1501,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0345,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 3,
     "time_ms": 2185,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1430,9 +1512,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1440,9 +1523,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1450,9 +1534,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0036,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 294,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1460,9 +1545,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.244,
     "goto_count": 1,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 1748,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1470,9 +1556,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1480,9 +1567,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1490,9 +1578,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0031,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 315,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1500,9 +1589,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0814,
     "goto_count": 1,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 1974,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1510,9 +1600,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1520,9 +1611,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1530,9 +1622,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0036,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 328,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1540,9 +1633,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.1074,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 2035,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1550,9 +1644,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1560,9 +1655,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1570,9 +1666,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0036,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 309,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1580,9 +1677,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0761,
     "goto_count": 1,
-    "consensus_rank": 1,
+    "nesting_depth": 2,
     "time_ms": 2150,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1590,9 +1688,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1600,9 +1699,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1610,9 +1710,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0079,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 321,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1620,9 +1721,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0808,
     "goto_count": 2,
-    "consensus_rank": 1,
+    "nesting_depth": 5,
     "time_ms": 1728,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1630,9 +1732,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1640,9 +1743,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1650,9 +1754,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0082,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 325,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1660,9 +1765,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.068,
     "goto_count": 4,
-    "consensus_rank": 1,
+    "nesting_depth": 3,
     "time_ms": 1998,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1670,9 +1776,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1680,9 +1787,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1690,9 +1798,10 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0048,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 306,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   },
   {
     "decompiler": "fission",
@@ -1700,9 +1809,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.3306,
     "goto_count": 0,
-    "consensus_rank": 1,
+    "nesting_depth": 1,
     "time_ms": 1678,
-    "error": null
+    "error": null,
+    "consensus_rank": 1
   },
   {
     "decompiler": "ghidra",
@@ -1710,9 +1820,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8001/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "retdec",
@@ -1720,9 +1831,10 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0,
     "goto_count": 0,
-    "consensus_rank": null,
+    "nesting_depth": 0,
     "time_ms": 0,
-    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    "error": "Server error '500 Internal Server Error' for url 'http://localhost:8002/decompile'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+    "consensus_rank": null
   },
   {
     "decompiler": "radare2",
@@ -1730,51 +1842,9 @@ const SCORES = [
     "compiler_variant": "gcc -O2",
     "source_similarity": 0.0058,
     "goto_count": 0,
-    "consensus_rank": 2,
+    "nesting_depth": 0,
     "time_ms": 311,
-    "error": null
+    "error": null,
+    "consensus_rank": 2
   }
-];
-const FN_NAMES = ["accumulate_pairs", "binary_search", "bubble_sort", "checksum", "clamp", "classify_range", "count_bits", "factorial", "fibonacci", "fibonacci_iter", "find_pair_value", "gcd", "linear_search", "max", "pointer_stride_sum", "power", "process_code", "reverse_in_place", "saturating_add", "signum", "sum_array"];
-
-// Bar chart
-new Chart(document.getElementById('barChart'), {
-  type: 'bar',
-  data: {
-    labels: ["fission", "radare2"],
-    datasets: [{ label: 'Avg Similarity', data: [0.1795, 0.0065],
-      backgroundColor: ["#6366f1", "#ef4444"], borderRadius: 4 }]
-  },
-  options: { plugins: { legend: { display: false } },
-    scales: { y: { min: 0, max: 1, grid: { color: '#30363d' }, ticks: { color: '#8b949e' } },
-               x: { grid: { display: false }, ticks: { color: '#8b949e' } } } }
-});
-
-// Scatter
-new Chart(document.getElementById('scatterChart'), {
-  type: 'scatter',
-  data: { datasets: [{"label": "fission", "data": [{"x": 0, "y": 0.1331}, {"x": 1, "y": 0.0593}, {"x": 2, "y": 0.0564}, {"x": 3, "y": 0.1361}, {"x": 4, "y": 0.3572}, {"x": 5, "y": 0.3027}, {"x": 6, "y": 0.1255}, {"x": 7, "y": 0.1392}, {"x": 8, "y": 0.1081}, {"x": 9, "y": 0.2107}, {"x": 10, "y": 0.13}, {"x": 11, "y": 0.0944}, {"x": 12, "y": 0.1394}, {"x": 13, "y": 0.4716}, {"x": 14, "y": 0.2268}, {"x": 15, "y": 0.0784}, {"x": 16, "y": 0.1993}, {"x": 17, "y": 0.1184}, {"x": 18, "y": 0.1777}, {"x": 19, "y": 0.2733}, {"x": 20, "y": 0.231}], "backgroundColor": "#6366f1"}, {"label": "radare2", "data": [{"x": 0, "y": 0.0087}, {"x": 1, "y": 0.0075}, {"x": 2, "y": 0.0066}, {"x": 3, "y": 0.0123}, {"x": 4, "y": 0.0053}, {"x": 5, "y": 0.0084}, {"x": 6, "y": 0.0085}, {"x": 7, "y": 0.0033}, {"x": 8, "y": 0.004}, {"x": 9, "y": 0.0077}, {"x": 10, "y": 0.0053}, {"x": 11, "y": 0.0036}, {"x": 12, "y": 0.0049}, {"x": 13, "y": 0.0016}, {"x": 14, "y": 0.0056}, {"x": 15, "y": 0.0081}, {"x": 16, "y": 0.0053}, {"x": 17, "y": 0.0059}, {"x": 18, "y": 0.0116}, {"x": 19, "y": 0.0036}, {"x": 20, "y": 0.008}], "backgroundColor": "#ef4444"}] },
-  options: {
-    scales: {
-      x: { ticks: { callback: v => FN_NAMES[v] || v, color: '#8b949e' }, grid: { color: '#30363d' } },
-      y: { min: 0, max: 1, grid: { color: '#30363d' }, ticks: { color: '#8b949e' } }
-    }
-  }
-});
-
-// Table
-const tbody = document.querySelector('#resultsTable tbody');
-SCORES.forEach(s => {
-  const tr = document.createElement('tr');
-  const rankLabel = s.consensus_rank ? `#${s.consensus_rank}` : '—';
-  const statusClass = s.error ? 'gap' : (s.source_similarity > 0.5 ? 'ok' : '');
-  const statusText = s.error ? '❌' : '✓';
-  tr.innerHTML = `<td>${s.function_name}</td><td>${s.compiler_variant}</td>
-    <td>${s.decompiler}</td><td>${s.source_similarity.toFixed(3)}</td>
-    <td>${rankLabel}</td><td>${s.goto_count}</td><td>${s.time_ms}ms</td>
-    <td><span class="badge ${statusClass}">${statusText}</span></td>`;
-  tbody.appendChild(tr);
-});
-</script>
-</body>
-</html>
+]
