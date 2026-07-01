@@ -51,7 +51,7 @@ def decompile(req: DecompileRequest):
         start = time.monotonic()
         result = subprocess.run(
             [str(RETDEC_BIN), str(binary_path), "-o", str(out_c),
-             "--select-ranges", req.addr],  # decompile only at addr
+             "--select-ranges", f"{req.addr}-{hex(int(req.addr, 16) + 0x1000)}"],  # decompile range
             capture_output=True, text=True, timeout=120,
         )
         elapsed = int((time.monotonic() - start) * 1000)
