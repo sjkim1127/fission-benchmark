@@ -51,21 +51,27 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
         "",
     ]
 
-    # Per-decompiler average
-    by_decomp: dict[str, list[float]] = defaultdict(list)
+    # Per-decompiler average (ranked by composite_score)
+    by_decomp_comp: dict[str, list[float]] = defaultdict(list)
+    by_decomp_sim: dict[str, list[float]] = defaultdict(list)
     by_decomp_sem: dict[str, list[float]] = defaultdict(list)
     for s in scores:
         if s.error is None:
-            by_decomp[s.decompiler].append(s.source_similarity)
+            by_decomp_comp[s.decompiler].append(getattr(s, "composite_score", 0.0))
+            by_decomp_sim[s.decompiler].append(s.source_similarity)
             by_decomp_sem[s.decompiler].append(s.semantic_score)
 
     rows = []
-    for d, sims in sorted(by_decomp.items(), key=lambda x: -sum(x[1]) / len(x[1])):
-        avg = sum(sims) / len(sims)
+    all_decomps = sorted(by_decomp_comp.keys(), key=lambda d: -(sum(by_decomp_comp[d]) / len(by_decomp_comp[d])))
+    for d in all_decomps:
+        comps = by_decomp_comp[d]
+        sims = by_decomp_sim[d]
         sems = by_decomp_sem[d]
+        avg_comp = sum(comps) / len(comps)
+        avg_sim = sum(sims) / len(sims)
         avg_sem = sum(sems) / len(sems) if sems else 0.0
-        rows.append([f"**{d}**", f"{avg:.3f}", f"{avg_sem * 100:.1f}%", f"{len(sims)}"])
-    lines.append(_md_table(["Decompiler", "Avg Similarity", "Semantic Pass", "Functions"], rows))
+        rows.append([f"**{d}**", f"{avg_comp:.3f}", f"{avg_sim:.3f}", f"{avg_sem * 100:.1f}%", f"{len(comps)}"])
+    lines.append(_md_table(["Decompiler", "Composite ⭐", "Similarity", "Semantic Pass", "Functions"], rows))
     lines += ["", "---", "", "## Per-Function Results", ""]
 
     # Per function
@@ -75,18 +81,50 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
 
     for fn_name, fn_scores in sorted(by_fn.items()):
         lines.append(f"### `{fn_name}`")
+        # Consensus badge for this function
+        badge = ""
+        fission_scores_fn = [s for s in fn_scores if s.decompiler == "fission" and s.error is None]
+        other_scores_fn = [s for s in fn_scores if s.decompiler != "fission" and s.error is None]
+        if fission_scores_fn and other_scores_fn:
+            fn_comp = fission_scores_fn[0].composite_score if hasattr(fission_scores_fn[0], "composite_score") else 0.0
+            others_avg = sum(getattr(s, "composite_score", 0.0) for s in other_scores_fn) / len(other_scores_fn)
+            if fission_scores_fn[0].consensus_rank == 1:
+                badge = " 🟢 Fission leads"
+            elif fn_comp < 0.20 and others_avg > 0.40:
+                badge = " 🔴 Fission-only gap"
+            elif fn_comp < 0.20 and others_avg < 0.20:
+                badge = " ⚪ Universally hard"
+        lines[-1] = lines[-1] + badge
+
         rows = []
-        for s in sorted(fn_scores, key=lambda x: x.decompiler):
+        for s in sorted(fn_scores, key=lambda x: -(getattr(x, "composite_score", 0.0))):
             rank = f"#{s.consensus_rank}" if s.consensus_rank else "—"
-            err = f"❌ {s.error[:40]}" if s.error else "✓"
+            fail_cat = getattr(s, "fail_category", "") or ""
+            cat_icons = {
+                "compile_error": "🔴 compile",
+                "runtime_error": "🟠 runtime",
+                "timeout": "🟡 timeout",
+                "assertion_fail": "🟤 assert",
+                "no_wrapper": "⚪ no_test",
+                "": "✅" if not s.error else "❌",
+            }
+            status_icon = cat_icons.get(fail_cat, "❌")
+            if s.error:
+                status_icon = f"❌ {s.error[:30]}"
+            sem_str = f"{s.semantic_score:.1%}"
+            if hasattr(s, "cases_passed") and getattr(s, "cases_total", 0) > 0:
+                sem_str = f"{s.semantic_score:.1%} ({s.cases_passed}/{s.cases_total})"
+            intrin_flag = " ⚠️intrin" if getattr(s, "uses_intrinsics", False) else ""
             rows.append([
                 s.decompiler, s.compiler_variant,
-                f"{s.source_similarity:.3f}", f"{s.semantic_score:.0f}", rank,
+                f"{getattr(s, 'composite_score', 0.0):.3f}",
+                f"{s.source_similarity:.3f}",
+                sem_str + intrin_flag, rank,
                 str(s.goto_count), str(s.nesting_depth),
-                f"{s.time_ms}ms", err,
+                f"{s.time_ms}ms", status_icon,
             ])
         lines.append(_md_table(
-            ["Decompiler", "Variant", "Similarity", "Semantic", "Rank", "Gotos", "Depth", "Time", "Status"],
+            ["Decompiler", "Variant", "Composite ⭐", "Similarity", "Semantic", "Rank", "Gotos", "Depth", "Time", "Status"],
             rows,
         ))
         lines.append("")
@@ -107,10 +145,10 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
         valid = [s for s in fn_scores if s.error is None]
         if not valid:
             continue
-        all_low = all(s.source_similarity < 0.3 for s in valid)
+        all_low = all(getattr(s, "composite_score", s.source_similarity) < 0.20 for s in valid)
         fission_scores = [s for s in valid if s.decompiler == "fission"]
-        others_ok = any(s.source_similarity >= 0.3 for s in valid if s.decompiler != "fission")
-        fission_low = fission_scores and all(s.source_similarity < 0.3 for s in fission_scores)
+        others_ok = any(getattr(s, "composite_score", s.source_similarity) >= 0.20 for s in valid if s.decompiler != "fission")
+        fission_low = fission_scores and all(getattr(s, "composite_score", s.source_similarity) < 0.20 for s in fission_scores)
 
         if all_low:
             hard.append(fn_name)
@@ -152,7 +190,14 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
         "source_similarity": s.source_similarity,
         "semantic_score": s.semantic_score,
         "semantic_error": s.semantic_error,
+        "fail_category": getattr(s, "fail_category", "") or "",
+        "cases_passed": getattr(s, "cases_passed", 0),
+        "cases_total": getattr(s, "cases_total", 0),
+        "composite_score": getattr(s, "composite_score", 0.0),
+        "structural_penalty": getattr(s, "structural_penalty", 0.0),
+        "uses_intrinsics": getattr(s, "uses_intrinsics", False),
         "goto_count": s.goto_count,
+        "nesting_depth": s.nesting_depth,
         "consensus_rank": s.consensus_rank,
         "time_ms": s.time_ms,
         "error": s.error,
@@ -853,9 +898,23 @@ function renderTable() {
     }
     
     const rankLabel = getRankBadge(s.consensus_rank);
-    const simClass = getSimilarityClass(s.source_similarity, s.error);
+    const compScore = (s.composite_score || 0);
+    const simClass = getSimilarityClass(compScore, s.error);
     const statusClass = s.error ? 'error' : 'success';
     const statusText = s.error ? '❌ Error' : '✓ Success';
+    const failCatLabels = {'compile_error':'🔴','runtime_error':'🟠','timeout':'🟡','assertion_fail':'🟤','no_wrapper':'⚪','':''};
+    const failCat = s.fail_category || '';
+    const failIcon = failCatLabels[failCat] !== undefined ? failCatLabels[failCat] : '🟤';
+    const semPct = s.cases_total > 0
+      ? `${(s.semantic_score*100).toFixed(0)}% (${s.cases_passed}/${s.cases_total})`
+      : (s.semantic_score >= 1.0 ? 'Pass' : 'Fail');
+    const intrinFlag = s.uses_intrinsics ? ' ⚠️' : '';
+    const errTxt = (s.semantic_error||'').replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$');
+    const semHtml = s.error
+      ? '<span class="badge error">N/A</span>'
+      : (s.semantic_score >= 1.0
+          ? `<span class="badge success">${semPct}${intrinFlag}</span>`
+          : `<span class="badge error" title="${failCat}" style="cursor:pointer;" onclick="openModal('${s.decompiler}','${s.function_name}','${s.compiler_variant}','${errTxt}')">${failIcon} ${semPct}${intrinFlag}</span>`);
     
     tr.innerHTML = `
       <td><strong>${s.function_name}</strong></td>
@@ -866,17 +925,14 @@ function renderTable() {
       </td>
       <td>
         <div class="sim-cell">
-          <span class="sim-badge ${simClass}">${s.source_similarity.toFixed(3)}</span>
+          <span class="sim-badge ${simClass}">${compScore.toFixed(3)}</span>
           <div class="sim-bar-bg">
-            <div class="sim-bar-fill ${simClass}" style="width: ${s.source_similarity * 100}%"></div>
+            <div class="sim-bar-fill ${simClass}" style="width: ${compScore * 100}%"></div>
           </div>
         </div>
+        <small style="color:#9ca3af;font-size:0.75em;">sim:${s.source_similarity.toFixed(3)}</small>
       </td>
-      <td>
-        ${s.semantic_score >= 1.0 
-          ? '<span class="badge success">Pass</span>' 
-          : `<span class="badge error" style="cursor: pointer; text-decoration: underline;" onclick="openModal('${s.decompiler}', '${s.function_name}', '${s.compiler_variant}', \\`${(s.semantic_error || '').replace(/'/g, \"\\\\\\'\").replace(/"/g, '&quot;').replace(/\\n/g, '\\\\n')}\\`)">Fail 🔍</span>`}
-      </td>
+      <td>${semHtml}</td>
       <td>${rankLabel}</td>
       <td>${s.goto_count}</td>
       <td>${s.time_ms}ms</td>

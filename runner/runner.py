@@ -17,6 +17,7 @@ from corpus import CORPUS_ROOT, Corpus
 from scoring import (
     FunctionScore,
     assign_consensus_ranks,
+    check_uses_intrinsics,
     extract_function_source,
     source_similarity,
     structural_score,
@@ -25,6 +26,20 @@ from semantic import verify_semantic_correctness
 from report import generate_report
 
 app = typer.Typer(help="Fission decompiler benchmark runner.")
+
+# Source-level goto/nesting counts keyed by function name.
+# Populated from corpus manifest or precomputed via scripts/precompute_source_metrics.py.
+SOURCE_GOTO_COUNTS: dict[str, int] = {}
+SOURCE_NESTING_DEPTHS: dict[str, int] = {}
+
+
+def _load_source_metrics() -> None:
+    """Load precomputed source-level structural metrics if available."""
+    metrics_path = Path(__file__).parent.parent / "corpus" / "source_metrics.json"
+    if metrics_path.exists():
+        data = json.loads(metrics_path.read_text())
+        SOURCE_GOTO_COUNTS.update(data.get("goto_counts", {}))
+        SOURCE_NESTING_DEPTHS.update(data.get("nesting_depths", {}))
 
 
 def configured_decompilers() -> dict[str, str]:
@@ -38,6 +53,7 @@ def configured_decompilers() -> dict[str, str]:
         "angr": "http://localhost:8004",
         "snowman": "http://localhost:8005",
         "revng": "http://localhost:8006",
+        "reko": "http://localhost:8007",
     }
     return defaults
 
@@ -51,7 +67,7 @@ async def decompile_batch_and_score(
     sem: asyncio.Semaphore,
 ) -> List[FunctionScore]:
     addresses = [t[1].addr for t in targets]
-    
+
     try:
         binary_b64 = base64.b64encode(binary_path.read_bytes()).decode()
     except Exception as e:
@@ -122,11 +138,14 @@ async def decompile_batch_and_score(
         error = item.get("error")
         sim = source_similarity(function_source, code) if function_source and not error else 0.0
         gotos, depth = structural_score(code) if not error else (0, 0)
+        uses_intrin = check_uses_intrinsics(code) if code else False
 
         if not error:
-            sem_score, sem_err = verify_semantic_correctness(fn.name, code)
+            sem_score, sem_err, fail_cat, cases_passed, cases_total = verify_semantic_correctness(
+                fn.name, code
+            )
         else:
-            sem_score, sem_err = 0.0, None
+            sem_score, sem_err, fail_cat, cases_passed, cases_total = 0.0, None, "compile_error", 0, 0
 
         fn_scores.append(FunctionScore(
             decompiler=dname,
@@ -139,11 +158,19 @@ async def decompile_batch_and_score(
             error=error,
             semantic_score=sem_score,
             semantic_error=sem_err,
+            fail_category=fail_cat,
+            cases_passed=cases_passed,
+            cases_total=cases_total,
+            uses_intrinsics=uses_intrin,
         ))
 
         # Direct feedback output
         status = "✓" if not error else "✗"
-        typer.echo(f"  {status} {dname:10s} {fn.name:15s} [{variant_label}] sim={sim:.3f} sem={sem_score:.0f} gotos={gotos}")
+        cat_tag = f" [{fail_cat}]" if fail_cat else ""
+        typer.echo(
+            f"  {status} {dname:10s} {fn.name:15s} [{variant_label}] "
+            f"sim={sim:.3f} sem={sem_score:.2f} ({cases_passed}/{cases_total} cases){cat_tag} gotos={gotos}"
+        )
 
     return fn_scores
 
@@ -155,7 +182,7 @@ async def run_all(
     limit: int | None,
 ) -> list[FunctionScore]:
     fn_list = functions[:limit] if limit else functions
-    
+
     # 1. Group decompile requests by (decompiler, binary_path)
     groups = {}
     for fn in fn_list:
@@ -167,7 +194,7 @@ async def run_all(
             binary_path = CORPUS_ROOT / corpus_split / variant.binary
             if not binary_path.exists():
                 continue
-            
+
             for dname, url in decompilers.items():
                 key = (dname, url, binary_path)
                 if key not in groups:
@@ -180,7 +207,7 @@ async def run_all(
     typer.echo(f"Starting batch benchmark run with concurrency limit of {concurrency} workers.")
 
     all_scores: list[FunctionScore] = []
-    
+
     async with httpx.AsyncClient() as client:
         tasks = []
         for (dname, url, binary_path), targets in groups.items():
@@ -194,18 +221,24 @@ async def run_all(
         for r in results:
             all_scores.extend(r)
 
-    return assign_consensus_ranks(all_scores)
+    return assign_consensus_ranks(
+        all_scores,
+        source_goto_counts=SOURCE_GOTO_COUNTS,
+        source_nesting_depths=SOURCE_NESTING_DEPTHS,
+    )
 
 
 @app.command()
 def run(
-    corpus: str = typer.Option("dev", help="Corpus split name (dev, full)"),
+    corpus: str = typer.Option("dev", help="Corpus split name (dev, holdout, full)"),
     limit: Optional[int] = typer.Option(None, help="Limit number of functions analyzed"),
     decompilers: Optional[str] = typer.Option(None, help="Comma-separated decompiler list"),
+    output: Optional[str] = typer.Option(None, help="Override output JSON path"),
 ):
     """Run decompiler benchmark and generate report."""
+    _load_source_metrics()
     start_time = time.monotonic()
-    
+
     # Select decompilers
     all_dec = configured_decompilers()
     if decompilers:
@@ -223,24 +256,27 @@ def run(
 
     # Run event loop
     scores = asyncio.run(run_all(c.functions, dec_map, corpus, limit))
-    
+
     elapsed = time.monotonic() - start_time
-    
+
     # Save JSON and generate report
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     results_dir = Path(__file__).parent.parent / "results"
     results_dir.mkdir(exist_ok=True)
-    
+
     # Save definitive run results
-    json_path = results_dir / f"{timestamp}.json"
+    if output:
+        json_path = Path(output)
+    else:
+        json_path = results_dir / f"{timestamp}.json"
     latest_json = results_dir / "latest.json"
-    
+
     serialized = [asdict(s) for s in scores]
-    for path in [json_path, latest_json]:
-        path.write_text(json.dumps(serialized, indent=2), encoding="utf-8")
-        
-    generate_report(scores)
-    
+    json_path.write_text(json.dumps(serialized, indent=2), encoding="utf-8")
+    latest_json.write_text(json.dumps(serialized, indent=2), encoding="utf-8")
+
+    generate_report(scores, corpus_split=corpus)
+
     typer.echo(f"\n✅ Results saved to {json_path} ({elapsed:.1f}s)")
     typer.echo("📊 Report generated: results/latest.md, docs/index.html")
 

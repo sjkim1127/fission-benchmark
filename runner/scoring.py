@@ -3,14 +3,20 @@ Scoring engine for multi-decompiler comparison.
 
 Metrics:
   1. source_similarity  — normalized edit distance vs original C source
-  2. structural_score   — goto count, nesting depth penalty
-  3. consensus_rank     — relative position among all decompilers
+  2. semantic_score     — fraction of test cases passed (0.0–1.0)
+  3. structural_penalty — relative goto/nesting increase vs original source
+  4. composite_score    — primary ranking metric (semantic-gated)
+  5. consensus_rank     — relative position among all decompilers
 """
 from __future__ import annotations
 
 import difflib
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+
+# Intrinsic functions that may affect semantic score validity
+INTRINSIC_NAMES = {"__carry", "__scarry", "__sborrow", "__borrow"}
 
 
 @dataclass
@@ -23,10 +29,76 @@ class FunctionScore:
     nesting_depth: int
     time_ms: int
     error: str | None = None
-    semantic_score: float = 0.0
+    semantic_score: float = 0.0         # fraction of test cases passed (0.0–1.0)
     semantic_error: str | None = None
+    fail_category: str | None = None    # compile_error|runtime_error|timeout|assertion_fail|no_wrapper
+    cases_passed: int = 0               # number of test cases passed
+    cases_total: int = 0                # total number of test cases
+    structural_penalty: float = 0.0     # 0.0–1.0 based on relative goto/nesting delta
+    composite_score: float = 0.0        # primary ranking metric (computed after all scores)
     consensus_rank: int | None = None   # set after all decompilers run
+    uses_intrinsics: bool = False       # True if decompiled code uses __carry/__scarry etc.
 
+
+# ── Composite Score ───────────────────────────────────────────────────────────
+
+# Weights for composite formula
+WEIGHT_SEMANTIC = 0.70
+WEIGHT_SIMILARITY = 0.20
+WEIGHT_STRUCTURAL = 0.10
+
+# If semantic == 0, composite is capped at this value
+SEMANTIC_ZERO_CAP = 0.15
+
+
+def compute_composite(
+    semantic_score: float,
+    source_similarity: float,
+    structural_penalty: float,
+) -> float:
+    """
+    Compute gated composite score.
+
+    Formula: sem * 0.70 + sim * 0.20 + (1 - structural_penalty) * 0.10
+
+    Gating: if semantic_score == 0.0, composite cannot exceed SEMANTIC_ZERO_CAP (0.15).
+    This ensures that a binary that compiles/runs but fails all tests, or fails to
+    compile entirely, cannot be ranked above a binary that passes even one test case.
+    """
+    raw = (
+        semantic_score * WEIGHT_SEMANTIC
+        + source_similarity * WEIGHT_SIMILARITY
+        + (1.0 - structural_penalty) * WEIGHT_STRUCTURAL
+    )
+    if semantic_score == 0.0:
+        return round(min(raw, SEMANTIC_ZERO_CAP), 4)
+    return round(raw, 4)
+
+
+# ── Structural Penalty ────────────────────────────────────────────────────────
+
+def compute_structural_penalty(
+    goto_count: int,
+    nesting_depth: int,
+    source_goto_count: int = 0,
+    source_nesting_depth: int = 0,
+) -> float:
+    """
+    Compute structural penalty based on relative increase vs original source.
+
+    If the original source already uses gotos, no penalty for matching count.
+    Penalty increases linearly: 5 extra gotos → 100% goto penalty.
+    """
+    goto_delta = max(0, goto_count - source_goto_count)
+    goto_pen = min(goto_delta / 5.0, 1.0)
+
+    depth_delta = max(0, nesting_depth - source_nesting_depth)
+    depth_pen = min(depth_delta / 3.0, 1.0)
+
+    return round(goto_pen * 0.7 + depth_pen * 0.3, 4)
+
+
+# ── Normalizers & Similarity ──────────────────────────────────────────────────
 
 def normalize_code(code: str) -> str:
     """Strip comments, normalize whitespace, lowercase identifiers."""
@@ -79,6 +151,14 @@ def extract_function_source(source: str, function_name: str) -> str:
     return ""
 
 
+def check_uses_intrinsics(code: str) -> bool:
+    """Return True if decompiled code uses any SLEIGH intrinsic functions."""
+    for name in INTRINSIC_NAMES:
+        if name in code:
+            return True
+    return False
+
+
 def count_gotos(code: str) -> int:
     return len(re.findall(r"\bgoto\b", code))
 
@@ -101,15 +181,44 @@ def structural_score(code: str) -> tuple[int, int]:
     return count_gotos(code), measure_nesting_depth(code)
 
 
-def assign_consensus_ranks(scores: list[FunctionScore]) -> list[FunctionScore]:
+# ── Consensus Ranking ─────────────────────────────────────────────────────────
+
+def assign_consensus_ranks(
+    scores: list[FunctionScore],
+    source_goto_counts: dict[str, int] | None = None,
+    source_nesting_depths: dict[str, int] | None = None,
+) -> list[FunctionScore]:
     """
-    For the same function+variant, rank decompilers by source_similarity desc.
+    For the same function+variant, rank decompilers by composite_score desc.
+
+    Also assigns structural_penalty and composite_score for each score entry.
+
     Consensus interpretation:
       - All decompilers rank low  → objectively hard function
       - Only Fission ranks low    → Fission quality issue
     """
-    # Group by (function_name, compiler_variant)
     from collections import defaultdict
+
+    src_gotos = source_goto_counts or {}
+    src_depths = source_nesting_depths or {}
+
+    # First pass: compute structural penalty and composite score for each entry
+    for s in scores:
+        if s.error is None:
+            s.structural_penalty = compute_structural_penalty(
+                s.goto_count,
+                s.nesting_depth,
+                src_gotos.get(s.function_name, 0),
+                src_depths.get(s.function_name, 0),
+            )
+            s.composite_score = compute_composite(
+                s.semantic_score,
+                s.source_similarity,
+                s.structural_penalty,
+            )
+            s.uses_intrinsics = check_uses_intrinsics("")  # placeholder; set by runner
+
+    # Group by (function_name, compiler_variant)
     groups: dict[tuple, list[FunctionScore]] = defaultdict(list)
     for s in scores:
         groups[(s.function_name, s.compiler_variant)].append(s)
@@ -117,10 +226,62 @@ def assign_consensus_ranks(scores: list[FunctionScore]) -> list[FunctionScore]:
     result = []
     for group in groups.values():
         valid = [s for s in group if s.error is None]
-        valid.sort(key=lambda s: s.source_similarity, reverse=True)
+        # Rank by composite_score descending (semantic-gated)
+        valid.sort(key=lambda s: s.composite_score, reverse=True)
         for rank, s in enumerate(valid, start=1):
             s.consensus_rank = rank
         # errored entries get no rank
         result.extend(group)
 
     return result
+
+
+# ── Consensus Badge ───────────────────────────────────────────────────────────
+
+def get_consensus_badge(
+    function_name: str,
+    compiler_variant: str,
+    scores: list[FunctionScore],
+    fission_decompiler_name: str = "fission",
+    low_threshold: float = 0.20,
+) -> str:
+    """
+    Return a consensus badge for a function+variant group.
+
+    🔴 Fission-only gap: Fission is low but others are not
+    ⚪ Universally hard: All decompilers are low
+    🟢 Fission leads: Fission is #1
+    """
+    group = [
+        s for s in scores
+        if s.function_name == function_name
+        and s.compiler_variant == compiler_variant
+        and s.error is None
+    ]
+    if not group:
+        return ""
+
+    fission_scores = [s for s in group if s.decompiler == fission_decompiler_name]
+    other_scores = [s for s in group if s.decompiler != fission_decompiler_name]
+
+    if not fission_scores:
+        return ""
+
+    fission_composite = fission_scores[0].composite_score
+    others_composites = [s.composite_score for s in other_scores]
+
+    # Fission leads
+    if fission_scores[0].consensus_rank == 1:
+        return "🟢 Fission leads"
+
+    # All decompilers low
+    all_low = fission_composite < low_threshold and all(c < low_threshold for c in others_composites)
+    if all_low:
+        return "⚪ Universally hard"
+
+    # Fission-only gap: Fission is low, but at least one other is clearly higher
+    others_avg = sum(others_composites) / len(others_composites) if others_composites else 0.0
+    if fission_composite < low_threshold and others_avg > low_threshold * 2:
+        return "🔴 Fission-only gap"
+
+    return ""
