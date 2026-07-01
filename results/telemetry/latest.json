@@ -1,0 +1,26 @@
+{
+  "total_rows": 360,
+  "by_stage": {
+    "assembly_parity": 70,
+    "cfg_parity": 70,
+    "decode_parity": 70,
+    "function_discovery": 70,
+    "ir_invariants": 10,
+    "pcode_parity": 70
+  },
+  "by_status": {
+    "match": 280,
+    "mismatch": 80
+  },
+  "by_mismatch_kind": {
+    "empty_cfg_blocks": 10,
+    "function_set": 70,
+    "none": 280
+  },
+  "by_variant": {
+    "gcc -O0": 108,
+    "gcc -O2": 72,
+    "gcc-m32 -O0": 108,
+    "gcc-m32 -O2": 72
+  }
+}
