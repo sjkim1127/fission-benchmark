@@ -6,12 +6,28 @@ env:
   FISSION_VERSION: v0.1.1
   FISSION_ASSETS_TAG: assets-v1
   CORPUS_TARGET: windows-x86_64
+  CORPUS_SPLIT: ${{ github.event.inputs.corpus || 'dev' }}
+  BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,retdec,radare2' }}
   PYTHONPATH: .
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      corpus:
+        description: "Corpus split to benchmark"
+        type: choice
+        options: [dev, holdout]
+        default: dev
+      decompilers:
+        description: "Comma-separated decompilers to run"
+        type: string
+        default: "fission,ghidra,retdec,radare2"
+      publish_results:
+        description: "Commit results and deploy GitHub Pages"
+        type: boolean
+        default: true
   schedule:
     - cron: '0 0 * * 0'  # Every Sunday midnight UTC
 
@@ -51,7 +67,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install Python deps
-        run: pip install httpx fastapi uvicorn jinja2 rich typer
+        run: pip install -e ".[dev]"
 
       - name: Build corpus binaries
         run: docker compose --profile tools run --rm --build corpus-builder
@@ -80,24 +96,42 @@ jobs:
             fi
           done
 
-      - name: Run benchmark (dev corpus)
-        run: python runner/runner.py --corpus dev
+      - name: Run benchmark
+        run: python runner/runner.py --corpus "$CORPUS_SPLIT" --decompilers "$BENCHMARK_DECOMPILERS"
+
+      - name: Write benchmark summary
+        if: always()
+        run: |
+          {
+            echo "## Fission Benchmark"
+            echo
+            echo "- Corpus: \`$CORPUS_SPLIT\`"
+            echo "- Decompilers: \`$BENCHMARK_DECOMPILERS\`"
+            echo
+            if [ -f results/latest.md ]; then
+              sed -n '1,220p' results/latest.md
+            else
+              echo "No benchmark report was generated."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload benchmark artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-results
+          name: benchmark-results-${{ github.run_id }}
           path: |
             results/
             docs/
           if-no-files-found: warn
 
       - name: Commit results
+        if: ${{ github.event.inputs.publish_results != 'false' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add results/ docs/
+          git pull --rebase --autostash origin main
+          git add -f results/ docs/
           git diff --staged --quiet || git commit -m "chore: update benchmark results [skip ci]"
           git push
 
@@ -112,6 +146,7 @@ jobs:
   deploy-pages:
     name: Deploy GitHub Pages
     needs: run-benchmark
+    if: ${{ github.event.inputs.publish_results != 'false' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages

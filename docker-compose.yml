@@ -15,7 +15,7 @@ services:
       - .:/workspace
     environment:
       - CORPUS_TARGET=${CORPUS_TARGET:-windows-x86_64}
-    command: ["python3", "scripts/build_corpus.py", "--split", "dev"]
+    command: ["python3", "scripts/build_corpus.py", "--split", "${CORPUS_SPLIT:-dev}"]
     profiles: ["tools"]
 
   fission:
