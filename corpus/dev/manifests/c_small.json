@@ -9,13 +9,13 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x100000460"
+          "addr": "0x140001530"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x100000460"
+          "addr": "0x140001530"
         }
       ]
     },
@@ -27,13 +27,13 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x1000004cc"
+          "addr": "0x14000156e"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x1000004b4"
+          "addr": "0x140001580"
         }
       ]
     },
@@ -45,13 +45,13 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x100000568"
+          "addr": "0x1400015c7"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x1000004e0"
+          "addr": "0x1400015c0"
         }
       ]
     },
@@ -63,13 +63,13 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x1000005ac"
+          "addr": "0x1400015de"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x1000004ec"
+          "addr": "0x1400015d0"
         }
       ]
     },
@@ -81,13 +81,13 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x10000069c"
+          "addr": "0x1400016d1"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x100000560"
+          "addr": "0x140001630"
         }
       ]
     },
@@ -99,13 +99,13 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x10000071c"
+          "addr": "0x140001724"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x100000594"
+          "addr": "0x140001660"
         }
       ]
     },
@@ -117,13 +117,13 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x1000007f4"
+          "addr": "0x1400017c4"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x1000005dc"
+          "addr": "0x1400016a0"
         }
       ]
     },
@@ -135,13 +135,13 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x100000854"
+          "addr": "0x1400017fd"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x100000678"
+          "addr": "0x1400016e0"
         }
       ]
     },
@@ -153,13 +153,13 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x1000008a8"
+          "addr": "0x140001832"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x100000698"
+          "addr": "0x140001700"
         }
       ]
     },
@@ -171,13 +171,13 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x10000091c"
+          "addr": "0x140001881"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x1000006d4"
+          "addr": "0x140001730"
         }
       ]
     }

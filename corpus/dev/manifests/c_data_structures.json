@@ -8,14 +8,14 @@
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/data_structures_gcc_O0",
-          "addr": "0x100000460"
+          "binary": "binaries/data_structures_gcc_O0.exe",
+          "addr": "0x140001530"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/data_structures_gcc_O2",
-          "addr": "0x100000460"
+          "binary": "binaries/data_structures_gcc_O2.exe",
+          "addr": "0x140001530"
         }
       ]
     },
@@ -26,14 +26,14 @@
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/data_structures_gcc_O0",
-          "addr": "0x1000004c4"
+          "binary": "binaries/data_structures_gcc_O0.exe",
+          "addr": "0x140001581"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/data_structures_gcc_O2",
-          "addr": "0x100000550"
+          "binary": "binaries/data_structures_gcc_O2.exe",
+          "addr": "0x140001560"
         }
       ]
     },
@@ -44,14 +44,14 @@
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/data_structures_gcc_O0",
-          "addr": "0x100000590"
+          "binary": "binaries/data_structures_gcc_O0.exe",
+          "addr": "0x140001631"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/data_structures_gcc_O2",
-          "addr": "0x100000664"
+          "binary": "binaries/data_structures_gcc_O2.exe",
+          "addr": "0x1400015b0"
         }
       ]
     },
@@ -62,14 +62,14 @@
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/data_structures_gcc_O0",
-          "addr": "0x100000620"
+          "binary": "binaries/data_structures_gcc_O0.exe",
+          "addr": "0x14000169b"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/data_structures_gcc_O2",
-          "addr": "0x100000694"
+          "binary": "binaries/data_structures_gcc_O2.exe",
+          "addr": "0x1400015f0"
         }
       ]
     },
@@ -80,14 +80,14 @@
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/data_structures_gcc_O0",
-          "addr": "0x10000069c"
+          "binary": "binaries/data_structures_gcc_O0.exe",
+          "addr": "0x140001705"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/data_structures_gcc_O2",
-          "addr": "0x1000007a4"
+          "binary": "binaries/data_structures_gcc_O2.exe",
+          "addr": "0x140001620"
         }
       ]
     }

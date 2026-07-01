@@ -8,12 +8,26 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS_ROOT = ROOT / "corpus"
+CORPUS_TARGET = os.environ.get("CORPUS_TARGET", "host")
+
+
+def target_tool(compiler: str, tool: str) -> str:
+    if CORPUS_TARGET == "windows-x86_64" and compiler in {"gcc", "clang"}:
+        return f"x86_64-w64-mingw32-{tool}"
+    return compiler if tool == "gcc" else tool
+
+
+def target_binary(binary: str) -> str:
+    if CORPUS_TARGET == "windows-x86_64" and not binary.endswith(".exe"):
+        return f"{binary}.exe"
+    return binary
 
 
 def compiler_binary(name: str) -> str:
@@ -24,9 +38,10 @@ def compiler_binary(name: str) -> str:
 
 
 def compile_source(compiler: str, opt: str, source: Path, output: Path) -> None:
+    selected_compiler = target_tool(compiler, "gcc")
     output.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
-        compiler_binary(compiler),
+        compiler_binary(selected_compiler),
         opt,
         "-g",
         "-fno-inline",
@@ -35,7 +50,7 @@ def compile_source(compiler: str, opt: str, source: Path, output: Path) -> None:
         str(output),
         str(source),
     ]
-    if compiler in {"gcc", "clang"}:
+    if compiler in {"gcc", "clang"} and CORPUS_TARGET != "windows-x86_64":
         cmd[2:2] = ["-fno-pie", "-no-pie"]
 
     try:
@@ -47,10 +62,11 @@ def compile_source(compiler: str, opt: str, source: Path, output: Path) -> None:
         subprocess.run(fallback, check=True, capture_output=True, text=True)
 
 
-def symbol_addresses(binary: Path) -> dict[str, str]:
-    nm = shutil.which("nm")
+def symbol_addresses(binary: Path, compiler: str) -> dict[str, str]:
+    nm_name = target_tool(compiler, "nm")
+    nm = shutil.which(nm_name)
     if not nm:
-        raise SystemExit("nm not found on PATH")
+        raise SystemExit(f"{nm_name} not found on PATH")
 
     proc = subprocess.run([nm, "-n", str(binary)], check=True, capture_output=True, text=True)
     symbols: dict[str, str] = {}
@@ -78,6 +94,7 @@ def build_manifest(manifest_path: Path, split: str) -> None:
     for fn in data["functions"]:
         source = CORPUS_ROOT / split / fn["source"]
         for variant in fn.get("compiler_variants", []):
+            variant["binary"] = target_binary(variant["binary"])
             key = (
                 fn["source"],
                 variant["compiler"],
@@ -99,7 +116,7 @@ def build_manifest(manifest_path: Path, split: str) -> None:
         for variant in fn.get("compiler_variants", []):
             binary = variant["binary"]
             if binary not in addr_cache:
-                addr_cache[binary] = symbol_addresses(CORPUS_ROOT / split / binary)
+                addr_cache[binary] = symbol_addresses(CORPUS_ROOT / split / binary, variant["compiler"])
             addr = addr_cache[binary].get(fn["name"])
             if not addr:
                 raise SystemExit(f"Symbol not found: {fn['name']} in {binary}")
