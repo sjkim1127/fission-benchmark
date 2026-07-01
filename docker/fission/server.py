@@ -13,6 +13,8 @@ from pydantic import BaseModel
 app = FastAPI(title="fission-decompiler", version="1.0")
 FISSION_BIN = Path("/usr/local/bin/fission_cli")
 SLEIGH_SPEC_DIR = os.environ.get("FISSION_SLEIGH_SPEC_DIR", "/sleigh-specs")
+RESOURCE_ROOT = os.environ.get("FISSION_RESOURCE_ROOT", "/opt/fission-utils/utils")
+GHIDRA_DATA_DIR = os.environ.get("FISSION_GHIDRA_DATA_DIR", "/opt/fission-utils/utils/ghidra-data")
 
 
 class DecompileRequest(BaseModel):
@@ -46,11 +48,16 @@ def decompile(req: DecompileRequest):
         f.write(binary_bytes)
         tmp_path = f.name
 
-    env = {**os.environ, "FISSION_SLEIGH_SPEC_DIR": SLEIGH_SPEC_DIR}
+    env = {
+        **os.environ,
+        "FISSION_SLEIGH_SPEC_DIR": SLEIGH_SPEC_DIR,
+        "FISSION_RESOURCE_ROOT": RESOURCE_ROOT,
+        "FISSION_GHIDRA_DATA_DIR": GHIDRA_DATA_DIR,
+    }
     start = time.monotonic()
     try:
         result = subprocess.run(
-            [str(FISSION_BIN), "decomp", tmp_path, "--addr", req.addr, "--json"],
+            [str(FISSION_BIN), "decomp", tmp_path, "--addr", req.addr, "--json", "--resource-root", RESOURCE_ROOT],
             capture_output=True, text=True, timeout=120, env=env,
         )
         elapsed = int((time.monotonic() - start) * 1000)

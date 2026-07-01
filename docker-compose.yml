@@ -7,16 +7,27 @@
 #   python runner/runner.py --corpus dev
 
 services:
+  corpus-builder:
+    build: ./docker/corpus-builder
+    platform: linux/amd64
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      - CORPUS_TARGET=${CORPUS_TARGET:-windows-x86_64}
+    command: ["python3", "scripts/build_corpus.py", "--split", "dev"]
+    profiles: ["tools"]
+
   fission:
     build: ./docker/fission
-    ports: ["8000:8000"]
+    platform: linux/amd64
+    ports: ["${FISSION_HOST_PORT:-8000}:8000"]
     volumes:
       - ./corpus:/corpus:ro
-      # Mount local Sleigh specs (required for decompilation)
-      # Adjust path if your utils/ is elsewhere.
-      - ${FISSION_SLEIGH_SPEC_DIR:-/Users/sjkim1127/Fission/utils/sleigh-specs}:/sleigh-specs:ro
     environment:
       - FISSION_SLEIGH_SPEC_DIR=/sleigh-specs
+      - FISSION_RESOURCE_ROOT=/opt/fission-utils/utils
+      - FISSION_GHIDRA_DATA_DIR=/opt/fission-utils/utils/ghidra-data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
