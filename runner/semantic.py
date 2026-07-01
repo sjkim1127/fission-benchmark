@@ -29,28 +29,41 @@ typedef unsigned int uint;
 typedef unsigned long ulong;
 typedef unsigned short ushort;
 typedef unsigned char uchar;
+typedef unsigned long long ulonglong;
+typedef long long longlong;
 
 // Structures used in corpus
 typedef struct Pair {
     int key;
     int value;
 } Pair;
+
+// SLEIGH/Fission intrinsics stubs
+#define __carry(a, b) 0
+#define __scarry(a, b) 0
+#define __sborrow(a, b) 0
+#define __borrow(a, b) 0
+#define __popcount(x) __builtin_popcount(x)
 """
 
-def verify_semantic_correctness(func_name: str, decompiled_code: str) -> float:
+def verify_semantic_correctness(func_name: str, decompiled_code: str) -> tuple[float, str | None]:
     """
     Verify correctness of decompiled code.
-    Returns 1.0 if correct (compiles and passes all tests), 0.0 otherwise.
+    Returns (score, error_detail). Score is 1.0 on success, 0.0 on failure.
     """
     if func_name not in TEST_WRAPPERS:
-        return 0.0
+        return 0.0, f"No test wrapper defined for function {func_name}"
         
     if not decompiled_code.strip():
-        return 0.0
+        return 0.0, "Empty decompilation output"
 
-    # Ghidra and others sometimes output comments or headers before function code.
-    # The scoring engine's extract_function_source strips some of it, but we prepend headers anyway.
-    source = STANDARD_HEADER + "\n" + decompiled_code + "\n" + TEST_WRAPPERS[func_name]
+    # If the decompiler prefixed the function name with an underscore (common in 32-bit PE symbols),
+    # define an alias so the test wrapper compiles successfully.
+    alias = ""
+    if f" _{func_name}" in decompiled_code or f" *_{func_name}" in decompiled_code:
+        alias = f"#define {func_name} _{func_name}\n"
+    
+    source = STANDARD_HEADER + "\n" + alias + decompiled_code + "\n" + TEST_WRAPPERS[func_name]
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
@@ -61,8 +74,6 @@ def verify_semantic_correctness(func_name: str, decompiled_code: str) -> float:
         
         # Compile using host gcc
         try:
-            # -w suppresses all warnings
-            # -O0 compiles faster and avoids compiler optimization transformations
             result = subprocess.run(
                 ["gcc", "-w", "-O0", str(c_file), "-o", str(bin_file)],
                 capture_output=True,
@@ -70,23 +81,27 @@ def verify_semantic_correctness(func_name: str, decompiled_code: str) -> float:
                 timeout=5.0
             )
             if result.returncode != 0:
-                # Compilation failed
-                return 0.0
-        except Exception:
-            # Compiler not found or timeout
-            return 0.0
+                return 0.0, f"Compilation failed:\n{result.stderr}"
+        except subprocess.TimeoutExpired:
+            return 0.0, "Compilation timed out (5s limit)"
+        except Exception as e:
+            return 0.0, f"Compiler execution failed: {e}"
             
         # Run binary
         try:
             run_res = subprocess.run(
                 [str(bin_file)],
                 capture_output=True,
+                text=True,
                 timeout=1.0
             )
             if run_res.returncode == 0:
-                return 1.0
-        except Exception:
-            # Timeout (infinite loop) or crash
-            return 0.0
+                return 1.0, None
+            else:
+                return 0.0, f"Runtime verification failed (exit code {run_res.returncode})"
+        except subprocess.TimeoutExpired:
+            return 0.0, "Runtime verification timed out (1.0s limit) - potential infinite loop"
+        except Exception as e:
+            return 0.0, f"Runtime execution failed: {e}"
             
-    return 0.0
+    return 0.0, "Unknown verification error"

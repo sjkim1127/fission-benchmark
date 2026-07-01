@@ -24,6 +24,7 @@ class FunctionScore:
     time_ms: int
     error: str | None = None
     semantic_score: float = 0.0
+    semantic_error: str | None = None
     consensus_rank: int | None = None   # set after all decompilers run
 
 

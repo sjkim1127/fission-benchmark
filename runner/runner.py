@@ -94,66 +94,97 @@ async def call_decompiler(
         return {"name": "?", "code": "", "time_ms": 0, "error": str(e), "decompiler": name}
 
 
+async def decompile_and_score(
+    client: httpx.AsyncClient,
+    fn,
+    variant,
+    function_source,
+    decompilers: dict[str, str],
+    corpus_split: str,
+    sem: asyncio.Semaphore,
+) -> list[FunctionScore]:
+    binary_path = CORPUS_ROOT / corpus_split / variant.binary
+    if not binary_path.exists():
+        return []
+
+    variant_label = f"{variant.compiler} {variant.opt}"
+    addr = variant.addr
+
+    async with sem:
+        tasks = {
+            dname: call_decompiler(client, dname, url, binary_path, addr)
+            for dname, url in decompilers.items()
+        }
+        results = await asyncio.gather(*tasks.values())
+
+    result_map = dict(zip(tasks.keys(), results))
+    fn_scores = []
+
+    for dname, res in result_map.items():
+        code = res.get("code", "")
+        sim = source_similarity(function_source, code) if function_source else 0.0
+        gotos, depth = structural_score(code)
+
+        if not res.get("error"):
+            sem_score, sem_err = verify_semantic_correctness(fn.name, code)
+        else:
+            sem_score, sem_err = 0.0, None
+
+        fn_scores.append(FunctionScore(
+            decompiler=dname,
+            function_name=fn.name,
+            compiler_variant=variant_label,
+            source_similarity=sim,
+            goto_count=gotos,
+            nesting_depth=depth,
+            time_ms=res.get("time_ms", 0),
+            error=res.get("error"),
+            semantic_score=sem_score,
+            semantic_error=sem_err,
+        ))
+
+    # Output status as soon as this function-variant finishes
+    typer.echo(f"▶ {fn.name} [{variant_label}]")
+    for s in fn_scores:
+        status = "✓" if not s.error else "✗"
+        typer.echo(f"  {status} {s.decompiler:10s} sim={s.source_similarity:.3f} sem={s.semantic_score:.0f} gotos={s.goto_count} {s.time_ms}ms")
+
+    return fn_scores
+
+
 async def run_all(
     functions: list,
     decompilers: dict[str, str],
     corpus_split: str,
     limit: int | None,
 ) -> list[FunctionScore]:
-    scores: list[FunctionScore] = []
-
     fn_list = functions[:limit] if limit else functions
+    
+    concurrency = os.cpu_count() or 4
+    sem = asyncio.Semaphore(concurrency)
+    typer.echo(f"Starting benchmark run with concurrency limit of {concurrency} workers.")
 
+    all_scores: list[FunctionScore] = []
+    
     async with httpx.AsyncClient() as client:
+        tasks = []
         for fn in fn_list:
             source_path = CORPUS_ROOT / corpus_split / fn.source
             source_code = source_path.read_text(errors="replace") if source_path.exists() else ""
             function_source = extract_function_source(source_code, fn.name) or source_code
 
             for variant in fn.compiler_variants:
-                binary_path = CORPUS_ROOT / corpus_split / variant.binary
-                if not binary_path.exists():
-                    typer.echo(f"  [SKIP] binary not found: {binary_path}", err=True)
-                    continue
+                tasks.append(
+                    decompile_and_score(
+                        client, fn, variant, function_source, decompilers, corpus_split, sem
+                    )
+                )
 
-                variant_label = f"{variant.compiler} {variant.opt}"
-                typer.echo(f"▶ {fn.name} [{variant_label}]")
+        results = await asyncio.gather(*tasks)
+        for r in results:
+            all_scores.extend(r)
 
-                # Parallel decompile requests
-                addr = variant.addr
-
-                tasks = {
-                    dname: call_decompiler(client, dname, url, binary_path, addr)
-                    for dname, url in decompilers.items()
-                }
-                results = await asyncio.gather(*tasks.values())
-                result_map = dict(zip(tasks.keys(), results))
-
-                for dname, res in result_map.items():
-                    code = res.get("code", "")
-                    sim = source_similarity(function_source, code) if function_source else 0.0
-                    gotos, depth = structural_score(code)
-                    
-                    if not res.get("error"):
-                        sem_score = verify_semantic_correctness(fn.name, code)
-                    else:
-                        sem_score = 0.0
-
-                    scores.append(FunctionScore(
-                        decompiler=dname,
-                        function_name=fn.name,
-                        compiler_variant=variant_label,
-                        source_similarity=sim,
-                        goto_count=gotos,
-                        nesting_depth=depth,
-                        time_ms=res.get("time_ms", 0),
-                        error=res.get("error"),
-                        semantic_score=sem_score,
-                    ))
-                    status = "✓" if not res.get("error") else "✗"
-                    typer.echo(f"  {status} {dname:10s} sim={sim:.3f} sem={sem_score:.0f} gotos={gotos} {res.get('time_ms',0)}ms")
-
-    return assign_consensus_ranks(scores)
+    return assign_consensus_ranks(all_scores)
 
 
 @app.command()

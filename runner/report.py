@@ -150,6 +150,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
         "compiler_variant": s.compiler_variant,
         "source_similarity": s.source_similarity,
         "semantic_score": s.semantic_score,
+        "semantic_error": s.semantic_error,
         "goto_count": s.goto_count,
         "consensus_rank": s.consensus_rank,
         "time_ms": s.time_ms,
@@ -871,7 +872,9 @@ function renderTable() {
         </div>
       </td>
       <td>
-        <span class="badge ${s.semantic_score >= 1.0 ? "success" : "error"}">${s.semantic_score >= 1.0 ? "Pass" : "Fail"}</span>
+        ${s.semantic_score >= 1.0 
+          ? '<span class="badge success">Pass</span>' 
+          : `<span class="badge error" style="cursor: pointer; text-decoration: underline;" onclick="openModal('${s.decompiler}', '${s.function_name}', '${s.compiler_variant}', \\`${(s.semantic_error || '').replace(/'/g, \"\\\\\\'\").replace(/"/g, '&quot;').replace(/\\n/g, '\\\\n')}\\`)">Fail 🔍</span>`}
       </td>
       <td>${rankLabel}</td>
       <td>${s.goto_count}</td>
@@ -965,8 +968,36 @@ document.querySelectorAll('#resultsTable th').forEach(th => {
 });
 
 // Initial Render
+
+// Modal logic
+function openModal(decompiler, funcName, variant, errorMsg) {
+  document.getElementById('modalTitle').textContent = `Verification Error: ${decompiler} - ${funcName} (${variant})`;
+  document.getElementById('modalErrorContent').textContent = errorMsg || 'No error details recorded.';
+  document.getElementById('errorModal').style.display = 'flex';
+}
+function closeModal() {
+  document.getElementById('errorModal').style.display = 'none';
+}
+window.addEventListener('click', (e) => {
+  const modal = document.getElementById('errorModal');
+  if (e.target === modal) closeModal();
+});
+
 renderTable();
 </script>
+
+<!-- Modal overlay -->
+<div id="errorModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 80%; max-width: 800px; max-height: 80%; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);">
+    <div style="padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #1f2937;">
+      <h3 style="font-weight: 600;" id="modalTitle">Verification Error Details</h3>
+      <button onclick="closeModal()" style="background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+    <div style="padding: 1.5rem; overflow-y: auto; flex-grow: 1;">
+      <pre style="background: #090d16; border: 1px solid var(--border); padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; color: #ef4444; white-space: pre-wrap;" id="modalErrorContent"></pre>
+    </div>
+  </div>
+</div>
 </body>
 </html>
 """
