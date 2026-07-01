@@ -8,7 +8,8 @@ import ghidra.program.model.listing.Function;
 public class DecompileFunction extends GhidraScript {
     @Override
     public void run() throws Exception {
-        String addrStr = System.getProperty("decomp.addr", "");
+        String[] args = getScriptArgs();
+        String addrStr = args.length > 0 ? args[0] : System.getProperty("decomp.addr", "");
         if (addrStr.isEmpty()) {
             println("{\"error\": \"decomp.addr not set\"}");
             return;

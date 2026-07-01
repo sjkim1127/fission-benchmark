@@ -49,25 +49,30 @@ def decompile(req: DecompileRequest):
                 str(GHIDRA_HEADLESS), str(project_dir), "TempProject",
                 "-import", str(binary_path),
                 "-scriptPath", str(SCRIPT_DIR),
-                "-postScript", "DecompileFunction.java",
+                "-postScript", "DecompileFunction.java", req.addr,
                 "-scriptlog", str(Path(tmpdir) / "script.log"),
                 "-deleteProject",
             ],
-            env={**os.environ, "decomp.addr": req.addr},
+            env=os.environ,
             capture_output=True, text=True, timeout=180,
         )
         elapsed = int((time.monotonic() - start) * 1000)
 
-        # Extract JSON from stdout
+        # Ghidra prefixes script output with log metadata in headless mode.
         for line in result.stdout.splitlines():
             line = line.strip()
-            if line.startswith("{"):
+            json_start = line.find("{")
+            if json_start >= 0:
+                json_end = line.rfind("}")
+                if json_end < json_start:
+                    continue
                 try:
-                    data = json.loads(line)
+                    data = json.loads(line[json_start:json_end + 1])
                     if "error" in data:
                         return DecompileResponse(name="?", code="", time_ms=elapsed, error=data["error"])
                     return DecompileResponse(name=data["name"], code=data["code"], time_ms=elapsed)
                 except json.JSONDecodeError:
                     pass
 
-        raise HTTPException(status_code=500, detail=result.stderr[:500])
+        detail = (result.stderr + "\n" + result.stdout)[-2000:]
+        raise HTTPException(status_code=500, detail=detail)

@@ -13,7 +13,7 @@ RUN wget -q "https://github.com/avast/retdec/releases/download/${RETDEC_VERSION}
     && tar -xf /tmp/retdec.tar.xz -C /opt/retdec --strip-components=1 \
     && rm /tmp/retdec.tar.xz
 
-ENV PATH="/opt/retdec/bin:${PATH}"
+ENV PATH="/opt/retdec:${PATH}"
 
 WORKDIR /app
 COPY requirements.txt .
