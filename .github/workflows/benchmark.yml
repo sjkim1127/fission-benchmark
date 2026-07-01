@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 45
     strategy:
       matrix:
-        service: [ghidra, retdec, radare2]
+        service: [fission, ghidra, retdec, radare2]
     steps:
       - uses: actions/checkout@v4
       - name: Build ${{ matrix.service }}
@@ -51,9 +51,9 @@ jobs:
 
       - name: Start decompiler containers
         run: |
-          docker compose up -d ghidra retdec radare2
+          docker compose up -d fission ghidra retdec radare2
           # Wait for health checks
-          for port in 8001 8002 8003; do
+          for port in 8000 8001 8002 8003; do
             for i in $(seq 1 30); do
               curl -sf http://localhost:$port/health && break
               echo "Waiting for port $port... ($i/30)"
@@ -63,9 +63,6 @@ jobs:
 
       - name: Run benchmark (dev corpus)
         run: python runner/runner.py --corpus dev
-        env:
-          # fission runs locally via CLI, not in Docker for CI
-          FISSION_ENDPOINT: skip
 
       - name: Commit results
         run: |
