@@ -85,3 +85,26 @@ generic32_t function_0x4015e7_Code_x86(void) {
     assert "function_0x4015b0_Code_x86" in extracted
     assert "return 1;" in extracted
     assert "function_0x4015e7_Code_x86" not in extracted
+
+
+def test_revng_extracts_containing_function_for_interior_address(monkeypatch) -> None:
+    monkeypatch.setitem(sys.modules, "disasm_helper", types.ModuleType("disasm_helper"))
+    server = load_module("revng_server_interior", ROOT / "docker/revng/server.py")
+    code = """
+_ABI(raw_x86_64)
+void function_0x140001520_Code_x86_64(void) {
+  int local = 1;
+  return;
+}
+
+_ABI(raw_x86_64)
+void function_0x14000155f_Code_x86_64(void) {
+  return;
+}
+"""
+
+    extracted = server.extract_revng_function(code, "0x140001530")
+
+    assert "function_0x140001520_Code_x86_64" in extracted
+    assert "local = 1" in extracted
+    assert "function_0x14000155f_Code_x86_64" not in extracted

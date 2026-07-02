@@ -45,20 +45,12 @@ def _addr_hex(addr: str) -> str:
     except ValueError:
         return addr.lower().removeprefix("0x")
 
-def extract_revng_function(code: str, addr: str) -> str:
-    """Extract one function from revng plain C output by its address-derived name."""
-    addr_hex = _addr_hex(addr)
-    match = re.search(rf"\bfunction_0x{re.escape(addr_hex)}_[A-Za-z0-9_]+\s*\(", code)
-    if not match:
-        return ""
+FUNCTION_DEF_RE = re.compile(
+    r"(?m)(?:^_ABI[^\n]*\n)?^[^\n;{}]*\bfunction_0x([0-9a-fA-F]+)_[A-Za-z0-9_]+\s*\("
+)
 
-    start = code.rfind("\n", 0, match.start()) + 1
-    previous_end = start - 1
-    previous_start = code.rfind("\n", 0, previous_end) + 1
-    previous_line = code[previous_start:previous_end].strip()
-    if previous_line.startswith("_ABI("):
-        start = previous_start
-
+def _extract_function_at_match(code: str, match: re.Match[str]) -> str:
+    start = match.start()
     brace = code.find("{", match.end())
     if brace < 0:
         return code[start:code.find("\n", match.end())].strip()
@@ -73,6 +65,29 @@ def extract_revng_function(code: str, addr: str) -> str:
             if depth == 0:
                 return code[start:index + 1].strip()
     return code[start:].strip()
+
+def extract_revng_function(code: str, addr: str) -> str:
+    """Extract one function from revng plain C output by its address-derived name."""
+    addr_hex = _addr_hex(addr)
+    target = int(addr_hex, 16)
+    definitions: list[tuple[int, re.Match[str]]] = [
+        (int(match.group(1), 16), match) for match in FUNCTION_DEF_RE.finditer(code)
+    ]
+    definitions.sort(key=lambda item: item[0])
+
+    for fn_addr, match in definitions:
+        if fn_addr == target:
+            return _extract_function_at_match(code, match)
+
+    # Some manifests point at the first semantic instruction instead of the
+    # symbol entry. If rev.ng names the containing function by the earlier entry
+    # address, use the nearest preceding definition as an adapter fallback.
+    for index, (fn_addr, match) in enumerate(definitions):
+        next_addr = definitions[index + 1][0] if index + 1 < len(definitions) else None
+        if fn_addr < target and (next_addr is None or target < next_addr):
+            return _extract_function_at_match(code, match)
+
+    return ""
 
 @app.get("/health")
 def health():
