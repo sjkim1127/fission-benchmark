@@ -1,0 +1,15 @@
+{
+  "reference_cfg": {
+    "blocks": [],
+    "edges": []
+  },
+  "candidate_cfg": {
+    "blocks": [],
+    "edges": []
+  },
+  "reference_disasm": [],
+  "candidate_disasm": [],
+  "mismatch_info": "decode: instruction_count",
+  "reference_mermaid": "graph TD\n    empty[\"Empty CFG\"]",
+  "candidate_mermaid": "graph TD\n    empty[\"Empty CFG\"]"
+}

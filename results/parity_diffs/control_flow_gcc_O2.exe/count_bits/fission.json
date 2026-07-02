@@ -1,0 +1,106 @@
+{
+  "reference_cfg": {
+    "blocks": [],
+    "edges": []
+  },
+  "candidate_cfg": {
+    "blocks": [],
+    "edges": []
+  },
+  "reference_disasm": [],
+  "candidate_disasm": [
+    {
+      "address": "0x140001530",
+      "bytes": "31 c0",
+      "mnemonic": "xor",
+      "operands": "EAX,EAX",
+      "length": 2,
+      "fallthrough": null,
+      "branch_target": null
+    },
+    {
+      "address": "0x140001532",
+      "bytes": "85 c9",
+      "mnemonic": "test",
+      "operands": "ECX,ECX",
+      "length": 2,
+      "fallthrough": null,
+      "branch_target": null
+    },
+    {
+      "address": "0x140001534",
+      "bytes": "74 15",
+      "mnemonic": "jz",
+      "operands": "0x14000154b",
+      "length": 2,
+      "fallthrough": null,
+      "branch_target": null
+    },
+    {
+      "address": "0x140001536",
+      "bytes": "66 2e 0f 1f 84 00 00 00 00 00",
+      "mnemonic": "nop",
+      "operands": "word ptr CS:[RAX + RAX*0x2]",
+      "length": 14,
+      "fallthrough": null,
+      "branch_target": null
+    },
+    {
+      "address": "0x140001540",
+      "bytes": "89 ca",
+      "mnemonic": "mov",
+      "operands": "EDX,ECX",
+      "length": 2,
+      "fallthrough": null,
+      "branch_target": null
+    },
+    {
+      "address": "0x140001542",
+      "bytes": "83 e2 01",
+      "mnemonic": "and",
+      "operands": "EDX,0x1",
+      "length": 4,
+      "fallthrough": null,
+      "branch_target": null
+    },
+    {
+      "address": "0x140001545",
+      "bytes": "01 d0",
+      "mnemonic": "add",
+      "operands": "EAX,EDX",
+      "length": 2,
+      "fallthrough": null,
+      "branch_target": null
+    },
+    {
+      "address": "0x140001547",
+      "bytes": "d1 e9",
+      "mnemonic": "shr",
+      "operands": "ECX,0x1",
+      "length": 2,
+      "fallthrough": null,
+      "branch_target": null
+    },
+    {
+      "address": "0x140001549",
+      "bytes": "75 f5",
+      "mnemonic": "jnz",
+      "operands": "0x140001540",
+      "length": 2,
+      "fallthrough": null,
+      "branch_target": null
+    },
+    {
+      "address": "0x14000154b",
+      "bytes": "c3",
+      "mnemonic": "ret",
+      "operands": "",
+      "length": 1,
+      "fallthrough": null,
+      "branch_target": null
+    }
+  ],
+  "mismatch_info": "assembly: instruction_count; decode: instruction_count",
+  "reference_mermaid": "graph TD\n    empty[\"Empty CFG\"]",
+  "candidate_mermaid": "graph TD\n    empty[\"Empty CFG\"]"
+}
