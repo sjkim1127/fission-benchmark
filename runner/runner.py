@@ -190,6 +190,7 @@ async def run_all(
     decompilers: dict[str, str],
     corpus_split: str,
     limit: int | None,
+    variant_limit: int | None,
 ) -> list[FunctionScore]:
     fn_list = functions[:limit] if limit else functions
 
@@ -200,7 +201,8 @@ async def run_all(
         source_code = source_path.read_text(errors="replace") if source_path.exists() else ""
         function_source = extract_function_source(source_code, fn.name) or source_code
 
-        for variant in fn.compiler_variants:
+        variants = fn.compiler_variants[:variant_limit] if variant_limit else fn.compiler_variants
+        for variant in variants:
             binary_path = CORPUS_ROOT / corpus_split / variant.binary
             if not binary_path.exists():
                 continue
@@ -242,6 +244,7 @@ async def run_all(
 def run(
     corpus: str = typer.Option("dev", help="Corpus split name (dev, holdout, full)"),
     limit: Optional[int] = typer.Option(None, help="Limit number of functions analyzed"),
+    variant_limit: Optional[int] = typer.Option(None, help="Limit compiler variants per function; 0 means all"),
     decompilers: Optional[str] = typer.Option(None, help="Comma-separated decompiler list"),
     output: Optional[str] = typer.Option(None, help="Override output JSON path"),
 ):
@@ -263,9 +266,13 @@ def run(
     c = Corpus.load_all(corpus)
     typer.echo(f"Loading corpus: {corpus}")
     typer.echo(f"  {len(c.functions)} functions loaded")
+    if limit:
+        typer.echo(f"  function limit: {limit}")
+    if variant_limit:
+        typer.echo(f"  variant limit per function: {variant_limit}")
 
     # Run event loop
-    scores = asyncio.run(run_all(c.functions, dec_map, corpus, limit))
+    scores = asyncio.run(run_all(c.functions, dec_map, corpus, limit, variant_limit))
 
     elapsed = time.monotonic() - start_time
 
