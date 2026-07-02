@@ -574,7 +574,7 @@
   <div class="meta-badges">
     <div class="meta-badge">Corpus: <strong id="corpusName">dev</strong></div>
     <div class="meta-badge">Functions: <strong id="funcCount">10</strong></div>
-    <div class="meta-badge">Updated: <strong id="genTime">2026-07-02 13:45 UTC</strong></div>
+    <div class="meta-badge">Updated: <strong id="genTime">2026-07-02 14:34 UTC</strong></div>
   </div>
 </header>
 
@@ -822,7 +822,7 @@ const SCORES = [
     "goto_count": 2,
     "nesting_depth": 2,
     "consensus_rank": 2,
-    "time_ms": 3067,
+    "time_ms": 3101,
     "error": null
   },
   {
@@ -944,34 +944,114 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 4928,
+    "time_ms": 4288,
     "error": null
   },
   {
     "decompiler": "boomerang",
     "function_name": "count_bits",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0,
+    "source_similarity": 0.2791,
     "semantic_score": 0.0,
-    "semantic_error": "Function at address 0x140001530 not found in Boomerang address comments",
-    "fail_category": "adapter_error",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpiuzpwl2f/test_5.c: In function \u2018proc_0x00001530\u2019:\n/tmp/tmpiuzpwl2f/test_5.c:45:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019?\n   45 |     __size32 local1;            // m[esp - 8]\n      |     ^~~~~~~~\n      |     __ssize_t\n",
+    "fail_category": "compile_error",
     "cases_passed": 0,
-    "cases_total": 0,
-    "correctness_score": 0.0,
-    "correctness_rank": null,
-    "readability_proxy_score": null,
-    "composite_score": 0.0,
+    "cases_total": 6,
+    "correctness_score": 0.15,
+    "correctness_rank": 3,
+    "readability_proxy_score": 0.4,
+    "composite_score": 0.15,
     "structural_penalty": 0.0,
     "uses_intrinsics": false,
-    "decompiled_code": "",
-    "readability_metrics": {},
-    "ast_similarity": {},
-    "output_diagnostics": {},
+    "decompiled_code": "/** address: 0x00001530 */\nvoid proc_0x00001530(int param1)\n{\n    int local0; \t\t// m[esp + 12]\n    __size32 local1; \t\t// m[esp - 8]\n\n    local0 = param1;\n    local1 = 0;\n    while (local0 != 0) {\n        local1 += local0 & 0x1;\n        local0 = (unsigned int)local0 >> 1;\n    }\n    return;\n}",
+    "readability_metrics": {
+      "validated_against_humans": false,
+      "composite_score": null,
+      "parse_ok": false,
+      "parse_error": ":30:14: before: local1",
+      "generic_naming_ratio": {
+        "raw": {
+          "generic": 0,
+          "total": 0,
+          "ratio": 1.0
+        },
+        "normalized": 0.0
+      },
+      "type_specificity": {
+        "raw": {
+          "average": 0.0,
+          "typed_nodes": 0
+        },
+        "normalized": 0.0
+      },
+      "expression_complexity": {
+        "raw": {
+          "operator_count": 0,
+          "avg_expression_depth": 0.0,
+          "max_cast_depth": 0,
+          "ternary_count": 0,
+          "comma_count": 0,
+          "temporary_identifier_count": 0,
+          "loc": 12,
+          "temporary_identifier_loc_ratio": 0.0
+        },
+        "normalized": 0.0
+      },
+      "structured_control_flow": {
+        "raw": {
+          "structured_constructs": 0,
+          "goto_count": 0,
+          "nesting_depth": 2,
+          "irreducible_loop_suspected": false,
+          "state_flag_count": 0,
+          "structured_ratio": 1.0
+        },
+        "normalized": 1.0
+      },
+      "unresolved_artifacts": {
+        "raw": {
+          "total": 0,
+          "details": {
+            "sleigh_intrinsic": 0,
+            "word_macro": 0,
+            "register_name": 0,
+            "collapsed_type": 0
+          }
+        },
+        "normalized": 1.0
+      }
+    },
+    "ast_similarity": {
+      "available": false,
+      "algorithm": "zhang_shasha",
+      "error": ":30:14: before: local1",
+      "identifier_placeholder": null,
+      "type_erased": null,
+      "control_flow_normalized": null
+    },
+    "output_diagnostics": {
+      "status": "direct_function",
+      "issues": [
+        "target_name_missing"
+      ],
+      "function_definition_count": 1,
+      "function_definitions_sample": [
+        "proc_0x00001530"
+      ],
+      "target_name_present": false,
+      "expected_address_present": true,
+      "whole_program_like": false,
+      "truncated_output": false,
+      "harness_blockers": [],
+      "dotted_names_sample": [],
+      "register_inputs_sample": [],
+      "decompiler": "boomerang"
+    },
     "goto_count": 0,
-    "nesting_depth": 0,
-    "consensus_rank": null,
-    "time_ms": 10,
-    "error": "Function at address 0x140001530 not found in Boomerang address comments"
+    "nesting_depth": 2,
+    "consensus_rank": 3,
+    "time_ms": 14,
+    "error": null
   },
   {
     "decompiler": "radare2",
@@ -979,7 +1059,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.6376,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpv0hkng10/test_5.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.count_bits(unsigned int x)\n      |        ^\n",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpdr43p073/test_5.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.count_bits(unsigned int x)\n      |        ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -1081,7 +1161,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 108,
+    "time_ms": 80,
     "error": null
   },
   {
@@ -1198,7 +1278,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 452,
+    "time_ms": 473,
     "error": null
   },
   {
@@ -1207,7 +1287,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.556,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/usr/bin/ld: /tmp/cc5iSwjn.o: in function `main':\ntest_5.c:(.text+0x44): undefined reference to `count_bits'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 5: Compilation failed:\n/usr/bin/ld: /tmp/ccnKkjIz.o: in function `main':\ntest_5.c:(.text+0x44): undefined reference to `count_bits'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -1315,7 +1395,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 622,
+    "time_ms": 544,
     "error": null
   },
   {
@@ -1362,7 +1442,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 0,
     "consensus_rank": null,
-    "time_ms": 12014,
+    "time_ms": 11125,
     "error": "Decompiler output does not match requested function name or address"
   },
   {
@@ -1371,7 +1451,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.4078,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp412o38sa/test_5.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 count_bits(uint32 ecx)\n      | ^~~~~~\n      | word\n/tmp/tmp412o38sa/test_5.c:41:19: error: unknown type name \u2018uint32\u2019; did you mean \u2018uint\u2019?\n   41 | word32 count_bits(uint32 ecx)\n      |            ",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpty582omq/test_5.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 count_bits(uint32 ecx)\n      | ^~~~~~\n      | word\n/tmp/tmpty582omq/test_5.c:41:19: error: unknown type name \u2018uint32\u2019; did you mean \u2018uint\u2019?\n   41 | word32 count_bits(uint32 ecx)\n      |            ",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -1468,7 +1548,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 3,
-    "time_ms": 470,
+    "time_ms": 428,
     "error": null
   },
   {
@@ -1585,7 +1665,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 2,
-    "time_ms": 3067,
+    "time_ms": 3101,
     "error": null
   },
   {
@@ -1709,34 +1789,125 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 4928,
+    "time_ms": 4288,
     "error": null
   },
   {
     "decompiler": "boomerang",
     "function_name": "clamp",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0,
+    "source_similarity": 0.2394,
     "semantic_score": 0.0,
-    "semantic_error": "Function at address 0x14000155f not found in Boomerang address comments",
-    "fail_category": "adapter_error",
+    "semantic_error": "Case 5: Compilation failed:\n/usr/bin/ld: /tmp/ccAf8noF.o: in function `main':\ntest_5.c:(.text+0x28): undefined reference to `clamp'\ncollect2: error: ld returned 1 exit status\n",
+    "fail_category": "compile_error",
     "cases_passed": 0,
-    "cases_total": 0,
-    "correctness_score": 0.0,
-    "correctness_rank": null,
-    "readability_proxy_score": null,
-    "composite_score": 0.0,
+    "cases_total": 6,
+    "correctness_score": 0.15,
+    "correctness_rank": 3,
+    "readability_proxy_score": 0.9,
+    "composite_score": 0.15,
     "structural_penalty": 0.0,
     "uses_intrinsics": false,
-    "decompiled_code": "",
-    "readability_metrics": {},
-    "ast_similarity": {},
-    "output_diagnostics": {},
+    "decompiled_code": "/** address: 0x0000155f */\nvoid proc_0x0000155f()\n{\n    return;\n}",
+    "readability_metrics": {
+      "validated_against_humans": false,
+      "composite_score": null,
+      "parse_ok": true,
+      "parse_error": null,
+      "generic_naming_ratio": {
+        "raw": {
+          "generic": 0,
+          "total": 1,
+          "ratio": 0.0
+        },
+        "normalized": 1.0
+      },
+      "type_specificity": {
+        "raw": {
+          "average": 0.5,
+          "typed_nodes": 1
+        },
+        "normalized": 0.5
+      },
+      "expression_complexity": {
+        "raw": {
+          "operator_count": 0,
+          "avg_expression_depth": 0.0,
+          "max_cast_depth": 0,
+          "ternary_count": 0,
+          "comma_count": 0,
+          "temporary_identifier_count": 0,
+          "loc": 4,
+          "temporary_identifier_loc_ratio": 0.0
+        },
+        "normalized": 1.0
+      },
+      "structured_control_flow": {
+        "raw": {
+          "structured_constructs": 0,
+          "goto_count": 0,
+          "nesting_depth": 1,
+          "irreducible_loop_suspected": false,
+          "state_flag_count": 0,
+          "structured_ratio": 1.0
+        },
+        "normalized": 1.0
+      },
+      "unresolved_artifacts": {
+        "raw": {
+          "total": 0,
+          "details": {
+            "sleigh_intrinsic": 0,
+            "word_macro": 0,
+            "register_name": 0,
+            "collapsed_type": 0
+          }
+        },
+        "normalized": 1.0
+      }
+    },
+    "ast_similarity": {
+      "available": true,
+      "algorithm": "zhang_shasha",
+      "identifier_placeholder": {
+        "raw_distance": 23,
+        "normalized_distance": 0.2233,
+        "similarity": 0.7767
+      },
+      "type_erased": {
+        "raw_distance": 23,
+        "normalized_distance": 0.2233,
+        "similarity": 0.7767
+      },
+      "control_flow_normalized": {
+        "raw_distance": 24,
+        "normalized_distance": 0.233,
+        "similarity": 0.767
+      }
+    },
+    "output_diagnostics": {
+      "status": "direct_function",
+      "issues": [
+        "target_name_missing"
+      ],
+      "function_definition_count": 1,
+      "function_definitions_sample": [
+        "proc_0x0000155f"
+      ],
+      "target_name_present": false,
+      "expected_address_present": true,
+      "whole_program_like": false,
+      "truncated_output": false,
+      "harness_blockers": [],
+      "dotted_names_sample": [],
+      "register_inputs_sample": [],
+      "decompiler": "boomerang"
+    },
     "goto_count": 0,
-    "nesting_depth": 0,
-    "consensus_rank": null,
-    "time_ms": 10,
-    "error": "Function at address 0x14000155f not found in Boomerang address comments"
+    "nesting_depth": 1,
+    "consensus_rank": 3,
+    "time_ms": 14,
+    "error": null
   },
   {
     "decompiler": "radare2",
@@ -1744,7 +1915,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.4848,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpgsuagzqd/test_5.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.clamp(int value,int lo,int hi)\n      |        ^\n",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp5ps7zgej/test_5.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.clamp(int value,int lo,int hi)\n      |        ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -1846,7 +2017,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 108,
+    "time_ms": 80,
     "error": null
   },
   {
@@ -1963,7 +2134,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 452,
+    "time_ms": 473,
     "error": null
   },
   {
@@ -1972,12 +2143,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0099,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp864yotqd/test_5.c: In function \u2018fun_14000155f\u2019:\n/tmp/tmp864yotqd/test_5.c:44:9: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   44 |     if (reinterpret_cast<int32_t>(ecx) >= reinterpret_cast<int32_t>(edx)) {\n      |         ^~~~~~~~~~~~~~~~\n/tmp/tmp864yotqd/test_5.c:44:",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp5vbkcwwh/test_5.c: In function \u2018fun_14000155f\u2019:\n/tmp/tmp5vbkcwwh/test_5.c:44:9: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   44 |     if (reinterpret_cast<int32_t>(ecx) >= reinterpret_cast<int32_t>(edx)) {\n      |         ^~~~~~~~~~~~~~~~\n/tmp/tmp5vbkcwwh/test_5.c:44:",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
     "correctness_score": 0.141,
-    "correctness_rank": 7,
+    "correctness_rank": 8,
     "readability_proxy_score": 0.4,
     "composite_score": 0.141,
     "structural_penalty": 0.2,
@@ -2068,8 +2239,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 3,
-    "consensus_rank": 7,
-    "time_ms": 622,
+    "consensus_rank": 8,
+    "time_ms": 544,
     "error": null
   },
   {
@@ -2078,7 +2249,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0376,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpsgjhp24w/test_5.c: In function \u2018_ABI\u2019:\n/tmp/tmpsgjhp24w/test_5.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x14000155f_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), st",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp1i8831ur/test_5.c: In function \u2018_ABI\u2019:\n/tmp/tmp1i8831ur/test_5.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x14000155f_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), st",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -2178,7 +2349,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 3,
-    "time_ms": 12014,
+    "time_ms": 11125,
     "error": null
   },
   {
@@ -2187,7 +2358,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.4066,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp4palpbol/test_5.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 clamp(int32 ecx, int32 edx, int32 r8d)\n      | ^~~~~~\n      | word\n/tmp/tmp4palpbol/test_5.c:41:14: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | word32 clamp(int32 ecx, int32 e",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpqpfhzu66/test_5.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 clamp(int32 ecx, int32 edx, int32 r8d)\n      | ^~~~~~\n      | word\n/tmp/tmpqpfhzu66/test_5.c:41:14: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | word32 clamp(int32 ecx, int32 e",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -2284,7 +2455,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 3,
-    "time_ms": 470,
+    "time_ms": 428,
     "error": null
   },
   {
@@ -2401,7 +2572,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 3,
-    "time_ms": 3067,
+    "time_ms": 3101,
     "error": null
   },
   {
@@ -2523,34 +2694,125 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 2,
-    "time_ms": 4928,
+    "time_ms": 4288,
     "error": null
   },
   {
     "decompiler": "boomerang",
     "function_name": "signum",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0,
+    "source_similarity": 0.2667,
     "semantic_score": 0.0,
-    "semantic_error": "Function at address 0x14000158c not found in Boomerang address comments",
-    "fail_category": "adapter_error",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/cc3tv4CK.o: in function `main':\ntest_4.c:(.text+0x1e): undefined reference to `signum'\ncollect2: error: ld returned 1 exit status\n",
+    "fail_category": "compile_error",
     "cases_passed": 0,
-    "cases_total": 0,
-    "correctness_score": 0.0,
-    "correctness_rank": null,
-    "readability_proxy_score": null,
-    "composite_score": 0.0,
+    "cases_total": 5,
+    "correctness_score": 0.15,
+    "correctness_rank": 4,
+    "readability_proxy_score": 0.9,
+    "composite_score": 0.15,
     "structural_penalty": 0.0,
     "uses_intrinsics": false,
-    "decompiled_code": "",
-    "readability_metrics": {},
-    "ast_similarity": {},
-    "output_diagnostics": {},
+    "decompiled_code": "/** address: 0x0000158c */\nvoid proc_0x0000158c()\n{\n    return;\n}",
+    "readability_metrics": {
+      "validated_against_humans": false,
+      "composite_score": null,
+      "parse_ok": true,
+      "parse_error": null,
+      "generic_naming_ratio": {
+        "raw": {
+          "generic": 0,
+          "total": 1,
+          "ratio": 0.0
+        },
+        "normalized": 1.0
+      },
+      "type_specificity": {
+        "raw": {
+          "average": 0.5,
+          "typed_nodes": 1
+        },
+        "normalized": 0.5
+      },
+      "expression_complexity": {
+        "raw": {
+          "operator_count": 0,
+          "avg_expression_depth": 0.0,
+          "max_cast_depth": 0,
+          "ternary_count": 0,
+          "comma_count": 0,
+          "temporary_identifier_count": 0,
+          "loc": 4,
+          "temporary_identifier_loc_ratio": 0.0
+        },
+        "normalized": 1.0
+      },
+      "structured_control_flow": {
+        "raw": {
+          "structured_constructs": 0,
+          "goto_count": 0,
+          "nesting_depth": 1,
+          "irreducible_loop_suspected": false,
+          "state_flag_count": 0,
+          "structured_ratio": 1.0
+        },
+        "normalized": 1.0
+      },
+      "unresolved_artifacts": {
+        "raw": {
+          "total": 0,
+          "details": {
+            "sleigh_intrinsic": 0,
+            "word_macro": 0,
+            "register_name": 0,
+            "collapsed_type": 0
+          }
+        },
+        "normalized": 1.0
+      }
+    },
+    "ast_similarity": {
+      "available": true,
+      "algorithm": "zhang_shasha",
+      "identifier_placeholder": {
+        "raw_distance": 18,
+        "normalized_distance": 0.1837,
+        "similarity": 0.8163
+      },
+      "type_erased": {
+        "raw_distance": 18,
+        "normalized_distance": 0.1837,
+        "similarity": 0.8163
+      },
+      "control_flow_normalized": {
+        "raw_distance": 19,
+        "normalized_distance": 0.1939,
+        "similarity": 0.8061
+      }
+    },
+    "output_diagnostics": {
+      "status": "direct_function",
+      "issues": [
+        "target_name_missing"
+      ],
+      "function_definition_count": 1,
+      "function_definitions_sample": [
+        "proc_0x0000158c"
+      ],
+      "target_name_present": false,
+      "expected_address_present": true,
+      "whole_program_like": false,
+      "truncated_output": false,
+      "harness_blockers": [],
+      "dotted_names_sample": [],
+      "register_inputs_sample": [],
+      "decompiler": "boomerang"
+    },
     "goto_count": 0,
-    "nesting_depth": 0,
-    "consensus_rank": null,
-    "time_ms": 10,
-    "error": "Function at address 0x14000158c not found in Boomerang address comments"
+    "nesting_depth": 1,
+    "consensus_rank": 4,
+    "time_ms": 14,
+    "error": null
   },
   {
     "decompiler": "radare2",
@@ -2558,7 +2820,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.5412,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpc2c3sgzn/test_4.c:42:10: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | ulong dbg.signum(int value)\n      |          ^\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp5b4hmjji/test_4.c:42:10: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | ulong dbg.signum(int value)\n      |          ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -2660,7 +2922,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 4,
-    "time_ms": 108,
+    "time_ms": 80,
     "error": null
   },
   {
@@ -2777,7 +3039,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 1,
-    "time_ms": 452,
+    "time_ms": 473,
     "error": null
   },
   {
@@ -2786,7 +3048,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.2912,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/cccPcBL3.o: in function `main':\ntest_4.c:(.text+0x50): undefined reference to `signum'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccdQHpUA.o: in function `main':\ntest_4.c:(.text+0x50): undefined reference to `signum'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -2894,7 +3156,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 4,
-    "time_ms": 622,
+    "time_ms": 544,
     "error": null
   },
   {
@@ -2903,7 +3165,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0592,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp7ut7wm2j/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmp7ut7wm2j/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x14000158c_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), struct_204 stack_arguments _STACK) {\n      | ^~~~~~~~~~~\n/tmp/tmp7ut7wm2j/test_4.c:42:",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmptjvl2q_h/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmptjvl2q_h/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x14000158c_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), struct_204 stack_arguments _STACK) {\n      | ^~~~~~~~~~~\n/tmp/tmptjvl2q_h/test_4.c:42:",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -3003,7 +3265,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 4,
-    "time_ms": 12014,
+    "time_ms": 11125,
     "error": null
   },
   {
@@ -3012,7 +3274,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.4228,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpbx0w0ybn/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 signum(int32 ecx)\n      | ^~~~~~\n      | word\n/tmp/tmpbx0w0ybn/test_4.c:41:15: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | word32 signum(int32 ecx)\n      |               ^~~~~",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp0g6t1osy/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 signum(int32 ecx)\n      | ^~~~~~\n      | word\n/tmp/tmp0g6t1osy/test_4.c:41:15: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | word32 signum(int32 ecx)\n      |               ^~~~~",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -3109,7 +3371,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 4,
-    "time_ms": 470,
+    "time_ms": 428,
     "error": null
   },
   {
@@ -3118,12 +3380,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1028,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp_6bgljww/test_4.c: In function \u2018checksum\u2019:\n/tmp/tmp_6bgljww/test_4.c:62:13: error: invalid operands to binary % (have \u2018uchar *\u2019 {aka \u2018unsigned char *\u2019} and \u2018int\u2019)\n   62 |     local_4 %= 256;\n      |             ^~\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpake5yl__/test_4.c: In function \u2018checksum\u2019:\n/tmp/tmpake5yl__/test_4.c:62:13: error: invalid operands to binary % (have \u2018uchar *\u2019 {aka \u2018unsigned char *\u2019} and \u2018int\u2019)\n   62 |     local_4 %= 256;\n      |             ^~\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1123,
-    "correctness_rank": 7,
+    "correctness_rank": 8,
     "readability_proxy_score": 0.2,
     "composite_score": 0.1123,
     "structural_penalty": 0.28,
@@ -3214,8 +3476,8 @@ const SCORES = [
     },
     "goto_count": 2,
     "nesting_depth": 2,
-    "consensus_rank": 7,
-    "time_ms": 3067,
+    "consensus_rank": 8,
+    "time_ms": 3101,
     "error": null
   },
   {
@@ -3327,34 +3589,125 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 2,
-    "time_ms": 4928,
+    "time_ms": 4288,
     "error": null
   },
   {
     "decompiler": "boomerang",
     "function_name": "checksum",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0,
+    "source_similarity": 0.1856,
     "semantic_score": 0.0,
-    "semantic_error": "Function at address 0x1400015b4 not found in Boomerang address comments",
-    "fail_category": "adapter_error",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccIzYge4.o: in function `main':\ntest_4.c:(.text+0x3e): undefined reference to `checksum'\ncollect2: error: ld returned 1 exit status\n",
+    "fail_category": "compile_error",
     "cases_passed": 0,
-    "cases_total": 0,
-    "correctness_score": 0.0,
-    "correctness_rank": null,
-    "readability_proxy_score": null,
-    "composite_score": 0.0,
+    "cases_total": 5,
+    "correctness_score": 0.15,
+    "correctness_rank": 3,
+    "readability_proxy_score": 0.9,
+    "composite_score": 0.15,
     "structural_penalty": 0.0,
     "uses_intrinsics": false,
-    "decompiled_code": "",
-    "readability_metrics": {},
-    "ast_similarity": {},
-    "output_diagnostics": {},
+    "decompiled_code": "/** address: 0x000015b4 */\nvoid proc_0x000015b4()\n{\n    return;\n}",
+    "readability_metrics": {
+      "validated_against_humans": false,
+      "composite_score": null,
+      "parse_ok": true,
+      "parse_error": null,
+      "generic_naming_ratio": {
+        "raw": {
+          "generic": 0,
+          "total": 1,
+          "ratio": 0.0
+        },
+        "normalized": 1.0
+      },
+      "type_specificity": {
+        "raw": {
+          "average": 0.5,
+          "typed_nodes": 1
+        },
+        "normalized": 0.5
+      },
+      "expression_complexity": {
+        "raw": {
+          "operator_count": 0,
+          "avg_expression_depth": 0.0,
+          "max_cast_depth": 0,
+          "ternary_count": 0,
+          "comma_count": 0,
+          "temporary_identifier_count": 0,
+          "loc": 4,
+          "temporary_identifier_loc_ratio": 0.0
+        },
+        "normalized": 1.0
+      },
+      "structured_control_flow": {
+        "raw": {
+          "structured_constructs": 0,
+          "goto_count": 0,
+          "nesting_depth": 1,
+          "irreducible_loop_suspected": false,
+          "state_flag_count": 0,
+          "structured_ratio": 1.0
+        },
+        "normalized": 1.0
+      },
+      "unresolved_artifacts": {
+        "raw": {
+          "total": 0,
+          "details": {
+            "sleigh_intrinsic": 0,
+            "word_macro": 0,
+            "register_name": 0,
+            "collapsed_type": 0
+          }
+        },
+        "normalized": 1.0
+      }
+    },
+    "ast_similarity": {
+      "available": true,
+      "algorithm": "zhang_shasha",
+      "identifier_placeholder": {
+        "raw_distance": 38,
+        "normalized_distance": 0.322,
+        "similarity": 0.678
+      },
+      "type_erased": {
+        "raw_distance": 38,
+        "normalized_distance": 0.322,
+        "similarity": 0.678
+      },
+      "control_flow_normalized": {
+        "raw_distance": 39,
+        "normalized_distance": 0.3305,
+        "similarity": 0.6695
+      }
+    },
+    "output_diagnostics": {
+      "status": "direct_function",
+      "issues": [
+        "target_name_missing"
+      ],
+      "function_definition_count": 1,
+      "function_definitions_sample": [
+        "proc_0x000015b4"
+      ],
+      "target_name_present": false,
+      "expected_address_present": true,
+      "whole_program_like": false,
+      "truncated_output": false,
+      "harness_blockers": [],
+      "dotted_names_sample": [],
+      "register_inputs_sample": [],
+      "decompiler": "boomerang"
+    },
     "goto_count": 0,
-    "nesting_depth": 0,
-    "consensus_rank": null,
-    "time_ms": 10,
-    "error": "Function at address 0x1400015b4 not found in Boomerang address comments"
+    "nesting_depth": 1,
+    "consensus_rank": 3,
+    "time_ms": 14,
+    "error": null
   },
   {
     "decompiler": "radare2",
@@ -3362,7 +3715,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.4539,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpanjmcjv2/test_4.c:42:17: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | unsigned int dbg.checksum(int *buf,size_t len)\n      |                 ^\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpvc1ou0mh/test_4.c:42:17: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | unsigned int dbg.checksum(int *buf,size_t len)\n      |                 ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -3464,7 +3817,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 108,
+    "time_ms": 80,
     "error": null
   },
   {
@@ -3581,7 +3934,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 452,
+    "time_ms": 473,
     "error": null
   },
   {
@@ -3590,7 +3943,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1288,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpx0m4udgo/test_4.c: In function \u2018fun_1400015b4\u2019:\n/tmp/tmpx0m4udgo/test_4.c:53:17: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   53 |         eax8 = *reinterpret_cast<unsigned char*>(v7 + reinterpret_cast<int64_t>(v4));\n      |                 ^~~~~~~~~~~~~~~~\n/tmp/tmpx0",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpox757yzj/test_4.c: In function \u2018fun_1400015b4\u2019:\n/tmp/tmpox757yzj/test_4.c:53:17: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   53 |         eax8 = *reinterpret_cast<unsigned char*>(v7 + reinterpret_cast<int64_t>(v4));\n      |                 ^~~~~~~~~~~~~~~~\n/tmp/tmpox",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -3687,7 +4040,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 622,
+    "time_ms": 544,
     "error": null
   },
   {
@@ -3696,7 +4049,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0438,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmptalr5yqw/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmptalr5yqw/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x1400015b4_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_203 stack_arguments _STACK) {\n      ",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpxu7owa9w/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpxu7owa9w/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x1400015b4_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_203 stack_arguments _STACK) {\n      ",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -3796,7 +4149,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 3,
-    "time_ms": 12014,
+    "time_ms": 11125,
     "error": null
   },
   {
@@ -3805,7 +4158,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1762,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpqk1lu8b6/test_4.c:41:1: error: unknown type name \u2018ui32\u2019\n   41 | ui32 checksum(Eq_552 rcx, Eq_553 rdx)\n      | ^~~~\n/tmp/tmpqk1lu8b6/test_4.c:41:15: error: unknown type name \u2018Eq_552\u2019\n   41 | ui32 checksum(Eq_552 rcx, Eq_553 rdx)\n      |               ^~~~~~\n/tmp/tmpqk1lu8b6/test_4.c:41:27: er",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpg10aw49r/test_4.c:41:1: error: unknown type name \u2018ui32\u2019\n   41 | ui32 checksum(Eq_552 rcx, Eq_553 rdx)\n      | ^~~~\n/tmp/tmpg10aw49r/test_4.c:41:15: error: unknown type name \u2018Eq_552\u2019\n   41 | ui32 checksum(Eq_552 rcx, Eq_553 rdx)\n      |               ^~~~~~\n/tmp/tmpg10aw49r/test_4.c:41:27: er",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -3902,7 +4255,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 470,
+    "time_ms": 428,
     "error": null
   },
   {
@@ -4008,7 +4361,7 @@ const SCORES = [
     "goto_count": 9,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 3067,
+    "time_ms": 3101,
     "error": null
   },
   {
@@ -4130,34 +4483,125 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 2,
-    "time_ms": 4928,
+    "time_ms": 4288,
     "error": null
   },
   {
     "decompiler": "boomerang",
     "function_name": "classify_range",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0,
+    "source_similarity": 0.1865,
     "semantic_score": 0.0,
-    "semantic_error": "Function at address 0x14000160b not found in Boomerang address comments",
-    "fail_category": "adapter_error",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccr1lC0K.o: in function `main':\ntest_4.c:(.text+0x1e): undefined reference to `classify_range'\ncollect2: error: ld returned 1 exit status\n",
+    "fail_category": "compile_error",
     "cases_passed": 0,
-    "cases_total": 0,
-    "correctness_score": 0.0,
-    "correctness_rank": null,
-    "readability_proxy_score": null,
-    "composite_score": 0.0,
+    "cases_total": 5,
+    "correctness_score": 0.15,
+    "correctness_rank": 4,
+    "readability_proxy_score": 0.9,
+    "composite_score": 0.15,
     "structural_penalty": 0.0,
     "uses_intrinsics": false,
-    "decompiled_code": "",
-    "readability_metrics": {},
-    "ast_similarity": {},
-    "output_diagnostics": {},
+    "decompiled_code": "/** address: 0x0000160b */\nvoid proc_0x0000160b()\n{\n    return;\n}",
+    "readability_metrics": {
+      "validated_against_humans": false,
+      "composite_score": null,
+      "parse_ok": true,
+      "parse_error": null,
+      "generic_naming_ratio": {
+        "raw": {
+          "generic": 0,
+          "total": 1,
+          "ratio": 0.0
+        },
+        "normalized": 1.0
+      },
+      "type_specificity": {
+        "raw": {
+          "average": 0.5,
+          "typed_nodes": 1
+        },
+        "normalized": 0.5
+      },
+      "expression_complexity": {
+        "raw": {
+          "operator_count": 0,
+          "avg_expression_depth": 0.0,
+          "max_cast_depth": 0,
+          "ternary_count": 0,
+          "comma_count": 0,
+          "temporary_identifier_count": 0,
+          "loc": 4,
+          "temporary_identifier_loc_ratio": 0.0
+        },
+        "normalized": 1.0
+      },
+      "structured_control_flow": {
+        "raw": {
+          "structured_constructs": 0,
+          "goto_count": 0,
+          "nesting_depth": 1,
+          "irreducible_loop_suspected": false,
+          "state_flag_count": 0,
+          "structured_ratio": 1.0
+        },
+        "normalized": 1.0
+      },
+      "unresolved_artifacts": {
+        "raw": {
+          "total": 0,
+          "details": {
+            "sleigh_intrinsic": 0,
+            "word_macro": 0,
+            "register_name": 0,
+            "collapsed_type": 0
+          }
+        },
+        "normalized": 1.0
+      }
+    },
+    "ast_similarity": {
+      "available": true,
+      "algorithm": "zhang_shasha",
+      "identifier_placeholder": {
+        "raw_distance": 31,
+        "normalized_distance": 0.2793,
+        "similarity": 0.7207
+      },
+      "type_erased": {
+        "raw_distance": 31,
+        "normalized_distance": 0.2793,
+        "similarity": 0.7207
+      },
+      "control_flow_normalized": {
+        "raw_distance": 32,
+        "normalized_distance": 0.2883,
+        "similarity": 0.7117
+      }
+    },
+    "output_diagnostics": {
+      "status": "direct_function",
+      "issues": [
+        "target_name_missing"
+      ],
+      "function_definition_count": 1,
+      "function_definitions_sample": [
+        "proc_0x0000160b"
+      ],
+      "target_name_present": false,
+      "expected_address_present": true,
+      "whole_program_like": false,
+      "truncated_output": false,
+      "harness_blockers": [],
+      "dotted_names_sample": [],
+      "register_inputs_sample": [],
+      "decompiler": "boomerang"
+    },
     "goto_count": 0,
-    "nesting_depth": 0,
-    "consensus_rank": null,
-    "time_ms": 10,
-    "error": "Function at address 0x14000160b not found in Boomerang address comments"
+    "nesting_depth": 1,
+    "consensus_rank": 4,
+    "time_ms": 14,
+    "error": null
   },
   {
     "decompiler": "radare2",
@@ -4165,7 +4609,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1439,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp6i_it7x0/test_4.c:42:10: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | ulong dbg.classify_range(int value)\n      |          ^\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp67enqtqu/test_4.c:42:10: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | ulong dbg.classify_range(int value)\n      |          ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -4267,7 +4711,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 4,
-    "time_ms": 108,
+    "time_ms": 80,
     "error": null
   },
   {
@@ -4384,7 +4828,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 452,
+    "time_ms": 473,
     "error": null
   },
   {
@@ -4393,7 +4837,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0455,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/cceYC571.o: in function `main':\ntest_4.c:(.text+0x87): undefined reference to `classify_range'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccp8RuRh.o: in function `main':\ntest_4.c:(.text+0x87): undefined reference to `classify_range'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -4501,7 +4945,7 @@ const SCORES = [
     "goto_count": 7,
     "nesting_depth": 3,
     "consensus_rank": 4,
-    "time_ms": 622,
+    "time_ms": 544,
     "error": null
   },
   {
@@ -4510,12 +4954,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0418,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpx1m6gqzt/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpx1m6gqzt/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x14000160b_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), struct_202 stack_arguments _STACK) {\n      | ^~~~~~~~~~~\n/tmp/tmpx1m6gqzt/test_4.c:42:",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp3gwn2y5z/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmp3gwn2y5z/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x14000160b_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), struct_202 stack_arguments _STACK) {\n      | ^~~~~~~~~~~\n/tmp/tmp3gwn2y5z/test_4.c:42:",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1442,
-    "correctness_rank": 7,
+    "correctness_rank": 8,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1442,
     "structural_penalty": 0.2,
@@ -4609,8 +5053,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 4,
-    "consensus_rank": 7,
-    "time_ms": 12014,
+    "consensus_rank": 8,
+    "time_ms": 11125,
     "error": null
   },
   {
@@ -4619,12 +5063,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0824,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpp35nhvd8/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 classify_range(Eq_568 ecx)\n      | ^~~~~~\n      | word\n/tmp/tmpp35nhvd8/test_4.c:41:23: error: unknown type name \u2018Eq_568\u2019\n   41 | word32 classify_range(Eq_568 ecx)\n      |                       ^~~",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp88ltw4ki/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 classify_range(Eq_568 ecx)\n      | ^~~~~~\n      | word\n/tmp/tmp88ltw4ki/test_4.c:41:23: error: unknown type name \u2018Eq_568\u2019\n   41 | word32 classify_range(Eq_568 ecx)\n      |                       ^~~",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1482,
-    "correctness_rank": 6,
+    "correctness_rank": 7,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1482,
     "structural_penalty": 0.2,
@@ -4715,8 +5159,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 4,
-    "consensus_rank": 6,
-    "time_ms": 470,
+    "consensus_rank": 7,
+    "time_ms": 428,
     "error": null
   },
   {
@@ -4822,7 +5266,7 @@ const SCORES = [
     "goto_count": 3,
     "nesting_depth": 2,
     "consensus_rank": 2,
-    "time_ms": 3067,
+    "time_ms": 3101,
     "error": null
   },
   {
@@ -4945,34 +5389,125 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 3,
-    "time_ms": 4928,
+    "time_ms": 4288,
     "error": null
   },
   {
     "decompiler": "boomerang",
     "function_name": "saturating_add",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0,
+    "source_similarity": 0.1818,
     "semantic_score": 0.0,
-    "semantic_error": "Function at address 0x140001660 not found in Boomerang address comments",
-    "fail_category": "adapter_error",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccqhPktu.o: in function `main':\ntest_4.c:(.text+0x23): undefined reference to `saturating_add'\ncollect2: error: ld returned 1 exit status\n",
+    "fail_category": "compile_error",
     "cases_passed": 0,
-    "cases_total": 0,
-    "correctness_score": 0.0,
-    "correctness_rank": null,
-    "readability_proxy_score": null,
-    "composite_score": 0.0,
+    "cases_total": 5,
+    "correctness_score": 0.15,
+    "correctness_rank": 3,
+    "readability_proxy_score": 0.9,
+    "composite_score": 0.15,
     "structural_penalty": 0.0,
     "uses_intrinsics": false,
-    "decompiled_code": "",
-    "readability_metrics": {},
-    "ast_similarity": {},
-    "output_diagnostics": {},
+    "decompiled_code": "/** address: 0x00001660 */\nvoid proc_0x00001660()\n{\n    return;\n}",
+    "readability_metrics": {
+      "validated_against_humans": false,
+      "composite_score": null,
+      "parse_ok": true,
+      "parse_error": null,
+      "generic_naming_ratio": {
+        "raw": {
+          "generic": 0,
+          "total": 1,
+          "ratio": 0.0
+        },
+        "normalized": 1.0
+      },
+      "type_specificity": {
+        "raw": {
+          "average": 0.5,
+          "typed_nodes": 1
+        },
+        "normalized": 0.5
+      },
+      "expression_complexity": {
+        "raw": {
+          "operator_count": 0,
+          "avg_expression_depth": 0.0,
+          "max_cast_depth": 0,
+          "ternary_count": 0,
+          "comma_count": 0,
+          "temporary_identifier_count": 0,
+          "loc": 4,
+          "temporary_identifier_loc_ratio": 0.0
+        },
+        "normalized": 1.0
+      },
+      "structured_control_flow": {
+        "raw": {
+          "structured_constructs": 0,
+          "goto_count": 0,
+          "nesting_depth": 1,
+          "irreducible_loop_suspected": false,
+          "state_flag_count": 0,
+          "structured_ratio": 1.0
+        },
+        "normalized": 1.0
+      },
+      "unresolved_artifacts": {
+        "raw": {
+          "total": 0,
+          "details": {
+            "sleigh_intrinsic": 0,
+            "word_macro": 0,
+            "register_name": 0,
+            "collapsed_type": 0
+          }
+        },
+        "normalized": 1.0
+      }
+    },
+    "ast_similarity": {
+      "available": true,
+      "algorithm": "zhang_shasha",
+      "identifier_placeholder": {
+        "raw_distance": 37,
+        "normalized_distance": 0.3162,
+        "similarity": 0.6838
+      },
+      "type_erased": {
+        "raw_distance": 37,
+        "normalized_distance": 0.3162,
+        "similarity": 0.6838
+      },
+      "control_flow_normalized": {
+        "raw_distance": 38,
+        "normalized_distance": 0.3248,
+        "similarity": 0.6752
+      }
+    },
+    "output_diagnostics": {
+      "status": "direct_function",
+      "issues": [
+        "target_name_missing"
+      ],
+      "function_definition_count": 1,
+      "function_definitions_sample": [
+        "proc_0x00001660"
+      ],
+      "target_name_present": false,
+      "expected_address_present": true,
+      "whole_program_like": false,
+      "truncated_output": false,
+      "harness_blockers": [],
+      "dotted_names_sample": [],
+      "register_inputs_sample": [],
+      "decompiler": "boomerang"
+    },
     "goto_count": 0,
-    "nesting_depth": 0,
-    "consensus_rank": null,
-    "time_ms": 10,
-    "error": "Function at address 0x140001660 not found in Boomerang address comments"
+    "nesting_depth": 1,
+    "consensus_rank": 3,
+    "time_ms": 14,
+    "error": null
   },
   {
     "decompiler": "radare2",
@@ -4980,7 +5515,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.2273,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpaoyjjdz6/test_4.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.saturating_add(int a,int b)\n      |        ^\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp3d8k1z9r/test_4.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.saturating_add(int a,int b)\n      |        ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -5082,7 +5617,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 3,
-    "time_ms": 108,
+    "time_ms": 80,
     "error": null
   },
   {
@@ -5199,7 +5734,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 1,
-    "time_ms": 452,
+    "time_ms": 473,
     "error": null
   },
   {
@@ -5208,7 +5743,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0347,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccWKv97U.o: in function `main':\ntest_4.c:(.text+0x64): undefined reference to `saturating_add'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccAQZsPW.o: in function `main':\ntest_4.c:(.text+0x64): undefined reference to `saturating_add'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -5316,7 +5851,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 3,
-    "time_ms": 622,
+    "time_ms": 544,
     "error": null
   },
   {
@@ -5325,12 +5860,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0862,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmptm3llkq_/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmptm3llkq_/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x140001660_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_201 stack_arguments _STACK) {\n      ",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpleyjwpap/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpleyjwpap/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x140001660_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_201 stack_arguments _STACK) {\n      ",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1486,
-    "correctness_rank": 7,
+    "correctness_rank": 8,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1486,
     "structural_penalty": 0.2,
@@ -5424,8 +5959,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 3,
-    "consensus_rank": 7,
-    "time_ms": 12014,
+    "consensus_rank": 8,
+    "time_ms": 11125,
     "error": null
   },
   {
@@ -5434,7 +5969,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1866,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpi5x4_8yd/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 saturating_add(int32 ecx, int32 edx)\n      | ^~~~~~\n      | word\n/tmp/tmpi5x4_8yd/test_4.c:41:23: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | word32 saturating_add(int32 ecx, ",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpv0hgkx2p/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 saturating_add(int32 ecx, int32 edx)\n      | ^~~~~~\n      | word\n/tmp/tmpv0hgkx2p/test_4.c:41:23: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | word32 saturating_add(int32 ecx, ",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -5531,7 +6066,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 3,
-    "time_ms": 470,
+    "time_ms": 428,
     "error": null
   },
   {
@@ -5540,7 +6075,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0286,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp5d85si8p/test_4.c: In function \u2018rc4_init\u2019:\n/tmp/tmp5d85si8p/test_4.c:52:5: error: \u2018reg\u2019 undeclared (first use in this function)\n   52 |     reg = __sborrow(rsp, 16);\n      |     ^~~\n/tmp/tmp5d85si8p/test_4.c:52:5: note: each undeclared identifier is reported only once for each function it ap",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpou02c6z5/test_4.c: In function \u2018rc4_init\u2019:\n/tmp/tmpou02c6z5/test_4.c:52:5: error: \u2018reg\u2019 undeclared (first use in this function)\n   52 |     reg = __sborrow(rsp, 16);\n      |     ^~~\n/tmp/tmpou02c6z5/test_4.c:52:5: note: each undeclared identifier is reported only once for each function it ap",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -5637,7 +6172,7 @@ const SCORES = [
     "goto_count": 4,
     "nesting_depth": 2,
     "consensus_rank": 7,
-    "time_ms": 25938,
+    "time_ms": 24791,
     "error": null
   },
   {
@@ -5750,7 +6285,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 10754,
+    "time_ms": 9370,
     "error": null
   },
   {
@@ -5759,7 +6294,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "semantic_score": 0.0,
-    "semantic_error": "Function at address 0x140001530 not found in Boomerang address comments",
+    "semantic_error": "Decompilation failed: Level | File                                    | Line | Message\n====================================================================================================\nMsg   | src/boomerang/util/log/Log.cpp          |  152 | This is Boomerang 4110413\nMsg   | src/boomerang/util/log/Log.cpp          |  153 | Log initialized.\nMsg   | src/boomerang/util/log/Log.cpp          |  154 | Log level is 'Msg'.\nMsg   | src/boomerang/core/Project.cpp          |  350 | Loading plugins...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/ppc.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/x86.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/st20.ssl'...\nMsg   | src/boomerang/core/Project.cpp          |  364 | Loaded plugins:\nMsg   | src/boomerang/core/Project.cpp          |  366 |   C Code Generator plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone PPC decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone x86 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   ST20 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS4GW loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ELF32 loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS Exe loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Mach-O loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ST20 .bin loader plugin [experimental] 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Win32 PE loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   PPC FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   ST20 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   X86 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  382 |   C Symbol Provider plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  386 |   DFA Type Recovery plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  111 | Loading binary file '/tmp/tmp1s1kk3n1/target.bin'\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  291 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  374 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  433 | Microdisassembler out of step at offset 4561\nMsg   | src/boomerang/db/Prog.cpp               |  351 | Reading library signatures...\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001530\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001530\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001624\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001624\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001745\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001745\nMsg   | src/boomerang/core/Project.cpp          |  197 | Found 3 procs\nMsg   | src/boomerang/core/Project.cpp          |  222 | Decompiling...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001530'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001559: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001559 arpl ax, dx'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001584: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001584 arpl ax, dx'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  210 | Transforming from SSA form...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  139 | Removing unused global variables...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   94 | Compressing CFG...\n",
     "fail_category": "adapter_error",
     "cases_passed": 0,
     "cases_total": 0,
@@ -5776,8 +6311,8 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 0,
     "consensus_rank": null,
-    "time_ms": 26,
-    "error": "Function at address 0x140001530 not found in Boomerang address comments"
+    "time_ms": 179,
+    "error": "Decompilation failed: Level | File                                    | Line | Message\n====================================================================================================\nMsg   | src/boomerang/util/log/Log.cpp          |  152 | This is Boomerang 4110413\nMsg   | src/boomerang/util/log/Log.cpp          |  153 | Log initialized.\nMsg   | src/boomerang/util/log/Log.cpp          |  154 | Log level is 'Msg'.\nMsg   | src/boomerang/core/Project.cpp          |  350 | Loading plugins...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/ppc.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/x86.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/st20.ssl'...\nMsg   | src/boomerang/core/Project.cpp          |  364 | Loaded plugins:\nMsg   | src/boomerang/core/Project.cpp          |  366 |   C Code Generator plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone PPC decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone x86 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   ST20 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS4GW loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ELF32 loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS Exe loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Mach-O loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ST20 .bin loader plugin [experimental] 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Win32 PE loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   PPC FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   ST20 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   X86 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  382 |   C Symbol Provider plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  386 |   DFA Type Recovery plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  111 | Loading binary file '/tmp/tmp1s1kk3n1/target.bin'\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  291 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  374 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  433 | Microdisassembler out of step at offset 4561\nMsg   | src/boomerang/db/Prog.cpp               |  351 | Reading library signatures...\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001530\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001530\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001624\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001624\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001745\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001745\nMsg   | src/boomerang/core/Project.cpp          |  197 | Found 3 procs\nMsg   | src/boomerang/core/Project.cpp          |  222 | Decompiling...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001530'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001559: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001559 arpl ax, dx'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001584: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001584 arpl ax, dx'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  210 | Transforming from SSA form...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  139 | Removing unused global variables...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   94 | Compressing CFG...\n"
   },
   {
     "decompiler": "radare2",
@@ -5785,7 +6320,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.5009,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmplf9xuv6e/test_4.c:42:9: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | void dbg.rc4_init(uint8_t *s,int *key,int key_len)\n      |         ^\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp4t6nm4se/test_4.c:42:9: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | void dbg.rc4_init(uint8_t *s,int *key,int key_len)\n      |         ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -5887,7 +6422,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 154,
+    "time_ms": 164,
     "error": null
   },
   {
@@ -6004,7 +6539,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 829,
+    "time_ms": 927,
     "error": null
   },
   {
@@ -6013,7 +6548,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0263,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpqwryxzd3/test_4.c: In function \u2018fun_140001530\u2019:\n/tmp/tmpqwryxzd3/test_4.c:69:10: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   69 |         *reinterpret_cast<signed char*>(reinterpret_cast<int64_t>(v4) + v8) = *reinterpret_cast<signed char*>(&edx9);\n      |          ^~",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpp2fsm6af/test_4.c: In function \u2018fun_140001530\u2019:\n/tmp/tmpp2fsm6af/test_4.c:69:10: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   69 |         *reinterpret_cast<signed char*>(reinterpret_cast<int64_t>(v4) + v8) = *reinterpret_cast<signed char*>(&edx9);\n      |          ^~",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -6110,7 +6645,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 676,
+    "time_ms": 626,
     "error": null
   },
   {
@@ -6119,7 +6654,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0163,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpaa164pse/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpaa164pse/test_4.c:42:39: error: unknown type name \u2018generic64_t\u2019\n   42 | void function_0x140001530_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_1",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpahff93qq/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpahff93qq/test_4.c:42:39: error: unknown type name \u2018generic64_t\u2019\n   42 | void function_0x140001530_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_1",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -6219,7 +6754,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 5,
     "consensus_rank": 6,
-    "time_ms": 18467,
+    "time_ms": 17348,
     "error": null
   },
   {
@@ -6228,7 +6763,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1287,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpl8rkiadi/test_4.c:41:39: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | void rc4_init(byte rcx[], byte rdx[], int32 r8d)\n      |                                       ^~~~~\n      |                                       int32_t\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpwrucegkn/test_4.c:41:39: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | void rc4_init(byte rcx[], byte rdx[], int32 r8d)\n      |                                       ^~~~~\n      |                                       int32_t\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -6325,26 +6860,26 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 915,
+    "time_ms": 859,
     "error": null
   },
   {
     "decompiler": "fission",
     "function_name": "rc4_crypt",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0093,
+    "source_similarity": 0.0095,
     "semantic_score": 0.0,
-    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmp6j15vpaq/test_3.c: In function \u2018rc4_crypt\u2019:\n/tmp/tmp6j15vpaq/test_3.c:52:5: error: \u2018reg\u2019 undeclared (first use in this function)\n   52 |     reg = rsp < 16;\n      |     ^~~\n/tmp/tmp6j15vpaq/test_3.c:52:5: note: each undeclared identifier is reported only once for each function it appears in\n",
+    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmpdt50qoov/test_3.c: In function \u2018rc4_crypt\u2019:\n/tmp/tmpdt50qoov/test_3.c:52:5: error: \u2018reg\u2019 undeclared (first use in this function)\n   52 |     reg = rsp < 16;\n      |     ^~~\n/tmp/tmpdt50qoov/test_3.c:52:5: note: each undeclared identifier is reported only once for each function it appears in\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 4,
-    "correctness_score": 0.0729,
+    "correctness_score": 0.073,
     "correctness_rank": 7,
     "readability_proxy_score": 0.0,
-    "composite_score": 0.0729,
+    "composite_score": 0.073,
     "structural_penalty": 0.28,
     "uses_intrinsics": true,
-    "decompiled_code": "int rc4_crypt(uchar * param_1, uchar * param_2, uint param_3)\n{\n    uchar * local_4;\n    uchar * param_10;\n    uchar * param_18;\n    longlong param_20;\n    int iVar13;\n    uchar * rax = 0;\n    longlong rsp;\n    uchar * xVar197;\n\n    reg = rsp < 16;\n    reg = __sborrow(rsp, 16);\n    reg = rsp < 0;\n    reg = rsp == 0;\n    reg = (__popcount(rsp % 256) & 1) == 0;\n    param_10 = param_1;\n    param_18 = param_2;\n    param_20 = param_3;\n    local_4 = rax;\n    param_10 = rax;\n    goto block_140001731;\nblock_140001652:\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (int)(local_4 + 1);\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (uchar *)((ulonglong)local_4 >> 31);\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = (local_4 >> 30 & 1) != 0;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = (uchar *)((ulonglong)local_4 >> 24);\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = (local_4 / 8388608 & 1) != 0;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    reg = __carry(local_4, local_4);\n    reg = __scarry(local_4, local_4);\n    local_4 *= 2;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = (uint)(uchar)(ulonglong)local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = local_4 < local_4;\n    reg = __sborrow(local_4, local_4);\n    local_4 = (ulonglong)(ulonglong)local_4 - (ulonglong)(ulonglong)local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(param_10, local_4);\n    reg = __scarry(param_10, local_4);\n    param_10 += (ulonglong)local_4;\n    reg = param_10 < 0;\n    reg = param_10 == 0;\n    reg = (__popcount(param_10 % 256) & 1) == 0;\n    param_10 = (uint)*param_10;\n    param_10 = (uint)(uchar)(ulonglong)param_10;\n    param_10 = (ulonglong)(ulonglong)param_10;\n    param_10 = (ulonglong)(ulonglong)param_10;\n    reg = __carry(param_10, param_10);\n    reg = __scarry(param_10, param_10);\n    param_10 *= 2;\n    param_10 = (ulonglong)(ulonglong)param_10;\n    reg = param_10 < 0;\n    reg = param_10 == 0;\n    reg = (__popcount(param_10 % 256) & 1) == 0;\n    param_10 = (ulonglong)(ulonglong)param_10;\n    param_10 = (uchar *)((ulonglong)param_10 >> 31);\n    param_10 = (ulonglong)(ulonglong)param_10;\n    reg = (param_10 >> 30 & 1) != 0;\n    reg = param_10 < 0;\n    reg = param_10 == 0;\n    reg = (__popcount(param_10 % 256) & 1) == 0;\n    param_10 = (uchar *)((ulonglong)param_10 >> 24);\n    param_10 = (ulonglong)(ulonglong)param_10;\n    reg = (param_10 / 8388608 & 1) != 0;\n    reg = param_10 < 0;\n    reg = param_10 == 0;\n    reg = (__popcount(param_10 % 256) & 1) == 0;\n    reg = __carry(param_10, param_10);\n    reg = __scarry(param_10, param_10);\n    param_10 *= 2;\n    param_10 = (ulonglong)(ulonglong)param_10;\n    reg = param_10 < 0;\n    reg = param_10 == 0;\n    reg = (__popcount(param_10 % 256) & 1) == 0;\n    param_10 = (uint)(uchar)(ulonglong)param_10;\n    param_10 = (ulonglong)(ulonglong)param_10;\n    reg = param_10 < param_10;\n    reg = __sborrow(param_10, param_10);\n    param_10 = (ulonglong)(ulonglong)param_10 - (ulonglong)(ulonglong)param_10;\n    param_10 = (ulonglong)(ulonglong)param_10;\n    reg = param_10 < 0;\n    reg = param_10 == 0;\n    reg = (__popcount(param_10 % 256) & 1) == 0;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(param_10, local_4);\n    reg = __scarry(param_10, local_4);\n    param_10 += (ulonglong)local_4;\n    reg = param_10 < 0;\n    reg = param_10 == 0;\n    reg = (__popcount(param_10 % 256) & 1) == 0;\n    param_10 = (uint)*param_10;\n    param_10 = (ulonglong)(ulonglong)param_10;\n    reg = __carry(param_10, param_10);\n    reg = __scarry(param_10, param_10);\n    param_10 *= 2;\n    reg = param_10 < 0;\n    reg = param_10 == 0;\n    reg = (__popcount(param_10 % 256) & 1) == 0;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(param_10, local_4);\n    reg = __scarry(param_10, local_4);\n    param_10 += (ulonglong)local_4;\n    reg = param_10 < 0;\n    reg = param_10 == 0;\n    reg = (__popcount(param_10 % 256) & 1) == 0;\n    param_10 = (uint)*param_10;\n    *param_10 = (uchar)(ulonglong)param_10;\n    param_10 = (ulonglong)(ulonglong)param_10;\n    xVar197 = (longlong)(ulonglong)param_10;\n    reg = __carry(xVar197, param_10);\n    reg = __scarry(xVar197, param_10);\n    xVar197 += (ulonglong)param_10;\n    reg = xVar197 < 0;\n    reg = xVar197 == 0;\n    reg = (__popcount(xVar197 % 256) & 1) == 0;\n    *xVar197 = (uchar)(ulonglong)param_10;\n    param_10 = (ulonglong)(ulonglong)param_10;\n    reg = __carry(param_18, param_10);\n    reg = __scarry(param_18, param_10);\n    param_18 += (ulonglong)param_10;\n    reg = param_18 < 0;\n    reg = param_18 == 0;\n    reg = (__popcount(param_18 % 256) & 1) == 0;\n    xVar197 = (uint)*param_18;\n    xVar197 = (ulonglong)(ulonglong)xVar197;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(param_10, local_4);\n    reg = __scarry(param_10, local_4);\n    param_10 += (ulonglong)local_4;\n    reg = param_10 < 0;\n    reg = param_10 == 0;\n    reg = (__popcount(param_10 % 256) & 1) == 0;\n    iVar13 = *param_10;\n    param_10 = (ulonglong)(ulonglong)param_10;\n    reg = __carry(param_10, param_10);\n    reg = __scarry(param_10, param_10);\n    param_10 *= 2;\n    reg = param_10 < 0;\n    reg = param_10 == 0;\n    reg = (__popcount(param_10 % 256) & 1) == 0;\n    param_10 = (uint)*param_10;\n    reg = __carry(param_10, iVar13);\n    reg = __scarry(param_10, iVar13);\n    param_10 += iVar13;\n    reg = param_10 < 0;\n    reg = param_10 == 0;\n    reg = (__popcount(param_10 % 256) & 1) == 0;\n    reg = __carry(param_10, param_10);\n    reg = __scarry(param_10, param_10);\n    param_10 *= 2;\n    reg = param_10 < 0;\n    reg = param_10 == 0;\n    reg = (__popcount(param_10 % 256) & 1) == 0;\n    param_10 = (ulonglong)(ulonglong)param_10;\n    reg = __carry(param_18, param_10);\n    reg = __scarry(param_18, param_10);\n    param_18 += (ulonglong)param_10;\n    reg = param_18 < 0;\n    reg = param_18 == 0;\n    reg = (__popcount(param_18 % 256) & 1) == 0;\n    param_2 = (ulonglong)(ulonglong)xVar197;\n    reg = 0;\n    param_2 = (uchar *)((ulonglong)param_2 ^ *param_10);\n    param_2 = (ulonglong)(ulonglong)param_2;\n    reg = param_2 < 0;\n    reg = param_2 == 0;\n    reg = (__popcount(param_2 % 256) & 1) == 0;\n    *param_18 = (uchar)(ulonglong)param_2;\n    reg = 4294967295 <= param_10;\n    reg = __scarry(param_10, 1);\n    param_10++;\nblock_140001731:\n    param_10 = (ulonglong)(ulonglong)param_10;\n    reg = param_10 < param_20;\n    reg = __sborrow(param_10, param_20);\n    iVar13 = (ulonglong)(ulonglong)param_10 - param_20;\n    reg = iVar13 < 0;\n    reg = iVar13 == 0;\n    reg = (__popcount(iVar13 % 256) & 1) == 0;\n    if (param_10 < param_20) {\n        goto block_140001652;\n    }\n    reg = -16 <= rsp;\n    reg = __scarry(rsp, 16);\n    reg = rsp < 0;\n    reg = rsp == 0;\n    reg = (__popcount(rsp % 256) & 1) == 0;\n    return param_10;\n}\n",
+    "decompiled_code": "int rc4_crypt(uchar * param_1, uchar * param_2, uint param_3)\n{\n    uchar * local_d;\n    uchar * local_4;\n    uchar * param_18;\n    longlong param_20;\n    int iVar13;\n    uchar * rax = 0;\n    longlong rsp;\n    uchar * xVar197;\n\n    reg = rsp < 16;\n    reg = __sborrow(rsp, 16);\n    reg = rsp < 0;\n    reg = rsp == 0;\n    reg = (__popcount(rsp % 256) & 1) == 0;\n    local_d = param_1;\n    param_18 = param_2;\n    param_20 = param_3;\n    local_4 = rax;\n    local_d = rax;\n    goto block_140001731;\nblock_140001652:\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (int)(local_4 + 1);\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (uchar *)((ulonglong)local_4 >> 31);\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = (local_4 >> 30 & 1) != 0;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = (uchar *)((ulonglong)local_4 >> 24);\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = (local_4 / 8388608 & 1) != 0;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    reg = __carry(local_4, local_4);\n    reg = __scarry(local_4, local_4);\n    local_4 *= 2;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = (uint)(uchar)(ulonglong)local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = local_4 < local_4;\n    reg = __sborrow(local_4, local_4);\n    local_4 = (ulonglong)(ulonglong)local_4 - (ulonglong)(ulonglong)local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(local_d, local_4);\n    reg = __scarry(local_d, local_4);\n    local_d += (ulonglong)local_4;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)*local_d;\n    local_d = (uint)(uchar)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (ulonglong)(ulonglong)local_d;\n    local_d = (uchar *)((ulonglong)local_d >> 31);\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = (local_d >> 30 & 1) != 0;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uchar *)((ulonglong)local_d >> 24);\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = (local_d / 8388608 & 1) != 0;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)(uchar)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < local_d;\n    reg = __sborrow(local_d, local_d);\n    local_d = (ulonglong)(ulonglong)local_d - (ulonglong)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(local_d, local_4);\n    reg = __scarry(local_d, local_4);\n    local_d += (ulonglong)local_4;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)*local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(local_d, local_4);\n    reg = __scarry(local_d, local_4);\n    local_d += (ulonglong)local_4;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)*local_d;\n    *local_d = (uchar)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    xVar197 = (longlong)(ulonglong)local_d;\n    reg = __carry(xVar197, local_d);\n    reg = __scarry(xVar197, local_d);\n    xVar197 += (ulonglong)local_d;\n    reg = xVar197 < 0;\n    reg = xVar197 == 0;\n    reg = (__popcount(xVar197 % 256) & 1) == 0;\n    *xVar197 = (uchar)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(param_18, local_d);\n    reg = __scarry(param_18, local_d);\n    param_18 += (ulonglong)local_d;\n    reg = param_18 < 0;\n    reg = param_18 == 0;\n    reg = (__popcount(param_18 % 256) & 1) == 0;\n    xVar197 = (uint)*param_18;\n    xVar197 = (ulonglong)(ulonglong)xVar197;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(local_d, local_4);\n    reg = __scarry(local_d, local_4);\n    local_d += (ulonglong)local_4;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    iVar13 = *local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)*local_d;\n    reg = __carry(local_d, iVar13);\n    reg = __scarry(local_d, iVar13);\n    local_d += iVar13;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(param_18, local_d);\n    reg = __scarry(param_18, local_d);\n    param_18 += (ulonglong)local_d;\n    reg = param_18 < 0;\n    reg = param_18 == 0;\n    reg = (__popcount(param_18 % 256) & 1) == 0;\n    param_2 = (ulonglong)(ulonglong)xVar197;\n    reg = 0;\n    param_2 = (uchar *)((ulonglong)param_2 ^ *local_d);\n    param_2 = (ulonglong)(ulonglong)param_2;\n    reg = param_2 < 0;\n    reg = param_2 == 0;\n    reg = (__popcount(param_2 % 256) & 1) == 0;\n    *param_18 = (uchar)(ulonglong)param_2;\n    reg = 4294967295 <= local_d;\n    reg = __scarry(local_d, 1);\n    local_d++;\nblock_140001731:\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < param_20;\n    reg = __sborrow(local_d, param_20);\n    iVar13 = (ulonglong)(ulonglong)local_d - param_20;\n    reg = iVar13 < 0;\n    reg = iVar13 == 0;\n    reg = (__popcount(iVar13 % 256) & 1) == 0;\n    if (local_d < param_20) {\n        goto block_140001652;\n    }\n    reg = -16 <= rsp;\n    reg = __scarry(rsp, 16);\n    reg = rsp < 0;\n    reg = rsp == 0;\n    reg = (__popcount(rsp % 256) & 1) == 0;\n    return local_d;\n}\n",
     "readability_metrics": {
       "validated_against_humans": false,
       "composite_score": null,
@@ -6431,7 +6966,7 @@ const SCORES = [
     "goto_count": 2,
     "nesting_depth": 2,
     "consensus_rank": 7,
-    "time_ms": 25938,
+    "time_ms": 24791,
     "error": null
   },
   {
@@ -6544,7 +7079,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 2,
-    "time_ms": 10754,
+    "time_ms": 9370,
     "error": null
   },
   {
@@ -6553,7 +7088,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "semantic_score": 0.0,
-    "semantic_error": "Function at address 0x140001624 not found in Boomerang address comments",
+    "semantic_error": "Decompilation failed: Level | File                                    | Line | Message\n====================================================================================================\nMsg   | src/boomerang/util/log/Log.cpp          |  152 | This is Boomerang 4110413\nMsg   | src/boomerang/util/log/Log.cpp          |  153 | Log initialized.\nMsg   | src/boomerang/util/log/Log.cpp          |  154 | Log level is 'Msg'.\nMsg   | src/boomerang/core/Project.cpp          |  350 | Loading plugins...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/ppc.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/x86.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/st20.ssl'...\nMsg   | src/boomerang/core/Project.cpp          |  364 | Loaded plugins:\nMsg   | src/boomerang/core/Project.cpp          |  366 |   C Code Generator plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone PPC decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone x86 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   ST20 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS4GW loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ELF32 loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS Exe loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Mach-O loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ST20 .bin loader plugin [experimental] 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Win32 PE loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   PPC FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   ST20 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   X86 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  382 |   C Symbol Provider plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  386 |   DFA Type Recovery plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  111 | Loading binary file '/tmp/tmp1s1kk3n1/target.bin'\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  291 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  374 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  433 | Microdisassembler out of step at offset 4561\nMsg   | src/boomerang/db/Prog.cpp               |  351 | Reading library signatures...\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001530\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001530\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001624\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001624\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001745\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001745\nMsg   | src/boomerang/core/Project.cpp          |  197 | Found 3 procs\nMsg   | src/boomerang/core/Project.cpp          |  222 | Decompiling...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001530'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001559: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001559 arpl ax, dx'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001584: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001584 arpl ax, dx'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  210 | Transforming from SSA form...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  139 | Removing unused global variables...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   94 | Compressing CFG...\n",
     "fail_category": "adapter_error",
     "cases_passed": 0,
     "cases_total": 0,
@@ -6570,8 +7105,8 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 0,
     "consensus_rank": null,
-    "time_ms": 26,
-    "error": "Function at address 0x140001624 not found in Boomerang address comments"
+    "time_ms": 179,
+    "error": "Decompilation failed: Level | File                                    | Line | Message\n====================================================================================================\nMsg   | src/boomerang/util/log/Log.cpp          |  152 | This is Boomerang 4110413\nMsg   | src/boomerang/util/log/Log.cpp          |  153 | Log initialized.\nMsg   | src/boomerang/util/log/Log.cpp          |  154 | Log level is 'Msg'.\nMsg   | src/boomerang/core/Project.cpp          |  350 | Loading plugins...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/ppc.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/x86.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/st20.ssl'...\nMsg   | src/boomerang/core/Project.cpp          |  364 | Loaded plugins:\nMsg   | src/boomerang/core/Project.cpp          |  366 |   C Code Generator plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone PPC decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone x86 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   ST20 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS4GW loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ELF32 loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS Exe loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Mach-O loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ST20 .bin loader plugin [experimental] 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Win32 PE loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   PPC FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   ST20 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   X86 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  382 |   C Symbol Provider plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  386 |   DFA Type Recovery plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  111 | Loading binary file '/tmp/tmp1s1kk3n1/target.bin'\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  291 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  374 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  433 | Microdisassembler out of step at offset 4561\nMsg   | src/boomerang/db/Prog.cpp               |  351 | Reading library signatures...\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001530\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001530\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001624\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001624\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001745\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001745\nMsg   | src/boomerang/core/Project.cpp          |  197 | Found 3 procs\nMsg   | src/boomerang/core/Project.cpp          |  222 | Decompiling...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001530'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001559: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001559 arpl ax, dx'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001584: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001584 arpl ax, dx'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  210 | Transforming from SSA form...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  139 | Removing unused global variables...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   94 | Compressing CFG...\n"
   },
   {
     "decompiler": "radare2",
@@ -6579,7 +7114,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.4244,
     "semantic_score": 0.0,
-    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmp_vu9c9zo/test_3.c:42:9: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | void dbg.rc4_crypt(uint8_t *s,uint8_t *data,int data_len)\n      |         ^\n",
+    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmp2klh3zqq/test_3.c:42:9: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | void dbg.rc4_crypt(uint8_t *s,uint8_t *data,int data_len)\n      |         ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 4,
@@ -6681,7 +7216,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 154,
+    "time_ms": 164,
     "error": null
   },
   {
@@ -6798,7 +7333,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 829,
+    "time_ms": 927,
     "error": null
   },
   {
@@ -6807,7 +7342,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0203,
     "semantic_score": 0.0,
-    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmpegsap81t/test_3.c: In function \u2018fun_140001624\u2019:\n/tmp/tmpegsap81t/test_3.c:70:10: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   70 |         *reinterpret_cast<uint32_t*>(&rax10) = v7;\n      |          ^~~~~~~~~~~~~~~~\n/tmp/tmpegsap81t/test_3.c:70:10: note: each undeclar",
+    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmp7eqv5o6d/test_3.c: In function \u2018fun_140001624\u2019:\n/tmp/tmp7eqv5o6d/test_3.c:70:10: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   70 |         *reinterpret_cast<uint32_t*>(&rax10) = v7;\n      |          ^~~~~~~~~~~~~~~~\n/tmp/tmp7eqv5o6d/test_3.c:70:10: note: each undeclar",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 4,
@@ -6904,7 +7439,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 676,
+    "time_ms": 626,
     "error": null
   },
   {
@@ -6913,7 +7448,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.061,
     "semantic_score": 0.0,
-    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmpft3ceec3/test_3.c: In function \u2018_ABI\u2019:\n/tmp/tmpft3ceec3/test_3.c:42:39: error: unknown type name \u2018generic64_t\u2019\n   42 | void function_0x140001624_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_1",
+    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmpz3_q7z00/test_3.c: In function \u2018_ABI\u2019:\n/tmp/tmpz3_q7z00/test_3.c:42:39: error: unknown type name \u2018generic64_t\u2019\n   42 | void function_0x140001624_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_1",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 4,
@@ -7013,7 +7548,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 3,
-    "time_ms": 18467,
+    "time_ms": 17348,
     "error": null
   },
   {
@@ -7022,7 +7557,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1178,
     "semantic_score": 0.0,
-    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmpn2a7p1f4/test_3.c:41:28: error: unknown type name \u2018ui8\u2019\n   41 | void rc4_crypt(byte rcx[], ui8 rdx[], int32 r8d)\n      |                            ^~~\n/tmp/tmpn2a7p1f4/test_3.c:41:39: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | void rc4_crypt(byte rcx[], ui8 rdx[], int",
+    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmpesqddlbw/test_3.c:41:28: error: unknown type name \u2018ui8\u2019\n   41 | void rc4_crypt(byte rcx[], ui8 rdx[], int32 r8d)\n      |                            ^~~\n/tmp/tmpesqddlbw/test_3.c:41:39: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | void rc4_crypt(byte rcx[], ui8 rdx[], int",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 4,
@@ -7119,26 +7654,26 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 915,
+    "time_ms": 859,
     "error": null
   },
   {
     "decompiler": "fission",
     "function_name": "crc32",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0602,
+    "source_similarity": 0.0595,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp5eztuu3t/test_5.c: In function \u2018crc32\u2019:\n/tmp/tmp5eztuu3t/test_5.c:59:44: error: invalid operands to binary ^ (have \u2018long long unsigned int\u2019 and \u2018uchar *\u2019 {aka \u2018unsigned char *\u2019})\n   59 |     local_4 = (uchar *)((ulonglong)local_4 ^ local_4);\n      |                         ~~~~~~~~~~~~~~~~~~",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpch0xta20/test_5.c: In function \u2018crc32\u2019:\n/tmp/tmpch0xta20/test_5.c:59:46: error: invalid operands to binary ^ (have \u2018long long unsigned int\u2019 and \u2018uchar *\u2019 {aka \u2018unsigned char *\u2019})\n   59 |     local_1c = (uchar *)((ulonglong)local_1c ^ local_1c);\n      |                          ~~~~~~~~~~~~~~",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
-    "correctness_score": 0.08,
+    "correctness_score": 0.0799,
     "correctness_rank": 7,
     "readability_proxy_score": 0.2,
-    "composite_score": 0.08,
+    "composite_score": 0.0799,
     "structural_penalty": 0.56,
     "uses_intrinsics": false,
-    "decompiled_code": "uint crc32(longlong param_1, ulonglong param_2)\n{\n    uchar * local_4;\n    longlong param_10;\n    ulonglong param_18;\n    uchar * rax = 0;\n\n    param_10 = param_1;\n    param_18 = param_2;\n    local_4 = 4294967295;\n    local_4 = rax;\n    goto block_1400017b5;\nblock_140001766:\n    local_4 = local_4;\n    local_4 += param_10;\n    local_4 = (uint)*local_4;\n    local_4 = local_4;\n    local_4 = (uint)(ulonglong)local_4;\n    local_4 = (uchar *)((ulonglong)local_4 ^ local_4);\n    local_4 = rax;\n    goto block_1400017aa;\nblock_140001787:\n    local_4 = local_4;\n    local_4 = (uchar *)((ulonglong)local_4 & 1);\n    local_4 = -local_4;\n    local_4 = local_4;\n    local_4 = local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (uchar *)((ulonglong)local_4 >> 1);\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (uchar *)((ulonglong)local_4 & 3988292384);\n    local_4 = (uchar *)((ulonglong)local_4 ^ local_4);\n    local_4 = local_4;\n    local_4++;\nblock_1400017aa:\n    if (local_4 <= 7) {\n        goto block_140001787;\n    }\n    local_4++;\nblock_1400017b5:\n    if (local_4 < param_18) {\n        goto block_140001766;\n    }\n    return ~(uint)(ulonglong)local_4;\n}\n",
+    "decompiled_code": "uint crc32(longlong param_1, ulonglong param_2)\n{\n    uchar * local_1c;\n    longlong param_10;\n    ulonglong param_18;\n    uchar * rax = 0;\n\n    param_10 = param_1;\n    param_18 = param_2;\n    local_1c = 4294967295;\n    local_1c = rax;\n    goto block_1400017b5;\nblock_140001766:\n    local_1c = local_1c;\n    local_1c += param_10;\n    local_1c = (uint)*local_1c;\n    local_1c = local_1c;\n    local_1c = (uint)(ulonglong)local_1c;\n    local_1c = (uchar *)((ulonglong)local_1c ^ local_1c);\n    local_1c = rax;\n    goto block_1400017aa;\nblock_140001787:\n    local_1c = local_1c;\n    local_1c = (uchar *)((ulonglong)local_1c & 1);\n    local_1c = -local_1c;\n    local_1c = local_1c;\n    local_1c = local_1c;\n    local_1c = (ulonglong)(ulonglong)local_1c;\n    local_1c = (uchar *)((ulonglong)local_1c >> 1);\n    local_1c = (ulonglong)(ulonglong)local_1c;\n    local_1c = local_1c;\n    local_1c = (ulonglong)(ulonglong)local_1c;\n    local_1c = (ulonglong)(ulonglong)local_1c;\n    local_1c = (uchar *)((ulonglong)local_1c & 3988292384);\n    local_1c = (uchar *)((ulonglong)local_1c ^ local_1c);\n    local_1c = local_1c;\n    local_1c++;\nblock_1400017aa:\n    if (local_1c <= 7) {\n        goto block_140001787;\n    }\n    local_1c++;\nblock_1400017b5:\n    if (local_1c < param_18) {\n        goto block_140001766;\n    }\n    return ~(uint)(ulonglong)local_1c;\n}\n",
     "readability_metrics": {
       "validated_against_humans": false,
       "composite_score": null,
@@ -7225,7 +7760,7 @@ const SCORES = [
     "goto_count": 4,
     "nesting_depth": 2,
     "consensus_rank": 7,
-    "time_ms": 25938,
+    "time_ms": 24791,
     "error": null
   },
   {
@@ -7234,7 +7769,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.3434,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpjnf2b9r_/test_5.c: In function \u2018crc32\u2019:\n/tmp/tmpjnf2b9r_/test_5.c:57:25: error: expected expression before \u2018)\u2019 token\n   57 |     crc = crc ^ *(byte *)(i + in_RCX);\n      |                         ^\n",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpk_e6hxgg/test_5.c: In function \u2018crc32\u2019:\n/tmp/tmpk_e6hxgg/test_5.c:57:25: error: expected expression before \u2018)\u2019 token\n   57 |     crc = crc ^ *(byte *)(i + in_RCX);\n      |                         ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -7337,7 +7872,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 2,
-    "time_ms": 10754,
+    "time_ms": 9370,
     "error": null
   },
   {
@@ -7346,7 +7881,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "semantic_score": 0.0,
-    "semantic_error": "Function at address 0x140001745 not found in Boomerang address comments",
+    "semantic_error": "Decompilation failed: Level | File                                    | Line | Message\n====================================================================================================\nMsg   | src/boomerang/util/log/Log.cpp          |  152 | This is Boomerang 4110413\nMsg   | src/boomerang/util/log/Log.cpp          |  153 | Log initialized.\nMsg   | src/boomerang/util/log/Log.cpp          |  154 | Log level is 'Msg'.\nMsg   | src/boomerang/core/Project.cpp          |  350 | Loading plugins...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/ppc.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/x86.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/st20.ssl'...\nMsg   | src/boomerang/core/Project.cpp          |  364 | Loaded plugins:\nMsg   | src/boomerang/core/Project.cpp          |  366 |   C Code Generator plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone PPC decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone x86 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   ST20 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS4GW loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ELF32 loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS Exe loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Mach-O loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ST20 .bin loader plugin [experimental] 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Win32 PE loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   PPC FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   ST20 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   X86 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  382 |   C Symbol Provider plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  386 |   DFA Type Recovery plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  111 | Loading binary file '/tmp/tmp1s1kk3n1/target.bin'\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  291 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  374 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  433 | Microdisassembler out of step at offset 4561\nMsg   | src/boomerang/db/Prog.cpp               |  351 | Reading library signatures...\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001530\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001530\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001624\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001624\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001745\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001745\nMsg   | src/boomerang/core/Project.cpp          |  197 | Found 3 procs\nMsg   | src/boomerang/core/Project.cpp          |  222 | Decompiling...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001530'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001559: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001559 arpl ax, dx'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001584: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001584 arpl ax, dx'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  210 | Transforming from SSA form...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  139 | Removing unused global variables...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   94 | Compressing CFG...\n",
     "fail_category": "adapter_error",
     "cases_passed": 0,
     "cases_total": 0,
@@ -7363,8 +7898,8 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 0,
     "consensus_rank": null,
-    "time_ms": 26,
-    "error": "Function at address 0x140001745 not found in Boomerang address comments"
+    "time_ms": 179,
+    "error": "Decompilation failed: Level | File                                    | Line | Message\n====================================================================================================\nMsg   | src/boomerang/util/log/Log.cpp          |  152 | This is Boomerang 4110413\nMsg   | src/boomerang/util/log/Log.cpp          |  153 | Log initialized.\nMsg   | src/boomerang/util/log/Log.cpp          |  154 | Log level is 'Msg'.\nMsg   | src/boomerang/core/Project.cpp          |  350 | Loading plugins...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/ppc.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/x86.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/st20.ssl'...\nMsg   | src/boomerang/core/Project.cpp          |  364 | Loaded plugins:\nMsg   | src/boomerang/core/Project.cpp          |  366 |   C Code Generator plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone PPC decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone x86 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   ST20 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS4GW loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ELF32 loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS Exe loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Mach-O loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ST20 .bin loader plugin [experimental] 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Win32 PE loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   PPC FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   ST20 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   X86 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  382 |   C Symbol Provider plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  386 |   DFA Type Recovery plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  111 | Loading binary file '/tmp/tmp1s1kk3n1/target.bin'\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  291 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  374 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  433 | Microdisassembler out of step at offset 4561\nMsg   | src/boomerang/db/Prog.cpp               |  351 | Reading library signatures...\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001530\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001530\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001624\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001624\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001745\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001745\nMsg   | src/boomerang/core/Project.cpp          |  197 | Found 3 procs\nMsg   | src/boomerang/core/Project.cpp          |  222 | Decompiling...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001530'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001559: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001559 arpl ax, dx'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001584: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001584 arpl ax, dx'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001624'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001745'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  210 | Transforming from SSA form...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  139 | Removing unused global variables...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   94 | Compressing CFG...\n"
   },
   {
     "decompiler": "radare2",
@@ -7372,7 +7907,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.2991,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpmgq7bexk/test_5.c:42:13: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | uint32_t dbg.crc32(int *data,size_t length)\n      |             ^\n",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp9v0_46jq/test_5.c:42:13: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | uint32_t dbg.crc32(int *data,size_t length)\n      |             ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -7474,7 +8009,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 2,
-    "time_ms": 154,
+    "time_ms": 164,
     "error": null
   },
   {
@@ -7591,7 +8126,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 1,
-    "time_ms": 829,
+    "time_ms": 927,
     "error": null
   },
   {
@@ -7600,7 +8135,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0821,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpa1iz7c8f/test_5.c: In function \u2018fun_140001745\u2019:\n/tmp/tmpa1iz7c8f/test_5.c:55:17: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   55 |         eax8 = *reinterpret_cast<unsigned char*>(v7 + reinterpret_cast<int64_t>(v4));\n      |                 ^~~~~~~~~~~~~~~~\n/tmp/tmpa1",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp5yj3e7gl/test_5.c: In function \u2018fun_140001745\u2019:\n/tmp/tmp5yj3e7gl/test_5.c:55:17: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   55 |         eax8 = *reinterpret_cast<unsigned char*>(v7 + reinterpret_cast<int64_t>(v4));\n      |                 ^~~~~~~~~~~~~~~~\n/tmp/tmp5y",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -7697,7 +8232,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 2,
-    "time_ms": 676,
+    "time_ms": 626,
     "error": null
   },
   {
@@ -7706,7 +8241,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0683,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpdombhoqr/test_5.c: In function \u2018_ABI\u2019:\n/tmp/tmpdombhoqr/test_5.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x140001745_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_185 stack_arguments _STACK) {\n      ",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpcc9dvt73/test_5.c: In function \u2018_ABI\u2019:\n/tmp/tmpcc9dvt73/test_5.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x140001745_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_185 stack_arguments _STACK) {\n      ",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -7806,7 +8341,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 4,
     "consensus_rank": 2,
-    "time_ms": 18467,
+    "time_ms": 17348,
     "error": null
   },
   {
@@ -7815,7 +8350,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1019,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpwpwk4r29/test_5.c:41:1: error: unknown type name \u2018ui32\u2019\n   41 | ui32 crc32(Eq_648 rcx, Eq_649 rdx)\n      | ^~~~\n/tmp/tmpwpwk4r29/test_5.c:41:12: error: unknown type name \u2018Eq_648\u2019\n   41 | ui32 crc32(Eq_648 rcx, Eq_649 rdx)\n      |            ^~~~~~\n/tmp/tmpwpwk4r29/test_5.c:41:24: error: unkn",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpdngcrarl/test_5.c:41:1: error: unknown type name \u2018ui32\u2019\n   41 | ui32 crc32(Eq_648 rcx, Eq_649 rdx)\n      | ^~~~\n/tmp/tmpdngcrarl/test_5.c:41:12: error: unknown type name \u2018Eq_648\u2019\n   41 | ui32 crc32(Eq_648 rcx, Eq_649 rdx)\n      |            ^~~~~~\n/tmp/tmpdngcrarl/test_5.c:41:24: error: unkn",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -7912,7 +8447,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 2,
-    "time_ms": 915,
+    "time_ms": 859,
     "error": null
   },
   {
@@ -8018,7 +8553,7 @@ const SCORES = [
     "goto_count": 2,
     "nesting_depth": 2,
     "consensus_rank": 2,
-    "time_ms": 7274,
+    "time_ms": 6541,
     "error": null
   },
   {
@@ -8130,34 +8665,114 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 28563,
+    "time_ms": 26950,
     "error": null
   },
   {
     "decompiler": "boomerang",
     "function_name": "sum_array",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0,
+    "source_similarity": 0.1379,
     "semantic_score": 0.0,
-    "semantic_error": "Function at address 0x140001530 not found in Boomerang address comments",
-    "fail_category": "adapter_error",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpxx_tnpjl/test_4.c: In function \u2018proc_0x00001530\u2019:\n/tmp/tmpxx_tnpjl/test_4.c:45:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019?\n   45 |     __size32 local0;            // m[esp - 8]\n      |     ^~~~~~~~\n      |     __ssize_t\n/tmp/tmpxx_tnpjl/test_4.c:51:13: error: void value",
+    "fail_category": "compile_error",
     "cases_passed": 0,
-    "cases_total": 0,
-    "correctness_score": 0.0,
-    "correctness_rank": null,
-    "readability_proxy_score": null,
-    "composite_score": 0.0,
+    "cases_total": 5,
+    "correctness_score": 0.15,
+    "correctness_rank": 4,
+    "readability_proxy_score": 0.4,
+    "composite_score": 0.15,
     "structural_penalty": 0.0,
     "uses_intrinsics": false,
-    "decompiled_code": "",
-    "readability_metrics": {},
-    "ast_similarity": {},
-    "output_diagnostics": {},
+    "decompiled_code": "/** address: 0x00001530 */\nvoid proc_0x00001530(void *param1, unsigned int param2)\n{\n    int eax; \t\t// r24\n    __size32 local0; \t\t// m[esp - 8]\n    unsigned int local1; \t\t// m[esp - 20]\n\n    local0 = 0;\n    local1 = 0;\n    while ((unsigned int)(local1 - 1) < param2) {\n        eax = *(param1 + (local1 - 1) * 4 - 1);\n        local0 += eax;\n        local1++;\n    }\n    return;\n}",
+    "readability_metrics": {
+      "validated_against_humans": false,
+      "composite_score": null,
+      "parse_ok": false,
+      "parse_error": ":30:14: before: local0",
+      "generic_naming_ratio": {
+        "raw": {
+          "generic": 0,
+          "total": 0,
+          "ratio": 1.0
+        },
+        "normalized": 0.0
+      },
+      "type_specificity": {
+        "raw": {
+          "average": 0.0,
+          "typed_nodes": 0
+        },
+        "normalized": 0.0
+      },
+      "expression_complexity": {
+        "raw": {
+          "operator_count": 0,
+          "avg_expression_depth": 0.0,
+          "max_cast_depth": 0,
+          "ternary_count": 0,
+          "comma_count": 0,
+          "temporary_identifier_count": 0,
+          "loc": 14,
+          "temporary_identifier_loc_ratio": 0.0
+        },
+        "normalized": 0.0
+      },
+      "structured_control_flow": {
+        "raw": {
+          "structured_constructs": 0,
+          "goto_count": 0,
+          "nesting_depth": 2,
+          "irreducible_loop_suspected": false,
+          "state_flag_count": 0,
+          "structured_ratio": 1.0
+        },
+        "normalized": 1.0
+      },
+      "unresolved_artifacts": {
+        "raw": {
+          "total": 0,
+          "details": {
+            "sleigh_intrinsic": 0,
+            "word_macro": 0,
+            "register_name": 0,
+            "collapsed_type": 0
+          }
+        },
+        "normalized": 1.0
+      }
+    },
+    "ast_similarity": {
+      "available": false,
+      "algorithm": "zhang_shasha",
+      "error": ":30:14: before: local0",
+      "identifier_placeholder": null,
+      "type_erased": null,
+      "control_flow_normalized": null
+    },
+    "output_diagnostics": {
+      "status": "direct_function",
+      "issues": [
+        "target_name_missing"
+      ],
+      "function_definition_count": 1,
+      "function_definitions_sample": [
+        "proc_0x00001530"
+      ],
+      "target_name_present": false,
+      "expected_address_present": true,
+      "whole_program_like": false,
+      "truncated_output": false,
+      "harness_blockers": [],
+      "dotted_names_sample": [],
+      "register_inputs_sample": [],
+      "decompiler": "boomerang"
+    },
     "goto_count": 0,
-    "nesting_depth": 0,
-    "consensus_rank": null,
-    "time_ms": 71,
-    "error": "Function at address 0x140001530 not found in Boomerang address comments"
+    "nesting_depth": 2,
+    "consensus_rank": 4,
+    "time_ms": 106,
+    "error": null
   },
   {
     "decompiler": "radare2",
@@ -8165,7 +8780,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.2857,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpbyfriok1/test_4.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.sum_array(int *items,size_t len)\n      |        ^\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp70hzxaqu/test_4.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.sum_array(int *items,size_t len)\n      |        ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -8267,7 +8882,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 4,
-    "time_ms": 591,
+    "time_ms": 394,
     "error": null
   },
   {
@@ -8384,7 +8999,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 1995,
+    "time_ms": 1338,
     "error": null
   },
   {
@@ -8393,7 +9008,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.3988,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/cca49w2f.o: in function `main':\ntest_4.c:(.text+0x9f): undefined reference to `sum_array'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccyCkRFe.o: in function `main':\ntest_4.c:(.text+0x9f): undefined reference to `sum_array'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -8501,7 +9116,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 4,
-    "time_ms": 791,
+    "time_ms": 570,
     "error": null
   },
   {
@@ -8510,7 +9125,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.065,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpmnwh5r7_/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpmnwh5r7_/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x140001530_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_195 stack_arguments _STACK) {\n      ",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmphxlhaehy/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmphxlhaehy/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x140001530_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_195 stack_arguments _STACK) {\n      ",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -8610,7 +9225,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 4,
-    "time_ms": 34486,
+    "time_ms": 28481,
     "error": null
   },
   {
@@ -8619,7 +9234,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.2241,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpk5ezgokm/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 sum_array(struct Eq_518 * rcx, uint64 rdx)\n      | ^~~~~~\n      | word\n/tmp/tmpk5ezgokm/test_4.c:41:39: error: unknown type name \u2018uint64\u2019; did you mean \u2018uint\u2019?\n   41 | word32 sum_array(struct Eq_51",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpyuz4bkz5/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 sum_array(struct Eq_518 * rcx, uint64 rdx)\n      | ^~~~~~\n      | word\n/tmp/tmpyuz4bkz5/test_4.c:41:39: error: unknown type name \u2018uint64\u2019; did you mean \u2018uint\u2019?\n   41 | word32 sum_array(struct Eq_51",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -8716,7 +9331,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 4,
-    "time_ms": 2596,
+    "time_ms": 2372,
     "error": null
   }
 ];
