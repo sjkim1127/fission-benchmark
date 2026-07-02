@@ -51,8 +51,10 @@ class FunctionScore:
 # ── Correctness Score ─────────────────────────────────────────────────────────
 
 # Weights for the correctness formula.
-WEIGHT_SEMANTIC = 0.70
-WEIGHT_SIMILARITY = 0.20
+WEIGHT_SEMANTIC = 0.50
+WEIGHT_AST = 0.15
+WEIGHT_READABILITY = 0.15
+WEIGHT_SIMILARITY = 0.10
 WEIGHT_STRUCTURAL = 0.10
 
 # If semantic == 0, correctness is capped at this value.
@@ -63,11 +65,13 @@ def compute_correctness_score(
     semantic_score: float,
     source_similarity: float,
     structural_penalty: float,
+    ast_score: float = 0.0,
+    readability_score: float = 0.0,
 ) -> float:
     """
     Compute semantic-gated correctness score.
 
-    Formula: sem * 0.70 + sim * 0.20 + (1 - structural_penalty) * 0.10
+    Formula: sem * 0.50 + ast * 0.15 + read * 0.15 + sim * 0.10 + (1 - structural_penalty) * 0.10
 
     Gating: if semantic_score == 0.0, correctness cannot exceed SEMANTIC_ZERO_CAP (0.15).
     This ensures that a binary that compiles/runs but fails all tests, or fails to
@@ -75,6 +79,8 @@ def compute_correctness_score(
     """
     raw = (
         semantic_score * WEIGHT_SEMANTIC
+        + ast_score * WEIGHT_AST
+        + readability_score * WEIGHT_READABILITY
         + source_similarity * WEIGHT_SIMILARITY
         + (1.0 - structural_penalty) * WEIGHT_STRUCTURAL
     )
@@ -228,10 +234,21 @@ def assign_consensus_ranks(
                 src_gotos.get(s.function_name, 0),
                 src_depths.get(s.function_name, 0),
             )
+            ast_score = 0.0
+            if s.ast_similarity and s.ast_similarity.get("available") is True:
+                ast_score = (
+                    (s.ast_similarity.get("identifier_placeholder") or {}).get("similarity", 0.0)
+                    + (s.ast_similarity.get("type_erased") or {}).get("similarity", 0.0)
+                    + (s.ast_similarity.get("control_flow_normalized") or {}).get("similarity", 0.0)
+                ) / 3.0
+            readability_score = s.readability_proxy_score if s.readability_proxy_score is not None else 0.0
+
             s.correctness_score = compute_correctness_score(
                 s.semantic_score,
                 s.source_similarity,
                 s.structural_penalty,
+                ast_score=ast_score,
+                readability_score=readability_score,
             )
             s.composite_score = s.correctness_score
             s.uses_intrinsics = s.uses_intrinsics or check_uses_intrinsics(s.decompiled_code)
