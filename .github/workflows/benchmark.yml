@@ -66,7 +66,7 @@ permissions:
 
 concurrency:
   group: benchmark-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   preflight:
@@ -319,6 +319,7 @@ jobs:
     needs: run-benchmark
     if: ${{ needs.run-benchmark.outputs.is_current == 'true' && github.event.inputs.publish_results != 'false' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
