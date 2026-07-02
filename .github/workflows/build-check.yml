@@ -28,11 +28,23 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Resolve Fission release version
+        id: fission-version
+        run: |
+          set -euo pipefail
+          requested="${FISSION_VERSION:-latest}"
+          if [ "$requested" = "latest" ]; then
+            resolved="$(python -c 'import json, urllib.request; print(json.load(urllib.request.urlopen("https://api.github.com/repos/sjkim1127/Fission/releases/latest", timeout=30))["tag_name"])')"
+          else
+            resolved="$requested"
+          fi
+          echo "version=$resolved" >> "$GITHUB_OUTPUT"
+
       - name: Cache Docker layers
         uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache-${{ matrix.service }}
-          key: buildx-${{ matrix.service }}-${{ hashFiles(format('docker/{0}/**', matrix.service)) }}
+          key: buildx-${{ matrix.service }}-${{ hashFiles(format('docker/{0}/**', matrix.service)) }}-${{ steps.fission-version.outputs.version }}
           restore-keys: |
             buildx-${{ matrix.service }}-
 
@@ -43,6 +55,8 @@ jobs:
           push: false
           load: true
           tags: fission-benchmark-${{ matrix.service }}:pr
+          build-args: |
+            FISSION_VERSION=${{ steps.fission-version.outputs.version }}
           cache-from: type=local,src=/tmp/.buildx-cache-${{ matrix.service }}
           cache-to: type=local,dest=/tmp/.buildx-cache-${{ matrix.service }}-new,mode=max
 

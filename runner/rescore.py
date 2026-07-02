@@ -1,12 +1,12 @@
 """
-Re-score existing benchmark results with the new composite scoring formula.
+Re-score existing benchmark results with the semantic-gated correctness formula.
 
 Usage:
     python runner/rescore.py [--input results/latest.json] [--show-top 10]
 
-This script reads a previous JSON result file, applies the new composite_score formula
+This script reads a previous JSON result file, applies the correctness_score formula
 (semantic*0.70 + sim*0.20 + (1-structural_penalty)*0.10), and outputs a ranking diff table
-comparing old source_similarity ranks vs new composite_score ranks.
+comparing old source_similarity ranks vs new correctness_score ranks.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from scoring import compute_composite, compute_structural_penalty, WEIGHT_SEMANTIC, WEIGHT_SIMILARITY, WEIGHT_STRUCTURAL
+from scoring import compute_correctness_score, compute_structural_penalty, WEIGHT_SEMANTIC, WEIGHT_SIMILARITY, WEIGHT_STRUCTURAL
 
 
 def rescore(input_path: Path, show_top: int = 20) -> None:
@@ -51,12 +51,13 @@ def rescore(input_path: Path, show_top: int = 20) -> None:
             src_gotos.get(fn, 0),
             src_depths.get(fn, 0),
         )
-        composite = compute_composite(sem, sim, sp) if not error else 0.0
+        correctness = compute_correctness_score(sem, sim, sp) if not error else 0.0
 
         records.append({
             **r,
             "structural_penalty": sp,
-            "composite_score": composite,
+            "correctness_score": correctness,
+            "composite_score": correctness,
         })
 
     # Group by (function_name, compiler_variant) and compute old vs new ranks
@@ -66,10 +67,10 @@ def rescore(input_path: Path, show_top: int = 20) -> None:
         groups[key].append(r)
 
     print(f"\n{'='*90}")
-    print("  RESCORE DIFF  |  Old rank = source_similarity rank  |  New rank = composite_score rank")
+    print("  RESCORE DIFF  |  Old rank = source_similarity rank  |  New rank = correctness_score rank")
     print(f"  Weights: semantic={WEIGHT_SEMANTIC:.0%}  similarity={WEIGHT_SIMILARITY:.0%}  structural={WEIGHT_STRUCTURAL:.0%}")
     print(f"{'='*90}")
-    print(f"{'Function':20s} {'Variant':16s} {'Decomp':10s} {'OldSim':8s} {'OldRk':6s} {'NewCmp':8s} {'NewRk':6s} {'Δ':4s}  {'Change':20s}")
+    print(f"{'Function':20s} {'Variant':16s} {'Decomp':10s} {'OldSim':8s} {'OldRk':6s} {'NewCorr':8s} {'NewRk':6s} {'Delta':5s}  {'Change':20s}")
     print(f"{'-'*20} {'-'*16} {'-'*10} {'-'*8} {'-'*6} {'-'*8} {'-'*6} {'-'*4}  {'-'*20}")
 
     total_moves = 0
@@ -84,8 +85,8 @@ def rescore(input_path: Path, show_top: int = 20) -> None:
         old_sorted = sorted(valid, key=lambda x: x["source_similarity"], reverse=True)
         old_ranks = {r["decompiler"]: i+1 for i, r in enumerate(old_sorted)}
 
-        # New ranking: by composite_score desc
-        new_sorted = sorted(valid, key=lambda x: x["composite_score"], reverse=True)
+        # New ranking: by correctness_score desc.
+        new_sorted = sorted(valid, key=lambda x: x["correctness_score"], reverse=True)
         new_ranks = {r["decompiler"]: i+1 for i, r in enumerate(new_sorted)}
 
         for r in sorted(valid, key=lambda x: old_ranks[x["decompiler"]]):
@@ -104,7 +105,7 @@ def rescore(input_path: Path, show_top: int = 20) -> None:
             print(
                 f"{fn_name:20s} {variant:16s} {d:10s} "
                 f"{r['source_similarity']:8.3f} {old_rk:6d} "
-                f"{r['composite_score']:8.3f} {new_rk:6d} "
+                f"{r['correctness_score']:8.3f} {new_rk:6d} "
                 f"{delta:+4d}  {change:20s}"
             )
             rows_printed += 1
@@ -121,7 +122,7 @@ def rescore(input_path: Path, show_top: int = 20) -> None:
     print(f"\n{'='*50}")
     print("  AGGREGATE SUMMARY BY DECOMPILER")
     print(f"{'='*50}")
-    print(f"{'Decomp':12s} {'AvgOldSim':10s} {'AvgNewCmp':10s} {'Δ':8s}")
+    print(f"{'Decomp':12s} {'AvgOldSim':10s} {'AvgNewCorr':10s} {'Delta':8s}")
     print(f"{'-'*12} {'-'*10} {'-'*10} {'-'*8}")
 
     by_d: dict[str, list] = defaultdict(list)
@@ -132,20 +133,20 @@ def rescore(input_path: Path, show_top: int = 20) -> None:
     rows_by_d = []
     for d, rs in by_d.items():
         avg_sim = sum(r["source_similarity"] for r in rs) / len(rs)
-        avg_comp = sum(r["composite_score"] for r in rs) / len(rs)
-        rows_by_d.append((d, avg_sim, avg_comp))
+        avg_correctness = sum(r["correctness_score"] for r in rs) / len(rs)
+        rows_by_d.append((d, avg_sim, avg_correctness))
 
     rows_by_d.sort(key=lambda x: x[2], reverse=True)
-    for d, avg_sim, avg_comp in rows_by_d:
-        delta = avg_comp - avg_sim
-        print(f"{d:12s} {avg_sim:10.3f} {avg_comp:10.3f} {delta:+8.3f}")
+    for d, avg_sim, avg_correctness in rows_by_d:
+        delta = avg_correctness - avg_sim
+        print(f"{d:12s} {avg_sim:10.3f} {avg_correctness:10.3f} {delta:+8.3f}")
 
-    print("\n📝 Note: negative Δ means composite is lower than similarity (semantic failures penalized)")
-    print("📝 Note: positive Δ means composite is higher (strong semantic scores lift ranking)")
+    print("\nNote: negative delta means correctness is lower than similarity (semantic failures penalized)")
+    print("Note: positive delta means correctness is higher (strong semantic scores lift ranking)")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Re-score existing benchmark results with composite formula")
+    parser = argparse.ArgumentParser(description="Re-score existing benchmark results with correctness formula")
     parser.add_argument(
         "--input",
         default="results/latest.json",

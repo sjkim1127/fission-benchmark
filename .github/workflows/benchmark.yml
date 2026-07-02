@@ -114,6 +114,20 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Resolve Fission release version
+        id: fission-version
+        run: |
+          set -euo pipefail
+          requested="${FISSION_VERSION:-latest}"
+          if [ "$requested" = "latest" ]; then
+            resolved="$(python -c 'import json, urllib.request; print(json.load(urllib.request.urlopen("https://api.github.com/repos/sjkim1127/Fission/releases/latest", timeout=30))["tag_name"])')"
+          else
+            resolved="$requested"
+          fi
+          echo "Resolved Fission version: $resolved"
+          echo "FISSION_VERSION=$resolved" >> "$GITHUB_ENV"
+          echo "version=$resolved" >> "$GITHUB_OUTPUT"
+
       - name: Pull or build decompiler images
         run: |
           SERVICES="fission ghidra boomerang radare2 angr snowman revng reko"
@@ -125,6 +139,19 @@ jobs:
           fi
 
           for svc in $SERVICES; do
+            if [ "$svc" = "fission" ]; then
+              REMOTE="${IMAGE_PREFIX}-fission:${FISSION_VERSION}"
+              echo "==> Trying to pull ${REMOTE}..."
+              if docker pull "${REMOTE}" 2>/dev/null; then
+                docker tag "${REMOTE}" "fission-benchmark-fission"
+                echo "  ✓ Pulled fission ${FISSION_VERSION} from ghcr.io"
+              else
+                echo "  ⚠  Fission ${FISSION_VERSION} image not found — building locally"
+                docker compose build --pull fission
+              fi
+              continue
+            fi
+
             if echo "$CHANGED_SERVICES" | grep -qx "$svc"; then
               echo "==> Building changed service ${svc} locally for push benchmark..."
               docker compose build "${svc}"
@@ -173,6 +200,10 @@ jobs:
               exit 1
             fi
           done
+
+      - name: Verify Fission container version
+        run: |
+          python -c 'import json, os, urllib.request; expected = os.environ["FISSION_VERSION"].lstrip("v"); health = json.load(urllib.request.urlopen("http://localhost:8000/health", timeout=10)); actual = str(health.get("version", "")); release = str(health.get("release_version", "")); print(f"Fission health version: {actual}"); print(f"Fission release version: {release}"); raise SystemExit(f"Fission image release mismatch: expected {expected}, got {release}") if expected and release.lstrip("v") != expected else None'
 
       - name: Run dev benchmark
         timeout-minutes: 25

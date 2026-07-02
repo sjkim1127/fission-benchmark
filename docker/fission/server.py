@@ -17,6 +17,7 @@ SLEIGH_SPEC_DIR = os.environ.get("FISSION_SLEIGH_SPEC_DIR", "/sleigh-specs")
 RESOURCE_ROOT = os.environ.get("FISSION_RESOURCE_ROOT", "/opt/fission-utils/utils")
 GHIDRA_DATA_DIR = os.environ.get("FISSION_GHIDRA_DATA_DIR", "/opt/fission-utils/utils/ghidra-data")
 DECOMP_TIMEOUT_MS = os.environ.get("FISSION_DECOMP_TIMEOUT_MS", "30000")
+RELEASE_VERSION_FILE = Path("/opt/fission-release-version")
 
 class DecompileRequest(BaseModel):
     binary_b64: str
@@ -47,12 +48,22 @@ class BatchDecompileResponse(BaseModel):
 @app.get("/health")
 def health():
     version = "unknown"
+    release_version = os.environ.get("FISSION_RELEASE_VERSION", "unknown")
     try:
         r = subprocess.run([str(FISSION_BIN), "--version"], capture_output=True, text=True, timeout=5)
         version = r.stdout.strip() or r.stderr.strip()
     except Exception:
         pass
-    return {"status": "ok", "decompiler": "fission", "version": version}
+    try:
+        release_version = RELEASE_VERSION_FILE.read_text(encoding="utf-8").strip() or release_version
+    except Exception:
+        pass
+    return {
+        "status": "ok",
+        "decompiler": "fission",
+        "version": version,
+        "release_version": release_version,
+    }
 
 def run_fission_cli(args: List[str]):
     env = {

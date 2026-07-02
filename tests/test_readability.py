@@ -1,4 +1,8 @@
-from runner.readability import analyze_readability, ast_structure_similarity
+from runner.readability import (
+    analyze_readability,
+    ast_structure_similarity,
+    summarize_readability_proxy_score,
+)
 
 
 def test_readability_tracks_generic_ghidra_names_and_artifacts() -> None:
@@ -35,3 +39,15 @@ def test_ast_similarity_reports_three_separate_views() -> None:
         "control_flow_normalized",
     }
     assert similarity["identifier_placeholder"]["similarity"] >= 0.8
+
+
+def test_readability_proxy_summary_uses_normalized_artifact_value() -> None:
+    metrics = {
+        "generic_naming_ratio": {"normalized": 1.0},
+        "type_specificity": {"normalized": 1.0},
+        "expression_complexity": {"normalized": 1.0},
+        "structured_control_flow": {"normalized": 1.0},
+        "unresolved_artifacts": {"normalized": 0.0, "raw": {"total": 58}},
+    }
+
+    assert summarize_readability_proxy_score(metrics) == 0.8

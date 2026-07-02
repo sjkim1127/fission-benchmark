@@ -70,33 +70,38 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
         "",
         "---",
         "",
-        "## Summary — Correctness-Oriented Composite",
+        "## Summary — Correctness Score",
         "",
         "> Readability metrics are recorded as unvalidated raw proxies. They are not combined into a final readability score until the human validation study is complete.",
         "",
     ]
 
-    # Per-decompiler average (ranked by composite_score)
-    by_decomp_comp: dict[str, list[float]] = defaultdict(list)
+    # Per-decompiler average (ranked by correctness_score)
+    by_decomp_correctness: dict[str, list[float]] = defaultdict(list)
     by_decomp_sim: dict[str, list[float]] = defaultdict(list)
     by_decomp_sem: dict[str, list[float]] = defaultdict(list)
     for s in scores:
         if s.error is None:
-            by_decomp_comp[s.decompiler].append(getattr(s, "composite_score", 0.0))
+            by_decomp_correctness[s.decompiler].append(
+                getattr(s, "correctness_score", getattr(s, "composite_score", 0.0))
+            )
             by_decomp_sim[s.decompiler].append(s.source_similarity)
             by_decomp_sem[s.decompiler].append(s.semantic_score)
 
     rows = []
-    all_decomps = sorted(by_decomp_comp.keys(), key=lambda d: -(sum(by_decomp_comp[d]) / len(by_decomp_comp[d])))
+    all_decomps = sorted(
+        by_decomp_correctness.keys(),
+        key=lambda d: -(sum(by_decomp_correctness[d]) / len(by_decomp_correctness[d])),
+    )
     for d in all_decomps:
-        comps = by_decomp_comp[d]
+        comps = by_decomp_correctness[d]
         sims = by_decomp_sim[d]
         sems = by_decomp_sem[d]
         avg_comp = sum(comps) / len(comps)
         avg_sim = sum(sims) / len(sims)
         avg_sem = sum(sems) / len(sems) if sems else 0.0
         rows.append([f"**{d}**", f"{avg_comp:.3f}", f"{avg_sim:.3f}", f"{avg_sem * 100:.1f}%", f"{len(comps)}"])
-    lines.append(_md_table(["Decompiler", "Composite ⭐", "Similarity", "Semantic Pass", "Functions"], rows))
+    lines.append(_md_table(["Decompiler", "Correctness", "Similarity", "Semantic Pass", "Functions"], rows))
     lines += ["", "---", "", "## Per-Function Results", ""]
 
     # Per function
@@ -111,9 +116,9 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
         fission_scores_fn = [s for s in fn_scores if s.decompiler == "fission" and s.error is None]
         other_scores_fn = [s for s in fn_scores if s.decompiler != "fission" and s.error is None]
         if fission_scores_fn and other_scores_fn:
-            fn_comp = fission_scores_fn[0].composite_score if hasattr(fission_scores_fn[0], "composite_score") else 0.0
-            others_avg = sum(getattr(s, "composite_score", 0.0) for s in other_scores_fn) / len(other_scores_fn)
-            if fission_scores_fn[0].consensus_rank == 1:
+            fn_comp = getattr(fission_scores_fn[0], "correctness_score", getattr(fission_scores_fn[0], "composite_score", 0.0))
+            others_avg = sum(getattr(s, "correctness_score", getattr(s, "composite_score", 0.0)) for s in other_scores_fn) / len(other_scores_fn)
+            if getattr(fission_scores_fn[0], "correctness_rank", fission_scores_fn[0].consensus_rank) == 1:
                 badge = " 🟢 Fission leads"
             elif fn_comp < 0.20 and others_avg > 0.40:
                 badge = " 🔴 Fission-only gap"
@@ -122,8 +127,9 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
         lines[-1] = lines[-1] + badge
 
         rows = []
-        for s in sorted(fn_scores, key=lambda x: -(getattr(x, "composite_score", 0.0))):
-            rank = f"#{s.consensus_rank}" if s.consensus_rank else "—"
+        for s in sorted(fn_scores, key=lambda x: -(getattr(x, "correctness_score", getattr(x, "composite_score", 0.0)))):
+            correctness_rank = getattr(s, "correctness_rank", s.consensus_rank)
+            rank = f"#{correctness_rank}" if correctness_rank else "—"
             fail_cat = getattr(s, "fail_category", "") or ""
             cat_icons = {
                 "compile_error": "🔴 compile",
@@ -131,6 +137,7 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
                 "timeout": "🟡 timeout",
                 "assertion_fail": "🟤 assert",
                 "no_wrapper": "⚪ no_test",
+                "adapter_error": "⚫ adapter",
                 "": "✅" if not s.error else "❌",
             }
             status_icon = cat_icons.get(fail_cat, "❌")
@@ -142,7 +149,7 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
             intrin_flag = " ⚠️intrin" if getattr(s, "uses_intrinsics", False) else ""
             rows.append([
                 s.decompiler, s.compiler_variant,
-                f"{getattr(s, 'composite_score', 0.0):.3f}",
+                f"{getattr(s, 'correctness_score', getattr(s, 'composite_score', 0.0)):.3f}",
                 f"{s.source_similarity:.3f}",
                 sem_str + intrin_flag, rank,
                 str(s.goto_count), str(s.nesting_depth),
@@ -151,7 +158,7 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
             ])
         lines.append(_md_table(
             [
-                "Decompiler", "Variant", "Composite ⭐", "Similarity", "Semantic", "Rank",
+                "Decompiler", "Variant", "Correctness", "Similarity", "Semantic", "Correctness Rank",
                 "Gotos", "Depth", "Readability Proxies", "Time", "Status",
             ],
             rows,
@@ -174,10 +181,10 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
         valid = [s for s in fn_scores if s.error is None]
         if not valid:
             continue
-        all_low = all(getattr(s, "composite_score", s.source_similarity) < 0.20 for s in valid)
+        all_low = all(getattr(s, "correctness_score", getattr(s, "composite_score", s.source_similarity)) < 0.20 for s in valid)
         fission_scores = [s for s in valid if s.decompiler == "fission"]
-        others_ok = any(getattr(s, "composite_score", s.source_similarity) >= 0.20 for s in valid if s.decompiler != "fission")
-        fission_low = fission_scores and all(getattr(s, "composite_score", s.source_similarity) < 0.20 for s in fission_scores)
+        others_ok = any(getattr(s, "correctness_score", getattr(s, "composite_score", s.source_similarity)) >= 0.20 for s in valid if s.decompiler != "fission")
+        fission_low = fission_scores and all(getattr(s, "correctness_score", getattr(s, "composite_score", s.source_similarity)) < 0.20 for s in fission_scores)
 
         if all_low:
             hard.append(fn_name)
@@ -222,12 +229,16 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
         "fail_category": getattr(s, "fail_category", "") or "",
         "cases_passed": getattr(s, "cases_passed", 0),
         "cases_total": getattr(s, "cases_total", 0),
+        "correctness_score": getattr(s, "correctness_score", getattr(s, "composite_score", 0.0)),
+        "correctness_rank": getattr(s, "correctness_rank", getattr(s, "consensus_rank", None)),
+        "readability_proxy_score": getattr(s, "readability_proxy_score", None),
         "composite_score": getattr(s, "composite_score", 0.0),
         "structural_penalty": getattr(s, "structural_penalty", 0.0),
         "uses_intrinsics": getattr(s, "uses_intrinsics", False),
         "decompiled_code": getattr(s, "decompiled_code", "") or "",
         "readability_metrics": getattr(s, "readability_metrics", {}) or {},
         "ast_similarity": getattr(s, "ast_similarity", {}) or {},
+        "output_diagnostics": getattr(s, "output_diagnostics", {}) or {},
         "goto_count": s.goto_count,
         "nesting_depth": s.nesting_depth,
         "consensus_rank": s.consensus_rank,
@@ -847,7 +858,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
 <div class="charts-grid">
   <div class="card">
     <div class="card-header">
-      <h2>Correctness, Evidence, Similarity</h2>
+      <h2>Correctness, Readability Proxy, Similarity</h2>
     </div>
     <div class="chart-container">
       <canvas id="barChart"></canvas>
@@ -865,7 +876,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
   
   <div class="card">
     <div class="card-header">
-      <h2>Per-Function Evidence Score</h2>
+      <h2>Per-Function Correctness Score</h2>
       <div class="card-actions">
         <select id="functionChartSelector"></select>
       </div>
@@ -920,10 +931,10 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
           <th data-key="function_name">Function</th>
           <th data-key="compiler_variant">Variant</th>
           <th data-key="decompiler">Decompiler</th>
-          <th data-key="composite_score">Evidence</th>
+          <th data-key="correctness_score">Correctness</th>
           <th data-key="semantic_score">Semantic</th>
           <th>Readability Proxies</th>
-          <th data-key="consensus_rank">Rank</th>
+          <th data-key="correctness_rank">Correctness Rank</th>
           <th data-key="goto_count">Gotos</th>
           <th data-key="time_ms">Time</th>
           <th>Status</th>
@@ -1008,7 +1019,7 @@ function mean(rows, selector) {
 }
 
 function hasOutput(row) {
-  return Boolean(row.decompiled_code && row.decompiled_code.trim());
+  return Boolean(!row.error && row.decompiled_code && row.decompiled_code.trim());
 }
 
 function hasSemanticCases(row) {
@@ -1049,6 +1060,10 @@ const totalAdapterErrors = SCORES.filter(s => s.error).length;
 const totalSemanticRows = SCORES.filter(hasSemanticCases).length;
 const totalSemanticPassed = SCORES.filter(semanticPasses).length;
 const totalWithReadability = SCORES.filter(s => s.readability_metrics && Object.keys(s.readability_metrics).length > 0).length;
+const totalDirectFunctions = SCORES.filter(s => s.output_diagnostics?.status === 'direct_function').length;
+const totalNeedsNormalization = SCORES.filter(s => s.output_diagnostics?.status === 'needs_normalization').length;
+const totalBoundaryMismatch = SCORES.filter(s => s.output_diagnostics?.status === 'boundary_mismatch').length;
+const totalWholeProgram = SCORES.filter(s => s.output_diagnostics?.status === 'whole_program_output').length;
 
 const overviewContainer = document.getElementById('overviewContainer');
 [
@@ -1061,6 +1076,11 @@ const overviewContainer = document.getElementById('overviewContainer');
     label: 'Decompiler Output',
     value: totalRows ? `${((totalOutputRows / totalRows) * 100).toFixed(1)}%` : 'N/A',
     sub: `${totalOutputRows.toLocaleString()} rows returned code, ${totalAdapterErrors.toLocaleString()} adapter errors`
+  },
+  {
+    label: 'Function Boundary',
+    value: totalOutputRows ? `${((totalDirectFunctions / totalOutputRows) * 100).toFixed(1)}%` : 'N/A',
+    sub: `${totalDirectFunctions} direct, ${totalNeedsNormalization} normalize, ${totalBoundaryMismatch} boundary mismatch, ${totalWholeProgram} whole-program`
   },
   {
     label: 'Semantic Correctness',
@@ -1093,13 +1113,19 @@ decompilers.forEach(d => {
   const semanticPassed = decScores.filter(semanticPasses).length;
   const avgSim = mean(outputScores, s => s.source_similarity);
   const avgSem = mean(semanticRows, s => s.semantic_score);
-  const avgComposite = mean(outputScores, s => s.composite_score);
+  const avgCorrectness = mean(outputScores, s => s.correctness_score ?? s.composite_score);
+  const avgReadabilityProxy = mean(outputScores.filter(s => s.readability_proxy_score !== null && s.readability_proxy_score !== undefined), s => s.readability_proxy_score);
   const outputCount = outputScores.length;
   const outputRate = decScores.length ? (outputCount / decScores.length) * 100 : null;
   const semanticRate = semanticRows.length ? semanticPassed / semanticRows.length : null;
   const adapterErrors = decScores.filter(s => s.error).length;
   const totalGotos = decScores.reduce((sum, s) => sum + (s.goto_count || 0), 0);
   const avgTime = mean(decScores.filter(s => Number(s.time_ms || 0) > 0), s => s.time_ms);
+  const directFunctions = outputScores.filter(s => s.output_diagnostics?.status === 'direct_function').length;
+  const needsNormalization = outputScores.filter(s => s.output_diagnostics?.status === 'needs_normalization').length;
+  const boundaryMismatch = outputScores.filter(s => s.output_diagnostics?.status === 'boundary_mismatch').length;
+  const wholeProgram = outputScores.filter(s => s.output_diagnostics?.status === 'whole_program_output').length;
+  const boundaryRate = outputScores.length ? (directFunctions / outputScores.length) * 100 : null;
   const readabilityRows = decScores.filter(s => s.readability_metrics && Object.keys(s.readability_metrics).length > 0);
   const readabilityCoverage = outputScores.length ? (readabilityRows.length / outputScores.length) * 100 : null;
   const avgGnr = averageReadability(readabilityRows, 'gnr');
@@ -1109,9 +1135,10 @@ decompilers.forEach(d => {
   const avgArtifacts = averageReadability(readabilityRows, 'artifacts');
 
   stats[d] = {
-    avgSim, avgSem, avgComposite, outputRate, outputCount, adapterErrors,
+    avgSim, avgSem, avgCorrectness, avgReadabilityProxy, outputRate, outputCount, adapterErrors,
     semanticRate, semanticPassed, semanticTotal: semanticRows.length,
-    totalGotos, avgTime, readabilityCoverage, avgGnr, avgType, avgExpr, avgCf, avgArtifacts
+    totalGotos, avgTime, directFunctions, needsNormalization, boundaryMismatch, wholeProgram, boundaryRate,
+    readabilityCoverage, avgGnr, avgType, avgExpr, avgCf, avgArtifacts
   };
 });
 
@@ -1121,9 +1148,10 @@ decompilers.forEach(d => {
   const s = stats[d];
   const color = DECOMPILER_COLORS[d] || '#888';
   const hasAnyOutput = s.outputCount > 0;
-  const scoreLabel = hasAnyOutput ? `${pct(s.avgComposite)} <span style="font-size: 0.85rem; color: var(--muted); font-weight: normal;">evidence</span>` : '<span style="font-size:1.35rem;color:var(--muted);">No output</span>';
+  const scoreLabel = hasAnyOutput ? `${pct(s.avgCorrectness)} <span style="font-size: 0.85rem; color: var(--muted); font-weight: normal;">correctness</span>` : '<span style="font-size:1.35rem;color:var(--muted);">No output</span>';
   const semanticText = s.semanticTotal ? `${pct(s.semanticRate)} (${s.semanticPassed}/${s.semanticTotal})` : 'N/A';
   const readabilityText = s.readabilityCoverage === null ? 'N/A' : `${s.readabilityCoverage.toFixed(0)}%`;
+  const boundaryText = s.boundaryRate === null ? 'N/A' : `${s.boundaryRate.toFixed(0)}% (${s.directFunctions}/${s.outputCount})`;
   const artifactsText = s.readabilityCoverage === null ? 'N/A' : s.avgArtifacts.toFixed(1);
   const avgTimeText = s.avgTime === null ? 'N/A' : `${s.avgTime.toFixed(0)}ms`;
   
@@ -1136,12 +1164,14 @@ decompilers.forEach(d => {
     </div>
     <div class="kpi-value">${scoreLabel}</div>
     <div class="kpi-bar-bg">
-      <div class="kpi-bar-fill" style="width: ${hasAnyOutput ? Math.min(100, s.avgComposite * 100) : 0}%; background-color: ${color}"></div>
+      <div class="kpi-bar-fill" style="width: ${hasAnyOutput ? Math.min(100, s.avgCorrectness * 100) : 0}%; background-color: ${color}"></div>
     </div>
     <div class="kpi-stats">
       <div class="kpi-stat-item">Semantic: <strong>${semanticText}</strong></div>
       <div class="kpi-stat-item">Similarity: <strong>${pct(s.avgSim)}</strong></div>
       <div class="kpi-stat-item">Output: <strong>${s.outputRate === null ? 'N/A' : `${s.outputRate.toFixed(0)}% (${s.outputCount}/${SCORES.filter(x => x.decompiler === d).length})`}</strong></div>
+      <div class="kpi-stat-item">Boundary: <strong>${boundaryText}</strong></div>
+      <div class="kpi-stat-item">Readability Proxy: <strong>${s.avgReadabilityProxy === null ? 'N/A' : pct(s.avgReadabilityProxy)}</strong></div>
       <div class="kpi-stat-item">Readability: <strong>${readabilityText}</strong></div>
       <div class="kpi-stat-item">Artifacts: <strong>${artifactsText}</strong></div>
       <div class="kpi-stat-item">Avg Time: <strong>${avgTimeText}</strong></div>
@@ -1153,7 +1183,7 @@ decompilers.forEach(d => {
 
 // Setup global metric chart.
 const globalBarCtx = document.getElementById('barChart').getContext('2d');
-const scoreForSort = d => stats[d].avgComposite ?? -1;
+const scoreForSort = d => stats[d].avgCorrectness ?? -1;
 const sortedDecompilers = [...decompilers].sort((a, b) => scoreForSort(b) - scoreForSort(a));
 new Chart(globalBarCtx, {
   type: 'bar',
@@ -1167,9 +1197,15 @@ new Chart(globalBarCtx, {
         borderRadius: 5
       },
       {
-        label: 'Evidence Score',
-        data: sortedDecompilers.map(d => stats[d].avgComposite),
+        label: 'Correctness Score',
+        data: sortedDecompilers.map(d => stats[d].avgCorrectness),
         backgroundColor: 'rgba(96, 165, 250, 0.74)',
+        borderRadius: 5
+      },
+      {
+        label: 'Readability Proxy',
+        data: sortedDecompilers.map(d => stats[d].avgReadabilityProxy),
+        backgroundColor: 'rgba(168, 85, 247, 0.54)',
         borderRadius: 5
       },
       {
@@ -1264,7 +1300,7 @@ function updatePerFuncChart(funcName) {
       label: d,
       data: variants.map(v => {
         const match = dScores.find(s => s.compiler_variant === v);
-        return match && hasOutput(match) ? match.composite_score : null;
+        return match && hasOutput(match) ? (match.correctness_score ?? match.composite_score) : null;
       }),
       backgroundColor: DECOMPILER_COLORS[d] || '#888',
       borderRadius: 4
@@ -1306,19 +1342,22 @@ function toCSVRow(s) {
   const artifactCount = rm.unresolved_artifacts?.raw?.total ?? '';
   const fields = [
     s.function_name, s.compiler_variant, s.decompiler,
-    (s.composite_score || 0).toFixed(4),
+    ((s.correctness_score ?? s.composite_score) || 0).toFixed(4),
+    s.readability_proxy_score === null || s.readability_proxy_score === undefined ? '' : Number(s.readability_proxy_score).toFixed(4),
     s.source_similarity.toFixed(4),
     (s.semantic_score || 0).toFixed(4),
     gnr, typeScore, exprScore, cfScore, artifactCount,
     s.cases_passed || 0, s.cases_total || 0,
     s.fail_category || '',
-    s.consensus_rank || '', s.goto_count, s.nesting_depth,
+    s.output_diagnostics?.status || '',
+    (s.output_diagnostics?.issues || []).join(';'),
+    s.correctness_rank || s.consensus_rank || '', s.goto_count, s.nesting_depth,
     s.time_ms, s.error || '', s.uses_intrinsics ? 'true' : 'false'
   ];
   return fields.map(f => `"${String(f).replace(/"/g, '""')}"`).join(',');
 }
 
-const CSV_HEADER = '"function","variant","decompiler","composite","similarity","semantic","gnr","type_specificity","expression_complexity","structured_control_flow","unresolved_artifacts","cases_passed","cases_total","fail_category","rank","gotos","depth","time_ms","error","uses_intrinsics"';
+const CSV_HEADER = '"function","variant","decompiler","correctness_score","readability_proxy_score","similarity","semantic","gnr","type_specificity","expression_complexity","structured_control_flow","unresolved_artifacts","cases_passed","cases_total","fail_category","output_status","output_issues","correctness_rank","gotos","depth","time_ms","error","uses_intrinsics"';
 
 function exportCSV() {
   const rows = [CSV_HEADER, ...currentFiltered.map(toCSVRow)].join('\n');
@@ -1458,6 +1497,28 @@ function readabilityProxyHtml(s) {
     + `<span style="color:#9ca3af">${parse}</span></span>`;
 }
 
+function outputDiagnosticsHtml(s) {
+  const diag = s.output_diagnostics || {};
+  if (!hasOutput(s)) return '<span class="badge neutral">No output</span>';
+  const status = diag.status || 'unknown';
+  const labels = {
+    direct_function: 'Direct',
+    needs_normalization: 'Normalize',
+    boundary_mismatch: 'Boundary',
+    whole_program_output: 'Whole program',
+    no_output: 'No output',
+    unknown: 'Unknown'
+  };
+  const klass = status === 'direct_function'
+    ? 'success'
+    : (status === 'needs_normalization' ? 'warning' : 'error');
+  const title = [
+    ...(diag.issues || []),
+    ...(diag.harness_blockers || [])
+  ].join(', ') || status;
+  return `<span class="badge ${klass}" title="${escapeHtml(title)}">${labels[status] || status}</span>`;
+}
+
 function semanticHtml(s) {
   if (s.error) {
     return `<button type="button" class="badge error badge-button semantic-detail-btn" data-row-id="${s._rowId}">Adapter error</button>`;
@@ -1471,7 +1532,7 @@ function semanticHtml(s) {
   if (semanticPasses(s)) {
     return `<span class="badge success">${semPct}${intrinFlag}</span>`;
   }
-  const failCatLabels = {'compile_error':'Compile','runtime_error':'Runtime','timeout':'Timeout','assertion_fail':'Assert','no_wrapper':'No wrapper','':'Fail'};
+  const failCatLabels = {'compile_error':'Compile','runtime_error':'Runtime','timeout':'Timeout','assertion_fail':'Assert','no_wrapper':'No wrapper','adapter_error':'Adapter','':'Fail'};
   const failCat = s.fail_category || '';
   const label = failCatLabels[failCat] || 'Fail';
   return `<button type="button" class="badge error badge-button semantic-detail-btn" data-row-id="${s._rowId}" title="${escapeHtml(failCat)}">${label}: ${semPct}${intrinFlag}</button>`;
@@ -1510,17 +1571,17 @@ function renderTable() {
       tr.className = 'highlighted-row';
     }
     
-    const rankLabel = getRankBadge(s.consensus_rank);
+    const rankLabel = getRankBadge(s.correctness_rank || s.consensus_rank);
     const hasCode = hasOutput(s);
-    const compScore = hasCode ? (s.composite_score || 0) : null;
-    const simClass = getSimilarityClass(compScore, s.error);
+    const correctnessScore = hasCode ? ((s.correctness_score ?? s.composite_score) || 0) : null;
+    const simClass = getSimilarityClass(correctnessScore, s.error);
     const statusClass = s.error ? 'error' : (hasCode ? 'success' : 'warning');
     const statusText = s.error ? 'Error' : (hasCode ? 'Output' : 'No output');
     const scoreHtml = hasCode
       ? `<div class="sim-cell">
-          <span class="sim-badge ${simClass}">${compScore.toFixed(3)}</span>
+          <span class="sim-badge ${simClass}">${correctnessScore.toFixed(3)}</span>
           <div class="sim-bar-bg">
-            <div class="sim-bar-fill ${simClass}" style="width: ${compScore * 100}%"></div>
+            <div class="sim-bar-fill ${simClass}" style="width: ${correctnessScore * 100}%"></div>
           </div>
         </div>
         <small style="color:#9ca3af;font-size:0.75em;">sim:${s.source_similarity.toFixed(3)}</small>`
@@ -1539,7 +1600,7 @@ function renderTable() {
       <td>${rankLabel}</td>
       <td>${s.goto_count}</td>
       <td>${s.time_ms}ms</td>
-      <td><span class="badge ${statusClass}">${statusText}</span></td>
+      <td>${outputDiagnosticsHtml(s)}<br><span class="badge ${statusClass}" style="margin-top:4px;">${statusText}</span></td>
       <td>${hasCode ? `<button type="button" class="code-btn" data-row-id="${s._rowId}">🔬 View</button>` : '<span style="color:#6b7280">—</span>'}</td>
     `;
     tbody.appendChild(tr);
@@ -1585,12 +1646,14 @@ function filterScores() {
       const key = s.function_name + '|' + s.compiler_variant;
       const group = scoresByGroup[key] || [];
       const fissionScore = group.find(x => x.decompiler === 'fission');
-      const othersOk = group.some(x => x.decompiler !== 'fission' && x.source_similarity >= 0.3);
-      matchesGap = fissionScore && fissionScore.source_similarity < 0.3 && othersOk;
+      const scoreOf = row => (row.correctness_score ?? row.composite_score ?? row.source_similarity ?? 0);
+      const othersOk = group.some(x => x.decompiler !== 'fission' && scoreOf(x) >= 0.3);
+      matchesGap = fissionScore && scoreOf(fissionScore) < 0.3 && othersOk;
     } else if (gapType === 'hard') {
       const key = s.function_name + '|' + s.compiler_variant;
       const group = scoresByGroup[key] || [];
-      matchesGap = group.every(x => x.source_similarity < 0.3);
+      const scoreOf = row => (row.correctness_score ?? row.composite_score ?? row.source_similarity ?? 0);
+      matchesGap = group.every(x => scoreOf(x) < 0.3);
     } else if (gapType === 'gotos') {
       matchesGap = s.decompiler === 'fission' && s.goto_count > 0;
     }

@@ -1,6 +1,7 @@
 """Benchmark runner to decompile and score binaries."""
 import asyncio
 import base64
+from collections import Counter
 import json
 import os
 import sys
@@ -24,7 +25,8 @@ from scoring import (
 )
 from semantic import verify_semantic_correctness
 from report import generate_report
-from readability import analyze_readability, ast_structure_similarity
+from readability import analyze_readability, ast_structure_similarity, summarize_readability_proxy_score
+from output_diagnostics import analyze_output_diagnostics, invalid_output_reason
 
 app = typer.Typer(help="Fission decompiler benchmark runner.")
 
@@ -82,6 +84,8 @@ async def decompile_batch_and_score(
                 nesting_depth=0,
                 time_ms=0,
                 error=f"Failed to read binary: {e}",
+                semantic_error=f"Failed to read binary: {e}",
+                fail_category="adapter_error",
             ) for t in targets
         ]
 
@@ -111,11 +115,14 @@ async def decompile_batch_and_score(
                     nesting_depth=0,
                     time_ms=0,
                     error=f"Batch decompile error: {e}",
+                    semantic_error=f"Batch decompile error: {e}",
+                    fail_category="adapter_error",
                 ) for t in targets
             ]
 
     # Map batch results back
     results_by_addr = {item.get("addr"): item for item in batch_results}
+    code_counts = Counter((item.get("code") or "").strip() for item in batch_results if (item.get("code") or "").strip())
     fn_scores = []
 
     for fn, variant, function_source in targets:
@@ -136,11 +143,19 @@ async def decompile_batch_and_score(
             continue
 
         code = item.get("code", "")
-        error = item.get("error")
+        adapter_error = item.get("error")
+        output_diagnostics = analyze_output_diagnostics(fn.name, dname, code, expected_addr=variant.addr) if code else {}
+        output_error = invalid_output_reason(
+            output_diagnostics,
+            code,
+            duplicate_count=code_counts.get((code or "").strip(), 0),
+        ) if code else None
+        error = adapter_error or output_error
         sim = source_similarity(function_source, code) if function_source and not error else 0.0
         gotos, depth = structural_score(code) if not error else (0, 0)
         uses_intrin = check_uses_intrinsics(code) if code else False
         readability_metrics = analyze_readability(code, dname) if code and not error else {}
+        readability_score = summarize_readability_proxy_score(readability_metrics)
         ast_similarity = (
             ast_structure_similarity(function_source, code)
             if function_source and code and not error
@@ -152,7 +167,7 @@ async def decompile_batch_and_score(
                 fn.name, code
             )
         else:
-            sem_score, sem_err, fail_cat, cases_passed, cases_total = 0.0, None, "compile_error", 0, 0
+            sem_score, sem_err, fail_cat, cases_passed, cases_total = 0.0, error, "adapter_error", 0, 0
 
         fn_scores.append(FunctionScore(
             decompiler=dname,
@@ -171,7 +186,9 @@ async def decompile_batch_and_score(
             uses_intrinsics=uses_intrin,
             decompiled_code=code[:8000] if code else "",  # cap at 8KB for dashboard
             readability_metrics=readability_metrics,
+            readability_proxy_score=readability_score,
             ast_similarity=ast_similarity,
+            output_diagnostics=output_diagnostics,
         ))
 
         # Direct feedback output

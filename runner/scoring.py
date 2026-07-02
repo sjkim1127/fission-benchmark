@@ -5,8 +5,8 @@ Metrics:
   1. source_similarity  — normalized edit distance vs original C source
   2. semantic_score     — fraction of test cases passed (0.0–1.0)
   3. structural_penalty — relative goto/nesting increase vs original source
-  4. composite_score    — primary ranking metric (semantic-gated)
-  5. consensus_rank     — relative position among all decompilers
+  4. correctness_score  — semantic-gated correctness ranking metric
+  5. correctness_rank   — relative correctness position among all decompilers
 """
 from __future__ import annotations
 
@@ -36,36 +36,40 @@ class FunctionScore:
     cases_passed: int = 0               # number of test cases passed
     cases_total: int = 0                # total number of test cases
     structural_penalty: float = 0.0     # 0.0–1.0 based on relative goto/nesting delta
-    composite_score: float = 0.0        # primary ranking metric (computed after all scores)
-    consensus_rank: int | None = None   # set after all decompilers run
+    correctness_score: float = 0.0      # semantic-gated correctness score
+    correctness_rank: int | None = None # set after all decompilers run
+    readability_proxy_score: float | None = None  # unvalidated proxy evidence only
+    composite_score: float = 0.0        # deprecated alias for correctness_score
+    consensus_rank: int | None = None   # deprecated alias for correctness_rank
     uses_intrinsics: bool = False       # True if decompiled code uses __carry/__scarry etc.
     decompiled_code: str = ""           # raw decompiled output (truncated for dashboard)
     readability_metrics: dict[str, Any] = field(default_factory=dict)
     ast_similarity: dict[str, Any] = field(default_factory=dict)
+    output_diagnostics: dict[str, Any] = field(default_factory=dict)
 
 
-# ── Composite Score ───────────────────────────────────────────────────────────
+# ── Correctness Score ─────────────────────────────────────────────────────────
 
-# Weights for composite formula
+# Weights for the correctness formula.
 WEIGHT_SEMANTIC = 0.70
 WEIGHT_SIMILARITY = 0.20
 WEIGHT_STRUCTURAL = 0.10
 
-# If semantic == 0, composite is capped at this value
+# If semantic == 0, correctness is capped at this value.
 SEMANTIC_ZERO_CAP = 0.15
 
 
-def compute_composite(
+def compute_correctness_score(
     semantic_score: float,
     source_similarity: float,
     structural_penalty: float,
 ) -> float:
     """
-    Compute gated composite score.
+    Compute semantic-gated correctness score.
 
     Formula: sem * 0.70 + sim * 0.20 + (1 - structural_penalty) * 0.10
 
-    Gating: if semantic_score == 0.0, composite cannot exceed SEMANTIC_ZERO_CAP (0.15).
+    Gating: if semantic_score == 0.0, correctness cannot exceed SEMANTIC_ZERO_CAP (0.15).
     This ensures that a binary that compiles/runs but fails all tests, or fails to
     compile entirely, cannot be ranked above a binary that passes even one test case.
     """
@@ -77,6 +81,15 @@ def compute_composite(
     if semantic_score == 0.0:
         return round(min(raw, SEMANTIC_ZERO_CAP), 4)
     return round(raw, 4)
+
+
+def compute_composite(
+    semantic_score: float,
+    source_similarity: float,
+    structural_penalty: float,
+) -> float:
+    """Deprecated compatibility wrapper for compute_correctness_score."""
+    return compute_correctness_score(semantic_score, source_similarity, structural_penalty)
 
 
 # ── Structural Penalty ────────────────────────────────────────────────────────
@@ -193,9 +206,9 @@ def assign_consensus_ranks(
     source_nesting_depths: dict[str, int] | None = None,
 ) -> list[FunctionScore]:
     """
-    For the same function+variant, rank decompilers by composite_score desc.
+    For the same function+variant, rank decompilers by correctness_score desc.
 
-    Also assigns structural_penalty and composite_score for each score entry.
+    Also assigns structural_penalty and correctness_score for each score entry.
 
     Consensus interpretation:
       - All decompilers rank low  → objectively hard function
@@ -206,7 +219,7 @@ def assign_consensus_ranks(
     src_gotos = source_goto_counts or {}
     src_depths = source_nesting_depths or {}
 
-    # First pass: compute structural penalty and composite score for each entry
+    # First pass: compute structural penalty and correctness score for each entry.
     for s in scores:
         if s.error is None:
             s.structural_penalty = compute_structural_penalty(
@@ -215,12 +228,13 @@ def assign_consensus_ranks(
                 src_gotos.get(s.function_name, 0),
                 src_depths.get(s.function_name, 0),
             )
-            s.composite_score = compute_composite(
+            s.correctness_score = compute_correctness_score(
                 s.semantic_score,
                 s.source_similarity,
                 s.structural_penalty,
             )
-            s.uses_intrinsics = check_uses_intrinsics("")  # placeholder; set by runner
+            s.composite_score = s.correctness_score
+            s.uses_intrinsics = s.uses_intrinsics or check_uses_intrinsics(s.decompiled_code)
 
     # Group by (function_name, compiler_variant)
     groups: dict[tuple, list[FunctionScore]] = defaultdict(list)
@@ -230,9 +244,10 @@ def assign_consensus_ranks(
     result = []
     for group in groups.values():
         valid = [s for s in group if s.error is None]
-        # Rank by composite_score descending (semantic-gated)
-        valid.sort(key=lambda s: s.composite_score, reverse=True)
+        # Rank by correctness_score descending (semantic-gated).
+        valid.sort(key=lambda s: s.correctness_score, reverse=True)
         for rank, s in enumerate(valid, start=1):
+            s.correctness_rank = rank
             s.consensus_rank = rank
         # errored entries get no rank
         result.extend(group)
@@ -271,21 +286,21 @@ def get_consensus_badge(
     if not fission_scores:
         return ""
 
-    fission_composite = fission_scores[0].composite_score
-    others_composites = [s.composite_score for s in other_scores]
+    fission_correctness = fission_scores[0].correctness_score
+    others_correctness = [s.correctness_score for s in other_scores]
 
     # Fission leads
-    if fission_scores[0].consensus_rank == 1:
+    if fission_scores[0].correctness_rank == 1:
         return "🟢 Fission leads"
 
     # All decompilers low
-    all_low = fission_composite < low_threshold and all(c < low_threshold for c in others_composites)
+    all_low = fission_correctness < low_threshold and all(c < low_threshold for c in others_correctness)
     if all_low:
         return "⚪ Universally hard"
 
     # Fission-only gap: Fission is low, but at least one other is clearly higher
-    others_avg = sum(others_composites) / len(others_composites) if others_composites else 0.0
-    if fission_composite < low_threshold and others_avg > low_threshold * 2:
+    others_avg = sum(others_correctness) / len(others_correctness) if others_correctness else 0.0
+    if fission_correctness < low_threshold and others_avg > low_threshold * 2:
         return "🔴 Fission-only gap"
 
     return ""

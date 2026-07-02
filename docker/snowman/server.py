@@ -1,6 +1,7 @@
 """Snowman decompiler and parity diagnostic API server."""
 import base64
 import os
+import re
 import subprocess
 import tempfile
 import time
@@ -82,6 +83,65 @@ def pcode(binary: str, addr: str):
 def cfg(binary: str, addr: str):
     return {"blocks": [], "edges": []}
 
+FUNCTION_DEF_RE = re.compile(
+    r"(?m)^\s*(?:[\w_][\w\s_*\(\),]*\s+)?([A-Za-z_][\w.]*)\s*\([^;{}]*\)\s*\{"
+)
+CONTROL_KEYWORDS = {"if", "for", "while", "switch", "do"}
+
+def function_definition_count(code: str) -> int:
+    return sum(
+        1
+        for match in FUNCTION_DEF_RE.finditer(code)
+        if match.group(1) not in CONTROL_KEYWORDS
+    )
+
+def is_whole_program_output(code: str) -> bool:
+    return len(code) >= 7900 or function_definition_count(code) > 3
+
+def extract_snowman_function(code: str, addr_int: int) -> tuple[str, str]:
+    """
+    Search Snowman C++ output for the function at address addr_int.
+    Snowman functions are named like: fun_[hex_address]
+    e.g. fun_140001530 or fun_4015b0
+    """
+    hex_formats = [
+        f"{addr_int:x}",
+        f"{addr_int:X}",
+    ]
+    
+    body = ""
+    fn_name = f"fun_{addr_int:x}"
+
+    for hf in hex_formats:
+        # Match function definition, e.g. void fun_140001530(...) {
+        fn_pattern = re.compile(
+            rf"(?:^|\n)\s*[\w\s\*<>:,&]+?\bfun_{hf}\s*\([^;{{}}]*\)\s*\{{"
+        )
+        match = fn_pattern.search(code)
+        if not match:
+            continue
+
+        fn_name = f"fun_{hf}"
+        start = match.start()
+        brace_start = code.find("{", match.end() - 1)
+        if brace_start == -1:
+            continue
+
+        depth = 0
+        for idx in range(brace_start, len(code)):
+            ch = code[idx]
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    body = code[start : idx + 1].strip()
+                    break
+        if body:
+            break
+
+    return fn_name, body
+
 @app.post("/decompile", response_model=DecompileResponse)
 def decompile(req: DecompileRequest):
     batch_req = BatchDecompileRequest(binary_b64=req.binary_b64, addresses=[req.addr])
@@ -116,7 +176,28 @@ def decompile_batch(req: BatchDecompileRequest):
                     results.append(DecompileResultItem(addr=addr, name=f"func_{addr}", error=result.stderr or result.stdout))
                     continue
                 code = result.stdout.strip()
-                results.append(DecompileResultItem(addr=addr, name=f"func_{addr}", code=code))
+                
+                # Check if it contains multiple functions / whole program
+                if is_whole_program_output(code):
+                    try:
+                        addr_int = int(addr, 16) if addr.lower().startswith("0x") else int(addr)
+                        fn_name, extracted_code = extract_snowman_function(code, addr_int)
+                        if extracted_code:
+                            results.append(DecompileResultItem(addr=addr, name=fn_name, code=extracted_code))
+                        else:
+                            results.append(DecompileResultItem(
+                                addr=addr,
+                                name=f"func_{addr}",
+                                error="Snowman returned whole-program output and target function extraction failed",
+                            ))
+                    except Exception as e:
+                        results.append(DecompileResultItem(
+                            addr=addr,
+                            name=f"func_{addr}",
+                            error=f"Snowman whole-program extraction error: {e}",
+                        ))
+                else:
+                    results.append(DecompileResultItem(addr=addr, name=f"func_{addr}", code=code))
             except Exception as e:
                 results.append(DecompileResultItem(addr=addr, error=str(e)))
         elapsed = int((time.monotonic() - start) * 1000)

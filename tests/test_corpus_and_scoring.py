@@ -1,7 +1,8 @@
 from pathlib import Path
 
 from runner.corpus import Corpus
-from runner.scoring import extract_function_source
+from runner.scoring import FunctionScore, assign_consensus_ranks, extract_function_source
+from runner.test_wrappers import TEST_WRAPPERS
 
 
 def test_manifest_preserves_variant_addr(tmp_path: Path) -> None:
@@ -46,3 +47,28 @@ def test_extract_function_source_returns_requested_function_only() -> None:
     assert "int beta" in extracted
     assert "return -y;" in extracted
     assert "int alpha" not in extracted
+
+
+def test_assign_ranks_preserves_intrinsics_flag() -> None:
+    scores = [
+        FunctionScore(
+            decompiler="ghidra",
+            function_name="foo",
+            compiler_variant="gcc -O0",
+            source_similarity=0.5,
+            goto_count=0,
+            nesting_depth=1,
+            time_ms=10,
+            decompiled_code="int foo(int x) { return __carry(x, 1); }",
+        )
+    ]
+
+    ranked = assign_consensus_ranks(scores)
+
+    assert ranked[0].uses_intrinsics is True
+
+
+def test_crypto_functions_have_semantic_wrappers() -> None:
+    for name in ("rc4_init", "rc4_crypt", "crc32"):
+        assert name in TEST_WRAPPERS
+        assert len(TEST_WRAPPERS[name]) >= 4

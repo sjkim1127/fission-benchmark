@@ -108,3 +108,54 @@ void function_0x14000155f_Code_x86_64(void) {
     assert "function_0x140001520_Code_x86_64" in extracted
     assert "local = 1" in extracted
     assert "function_0x14000155f_Code_x86_64" not in extracted
+
+
+def test_boomerang_extracts_function_by_rva_address(monkeypatch) -> None:
+    monkeypatch.setitem(sys.modules, "disasm_helper", types.ModuleType("disasm_helper"))
+    server = load_module("boomerang_server", ROOT / "docker/boomerang/server.py")
+    code = """
+/* File: target.c */
+/** address: 0x00001181 */
+void proc_0x00001181(int pc) { return; }
+
+/** address: 0x0000155f */
+int proc_0x0000155f(int value, int lo, int hi) { return value; }
+"""
+
+    name, extracted = server.extract_function_by_address(code, "0x14000155f")
+
+    assert name == "proc_0x0000155f"
+    assert "return value" in extracted
+    assert "proc_0x00001181" not in extracted
+
+
+def test_boomerang_reports_missing_requested_address(monkeypatch) -> None:
+    monkeypatch.setitem(sys.modules, "disasm_helper", types.ModuleType("disasm_helper"))
+    server = load_module("boomerang_server_missing", ROOT / "docker/boomerang/server.py")
+    code = """
+/** address: 0x00001181 */
+void proc_0x00001181(int pc) { return; }
+"""
+
+    name, error = server.extract_function_by_address(code, "0x14000155f")
+
+    assert name == ""
+    assert "not found" in error
+
+
+def test_snowman_detects_whole_program_output(monkeypatch) -> None:
+    monkeypatch.setitem(sys.modules, "disasm_helper", types.ModuleType("disasm_helper"))
+    server = load_module("snowman_server", ROOT / "docker/snowman/server.py")
+    code = "\n".join(f"int fun_{i}(void) {{ return {i}; }}" for i in range(5))
+
+    assert server.function_definition_count(code) == 5
+    assert server.is_whole_program_output(code) is True
+
+
+def test_snowman_allows_single_function_output(monkeypatch) -> None:
+    monkeypatch.setitem(sys.modules, "disasm_helper", types.ModuleType("disasm_helper"))
+    server = load_module("snowman_server_single", ROOT / "docker/snowman/server.py")
+    code = "int fun_14000155f(int value, int lo, int hi) { return value; }"
+
+    assert server.function_definition_count(code) == 1
+    assert server.is_whole_program_output(code) is False

@@ -1,6 +1,7 @@
 """Boomerang decompiler and parity diagnostic API server."""
 import base64
 import os
+import re
 import subprocess
 import tempfile
 import time
@@ -82,6 +83,39 @@ def pcode(binary: str, addr: str):
 def cfg(binary: str, addr: str):
     return {"blocks": [], "edges": []}
 
+def address_aliases(addr: str) -> set[str]:
+    try:
+        value = int(addr, 16) if addr.lower().startswith("0x") else int(addr)
+    except ValueError:
+        return {addr.lower()}
+
+    aliases = {f"{value:x}", f"{value:08x}", f"0x{value:x}", f"0x{value:08x}"}
+    if value >= 0x100000000:
+        rva = value & 0xFFFFF
+        aliases.update({f"{rva:x}", f"{rva:08x}", f"0x{rva:x}", f"0x{rva:08x}"})
+    return {alias.lower() for alias in aliases}
+
+def extract_function_by_address(code: str, addr: str) -> tuple[str, str]:
+    """Extract one Boomerang function by the address comment above it."""
+    aliases = address_aliases(addr)
+    marker_re = re.compile(r"/\*\*\s*address:\s*(0x[0-9a-fA-F]+|[0-9a-fA-F]+)\s*\*/")
+    markers = list(marker_re.finditer(code))
+
+    for idx, marker in enumerate(markers):
+        marker_addr = marker.group(1).lower()
+        marker_value = marker_addr[2:] if marker_addr.startswith("0x") else marker_addr
+        marker_aliases = {marker_addr, marker_value, f"0x{marker_value.lstrip('0') or '0'}", marker_value.lstrip("0") or "0"}
+        if aliases.isdisjoint(marker_aliases):
+            continue
+
+        start = marker.start()
+        end = markers[idx + 1].start() if idx + 1 < len(markers) else len(code)
+        chunk = code[start:end].strip()
+        name_match = re.search(r"\b([A-Za-z_]\w*)\s*\([^;{}]*\)\s*\{", chunk)
+        return (name_match.group(1) if name_match else f"proc_{addr}", chunk)
+
+    return "", f"Function at address {addr} not found in Boomerang address comments"
+
 @app.post("/decompile", response_model=DecompileResponse)
 def decompile(req: DecompileRequest):
     batch_req = BatchDecompileRequest(binary_b64=req.binary_b64, addresses=[req.addr])
@@ -118,10 +152,22 @@ def decompile_batch(req: BatchDecompileRequest):
         elapsed = int((time.monotonic() - start) * 1000)
         results = []
         for addr in req.addresses:
+            if not code:
+                results.append(DecompileResultItem(
+                    addr=addr,
+                    name=f"fcn.{addr}",
+                    error=f"Decompilation failed: {result.stderr or result.stdout}"
+                ))
+                continue
+
+            fn_name, fn_code = extract_function_by_address(code, addr)
+            if not fn_code or fn_code.startswith("Function at address"):
+                results.append(DecompileResultItem(addr=addr, name=fn_name or f"fcn.{addr}", error=fn_code))
+                continue
+
             results.append(DecompileResultItem(
                 addr=addr,
-                name=f"fcn.{addr}",
-                code=code if code else "",
-                error=None if code else f"Decompilation failed: {result.stderr or result.stdout}"
+                name=fn_name,
+                code=fn_code,
             ))
         return BatchDecompileResponse(results=results, time_ms=elapsed)

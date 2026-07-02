@@ -16,6 +16,7 @@ WORKDIR /app
 #   fission-linux-x64.tar.gz        (contains: fission_cli + utils/)
 #   fission_cli-x86_64-unknown-linux-gnu  (raw benchmark binary, same release)
 ARG FISSION_VERSION=latest
+ENV FISSION_RELEASE_VERSION=${FISSION_VERSION}
 RUN set -eux; \
     if [ "$FISSION_VERSION" = "latest" ]; then \
         CLI_URL="https://github.com/sjkim1127/Fission/releases/latest/download/fission-linux-x64.tar.gz"; \
@@ -30,6 +31,7 @@ RUN set -eux; \
     find /opt/fission-utils -name 'fission_cli' -exec cp {} /usr/local/bin/fission_cli \; ; \
     chmod +x /usr/local/bin/fission_cli; \
     /usr/local/bin/fission_cli --version; \
+    echo "$FISSION_VERSION" > /opt/fission-release-version; \
     ln -sf /opt/fission-utils/utils/sleigh-specs /sleigh-specs; \
     test -d /sleigh-specs/languages; \
     test -d /opt/fission-utils/utils/ghidra-data; \

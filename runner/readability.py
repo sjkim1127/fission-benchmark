@@ -501,6 +501,24 @@ def unresolved_artifact_count(code: str) -> dict[str, Any]:
     }
 
 
+def summarize_readability_proxy_score(metrics: dict[str, Any]) -> float | None:
+    """Unvalidated 0-1 readability proxy summary; never used for correctness ranking."""
+    if not metrics:
+        return None
+
+    values = [
+        metrics.get("generic_naming_ratio", {}).get("normalized"),
+        metrics.get("type_specificity", {}).get("normalized"),
+        metrics.get("expression_complexity", {}).get("normalized"),
+        metrics.get("structured_control_flow", {}).get("normalized"),
+        metrics.get("unresolved_artifacts", {}).get("normalized"),
+    ]
+    numeric = [float(value) for value in values if isinstance(value, (int, float))]
+    if not numeric:
+        return None
+    return round(sum(numeric) / len(numeric), 4)
+
+
 def analyze_readability(code: str, decompiler: str) -> dict[str, Any]:
     parsed = parse_c(code)
     return {

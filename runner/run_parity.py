@@ -30,11 +30,13 @@ PORT_MAPPING = {
     "revng": 8006,
 }
 
-def fetch_data(decompiler: str, endpoint: str, binary: str, addr: str = "", arch: str = ""):
+def fetch_data(decompiler: str, endpoint: str, binary: str, addr: str = "", arch: str = "", corpus: str = "dev"):
     port = PORT_MAPPING.get(decompiler)
     if not port:
         return [] if endpoint != "cfg" else {"blocks": [], "edges": []}
     
+    if not binary.startswith("corpus/"):
+        binary = f"corpus/{corpus}/{binary}"
     url = f"http://localhost:{port}/{endpoint}?binary={binary}"
     if addr:
         url += f"&addr={addr}"
@@ -101,7 +103,7 @@ def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[Benchma
             if decompiler == "ghidra":
                 continue # ghidra is usually reference
             try:
-                funcs = fetch_data(decompiler, "functions", subj.binary)
+                funcs = fetch_data(decompiler, "functions", subj.binary, corpus=corpus)
                 expected = [{"address": subj.addr, "name": subj.function}]
                 actual = [{"address": f.get("address"), "name": f.get("name")} for f in funcs if f.get("address") == subj.addr]
                 res = compare_functions(subj, "manifest", decompiler, expected, actual)
@@ -111,11 +113,11 @@ def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[Benchma
 
         # 2. Assembly Parity
         try:
-            ref_asm = fetch_data("ghidra", "disasm", subj.binary, subj.addr, subj.arch)
+            ref_asm = fetch_data("ghidra", "disasm", subj.binary, subj.addr, subj.arch, corpus=corpus)
             for cand in decompilers:
                 if cand == "ghidra":
                     continue
-                cand_asm = fetch_data(cand, "disasm", subj.binary, subj.addr, subj.arch)
+                cand_asm = fetch_data(cand, "disasm", subj.binary, subj.addr, subj.arch, corpus=corpus)
                 res = compare_assembly(subj, "ghidra", cand, ref_asm, cand_asm)
                 results.append(res)
         except Exception as e:
@@ -123,11 +125,11 @@ def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[Benchma
 
         # 3. Decode Parity
         try:
-            ref_dec = fetch_data("ghidra", "decode", subj.binary, subj.addr, subj.arch)
+            ref_dec = fetch_data("ghidra", "decode", subj.binary, subj.addr, subj.arch, corpus=corpus)
             for cand in decompilers:
                 if cand == "ghidra":
                     continue
-                cand_dec = fetch_data(cand, "decode", subj.binary, subj.addr, subj.arch)
+                cand_dec = fetch_data(cand, "decode", subj.binary, subj.addr, subj.arch, corpus=corpus)
                 res = compare_decode(subj, "ghidra", cand, ref_dec, cand_dec)
                 results.append(res)
         except Exception as e:
@@ -135,11 +137,11 @@ def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[Benchma
 
         # 4. P-code Parity
         try:
-            ref_pcode = fetch_data("ghidra", "pcode", subj.binary, subj.addr, subj.arch)
+            ref_pcode = fetch_data("ghidra", "pcode", subj.binary, subj.addr, subj.arch, corpus=corpus)
             for cand in decompilers:
                 if cand == "ghidra":
                     continue
-                cand_pcode = fetch_data(cand, "pcode", subj.binary, subj.addr, subj.arch)
+                cand_pcode = fetch_data(cand, "pcode", subj.binary, subj.addr, subj.arch, corpus=corpus)
                 res = compare_pcode(subj, "ghidra", cand, ref_pcode, cand_pcode)
                 results.append(res)
         except Exception as e:
@@ -147,11 +149,11 @@ def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[Benchma
 
         # 5. CFG Parity
         try:
-            ref_cfg = fetch_data("ghidra", "cfg", subj.binary, subj.addr, subj.arch)
+            ref_cfg = fetch_data("ghidra", "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus)
             for cand in decompilers:
                 if cand == "ghidra":
                     continue
-                cand_cfg = fetch_data(cand, "cfg", subj.binary, subj.addr, subj.arch)
+                cand_cfg = fetch_data(cand, "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus)
                 res = compare_cfg(subj, "ghidra", cand, ref_cfg, cand_cfg)
                 results.append(res)
         except Exception as e:
@@ -161,7 +163,7 @@ def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[Benchma
         try:
             # For invariants, we check if fission had any major normalization errors or empty output
             violations = []
-            fission_cfg = fetch_data("fission", "cfg", subj.binary, subj.addr, subj.arch)
+            fission_cfg = fetch_data("fission", "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus)
             if not fission_cfg or not fission_cfg.get("blocks"):
                 violations.append({"kind": "empty_cfg_blocks"})
             

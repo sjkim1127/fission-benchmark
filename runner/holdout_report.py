@@ -1,5 +1,5 @@
 """
-Holdout overfitting report: compare Dev vs Holdout composite scores.
+Holdout overfitting report: compare Dev vs Holdout correctness scores.
 
 Usage:
     python runner/holdout_report.py --dev results/dev_latest.json --holdout results/holdout_latest.json
@@ -31,12 +31,12 @@ def aggregate_by_decompiler(results: list[dict]) -> dict[str, dict]:
 
     agg = {}
     for d, rs in by_d.items():
-        composites = [r.get("composite_score", 0.0) for r in rs]
+        correctness = [r.get("correctness_score", r.get("composite_score", 0.0)) for r in rs]
         sims = [r.get("source_similarity", 0.0) for r in rs]
         sems = [r.get("semantic_score", 0.0) for r in rs]
         agg[d] = {
             "count": len(rs),
-            "avg_composite": sum(composites) / len(composites),
+            "avg_correctness": sum(correctness) / len(correctness),
             "avg_similarity": sum(sims) / len(sims),
             "avg_semantic": sum(sems) / len(sems),
         }
@@ -46,14 +46,14 @@ def aggregate_by_decompiler(results: list[dict]) -> dict[str, dict]:
 def compute_per_function_comparison(
     dev: list[dict], holdout: list[dict]
 ) -> list[dict]:
-    """Per-function composite score comparison (dev vs holdout, per decompiler)."""
+    """Per-function correctness score comparison (dev vs holdout, per decompiler)."""
     def build_index(results: list[dict]) -> dict[tuple, float]:
         idx = {}
         for r in results:
             if not r.get("error"):
                 key = (r["decompiler"], r["function_name"])
                 scores = idx.setdefault(key, [])
-                scores.append(r.get("composite_score", 0.0))
+                scores.append(r.get("correctness_score", r.get("composite_score", 0.0)))
         return {k: sum(v) / len(v) for k, v in idx.items()}
 
     dev_idx = build_index(dev)
@@ -62,15 +62,15 @@ def compute_per_function_comparison(
     all_keys = set(dev_idx) | set(holdout_idx)
     rows = []
     for key in sorted(all_keys):
-        d_comp = dev_idx.get(key, None)
-        h_comp = holdout_idx.get(key, None)
-        if d_comp is not None and h_comp is not None:
-            drop = (d_comp - h_comp) * 100.0  # positive = holdout is worse
+        dev_correctness = dev_idx.get(key, None)
+        holdout_correctness = holdout_idx.get(key, None)
+        if dev_correctness is not None and holdout_correctness is not None:
+            drop = (dev_correctness - holdout_correctness) * 100.0  # positive = holdout is worse
             rows.append({
                 "decompiler": key[0],
                 "function": key[1],
-                "dev_composite": d_comp,
-                "holdout_composite": h_comp,
+                "dev_correctness": dev_correctness,
+                "holdout_correctness": holdout_correctness,
                 "drop_pp": drop,
                 "flag": "🔴 overfit" if drop >= OVERFITTING_THRESHOLD_PP else "",
             })
@@ -96,7 +96,7 @@ def generate_report(dev_path: Path, holdout_path: Path, output_path: Path | None
     lines.append("## Summary by Decompiler")
     lines.append("")
 
-    header = "| Decompiler | Dev N | Dev Composite | Holdout N | Holdout Composite | Drop (pp) | Flag |"
+    header = "| Decompiler | Dev N | Dev Correctness | Holdout N | Holdout Correctness | Drop (pp) | Flag |"
     sep    = "|---|---|---|---|---|---|---|"
     lines.append(header)
     lines.append(sep)
@@ -105,25 +105,25 @@ def generate_report(dev_path: Path, holdout_path: Path, output_path: Path | None
     for d in all_decompilers:
         dev_d = dev_agg.get(d, {})
         ho_d = holdout_agg.get(d, {})
-        dev_comp = dev_d.get("avg_composite", None)
-        ho_comp = ho_d.get("avg_composite", None)
+        dev_correctness = dev_d.get("avg_correctness", None)
+        holdout_correctness = ho_d.get("avg_correctness", None)
 
-        if dev_comp is not None and ho_comp is not None:
-            drop = (dev_comp - ho_comp) * 100.0
+        if dev_correctness is not None and holdout_correctness is not None:
+            drop = (dev_correctness - holdout_correctness) * 100.0
             flag = "🔴 Overfitting" if drop >= OVERFITTING_THRESHOLD_PP else "✅"
             if drop >= OVERFITTING_THRESHOLD_PP:
                 overfit_flags.append(d)
         else:
             drop = 0.0
-            flag = "⚠️ No holdout data" if ho_comp is None else "⚠️ No dev data"
+            flag = "⚠️ No holdout data" if holdout_correctness is None else "⚠️ No dev data"
 
-        dev_comp_str = f"{dev_comp:.3f}" if dev_comp is not None else "—"
-        ho_comp_str = f"{ho_comp:.3f}" if ho_comp is not None else "—"
-        drop_str = f"{drop:+.1f}pp" if (dev_comp is not None and ho_comp is not None) else "—"
+        dev_correctness_str = f"{dev_correctness:.3f}" if dev_correctness is not None else "—"
+        holdout_correctness_str = f"{holdout_correctness:.3f}" if holdout_correctness is not None else "—"
+        drop_str = f"{drop:+.1f}pp" if (dev_correctness is not None and holdout_correctness is not None) else "—"
 
         lines.append(
-            f"| **{d}** | {dev_d.get('count', '—')} | {dev_comp_str} "
-            f"| {ho_d.get('count', '—')} | {ho_comp_str} | {drop_str} | {flag} |"
+            f"| **{d}** | {dev_d.get('count', '—')} | {dev_correctness_str} "
+            f"| {ho_d.get('count', '—')} | {holdout_correctness_str} | {drop_str} | {flag} |"
         )
 
     lines.append("")
@@ -140,7 +140,7 @@ def generate_report(dev_path: Path, holdout_path: Path, output_path: Path | None
         for r in worst[:20]:
             lines.append(
                 f"| {r['decompiler']} | `{r['function']}` "
-                f"| {r['dev_composite']:.3f} | {r['holdout_composite']:.3f} | {r['drop_pp']:+.1f}pp |"
+                f"| {r['dev_correctness']:.3f} | {r['holdout_correctness']:.3f} | {r['drop_pp']:+.1f}pp |"
             )
         lines.append("")
 
