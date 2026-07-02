@@ -235,7 +235,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
         "error": s.error,
     } for s in scores], indent=2)
 
-    html_template = """<!DOCTYPE html>
+    html_template = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -261,27 +261,37 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
   * { box-sizing: border-box; margin: 0; padding: 0; }
   
   body {
-    background: radial-gradient(circle at top, #1e293b, #0f172a);
+    background:
+      radial-gradient(circle at 10% 0%, rgba(20, 184, 166, 0.14), transparent 28rem),
+      radial-gradient(circle at 90% 0%, rgba(99, 102, 241, 0.12), transparent 30rem),
+      #0b0f17;
     color: var(--text);
     font-family: 'Inter', -apple-system, sans-serif;
-    padding: 2rem;
+    padding: 1.5rem;
     min-height: 100vh;
+  }
+
+  body > * {
+    max-width: 1760px;
+    margin-left: auto;
+    margin-right: auto;
   }
   
   header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 2rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 1.5rem;
+    gap: 1.5rem;
   }
   
   .brand h1 {
     font-size: 2.2rem;
     font-weight: 700;
-    letter-spacing: -0.025em;
-    background: linear-gradient(to right, #6366f1, #06b6d4);
+    letter-spacing: 0;
+    background: linear-gradient(to right, #60a5fa, #22d3ee 55%, #34d399);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: flex;
@@ -297,6 +307,8 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
   
   .meta-badges {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 0.75rem;
   }
   
@@ -316,9 +328,89 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
     color: var(--accent-cyan);
   }
 
+  .section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 1rem;
+    margin: 1.5rem 0 0.8rem;
+  }
+
+  .section-title h2 {
+    font-size: 1rem;
+    font-weight: 650;
+  }
+
+  .section-title p {
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .overview-card {
+    background: rgba(17, 24, 39, 0.72);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    min-height: 118px;
+  }
+
+  .overview-label {
+    color: var(--muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .overview-value {
+    font-size: 1.9rem;
+    font-weight: 750;
+    margin-top: 0.45rem;
+  }
+
+  .overview-sub {
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    margin-top: 0.45rem;
+  }
+
+  .method-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .method-pill {
+    background: rgba(31, 41, 55, 0.62);
+    border: 1px solid rgba(75, 85, 99, 0.75);
+    border-radius: 8px;
+    padding: 0.85rem;
+  }
+
+  .method-pill strong {
+    display: block;
+    font-size: 0.83rem;
+    margin-bottom: 0.28rem;
+  }
+
+  .method-pill span {
+    color: var(--muted);
+    font-size: 0.76rem;
+    line-height: 1.35;
+  }
+
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 1rem;
     margin-bottom: 2rem;
   }
@@ -326,7 +418,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
   .kpi-card {
     background: rgba(17, 24, 39, 0.6);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 8px;
     padding: 1.25rem;
     backdrop-filter: blur(12px);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -334,8 +426,8 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
   
   .kpi-card:hover {
     transform: translateY(-2px);
-    border-color: var(--accent-indigo);
-    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.15);
+    border-color: rgba(34, 211, 238, 0.65);
+    box-shadow: 0 10px 25px -5px rgba(34, 211, 238, 0.12);
   }
   
   .kpi-header {
@@ -350,7 +442,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
     font-weight: 600;
     color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
   }
   
   .kpi-color-dot {
@@ -360,7 +452,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
   }
   
   .kpi-value {
-    font-size: 1.8rem;
+    font-size: 1.65rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
   }
@@ -392,19 +484,23 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
 
   .charts-grid {
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
   }
   
   @media (max-width: 1024px) {
     .charts-grid { grid-template-columns: 1fr; }
+    .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .method-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    header { flex-direction: column; }
+    .meta-badges { justify-content: flex-start; }
   }
   
   .card {
     background: rgba(17, 24, 39, 0.6);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 8px;
     padding: 1.5rem;
     backdrop-filter: blur(12px);
   }
@@ -418,6 +514,44 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
     margin-bottom: 1.5rem;
     font-size: 0.9rem;
     line-height: 1.45;
+  }
+
+  .taxonomy-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .taxonomy-item {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem;
+    background: rgba(15, 23, 42, 0.6);
+  }
+
+  .taxonomy-item strong {
+    display: block;
+    font-size: 1.35rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .taxonomy-item span {
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .empty-state {
+    border: 1px dashed rgba(148, 163, 184, 0.35);
+    border-radius: 8px;
+    padding: 2rem;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  @media (max-width: 640px) {
+    body { padding: 1rem; }
+    .brand h1 { font-size: 1.75rem; }
+    .overview-grid, .method-strip, .taxonomy-grid { grid-template-columns: 1fr; }
   }
   
   .card-header {
@@ -677,29 +811,57 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
   </div>
 </header>
 
-<!-- KPI Cards -->
 <div class="notice">
   Readability values shown below are unvalidated proxy metrics. They are recorded as raw evidence only;
   no final readability composite is published until the human comprehension study validates which proxies correlate with accuracy and response time.
 </div>
 
-<!-- KPI Cards -->
+<div class="section-title">
+  <div>
+    <h2>Benchmark Health</h2>
+    <p>Correctness and readability are intentionally separate axes.</p>
+  </div>
+</div>
+<div class="overview-grid" id="overviewContainer"></div>
+
+<div class="method-strip">
+  <div class="method-pill"><strong>Correctness</strong><span>Semantic score comes from compile and test execution, not text similarity.</span></div>
+  <div class="method-pill"><strong>Readability</strong><span>Proxy metrics are raw evidence only until human validation is complete.</span></div>
+  <div class="method-pill"><strong>Similarity</strong><span>Source similarity is retained for context, not treated as readability.</span></div>
+  <div class="method-pill"><strong>Parity</strong><span>Assembly, decode, p-code, CFG, function discovery, and IR invariant rows are emitted separately.</span></div>
+</div>
+
+<div class="section-title">
+  <div>
+    <h2>Decompiler Scoreboard</h2>
+    <p>Cards show decompilation success, correctness, similarity, readability coverage, and runtime.</p>
+  </div>
+</div>
 <div class="kpi-grid" id="kpiContainer"></div>
 
 <!-- Charts Section -->
 <div class="charts-grid">
   <div class="card">
     <div class="card-header">
-      <h2>Average Source Similarity</h2>
+      <h2>Correctness, Composite, Similarity</h2>
     </div>
     <div class="chart-container">
       <canvas id="barChart"></canvas>
     </div>
   </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Readability Proxy Profile</h2>
+    </div>
+    <div class="chart-container">
+      <canvas id="readabilityChart"></canvas>
+    </div>
+  </div>
   
   <div class="card">
     <div class="card-header">
-      <h2>Per-Function Comparison</h2>
+      <h2>Per-Function Composite</h2>
       <div class="card-actions">
         <select id="functionChartSelector"></select>
       </div>
@@ -707,6 +869,13 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
     <div class="chart-container">
       <canvas id="perFuncChart"></canvas>
     </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Failure Taxonomy</h2>
+    </div>
+    <div class="taxonomy-grid" id="failureTaxonomy"></div>
   </div>
 </div>
 
@@ -814,22 +983,103 @@ variants.forEach(v => {
   variantFilter.appendChild(opt);
 });
 
-// Calculate statistics per decompiler
+function pct(value) {
+  return `${(Number(value || 0) * 100).toFixed(1)}%`;
+}
+
+function mean(rows, selector) {
+  if (!rows.length) return 0;
+  return rows.reduce((sum, row) => sum + Number(selector(row) || 0), 0) / rows.length;
+}
+
+function readabilityValue(row, metric) {
+  const rm = row.readability_metrics || {};
+  if (metric === 'gnr') return rm.generic_naming_ratio?.raw?.ratio;
+  if (metric === 'type') return rm.type_specificity?.normalized;
+  if (metric === 'expr') return rm.expression_complexity?.normalized;
+  if (metric === 'cf') return rm.structured_control_flow?.normalized;
+  if (metric === 'artifacts') return rm.unresolved_artifacts?.raw?.total;
+  return undefined;
+}
+
+function finiteValues(rows, metric) {
+  return rows
+    .map(row => readabilityValue(row, metric))
+    .filter(value => value !== undefined && value !== null && Number.isFinite(Number(value)))
+    .map(Number);
+}
+
+function averageReadability(rows, metric) {
+  const values = finiteValues(rows, metric);
+  return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+}
+
+// Calculate global and per-decompiler statistics.
+const totalRows = SCORES.length;
+const totalGroups = Object.keys(scoresByGroup).length;
+const totalValid = SCORES.filter(s => s.error === null).length;
+const totalSemanticPassed = SCORES.filter(s => (s.semantic_score || 0) >= 1).length;
+const totalWithReadability = SCORES.filter(s => s.readability_metrics && Object.keys(s.readability_metrics).length > 0).length;
+
+const overviewContainer = document.getElementById('overviewContainer');
+[
+  {
+    label: 'Result Rows',
+    value: totalRows.toLocaleString(),
+    sub: `${fnNames.length} functions × ${variants.length} variants × ${decompilers.length} decompilers`
+  },
+  {
+    label: 'Decompiler Success',
+    value: totalRows ? `${((totalValid / totalRows) * 100).toFixed(1)}%` : '0.0%',
+    sub: `${totalValid.toLocaleString()} rows returned code, ${(totalRows - totalValid).toLocaleString()} rows errored`
+  },
+  {
+    label: 'Semantic Correctness',
+    value: totalRows ? `${((totalSemanticPassed / totalRows) * 100).toFixed(1)}%` : '0.0%',
+    sub: `${totalSemanticPassed.toLocaleString()} rows passed all available execution tests`
+  },
+  {
+    label: 'Readability Coverage',
+    value: totalRows ? `${((totalWithReadability / totalRows) * 100).toFixed(1)}%` : '0.0%',
+    sub: `${totalWithReadability.toLocaleString()} rows include AST/proxy readability evidence`
+  }
+].forEach(item => {
+  const card = document.createElement('div');
+  card.className = 'overview-card';
+  card.innerHTML = `
+    <div class="overview-label">${item.label}</div>
+    <div class="overview-value">${item.value}</div>
+    <div class="overview-sub">${item.sub}</div>
+  `;
+  overviewContainer.appendChild(card);
+});
+
 const stats = {};
 decompilers.forEach(d => {
   const decScores = SCORES.filter(s => s.decompiler === d);
   const validScores = decScores.filter(s => s.error === null);
-  const avgSim = validScores.length ? validScores.reduce((sum, s) => sum + s.source_similarity, 0) / validScores.length : 0;
-  const avgSem = validScores.length ? validScores.reduce((sum, s) => sum + (s.semantic_score || 0), 0) / validScores.length : 0;
-  const successCount = decScores.filter(s => s.error === null).length;
+  const avgSim = mean(validScores, s => s.source_similarity);
+  const avgSem = mean(validScores, s => s.semantic_score);
+  const avgComposite = mean(validScores, s => s.composite_score);
+  const successCount = validScores.length;
   const successRate = decScores.length ? (successCount / decScores.length) * 100 : 0;
   const totalGotos = decScores.reduce((sum, s) => sum + (s.goto_count || 0), 0);
-  const avgTime = decScores.length ? decScores.reduce((sum, s) => sum + s.time_ms, 0) / decScores.length : 0;
-  
-  stats[d] = { avgSim, avgSem, successRate, totalGotos, avgTime };
+  const avgTime = mean(decScores, s => s.time_ms);
+  const readabilityRows = decScores.filter(s => s.readability_metrics && Object.keys(s.readability_metrics).length > 0);
+  const readabilityCoverage = decScores.length ? (readabilityRows.length / decScores.length) * 100 : 0;
+  const avgGnr = averageReadability(readabilityRows, 'gnr');
+  const avgType = averageReadability(readabilityRows, 'type');
+  const avgExpr = averageReadability(readabilityRows, 'expr');
+  const avgCf = averageReadability(readabilityRows, 'cf');
+  const avgArtifacts = averageReadability(readabilityRows, 'artifacts');
+
+  stats[d] = {
+    avgSim, avgSem, avgComposite, successRate, totalGotos, avgTime,
+    readabilityCoverage, avgGnr, avgType, avgExpr, avgCf, avgArtifacts
+  };
 });
 
-// Render KPI Cards
+// Render decompiler cards.
 const kpiContainer = document.getElementById('kpiContainer');
 decompilers.forEach(d => {
   const s = stats[d];
@@ -842,43 +1092,123 @@ decompilers.forEach(d => {
       <span class="kpi-title">${d}</span>
       <span class="kpi-color-dot" style="background-color: ${color}"></span>
     </div>
-    <div class="kpi-value">${(s.avgSim * 100).toFixed(1)}% <span style="font-size: 0.85rem; color: var(--muted); font-weight: normal;">(Sem: ${(s.avgSem * 100).toFixed(0)}%)</span></div>
+    <div class="kpi-value">${pct(s.avgComposite)} <span style="font-size: 0.85rem; color: var(--muted); font-weight: normal;">composite</span></div>
     <div class="kpi-bar-bg">
-      <div class="kpi-bar-fill" style="width: ${s.avgSim * 100}%; background-color: ${color}"></div>
+      <div class="kpi-bar-fill" style="width: ${Math.min(100, s.avgComposite * 100)}%; background-color: ${color}"></div>
     </div>
     <div class="kpi-stats">
+      <div class="kpi-stat-item">Semantic: <strong>${pct(s.avgSem)}</strong></div>
+      <div class="kpi-stat-item">Similarity: <strong>${pct(s.avgSim)}</strong></div>
       <div class="kpi-stat-item">Success: <strong>${s.successRate.toFixed(0)}%</strong></div>
-      <div class="kpi-stat-item">Gotos: <strong>${s.totalGotos}</strong></div>
-      <div class="kpi-stat-item" style="grid-column: span 2; margin-top: 4px;">Avg Time: <strong>${s.avgTime.toFixed(0)}ms</strong></div>
+      <div class="kpi-stat-item">Readability: <strong>${s.readabilityCoverage.toFixed(0)}%</strong></div>
+      <div class="kpi-stat-item">Artifacts: <strong>${s.avgArtifacts.toFixed(1)}</strong></div>
+      <div class="kpi-stat-item">Avg Time: <strong>${s.avgTime.toFixed(0)}ms</strong></div>
     </div>
   `;
   kpiContainer.appendChild(card);
 });
 
-// Setup global Bar Chart
+// Setup global metric chart.
 const globalBarCtx = document.getElementById('barChart').getContext('2d');
-const sortedDecompilers = [...decompilers].sort((a, b) => stats[b].avgSim - stats[a].avgSim);
+const sortedDecompilers = [...decompilers].sort((a, b) => stats[b].avgComposite - stats[a].avgComposite);
 new Chart(globalBarCtx, {
   type: 'bar',
   data: {
     labels: sortedDecompilers,
-    datasets: [{
-      label: 'Avg Similarity',
-      data: sortedDecompilers.map(d => stats[d].avgSim),
-      backgroundColor: sortedDecompilers.map(d => DECOMPILER_COLORS[d] || '#888'),
-      borderRadius: 6
-    }]
+    datasets: [
+      {
+        label: 'Semantic',
+        data: sortedDecompilers.map(d => stats[d].avgSem),
+        backgroundColor: 'rgba(16, 185, 129, 0.72)',
+        borderRadius: 5
+      },
+      {
+        label: 'Composite',
+        data: sortedDecompilers.map(d => stats[d].avgComposite),
+        backgroundColor: 'rgba(96, 165, 250, 0.74)',
+        borderRadius: 5
+      },
+      {
+        label: 'Source Similarity',
+        data: sortedDecompilers.map(d => stats[d].avgSim),
+        backgroundColor: 'rgba(245, 158, 11, 0.70)',
+        borderRadius: 5
+      }
+    ]
   },
   options: {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
+    plugins: { legend: { position: 'top', labels: { color: '#cbd5e1' } } },
     scales: {
       y: { min: 0, max: 1, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } },
       x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
     }
   }
 });
+
+// Setup readability proxy chart. GNR/artifacts are lower-is-better and shown raw.
+const readabilityCtx = document.getElementById('readabilityChart').getContext('2d');
+new Chart(readabilityCtx, {
+  type: 'bar',
+  data: {
+    labels: sortedDecompilers,
+    datasets: [
+      {
+        label: 'Generic Naming Ratio',
+        data: sortedDecompilers.map(d => stats[d].avgGnr),
+        backgroundColor: 'rgba(239, 68, 68, 0.66)',
+        borderRadius: 5
+      },
+      {
+        label: 'Type Specificity',
+        data: sortedDecompilers.map(d => stats[d].avgType),
+        backgroundColor: 'rgba(34, 211, 238, 0.70)',
+        borderRadius: 5
+      },
+      {
+        label: 'Expression Simplicity',
+        data: sortedDecompilers.map(d => 1 - Math.min(1, stats[d].avgExpr)),
+        backgroundColor: 'rgba(168, 85, 247, 0.66)',
+        borderRadius: 5
+      },
+      {
+        label: 'Structured CF',
+        data: sortedDecompilers.map(d => stats[d].avgCf),
+        backgroundColor: 'rgba(16, 185, 129, 0.66)',
+        borderRadius: 5
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { color: '#cbd5e1' } } },
+    scales: {
+      y: { min: 0, max: 1, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } },
+      x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+    }
+  }
+});
+
+const failureCounts = {};
+SCORES.forEach(s => {
+  const key = s.error ? 'decompiler_error' : (s.fail_category || 'no_failure_category');
+  failureCounts[key] = (failureCounts[key] || 0) + 1;
+});
+const failureTaxonomy = document.getElementById('failureTaxonomy');
+Object.entries(failureCounts)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 6)
+  .forEach(([label, count]) => {
+    const item = document.createElement('div');
+    item.className = 'taxonomy-item';
+    item.innerHTML = `<strong>${count.toLocaleString()}</strong><span>${label.replaceAll('_', ' ')}</span>`;
+    failureTaxonomy.appendChild(item);
+  });
+if (!Object.keys(failureCounts).length) {
+  failureTaxonomy.innerHTML = '<div class="empty-state">No failure records.</div>';
+}
 
 // Setup interactive Per-Function Chart
 let perFuncChart = null;
@@ -890,7 +1220,7 @@ function updatePerFuncChart(funcName) {
       label: d,
       data: variants.map(v => {
         const match = dScores.find(s => s.compiler_variant === v);
-        return match && !match.error ? match.source_similarity : 0;
+        return match && !match.error ? match.composite_score : 0;
       }),
       backgroundColor: DECOMPILER_COLORS[d] || '#888',
       borderRadius: 4
