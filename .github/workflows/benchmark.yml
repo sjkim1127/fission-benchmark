@@ -12,9 +12,9 @@ env:
   BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,boomerang,radare2,angr,snowman,revng,reko' }}
   BENCHMARK_LIMIT: ${{ github.event.inputs.benchmark_limit || '10' }}
   BENCHMARK_VARIANT_LIMIT: ${{ github.event.inputs.benchmark_variant_limit || '1' }}
-  PARITY_LIMIT: ${{ github.event.inputs.parity_limit || '10' }}
+  PARITY_LIMIT: ${{ github.event.inputs.parity_limit || '3' }}
   PARITY_DECOMPILERS: fission,ghidra,radare2,reko
-  PARITY_REQUEST_TIMEOUT: '5'
+  PARITY_REQUEST_TIMEOUT: '2'
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/fission-benchmark
   PYTHONPATH: .
@@ -48,7 +48,7 @@ on:
       parity_limit:
         description: "Parity benchmark subject limit; use 0 for full parity"
         type: string
-        default: "10"
+        default: "3"
       publish_results:
         description: "Commit results and deploy GitHub Pages"
         type: boolean
