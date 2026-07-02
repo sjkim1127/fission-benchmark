@@ -64,8 +64,8 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
     lines = [
         "# Fission Benchmark Report",
         "",
-        f"**Generated:** {ts}  ",
-        f"**Corpus:** `{corpus_split}`  ",
+        f"**Generated:** {ts}",
+        f"**Corpus:** `{corpus_split}`",
         f"**Functions evaluated:** {len(set(s.function_name for s in scores))}",
         "",
         "---",

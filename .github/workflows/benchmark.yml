@@ -165,6 +165,13 @@ jobs:
             --output results/overfitting_report.md || \
             echo "⚠️ Overfitting detected — check overfitting_report.md" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Restore published dashboard from dev results
+        run: |
+          python runner/render_report.py \
+            --input results/dev_latest.json \
+            --corpus dev \
+            --update-latest
+
       - name: Run parity benchmarks
         run: |
           if [ -n "$PARITY_LIMIT" ] && [ "$PARITY_LIMIT" != "0" ]; then
