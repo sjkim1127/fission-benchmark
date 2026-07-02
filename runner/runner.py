@@ -47,9 +47,19 @@ def _load_source_metrics() -> None:
 
 def configured_decompilers() -> dict[str, str]:
     """Get configured decompiler HTTP endpoints from environment."""
+    # Automatically load .env if it exists in the workspace root
+    env_path = Path(__file__).resolve().parents[1] / ".env"
+    if env_path.exists():
+        for line in env_path.read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, val = line.split("=", 1)
+                val_str = val.strip().strip(chr(39) + chr(34))
+                os.environ.setdefault(key.strip(), val_str)
+
     # Default local dev ports mapped in docker-compose.yml
     defaults = {
-        "fission": os.environ.get("FISSION_ENDPOINT", "http://localhost:8007"),
+        "fission": os.environ.get("FISSION_ENDPOINT", "http://localhost:8000"),
         "ghidra": "http://localhost:8001",
         "boomerang": "http://localhost:8002",
         "radare2": "http://localhost:8003",

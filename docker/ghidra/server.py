@@ -211,7 +211,7 @@ def decompile_batch(req: BatchDecompileRequest):
     start = time.monotonic()
     try:
         results = _run_ghidra_headless(binary_bytes, req.addresses)
-    except Exception as e:
+    except Exception:
         results = []
         for addr in req.addresses:
             try:
