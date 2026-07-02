@@ -18,17 +18,12 @@ WORKDIR /app
 ARG FISSION_VERSION=latest
 RUN set -eux; \
     if [ "$FISSION_VERSION" = "latest" ]; then \
-        RELEASE_JSON=$(curl -sf https://api.github.com/repos/sjkim1127/Fission/releases/latest); \
-        CLI_URL=$(echo "$RELEASE_JSON" \
-              | grep '"browser_download_url"' \
-              | grep 'fission-linux-x64\.tar\.gz' \
-              | head -1 \
-              | sed 's/.*"\(https[^"]*\)".*/\1/'); \
+        CLI_URL="https://github.com/sjkim1127/Fission/releases/latest/download/fission-linux-x64.tar.gz"; \
     else \
         CLI_URL="https://github.com/sjkim1127/Fission/releases/download/${FISSION_VERSION}/fission-linux-x64.tar.gz"; \
     fi; \
     echo "Downloading fission bundle from: $CLI_URL"; \
-    curl -L "$CLI_URL" -o /tmp/fission-bundle.tar.gz; \
+    curl -fL "$CLI_URL" -o /tmp/fission-bundle.tar.gz; \
     mkdir -p /opt/fission-utils; \
     tar --warning=no-unknown-keyword -xzf /tmp/fission-bundle.tar.gz -C /opt/fission-utils; \
     # The tar contains: fission_cli + utils/

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import types
 from pathlib import Path
 
 
@@ -59,7 +60,8 @@ def test_ghidra_extracts_marker_from_info_prefixed_line() -> None:
     ]
 
 
-def test_revng_extracts_address_named_function() -> None:
+def test_revng_extracts_address_named_function(monkeypatch) -> None:
+    monkeypatch.setitem(sys.modules, "disasm_helper", types.ModuleType("disasm_helper"))
     server = load_module("revng_server", ROOT / "docker/revng/server.py")
     code = """
 #include "types-and-globals.h"
