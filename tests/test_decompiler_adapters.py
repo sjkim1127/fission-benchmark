@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import sys
 import types
 from pathlib import Path
@@ -191,6 +192,38 @@ void proc_0x00001181(int pc) { return; }
 
     assert name == ""
     assert "not found" in error
+
+
+def test_boomerang_batch_falls_back_to_single_address_runs(monkeypatch) -> None:
+    monkeypatch.setitem(sys.modules, "disasm_helper", types.ModuleType("disasm_helper"))
+    server = load_module("boomerang_server_fallback", ROOT / "docker/boomerang/server.py")
+    calls = []
+
+    def fake_run_boomerang(binary_path, workdir, addresses):
+        calls.append(list(addresses))
+        result = subprocess.CompletedProcess(args=["boomerang-cli"], returncode=0, stdout="failed", stderr="")
+        if len(addresses) > 1:
+            return "", result
+        if addresses == ["0x140001624"]:
+            return (
+                "/** address: 0x00001624 */\n"
+                "void proc_0x00001624(void) { return; }\n",
+                result,
+            )
+        return "", result
+
+    monkeypatch.setattr(server, "run_boomerang", fake_run_boomerang)
+    req = server.BatchDecompileRequest(
+        binary_b64="AA==",
+        addresses=["0x140001530", "0x140001624"],
+    )
+
+    resp = server.decompile_batch(req)
+
+    assert calls == [["0x140001530", "0x140001624"], ["0x140001530"], ["0x140001624"]]
+    assert resp.results[0].error
+    assert resp.results[1].error is None
+    assert "proc_0x00001624" in resp.results[1].code
 
 
 def test_snowman_detects_whole_program_output(monkeypatch) -> None:

@@ -164,6 +164,58 @@ def extract_function_by_address(code: str, addr: str) -> tuple[str, str]:
 
     return "", f"Function at address {addr} not found in Boomerang address comments"
 
+def collect_c_code(workdir: Path) -> str:
+    code_parts = []
+    for root, dirs, files in os.walk(workdir):
+        for file in sorted(files):
+            if file.endswith(".c"):
+                content = (Path(root) / file).read_text(errors="replace")
+                code_parts.append(f"/* File: {file} */\n{content}")
+    return "\n\n".join(code_parts)
+
+def run_boomerang(binary_path: Path, workdir: Path, addresses: List[str]) -> tuple[str, subprocess.CompletedProcess[str]]:
+    args = ["boomerang-cli"]
+    for addr in addresses:
+        try:
+            args.extend(["-E", boomerang_entry_address(binary_path, addr)])
+        except ValueError:
+            pass
+    args.append(str(binary_path))
+
+    result = subprocess.run(
+        args,
+        cwd=workdir,
+        capture_output=True, text=True, timeout=120
+    )
+    return collect_c_code(workdir), result
+
+def boomerang_results_from_code(
+    addresses: List[str],
+    code: str,
+    result: subprocess.CompletedProcess[str],
+) -> list[DecompileResultItem]:
+    results = []
+    for addr in addresses:
+        if not code:
+            results.append(DecompileResultItem(
+                addr=addr,
+                name=f"fcn.{addr}",
+                error=f"Decompilation failed: {result.stderr or result.stdout}"
+            ))
+            continue
+
+        fn_name, fn_code = extract_function_by_address(code, addr)
+        if not fn_code or fn_code.startswith("Function at address"):
+            results.append(DecompileResultItem(addr=addr, name=fn_name or f"fcn.{addr}", error=fn_code))
+            continue
+
+        results.append(DecompileResultItem(
+            addr=addr,
+            name=fn_name,
+            code=fn_code,
+        ))
+    return results
+
 @app.post("/decompile", response_model=DecompileResponse)
 def decompile(req: DecompileRequest):
     validate_address(req.addr)
@@ -189,45 +241,16 @@ def decompile_batch(req: BatchDecompileRequest):
         binary_path = Path(tmpdir) / "target.bin"
         binary_path.write_bytes(binary_bytes)
         start = time.monotonic()
-        args = ["boomerang-cli"]
-        for addr in req.addresses:
-            try:
-                args.extend(["-E", boomerang_entry_address(binary_path, addr)])
-            except ValueError:
-                pass
-        args.append(str(binary_path))
-
-        result = subprocess.run(
-            args,
-            cwd=tmpdir,
-            capture_output=True, text=True, timeout=120
-        )
-        code_parts = []
-        for root, dirs, files in os.walk(tmpdir):
-            for file in sorted(files):
-                if file.endswith(".c"):
-                    content = (Path(root) / file).read_text(errors="replace")
-                    code_parts.append(f"/* File: {file} */\n{content}")
-        code = "\n\n".join(code_parts)
+        code, result = run_boomerang(binary_path, Path(tmpdir), req.addresses)
         elapsed = int((time.monotonic() - start) * 1000)
-        results = []
-        for addr in req.addresses:
-            if not code:
-                results.append(DecompileResultItem(
-                    addr=addr,
-                    name=f"fcn.{addr}",
-                    error=f"Decompilation failed: {result.stderr or result.stdout}"
-                ))
-                continue
 
-            fn_name, fn_code = extract_function_by_address(code, addr)
-            if not fn_code or fn_code.startswith("Function at address"):
-                results.append(DecompileResultItem(addr=addr, name=fn_name or f"fcn.{addr}", error=fn_code))
-                continue
-
-            results.append(DecompileResultItem(
-                addr=addr,
-                name=fn_name,
-                code=fn_code,
-            ))
+        if not code and len(req.addresses) > 1:
+            results = []
+            for idx, addr in enumerate(req.addresses):
+                single_dir = Path(tmpdir) / f"single_{idx}"
+                single_dir.mkdir()
+                single_code, single_result = run_boomerang(binary_path, single_dir, [addr])
+                results.extend(boomerang_results_from_code([addr], single_code, single_result))
+        else:
+            results = boomerang_results_from_code(req.addresses, code, result)
         return BatchDecompileResponse(results=results, time_ms=elapsed)
