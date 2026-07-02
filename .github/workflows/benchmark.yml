@@ -10,6 +10,7 @@ env:
   CORPUS_TARGET: windows-x86_64
   CORPUS_SPLIT: ${{ github.event.inputs.corpus || 'dev' }}
   BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,boomerang,radare2,angr,snowman,revng,reko' }}
+  BENCHMARK_LIMIT: ${{ github.event.inputs.benchmark_limit || '10' }}
   PARITY_LIMIT: ${{ github.event.inputs.parity_limit || '10' }}
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/fission-benchmark
@@ -33,6 +34,10 @@ on:
         description: "Comma-separated decompilers to run"
         type: string
         default: "fission,ghidra,boomerang,radare2,angr,snowman,revng,reko"
+      benchmark_limit:
+        description: "Function limit for dev/holdout benchmark; use 0 for full corpus"
+        type: string
+        default: "10"
       parity_limit:
         description: "Parity benchmark subject limit; use 0 for full parity"
         type: string
@@ -166,11 +171,19 @@ jobs:
 
       - name: Run dev benchmark
         run: |
-          python runner/runner.py --corpus dev --decompilers "$BENCHMARK_DECOMPILERS" --output results/dev_latest.json
+          if [ -n "$BENCHMARK_LIMIT" ] && [ "$BENCHMARK_LIMIT" != "0" ]; then
+            python runner/runner.py --corpus dev --limit "$BENCHMARK_LIMIT" --decompilers "$BENCHMARK_DECOMPILERS" --output results/dev_latest.json
+          else
+            python runner/runner.py --corpus dev --decompilers "$BENCHMARK_DECOMPILERS" --output results/dev_latest.json
+          fi
 
       - name: Run holdout benchmark
         run: |
-          python runner/runner.py --corpus holdout --decompilers "$BENCHMARK_DECOMPILERS" --output results/holdout_latest.json
+          if [ -n "$BENCHMARK_LIMIT" ] && [ "$BENCHMARK_LIMIT" != "0" ]; then
+            python runner/runner.py --corpus holdout --limit "$BENCHMARK_LIMIT" --decompilers "$BENCHMARK_DECOMPILERS" --output results/holdout_latest.json
+          else
+            python runner/runner.py --corpus holdout --decompilers "$BENCHMARK_DECOMPILERS" --output results/holdout_latest.json
+          fi
 
       - name: Run overfitting check
         run: |
@@ -204,6 +217,7 @@ jobs:
             echo "- Fission version: \`$FISSION_VERSION\`"
             echo "- Corpus: \`$CORPUS_SPLIT\`"
             echo "- Decompilers: \`$BENCHMARK_DECOMPILERS\`"
+            echo "- Benchmark limit: \`$BENCHMARK_LIMIT\`"
             echo
             if [ -f results/latest.md ]; then
               sed -n '1,220p' results/latest.md
