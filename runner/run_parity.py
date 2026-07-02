@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import requests
 
@@ -20,17 +21,25 @@ from benchmark.common.schema import BenchmarkResult, BenchmarkSubject
 
 # Port mapping of decompiler containers
 PORT_MAPPING = {
-    "fission": 8000,
-    "reko": 8008,
-    "ghidra": 8001,
-    "boomerang": 8002,
-    "radare2": 8003,
-    "angr": 8004,
-    "snowman": 8005,
-    "revng": 8006,
+    "fission": int(os.environ.get("FISSION_HOST_PORT", "8000")),
+    "reko": int(os.environ.get("REKO_HOST_PORT", "8008")),
+    "ghidra": int(os.environ.get("GHIDRA_HOST_PORT", "8001")),
+    "boomerang": int(os.environ.get("BOOMERANG_HOST_PORT", "8002")),
+    "radare2": int(os.environ.get("RADARE2_HOST_PORT", "8003")),
+    "angr": int(os.environ.get("ANGR_HOST_PORT", "8004")),
+    "snowman": int(os.environ.get("SNOWMAN_HOST_PORT", "8005")),
+    "revng": int(os.environ.get("REVNG_HOST_PORT", "8006")),
 }
 
-def fetch_data(decompiler: str, endpoint: str, binary: str, addr: str = "", arch: str = "", corpus: str = "dev"):
+def fetch_data(
+    decompiler: str,
+    endpoint: str,
+    binary: str,
+    addr: str = "",
+    arch: str = "",
+    corpus: str = "dev",
+    timeout: float = 5.0,
+):
     port = PORT_MAPPING.get(decompiler)
     if not port:
         return [] if endpoint != "cfg" else {"blocks": [], "edges": []}
@@ -44,7 +53,7 @@ def fetch_data(decompiler: str, endpoint: str, binary: str, addr: str = "", arch
         url += f"&arch={arch}"
         
     try:
-        resp = requests.get(url, timeout=30)
+        resp = requests.get(url, timeout=timeout)
         if resp.status_code == 200:
             return resp.json()
     except Exception:
@@ -52,7 +61,12 @@ def fetch_data(decompiler: str, endpoint: str, binary: str, addr: str = "", arch
     
     return [] if endpoint != "cfg" else {"blocks": [], "edges": []}
 
-def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[BenchmarkResult]:
+def run_parity_benchmarks(
+    corpus: str,
+    limit: int | None = None,
+    decompilers: list[str] | None = None,
+    request_timeout: float = 5.0,
+) -> list[BenchmarkResult]:
     # Load subjects from corpus manifests
     manifests_dir = Path(f"corpus/{corpus}/manifests")
     subjects = []
@@ -83,7 +97,9 @@ def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[Benchma
     
     results: list[BenchmarkResult] = []
     
-    decompilers = list(PORT_MAPPING.keys())
+    decompilers = decompilers or list(PORT_MAPPING.keys())
+    if "ghidra" not in decompilers:
+        decompilers = ["ghidra", *decompilers]
     
     for sub in subjects:
         subj = BenchmarkSubject(
@@ -103,7 +119,7 @@ def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[Benchma
             if decompiler == "ghidra":
                 continue # ghidra is usually reference
             try:
-                funcs = fetch_data(decompiler, "functions", subj.binary, corpus=corpus)
+                funcs = fetch_data(decompiler, "functions", subj.binary, corpus=corpus, timeout=request_timeout)
                 expected = [{"address": subj.addr, "name": subj.function}]
                 actual = [{"address": f.get("address"), "name": f.get("name")} for f in funcs if f.get("address") == subj.addr]
                 res = compare_functions(subj, "manifest", decompiler, expected, actual)
@@ -113,11 +129,11 @@ def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[Benchma
 
         # 2. Assembly Parity
         try:
-            ref_asm = fetch_data("ghidra", "disasm", subj.binary, subj.addr, subj.arch, corpus=corpus)
+            ref_asm = fetch_data("ghidra", "disasm", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
             for cand in decompilers:
                 if cand == "ghidra":
                     continue
-                cand_asm = fetch_data(cand, "disasm", subj.binary, subj.addr, subj.arch, corpus=corpus)
+                cand_asm = fetch_data(cand, "disasm", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
                 res = compare_assembly(subj, "ghidra", cand, ref_asm, cand_asm)
                 results.append(res)
         except Exception as e:
@@ -125,11 +141,11 @@ def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[Benchma
 
         # 3. Decode Parity
         try:
-            ref_dec = fetch_data("ghidra", "decode", subj.binary, subj.addr, subj.arch, corpus=corpus)
+            ref_dec = fetch_data("ghidra", "decode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
             for cand in decompilers:
                 if cand == "ghidra":
                     continue
-                cand_dec = fetch_data(cand, "decode", subj.binary, subj.addr, subj.arch, corpus=corpus)
+                cand_dec = fetch_data(cand, "decode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
                 res = compare_decode(subj, "ghidra", cand, ref_dec, cand_dec)
                 results.append(res)
         except Exception as e:
@@ -137,11 +153,11 @@ def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[Benchma
 
         # 4. P-code Parity
         try:
-            ref_pcode = fetch_data("ghidra", "pcode", subj.binary, subj.addr, subj.arch, corpus=corpus)
+            ref_pcode = fetch_data("ghidra", "pcode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
             for cand in decompilers:
                 if cand == "ghidra":
                     continue
-                cand_pcode = fetch_data(cand, "pcode", subj.binary, subj.addr, subj.arch, corpus=corpus)
+                cand_pcode = fetch_data(cand, "pcode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
                 res = compare_pcode(subj, "ghidra", cand, ref_pcode, cand_pcode)
                 results.append(res)
         except Exception as e:
@@ -149,11 +165,11 @@ def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[Benchma
 
         # 5. CFG Parity
         try:
-            ref_cfg = fetch_data("ghidra", "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus)
+            ref_cfg = fetch_data("ghidra", "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
             for cand in decompilers:
                 if cand == "ghidra":
                     continue
-                cand_cfg = fetch_data(cand, "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus)
+                cand_cfg = fetch_data(cand, "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
                 res = compare_cfg(subj, "ghidra", cand, ref_cfg, cand_cfg)
                 results.append(res)
         except Exception as e:
@@ -163,7 +179,7 @@ def run_parity_benchmarks(corpus: str, limit: int | None = None) -> list[Benchma
         try:
             # For invariants, we check if fission had any major normalization errors or empty output
             violations = []
-            fission_cfg = fetch_data("fission", "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus)
+            fission_cfg = fetch_data("fission", "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
             if not fission_cfg or not fission_cfg.get("blocks"):
                 violations.append({"kind": "empty_cfg_blocks"})
             
@@ -181,9 +197,21 @@ def main():
     parser = argparse.ArgumentParser(description="Unified Parity Runner")
     parser.add_argument("--corpus", default="dev", help="Corpus split (dev/holdout)")
     parser.add_argument("--limit", type=int, default=None, help="Limit number of subjects to run")
+    parser.add_argument(
+        "--decompilers",
+        default=",".join(PORT_MAPPING.keys()),
+        help="Comma-separated decompilers to include; ghidra is always included as reference",
+    )
+    parser.add_argument(
+        "--request-timeout",
+        type=float,
+        default=5.0,
+        help="HTTP timeout per parity endpoint request",
+    )
     args = parser.parse_args()
     
-    results = run_parity_benchmarks(args.corpus, args.limit)
+    decompilers = [name.strip() for name in args.decompilers.split(",") if name.strip()]
+    results = run_parity_benchmarks(args.corpus, args.limit, decompilers, args.request_timeout)
     
     # Save results to respective output files
     output_dir = Path("results")

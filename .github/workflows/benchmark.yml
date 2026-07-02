@@ -13,6 +13,8 @@ env:
   BENCHMARK_LIMIT: ${{ github.event.inputs.benchmark_limit || '10' }}
   BENCHMARK_VARIANT_LIMIT: ${{ github.event.inputs.benchmark_variant_limit || '1' }}
   PARITY_LIMIT: ${{ github.event.inputs.parity_limit || '10' }}
+  PARITY_DECOMPILERS: fission,ghidra,radare2,reko
+  PARITY_REQUEST_TIMEOUT: '5'
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/fission-benchmark
   PYTHONPATH: .
@@ -253,9 +255,16 @@ jobs:
       - name: Run parity benchmarks
         run: |
           if [ -n "$PARITY_LIMIT" ] && [ "$PARITY_LIMIT" != "0" ]; then
-            python runner/run_parity.py --corpus "$CORPUS_SPLIT" --limit "$PARITY_LIMIT"
+            python runner/run_parity.py \
+              --corpus "$CORPUS_SPLIT" \
+              --limit "$PARITY_LIMIT" \
+              --decompilers "$PARITY_DECOMPILERS" \
+              --request-timeout "$PARITY_REQUEST_TIMEOUT"
           else
-            python runner/run_parity.py --corpus "$CORPUS_SPLIT"
+            python runner/run_parity.py \
+              --corpus "$CORPUS_SPLIT" \
+              --decompilers "$PARITY_DECOMPILERS" \
+              --request-timeout "$PARITY_REQUEST_TIMEOUT"
           fi
 
       - name: Write benchmark summary
