@@ -246,9 +246,12 @@ def assign_consensus_ranks(
         valid = [s for s in group if s.error is None]
         # Rank by correctness_score descending (semantic-gated).
         valid.sort(key=lambda s: s.correctness_score, reverse=True)
-        for rank, s in enumerate(valid, start=1):
-            s.correctness_rank = rank
-            s.consensus_rank = rank
+        current_rank = 1
+        for idx, s in enumerate(valid):
+            if idx > 0 and s.correctness_score < valid[idx - 1].correctness_score:
+                current_rank = idx + 1
+            s.correctness_rank = current_rank
+            s.consensus_rank = current_rank
         # errored entries get no rank
         result.extend(group)
 

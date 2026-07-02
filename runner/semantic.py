@@ -39,28 +39,11 @@ typedef struct Pair {
     int value;
 } Pair;
 
-// SLEIGH/Fission intrinsics — actual computation-based implementations
-// __carry: 1 if unsigned addition overflows 32-bit
-static inline int __carry(unsigned int a, unsigned int b) {
-    return ((uint64_t)a + (uint64_t)b) > (uint64_t)UINT_MAX ? 1 : 0;
-}
-
-// __scarry: 1 if signed addition overflows
-static inline int __scarry(int a, int b) {
-    long long r = (long long)a + (long long)b;
-    return (r > INT_MAX || r < INT_MIN) ? 1 : 0;
-}
-
-// __sborrow: 1 if signed subtraction overflows
-static inline int __sborrow(int a, int b) {
-    long long r = (long long)a - (long long)b;
-    return (r > INT_MAX || r < INT_MIN) ? 1 : 0;
-}
-
-// __borrow: 1 if unsigned subtraction would borrow (a < b)
-static inline int __borrow(unsigned int a, unsigned int b) {
-    return a < b ? 1 : 0;
-}
+// SLEIGH/Fission intrinsics — type-generic computation-based implementations
+#define __carry(a, b) ((__typeof__(a))((a) + (b)) < (a))
+#define __borrow(a, b) ((a) < (b))
+#define __scarry(a, b) ((((__typeof__(a))((a) + (b)) < 0) != ((a) < 0)) && (((a) < 0) == ((b) < 0)))
+#define __sborrow(a, b) ((((__typeof__(a))((a) - (b)) < 0) != ((a) < 0)) && (((a) < 0) != ((b) < 0)))
 
 #define __popcount(x) __builtin_popcount(x)
 """
