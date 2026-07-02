@@ -44,10 +44,26 @@ class BatchDecompileResponse(BaseModel):
 def health():
     return {"status": "ok", "decompiler": "boomerang", "version": "latest"}
 
+def validate_address(addr: str) -> int:
+    if not addr or not addr.strip():
+        raise HTTPException(status_code=400, detail="Address cannot be empty")
+    try:
+        if addr.lower().startswith("0x"):
+            return int(addr, 16)
+        try:
+            return int(addr, 10)
+        except ValueError:
+            return int(addr, 16)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid address format: {addr}")
+
 def resolve_binary(binary: str) -> str:
-    if binary.startswith("corpus/"):
-        return "/" + binary
-    return binary
+    if not binary or not binary.strip():
+        raise HTTPException(status_code=400, detail="Binary path cannot be empty")
+    resolved = "/" + binary if binary.startswith("corpus/") else binary
+    if not os.path.exists(resolved):
+        raise HTTPException(status_code=404, detail=f"Binary not found: {resolved}")
+    return resolved
 
 @app.get("/functions")
 def functions(binary: str):
@@ -55,10 +71,12 @@ def functions(binary: str):
 
 @app.get("/disasm")
 def disasm(binary: str, addr: str, arch: str = "x86_64"):
+    validate_address(addr)
     return disasm_helper.disassemble(resolve_binary(binary), addr, arch)
 
 @app.get("/decode")
 def decode(binary: str, addr: str, arch: str = "x86_64"):
+    validate_address(addr)
     disasm_data = disasm(binary, addr, arch)
     res = []
     for inst in disasm_data:
@@ -81,6 +99,7 @@ def pcode(binary: str, addr: str):
 
 @app.get("/cfg")
 def cfg(binary: str, addr: str):
+    validate_address(addr)
     return {"blocks": [], "edges": []}
 
 def address_aliases(addr: str) -> set[str]:
@@ -118,6 +137,7 @@ def extract_function_by_address(code: str, addr: str) -> tuple[str, str]:
 
 @app.post("/decompile", response_model=DecompileResponse)
 def decompile(req: DecompileRequest):
+    validate_address(req.addr)
     batch_req = BatchDecompileRequest(binary_b64=req.binary_b64, addresses=[req.addr])
     start = time.monotonic()
     try:
@@ -132,13 +152,25 @@ def decompile(req: DecompileRequest):
 
 @app.post("/decompile_batch", response_model=BatchDecompileResponse)
 def decompile_batch(req: BatchDecompileRequest):
-    binary_bytes = base64.b64decode(req.binary_b64)
+    try:
+        binary_bytes = base64.b64decode(req.binary_b64, validate=True)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64 payload")
     with tempfile.TemporaryDirectory() as tmpdir:
         binary_path = Path(tmpdir) / "target.bin"
         binary_path.write_bytes(binary_bytes)
         start = time.monotonic()
+        args = ["boomerang-cli"]
+        for addr in req.addresses:
+            try:
+                val = int(addr, 16) if addr.lower().startswith("0x") else int(addr)
+                args.extend(["-E", f"0x{val:x}"])
+            except ValueError:
+                pass
+        args.append(str(binary_path))
+
         result = subprocess.run(
-            ["boomerang-cli", str(binary_path)],
+            args,
             cwd=tmpdir,
             capture_output=True, text=True, timeout=120
         )

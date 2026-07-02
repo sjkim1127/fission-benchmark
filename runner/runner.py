@@ -49,7 +49,7 @@ def configured_decompilers() -> dict[str, str]:
     """Get configured decompiler HTTP endpoints from environment."""
     # Default local dev ports mapped in docker-compose.yml
     defaults = {
-        "fission": os.environ.get("FISSION_ENDPOINT", "http://localhost:8000"),
+        "fission": os.environ.get("FISSION_ENDPOINT", "http://localhost:8007"),
         "ghidra": "http://localhost:8001",
         "boomerang": "http://localhost:8002",
         "radare2": "http://localhost:8003",

@@ -77,10 +77,26 @@ def run_fission_cli(args: List[str]):
         raise HTTPException(status_code=500, detail=result.stderr or result.stdout)
     return json.loads(result.stdout)
 
+def validate_address(addr: str) -> int:
+    if not addr or not addr.strip():
+        raise HTTPException(status_code=400, detail="Address cannot be empty")
+    try:
+        if addr.lower().startswith("0x"):
+            return int(addr, 16)
+        try:
+            return int(addr, 10)
+        except ValueError:
+            return int(addr, 16)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid address format: {addr}")
+
 def resolve_binary(binary: str) -> str:
-    if binary.startswith("corpus/"):
-        return "/" + binary
-    return binary
+    if not binary or not binary.strip():
+        raise HTTPException(status_code=400, detail="Binary path cannot be empty")
+    resolved = "/" + binary if binary.startswith("corpus/") else binary
+    if not os.path.exists(resolved):
+        raise HTTPException(status_code=404, detail=f"Binary not found: {resolved}")
+    return resolved
 
 def decompile_batch_command(binary_path: str, addresses_path: str) -> List[str]:
     return [
@@ -119,6 +135,7 @@ def functions(binary: str):
 
 @app.get("/disasm")
 def disasm(binary: str, addr: str):
+    validate_address(addr)
     bin_path = resolve_binary(binary)
     data = run_fission_cli(["disasm", bin_path, "--addr", addr, "--function", "--json"])
     res = []
@@ -136,6 +153,7 @@ def disasm(binary: str, addr: str):
 
 @app.get("/decode")
 def decode(binary: str, addr: str):
+    validate_address(addr)
     # Decode is mapped from disassembly in same manner
     disasm_data = disasm(binary, addr)
     res = []
@@ -155,6 +173,7 @@ def decode(binary: str, addr: str):
 
 @app.get("/pcode")
 def pcode(binary: str, addr: str):
+    validate_address(addr)
     bin_path = resolve_binary(binary)
     data = run_fission_cli(["raw-pcode", bin_path, "--addr", addr, "--json"])
     # Map raw-pcode output to schema
@@ -195,6 +214,7 @@ def pcode(binary: str, addr: str):
 
 @app.get("/cfg")
 def cfg(binary: str, addr: str):
+    validate_address(addr)
     bin_path = resolve_binary(binary)
     data = run_fission_cli(["pcode-topology", bin_path, "--addr", addr, "--json"])
     # Map pcode-topology to schema
@@ -220,6 +240,7 @@ def cfg(binary: str, addr: str):
 
 @app.post("/decompile", response_model=DecompileResponse)
 def decompile(req: DecompileRequest):
+    validate_address(req.addr)
     batch_req = BatchDecompileRequest(binary_b64=req.binary_b64, addresses=[req.addr])
     start = time.monotonic()
     try:
@@ -234,7 +255,11 @@ def decompile(req: DecompileRequest):
 
 @app.post("/decompile_batch", response_model=BatchDecompileResponse)
 def decompile_batch(req: BatchDecompileRequest):
-    binary_bytes = base64.b64decode(req.binary_b64)
+    try:
+        binary_bytes = base64.b64decode(req.binary_b64, validate=True)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64 payload")
+        
     with tempfile.NamedTemporaryFile(suffix=".bin", delete=False) as f_bin:
         f_bin.write(binary_bytes)
         tmp_bin_path = f_bin.name
@@ -251,23 +276,76 @@ def decompile_batch(req: BatchDecompileRequest):
     }
     start = time.monotonic()
     try:
-        result = subprocess.run(
-            decompile_batch_command(tmp_bin_path, tmp_addrs_path),
-            env=env, capture_output=True, text=True, timeout=120
-        )
+        batch_failed = False
+        try:
+            result = subprocess.run(
+                decompile_batch_command(tmp_bin_path, tmp_addrs_path),
+                env=env, capture_output=True, text=True, timeout=120
+            )
+            if result.returncode != 0:
+                batch_failed = True
+            else:
+                res_list = normalize_decompile_results(json.loads(result.stdout))
+                results = []
+                for item in res_list:
+                    results.append(DecompileResultItem(
+                        addr=item.get("addr") or item.get("address"),
+                        name=item.get("name", "?"),
+                        code=item.get("code", ""),
+                        error=item.get("error")
+                    ))
+        except Exception:
+            batch_failed = True
+
+        if batch_failed:
+            results = []
+            for addr in req.addresses:
+                with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", delete=False) as f_single:
+                    f_single.write(f"{addr}\n")
+                    tmp_single_path = f_single.name
+                try:
+                    res_single = subprocess.run(
+                        decompile_batch_command(tmp_bin_path, tmp_single_path),
+                        env=env, capture_output=True, text=True, timeout=60
+                    )
+                    if res_single.returncode != 0:
+                        results.append(DecompileResultItem(
+                            addr=addr,
+                            error=f"Batch fallback failed with exit code {res_single.returncode}: {res_single.stderr or res_single.stdout}"
+                        ))
+                    else:
+                        res_list = normalize_decompile_results(json.loads(res_single.stdout))
+                        if res_list:
+                            item = res_list[0]
+                            results.append(DecompileResultItem(
+                                addr=item.get("addr") or item.get("address") or addr,
+                                name=item.get("name", "?"),
+                                code=item.get("code", ""),
+                                error=item.get("error")
+                            ))
+                        else:
+                            results.append(DecompileResultItem(
+                                addr=addr,
+                                error="No decompile result returned for address"
+                            ))
+                except Exception as e:
+                    results.append(DecompileResultItem(
+                        addr=addr,
+                        error=f"Batch fallback failed with exception: {str(e)}"
+                    ))
+                finally:
+                    try:
+                        os.unlink(tmp_single_path)
+                    except Exception:
+                        pass
         elapsed = int((time.monotonic() - start) * 1000)
-        if result.returncode != 0:
-            raise HTTPException(status_code=500, detail=result.stderr or result.stdout)
-        res_list = normalize_decompile_results(json.loads(result.stdout))
-        results = []
-        for item in res_list:
-            results.append(DecompileResultItem(
-                addr=item.get("addr") or item.get("address"),
-                name=item.get("name", "?"),
-                code=item.get("code", ""),
-                error=item.get("error")
-            ))
         return BatchDecompileResponse(results=results, time_ms=elapsed)
     finally:
-        os.unlink(tmp_bin_path)
-        os.unlink(tmp_addrs_path)
+        try:
+            os.unlink(tmp_bin_path)
+        except Exception:
+            pass
+        try:
+            os.unlink(tmp_addrs_path)
+        except Exception:
+            pass

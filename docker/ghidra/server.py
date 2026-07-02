@@ -1,6 +1,7 @@
 """Ghidra headless decompiler and parity diagnostic API server."""
 import base64
 import json
+import os
 import subprocess
 import tempfile
 import time
@@ -53,13 +54,30 @@ def _extract_marked_json_line(text: str, marker: str) -> object | None:
         return json.loads(payload)
     return None
 
+def validate_address(addr: str) -> int:
+    if not addr or not addr.strip():
+        raise HTTPException(status_code=400, detail="Address cannot be empty")
+    try:
+        if addr.lower().startswith("0x"):
+            return int(addr, 16)
+        try:
+            return int(addr, 10)
+        except ValueError:
+            return int(addr, 16)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid address format: {addr}")
+
 @app.get("/health")
 def health():
     return {"status": "ok", "decompiler": "ghidra", "version": "12.0"}
 
 def run_export_parity(binary_path: str, mode: str, addr: str = ""):
-    if binary_path.startswith("corpus/"):
-        binary_path = "/" + binary_path
+    if not binary_path or not binary_path.strip():
+        raise HTTPException(status_code=400, detail="Binary path cannot be empty")
+    resolved = "/" + binary_path if binary_path.startswith("corpus/") else binary_path
+    if not os.path.exists(resolved):
+        raise HTTPException(status_code=404, detail=f"Binary not found: {resolved}")
+    binary_path = resolved
     
     with tempfile.TemporaryDirectory() as tmpdir:
         project_dir = Path(tmpdir) / "proj"
@@ -74,8 +92,12 @@ def run_export_parity(binary_path: str, mode: str, addr: str = ""):
         ]
         result = subprocess.run(args, capture_output=True, text=True, timeout=120)
         for line in result.stdout.splitlines():
-            if line.startswith("===RESULT==="):
-                res = json.loads(line.replace("===RESULT===", ""))
+            idx = line.find("===RESULT===")
+            if idx >= 0:
+                payload = line[idx + len("===RESULT==="):].strip()
+                if payload.endswith("(GhidraScript)"):
+                    payload = payload[:-len("(GhidraScript)")].strip()
+                res = json.loads(payload)
                 if isinstance(res, dict) and "error" in res:
                     raise HTTPException(status_code=500, detail=res["error"])
                 return res
@@ -87,10 +109,12 @@ def functions(binary: str):
 
 @app.get("/disasm")
 def disasm(binary: str, addr: str):
+    validate_address(addr)
     return run_export_parity(binary, "disasm", addr)
 
 @app.get("/decode")
 def decode(binary: str, addr: str):
+    validate_address(addr)
     # Map Ghidra disasm output to decode schema
     disasm_data = run_export_parity(binary, "disasm", addr)
     res = []
@@ -111,14 +135,17 @@ def decode(binary: str, addr: str):
 
 @app.get("/pcode")
 def pcode(binary: str, addr: str):
+    validate_address(addr)
     return run_export_parity(binary, "pcode", addr)
 
 @app.get("/cfg")
 def cfg(binary: str, addr: str):
+    validate_address(addr)
     return run_export_parity(binary, "cfg", addr)
 
 @app.post("/decompile", response_model=DecompileResponse)
 def decompile(req: DecompileRequest):
+    validate_address(req.addr)
     batch_req = BatchDecompileRequest(binary_b64=req.binary_b64, addresses=[req.addr])
     start = time.monotonic()
     try:
@@ -131,41 +158,70 @@ def decompile(req: DecompileRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/decompile_batch", response_model=BatchDecompileResponse)
-def decompile_batch(req: BatchDecompileRequest):
-    binary_bytes = base64.b64decode(req.binary_b64)
+def _run_ghidra_headless(binary_bytes: bytes, addresses: List[str]) -> List[DecompileResultItem]:
     with tempfile.TemporaryDirectory() as tmpdir:
         binary_path = Path(tmpdir) / "target.bin"
         binary_path.write_bytes(binary_bytes)
         project_dir = Path(tmpdir) / "proj"
         project_dir.mkdir()
 
-        start = time.monotonic()
         args = [
             str(GHIDRA_HEADLESS), str(project_dir), "TempProject",
             "-import", str(binary_path),
             "-scriptPath", str(SCRIPT_DIR),
             "-postScript", "DecompileFunction.java",
-        ] + req.addresses + [
+        ] + addresses + [
             "-scriptlog", str(Path(tmpdir) / "script.log"),
             "-deleteProject",
         ]
 
         script_log = Path(tmpdir) / "script.log"
         result = subprocess.run(args, capture_output=True, text=True, timeout=300)
-        elapsed = int((time.monotonic() - start) * 1000)
 
         parse_sources = [result.stdout, result.stderr]
         if script_log.exists():
             parse_sources.append(script_log.read_text(errors="replace"))
 
         for source in parse_sources:
+            res_list = None
             try:
                 res_list = _extract_marked_json_line(source, BATCH_MARKER)
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Failed to parse GhidraScript JSON: {str(e)}")
+            except Exception:
+                pass
             if res_list is not None:
-                return BatchDecompileResponse(results=res_list, time_ms=elapsed)
+                items = []
+                for item in res_list:
+                    items.append(DecompileResultItem(
+                        addr=item.get("addr") or item.get("address"),
+                        name=item.get("name", "?"),
+                        code=item.get("code", ""),
+                        error=item.get("error")
+                    ))
+                return items
+        
+        raise RuntimeError(f"Ghidra script failed or marker not found. Exit code {result.returncode}")
 
-        output = "\n".join(parse_sources)
-        raise HTTPException(status_code=500, detail=f"Ghidra batch decompilation script output marker not found. Output: {output[-4000:]}")
+@app.post("/decompile_batch", response_model=BatchDecompileResponse)
+def decompile_batch(req: BatchDecompileRequest):
+    try:
+        binary_bytes = base64.b64decode(req.binary_b64, validate=True)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64 payload")
+        
+    start = time.monotonic()
+    try:
+        results = _run_ghidra_headless(binary_bytes, req.addresses)
+    except Exception as e:
+        results = []
+        for addr in req.addresses:
+            try:
+                single_results = _run_ghidra_headless(binary_bytes, [addr])
+                if single_results:
+                    results.append(single_results[0])
+                else:
+                    results.append(DecompileResultItem(addr=addr, error="Empty result returned"))
+            except Exception as se:
+                results.append(DecompileResultItem(addr=addr, error=f"Headless script failed: {str(se)}"))
+                
+    elapsed = int((time.monotonic() - start) * 1000)
+    return BatchDecompileResponse(results=results, time_ms=elapsed)

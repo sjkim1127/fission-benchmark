@@ -41,16 +41,32 @@ class BatchDecompileResponse(BaseModel):
 def health():
     return {"status": "ok", "decompiler": "angr", "version": "latest"}
 
+def validate_address(addr: str) -> int:
+    if not addr or not addr.strip():
+        raise HTTPException(status_code=400, detail="Address cannot be empty")
+    try:
+        if addr.lower().startswith("0x"):
+            return int(addr, 16)
+        try:
+            return int(addr, 10)
+        except ValueError:
+            return int(addr, 16)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid address format: {addr}")
+
 def resolve_binary(binary: str) -> str:
-    if binary.startswith("corpus/"):
-        return "/" + binary
-    return binary
+    if not binary or not binary.strip():
+        raise HTTPException(status_code=400, detail="Binary path cannot be empty")
+    resolved = "/" + binary if binary.startswith("corpus/") else binary
+    if not os.path.exists(resolved):
+        raise HTTPException(status_code=404, detail=f"Binary not found: {resolved}")
+    return resolved
 
 @app.get("/functions")
 def functions(binary: str):
     bin_path = resolve_binary(binary)
     proj = angr.Project(bin_path, auto_load_libs=False)
-    proj.analyses.CFGFast()
+    proj.analyses.CFGFast(normalize=True)
     res = []
     for addr, func in proj.kb.functions.items():
         res.append({
@@ -63,9 +79,9 @@ def functions(binary: str):
 
 @app.get("/disasm")
 def disasm(binary: str, addr: str):
+    addr_val = validate_address(addr)
     bin_path = resolve_binary(binary)
     proj = angr.Project(bin_path, auto_load_libs=False)
-    addr_val = int(addr, 16)
     try:
         block = proj.factory.block(addr_val)
         res = []
@@ -85,6 +101,7 @@ def disasm(binary: str, addr: str):
 
 @app.get("/decode")
 def decode(binary: str, addr: str):
+    validate_address(addr)
     disasm_data = disasm(binary, addr)
     res = []
     for inst in disasm_data:
@@ -107,10 +124,10 @@ def pcode(binary: str, addr: str):
 
 @app.get("/cfg")
 def cfg(binary: str, addr: str):
+    addr_val = validate_address(addr)
     bin_path = resolve_binary(binary)
     proj = angr.Project(bin_path, auto_load_libs=False)
-    addr_val = int(addr, 16)
-    cfg_fast = proj.analyses.CFGFast()
+    cfg_fast = proj.analyses.CFGFast(normalize=True)
     func = cfg_fast.functions.get(addr_val)
     if not func:
         return {"blocks": [], "edges": []}
@@ -131,6 +148,7 @@ def cfg(binary: str, addr: str):
 
 @app.post("/decompile", response_model=DecompileResponse)
 def decompile(req: DecompileRequest):
+    validate_address(req.addr)
     batch_req = BatchDecompileRequest(binary_b64=req.binary_b64, addresses=[req.addr])
     start = time.monotonic()
     try:
@@ -145,18 +163,35 @@ def decompile(req: DecompileRequest):
 
 @app.post("/decompile_batch", response_model=BatchDecompileResponse)
 def decompile_batch(req: BatchDecompileRequest):
-    binary_bytes = base64.b64decode(req.binary_b64)
+    try:
+        binary_bytes = base64.b64decode(req.binary_b64, validate=True)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64 payload")
+        
     with tempfile.NamedTemporaryFile(suffix=".bin", delete=False) as f:
         f.write(binary_bytes)
         tmp_path = f.name
     start = time.monotonic()
     results = []
     try:
-        proj = angr.Project(tmp_path, auto_load_libs=False)
-        proj.analyses.CFGFast()
+        try:
+            proj = angr.Project(tmp_path, auto_load_libs=False)
+            proj.analyses.CFGFast(normalize=True)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to load project in angr: {str(e)}")
+            
         for addr in req.addresses:
             try:
-                addr_val = int(addr, 16)
+                try:
+                    addr_val = int(addr, 16) if addr.lower().startswith("0x") else int(addr, 10)
+                except ValueError:
+                    results.append(DecompileResultItem(addr=addr, error=f"Invalid address format: {addr}"))
+                    continue
+                
+                if addr_val not in proj.kb.functions:
+                    results.append(DecompileResultItem(addr=addr, error=f"Function not found at address: {addr}"))
+                    continue
+                
                 dec = proj.analyses.Decompiler(proj.kb.functions[addr_val])
                 code = dec.codegen.text if dec.codegen else "angr decompilation empty"
                 results.append(DecompileResultItem(addr=addr, name=f"func_{addr}", code=code))
@@ -165,4 +200,7 @@ def decompile_batch(req: BatchDecompileRequest):
         elapsed = int((time.monotonic() - start) * 1000)
         return BatchDecompileResponse(results=results, time_ms=elapsed)
     finally:
-        os.unlink(tmp_path)
+        try:
+            os.unlink(tmp_path)
+        except Exception:
+            pass

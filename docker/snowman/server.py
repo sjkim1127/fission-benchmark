@@ -44,10 +44,29 @@ class BatchDecompileResponse(BaseModel):
 def health():
     return {"status": "ok", "decompiler": "snowman", "version": "latest"}
 
+def validate_address(addr: str) -> int:
+    if not addr or not addr.strip():
+        raise HTTPException(status_code=400, detail="Address cannot be empty")
+    try:
+        if addr.lower().startswith("0x"):
+            return int(addr, 16)
+        try:
+            return int(addr, 10)
+        except ValueError:
+            return int(addr, 16)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid address format: {addr}")
+
+
 def resolve_binary(binary: str) -> str:
-    if binary.startswith("corpus/"):
-        return "/" + binary
-    return binary
+    if not binary or not binary.strip():
+        raise HTTPException(status_code=400, detail="Binary path cannot be empty")
+    resolved = "/" + binary if binary.startswith("corpus/") else binary
+    if not os.path.exists(resolved):
+        raise HTTPException(status_code=404, detail=f"Binary not found: {resolved}")
+    if os.path.getsize(resolved) == 0:
+        raise HTTPException(status_code=400, detail="Binary file is empty")
+    return resolved
 
 @app.get("/functions")
 def functions(binary: str):
@@ -55,10 +74,12 @@ def functions(binary: str):
 
 @app.get("/disasm")
 def disasm(binary: str, addr: str, arch: str = "x86_64"):
+    validate_address(addr)
     return disasm_helper.disassemble(resolve_binary(binary), addr, arch)
 
 @app.get("/decode")
 def decode(binary: str, addr: str, arch: str = "x86_64"):
+    validate_address(addr)
     disasm_data = disasm(binary, addr, arch)
     res = []
     for inst in disasm_data:
@@ -81,6 +102,7 @@ def pcode(binary: str, addr: str):
 
 @app.get("/cfg")
 def cfg(binary: str, addr: str):
+    validate_address(addr)
     return {"blocks": [], "edges": []}
 
 FUNCTION_DEF_RE = re.compile(
@@ -98,7 +120,7 @@ def function_definition_count(code: str) -> int:
 def is_whole_program_output(code: str) -> bool:
     return len(code) >= 7900 or function_definition_count(code) > 3
 
-def extract_snowman_function(code: str, addr_int: int) -> tuple[str, str]:
+def extract_snowman_function(code: str, addr_int: int):
     """
     Search Snowman C++ output for the function at address addr_int.
     Snowman functions are named like: fun_[hex_address]
@@ -158,7 +180,10 @@ def decompile(req: DecompileRequest):
 
 @app.post("/decompile_batch", response_model=BatchDecompileResponse)
 def decompile_batch(req: BatchDecompileRequest):
-    binary_bytes = base64.b64decode(req.binary_b64)
+    try:
+        binary_bytes = base64.b64decode(req.binary_b64, validate=True)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64 payload")
     with tempfile.NamedTemporaryFile(suffix=".bin", delete=False) as f:
         f.write(binary_bytes)
         tmp_path = f.name
