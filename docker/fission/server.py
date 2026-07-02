@@ -16,6 +16,7 @@ FISSION_BIN = Path("/usr/local/bin/fission_cli")
 SLEIGH_SPEC_DIR = os.environ.get("FISSION_SLEIGH_SPEC_DIR", "/sleigh-specs")
 RESOURCE_ROOT = os.environ.get("FISSION_RESOURCE_ROOT", "/opt/fission-utils/utils")
 GHIDRA_DATA_DIR = os.environ.get("FISSION_GHIDRA_DATA_DIR", "/opt/fission-utils/utils/ghidra-data")
+DECOMP_TIMEOUT_MS = os.environ.get("FISSION_DECOMP_TIMEOUT_MS", "30000")
 
 class DecompileRequest(BaseModel):
     binary_b64: str
@@ -69,6 +70,27 @@ def resolve_binary(binary: str) -> str:
     if binary.startswith("corpus/"):
         return "/" + binary
     return binary
+
+def decompile_batch_command(binary_path: str, addresses_path: str) -> List[str]:
+    return [
+        str(FISSION_BIN),
+        "decomp",
+        binary_path,
+        "--addresses-file",
+        addresses_path,
+        "--json",
+        "--benchmark",
+        "--timeout-ms",
+        DECOMP_TIMEOUT_MS,
+    ]
+
+def normalize_decompile_results(payload: object) -> list[dict]:
+    if isinstance(payload, dict):
+        functions = payload.get("functions", [])
+        return functions if isinstance(functions, list) else []
+    if isinstance(payload, list):
+        return payload
+    return []
 
 @app.get("/functions")
 def functions(binary: str):
@@ -219,17 +241,17 @@ def decompile_batch(req: BatchDecompileRequest):
     start = time.monotonic()
     try:
         result = subprocess.run(
-            [str(FISSION_BIN), "decomp", tmp_bin_path, "--batch", tmp_addrs_path, "--json"],
+            decompile_batch_command(tmp_bin_path, tmp_addrs_path),
             env=env, capture_output=True, text=True, timeout=120
         )
         elapsed = int((time.monotonic() - start) * 1000)
         if result.returncode != 0:
             raise HTTPException(status_code=500, detail=result.stderr or result.stdout)
-        res_list = json.loads(result.stdout)
+        res_list = normalize_decompile_results(json.loads(result.stdout))
         results = []
         for item in res_list:
             results.append(DecompileResultItem(
-                addr=item.get("addr"),
+                addr=item.get("addr") or item.get("address"),
                 name=item.get("name", "?"),
                 code=item.get("code", ""),
                 error=item.get("error")

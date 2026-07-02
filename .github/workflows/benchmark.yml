@@ -91,6 +91,8 @@ jobs:
         run: echo "is_current=${{ needs.preflight.outputs.is_current }}" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -105,7 +107,20 @@ jobs:
       - name: Pull or build decompiler images
         run: |
           SERVICES="fission ghidra boomerang radare2 angr snowman revng reko"
+          CHANGED_SERVICES=""
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            CHANGED_SERVICES="$(git diff --name-only HEAD~1 HEAD | awk -F/ '/^docker\// {print $2}' | sort -u)"
+            echo "Docker services changed in this push:"
+            echo "${CHANGED_SERVICES:-<none>}"
+          fi
+
           for svc in $SERVICES; do
+            if echo "$CHANGED_SERVICES" | grep -qx "$svc"; then
+              echo "==> Building changed service ${svc} locally for push benchmark..."
+              docker compose build "${svc}"
+              continue
+            fi
+
             REMOTE="${IMAGE_PREFIX}-${svc}:latest"
             echo "==> Trying to pull ${REMOTE}..."
             if docker pull "${REMOTE}" 2>/dev/null; then

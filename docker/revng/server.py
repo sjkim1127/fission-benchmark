@@ -1,5 +1,6 @@
 """rev.ng decompiler and parity diagnostic API server."""
 import base64
+import re
 import subprocess
 import tempfile
 import time
@@ -37,6 +38,41 @@ class BatchDecompileResponse(BaseModel):
     decompiler: str = "revng"
     results: List[DecompileResultItem]
     time_ms: int
+
+def _addr_hex(addr: str) -> str:
+    try:
+        return f"{int(addr, 16):x}"
+    except ValueError:
+        return addr.lower().removeprefix("0x")
+
+def extract_revng_function(code: str, addr: str) -> str:
+    """Extract one function from revng plain C output by its address-derived name."""
+    addr_hex = _addr_hex(addr)
+    match = re.search(rf"\bfunction_0x{re.escape(addr_hex)}_[A-Za-z0-9_]+\s*\(", code)
+    if not match:
+        return ""
+
+    start = code.rfind("\n", 0, match.start()) + 1
+    previous_end = start - 1
+    previous_start = code.rfind("\n", 0, previous_end) + 1
+    previous_line = code[previous_start:previous_end].strip()
+    if previous_line.startswith("_ABI("):
+        start = previous_start
+
+    brace = code.find("{", match.end())
+    if brace < 0:
+        return code[start:code.find("\n", match.end())].strip()
+
+    depth = 0
+    for index in range(brace, len(code)):
+        char = code[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return code[start:index + 1].strip()
+    return code[start:].strip()
 
 @app.get("/health")
 def health():
@@ -101,21 +137,46 @@ def decompile_batch(req: BatchDecompileRequest):
     with tempfile.TemporaryDirectory() as tmpdir:
         binary_path = Path(tmpdir) / "target.bin"
         binary_path.write_bytes(binary_bytes)
+        ptml_path = Path(tmpdir) / "decompiled.ptml"
         start = time.monotonic()
         results = []
-        for addr in req.addresses:
-            output_path = Path(tmpdir) / f"{addr}.c"
-            try:
-                result = subprocess.run(
-                    ["revng", "decompile", "-o", str(output_path), "--decompile-function", addr, str(binary_path)],
-                    capture_output=True, text=True, timeout=120
+        try:
+            artifact = subprocess.run(
+                [
+                    "revng",
+                    "artifact",
+                    "--analyze",
+                    "decompile-to-single-file",
+                    str(binary_path),
+                    "-o",
+                    str(ptml_path),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=240,
+            )
+            if artifact.returncode != 0:
+                detail = artifact.stderr or artifact.stdout or "revng artifact failed"
+                results = [DecompileResultItem(addr=addr, name=f"func_{addr}", error=detail) for addr in req.addresses]
+            else:
+                plain = subprocess.run(
+                    ["revng", "ptml", str(ptml_path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
                 )
-                if output_path.exists():
-                    code = output_path.read_text(errors="replace")
-                    results.append(DecompileResultItem(addr=addr, name=f"func_{addr}", code=code))
+                if plain.returncode != 0:
+                    detail = plain.stderr or plain.stdout or "revng ptml conversion failed"
+                    results = [DecompileResultItem(addr=addr, name=f"func_{addr}", error=detail) for addr in req.addresses]
                 else:
-                    results.append(DecompileResultItem(addr=addr, name=f"func_{addr}", error=result.stderr or result.stdout or "revng failed"))
-            except Exception as e:
-                results.append(DecompileResultItem(addr=addr, error=str(e)))
+                    code = plain.stdout
+                    for addr in req.addresses:
+                        fn_code = extract_revng_function(code, addr)
+                        if fn_code:
+                            results.append(DecompileResultItem(addr=addr, name=f"function_0x{_addr_hex(addr)}", code=fn_code))
+                        else:
+                            results.append(DecompileResultItem(addr=addr, name=f"func_{addr}", error=f"revng output did not contain function {addr}"))
+        except Exception as e:
+            results = [DecompileResultItem(addr=addr, name=f"func_{addr}", error=str(e)) for addr in req.addresses]
         elapsed = int((time.monotonic() - start) * 1000)
         return BatchDecompileResponse(results=results, time_ms=elapsed)

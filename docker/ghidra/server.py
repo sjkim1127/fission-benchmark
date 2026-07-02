@@ -14,6 +14,7 @@ app = FastAPI(title="ghidra-decompiler", version="1.0")
 GHIDRA_HOME = Path("/opt/ghidra")
 GHIDRA_HEADLESS = GHIDRA_HOME / "support" / "analyzeHeadless"
 SCRIPT_DIR = Path("/opt/ghidra_scripts")
+BATCH_MARKER = "===BATCH_RESULT==="
 
 class DecompileRequest(BaseModel):
     binary_b64: str
@@ -40,6 +41,17 @@ class BatchDecompileResponse(BaseModel):
     decompiler: str = "ghidra"
     results: List[DecompileResultItem]
     time_ms: int
+
+def _extract_marked_json_line(text: str, marker: str) -> object | None:
+    for line in text.splitlines():
+        marker_index = line.find(marker)
+        if marker_index < 0:
+            continue
+        payload = line[marker_index + len(marker):].strip()
+        if payload.endswith("(GhidraScript)"):
+            payload = payload[:-len("(GhidraScript)")].strip()
+        return json.loads(payload)
+    return None
 
 @app.get("/health")
 def health():
@@ -139,18 +151,21 @@ def decompile_batch(req: BatchDecompileRequest):
             "-deleteProject",
         ]
 
+        script_log = Path(tmpdir) / "script.log"
         result = subprocess.run(args, capture_output=True, text=True, timeout=300)
         elapsed = int((time.monotonic() - start) * 1000)
 
-        for line in result.stdout.splitlines():
-            if line.startswith("===BATCH_RESULT==="):
-                try:
-                    res_json = line.replace("===BATCH_RESULT===", "").strip()
-                    if res_json.endswith("(GhidraScript)"):
-                        res_json = res_json[:-len("(GhidraScript)")].strip()
-                    res_list = json.loads(res_json)
-                    return BatchDecompileResponse(results=res_list, time_ms=elapsed)
-                except Exception as e:
-                    raise HTTPException(status_code=500, detail=f"Failed to parse GhidraScript JSON: {str(e)}")
+        parse_sources = [result.stdout, result.stderr]
+        if script_log.exists():
+            parse_sources.append(script_log.read_text(errors="replace"))
 
-        raise HTTPException(status_code=500, detail=f"Ghidra batch decompilation script output marker not found. Output: {result.stdout}")
+        for source in parse_sources:
+            try:
+                res_list = _extract_marked_json_line(source, BATCH_MARKER)
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Failed to parse GhidraScript JSON: {str(e)}")
+            if res_list is not None:
+                return BatchDecompileResponse(results=res_list, time_ms=elapsed)
+
+        output = "\n".join(parse_sources)
+        raise HTTPException(status_code=500, detail=f"Ghidra batch decompilation script output marker not found. Output: {output[-4000:]}")
