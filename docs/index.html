@@ -6,6 +6,7 @@
 <title>Fission Benchmark Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 <style>
   :root {
     --bg: #090d16;
@@ -562,6 +563,11 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+  .parity-btn { background: #1e1b4b; border: 1px solid #312e81; color: #c7d2fe; padding: 3px 10px; border-radius: 5px; cursor: pointer; font-size: 0.78rem; transition: all 0.15s; }
+  .parity-btn:hover { background: #312e81; color: #eff6ff; border-color: #6366f1; }
+  .tab-btn { background: #1f2937; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.15s; }
+  .tab-btn:hover { background: #374151; color: var(--text); }
+  .tab-btn.active { background: var(--accent-indigo); border-color: var(--accent-indigo); color: white; }
 </style>
 </head>
 <body>
@@ -574,7 +580,7 @@
   <div class="meta-badges">
     <div class="meta-badge">Corpus: <strong id="corpusName">dev</strong></div>
     <div class="meta-badge">Functions: <strong id="funcCount">10</strong></div>
-    <div class="meta-badge">Updated: <strong id="genTime">2026-07-02 14:50 UTC</strong></div>
+    <div class="meta-badge">Updated: <strong id="genTime">2026-07-02 17:02 UTC</strong></div>
   </div>
 </header>
 
@@ -823,7 +829,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 2,
     "time_ms": 3109,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "ghidra",
@@ -945,7 +953,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 4608,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "boomerang",
@@ -1051,7 +1061,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 17,
-    "error": null
+    "error": null,
+    "has_parity_diff": true,
+    "parity_diff_path": "../results/parity_diffs/control_flow_gcc_O0.exe/count_bits/boomerang.json"
   },
   {
     "decompiler": "radare2",
@@ -1162,7 +1174,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 91,
-    "error": null
+    "error": null,
+    "has_parity_diff": true,
+    "parity_diff_path": "../results/parity_diffs/control_flow_gcc_O0.exe/count_bits/radare2.json"
   },
   {
     "decompiler": "angr",
@@ -1279,7 +1293,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 1,
     "time_ms": 391,
-    "error": null
+    "error": null,
+    "has_parity_diff": true,
+    "parity_diff_path": "../results/parity_diffs/control_flow_gcc_O0.exe/count_bits/angr.json"
   },
   {
     "decompiler": "snowman",
@@ -1396,7 +1412,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 534,
-    "error": null
+    "error": null,
+    "has_parity_diff": true,
+    "parity_diff_path": "../results/parity_diffs/control_flow_gcc_O0.exe/count_bits/snowman.json"
   },
   {
     "decompiler": "revng",
@@ -1443,7 +1461,9 @@ const SCORES = [
     "nesting_depth": 0,
     "consensus_rank": null,
     "time_ms": 11899,
-    "error": "Decompiler output does not match requested function name or address"
+    "error": "Decompiler output does not match requested function name or address",
+    "has_parity_diff": true,
+    "parity_diff_path": "../results/parity_diffs/control_flow_gcc_O0.exe/count_bits/revng.json"
   },
   {
     "decompiler": "reko",
@@ -1549,7 +1569,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 3,
     "time_ms": 447,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "fission",
@@ -1666,7 +1688,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 2,
     "time_ms": 3109,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "ghidra",
@@ -1790,7 +1814,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 4608,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "boomerang",
@@ -1907,7 +1933,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 3,
     "time_ms": 17,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "radare2",
@@ -2018,7 +2046,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 91,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "angr",
@@ -2135,7 +2165,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 1,
     "time_ms": 391,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "snowman",
@@ -2241,7 +2273,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 8,
     "time_ms": 534,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "revng",
@@ -2350,7 +2384,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 3,
     "time_ms": 11899,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "reko",
@@ -2456,7 +2492,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 3,
     "time_ms": 447,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "fission",
@@ -2573,7 +2611,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 3,
     "time_ms": 3109,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "ghidra",
@@ -2695,7 +2735,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 2,
     "time_ms": 4608,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "boomerang",
@@ -2812,7 +2854,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 4,
     "time_ms": 17,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "radare2",
@@ -2923,7 +2967,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 4,
     "time_ms": 91,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "angr",
@@ -3040,7 +3086,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 1,
     "time_ms": 391,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "snowman",
@@ -3157,7 +3205,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 4,
     "time_ms": 534,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "revng",
@@ -3266,7 +3316,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 4,
     "time_ms": 11899,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "reko",
@@ -3372,7 +3424,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 4,
     "time_ms": 447,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "fission",
@@ -3478,7 +3532,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 8,
     "time_ms": 3109,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "ghidra",
@@ -3590,7 +3646,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 2,
     "time_ms": 4608,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "boomerang",
@@ -3707,7 +3765,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 3,
     "time_ms": 17,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "radare2",
@@ -3818,7 +3878,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 91,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "angr",
@@ -3935,7 +3997,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 1,
     "time_ms": 391,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "snowman",
@@ -4041,7 +4105,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 534,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "revng",
@@ -4150,7 +4216,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 3,
     "time_ms": 11899,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "reko",
@@ -4256,7 +4324,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 447,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "fission",
@@ -4362,7 +4432,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 3109,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "ghidra",
@@ -4484,7 +4556,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 2,
     "time_ms": 4608,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "boomerang",
@@ -4601,7 +4675,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 4,
     "time_ms": 17,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "radare2",
@@ -4712,7 +4788,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 4,
     "time_ms": 91,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "angr",
@@ -4829,7 +4907,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 1,
     "time_ms": 391,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "snowman",
@@ -4946,7 +5026,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 4,
     "time_ms": 534,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "revng",
@@ -5055,7 +5137,9 @@ const SCORES = [
     "nesting_depth": 4,
     "consensus_rank": 8,
     "time_ms": 11899,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "reko",
@@ -5161,7 +5245,9 @@ const SCORES = [
     "nesting_depth": 4,
     "consensus_rank": 7,
     "time_ms": 447,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "fission",
@@ -5267,7 +5353,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 2,
     "time_ms": 3109,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "ghidra",
@@ -5390,7 +5478,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 3,
     "time_ms": 4608,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "boomerang",
@@ -5507,7 +5597,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 3,
     "time_ms": 17,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "radare2",
@@ -5618,7 +5710,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 3,
     "time_ms": 91,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "angr",
@@ -5735,7 +5829,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 1,
     "time_ms": 391,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "snowman",
@@ -5852,7 +5948,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 3,
     "time_ms": 534,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "revng",
@@ -5961,7 +6059,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 8,
     "time_ms": 11899,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "reko",
@@ -6067,7 +6167,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 3,
     "time_ms": 447,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "fission",
@@ -6173,7 +6275,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 7,
     "time_ms": 26017,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "ghidra",
@@ -6286,7 +6390,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 1,
     "time_ms": 10166,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "boomerang",
@@ -6312,7 +6418,9 @@ const SCORES = [
     "nesting_depth": 0,
     "consensus_rank": null,
     "time_ms": 202,
-    "error": "Decompilation failed: Level | File                                    | Line | Message\n====================================================================================================\nMsg   | src/boomerang/util/log/Log.cpp          |  152 | This is Boomerang 4110413\nMsg   | src/boomerang/util/log/Log.cpp          |  153 | Log initialized.\nMsg   | src/boomerang/util/log/Log.cpp          |  154 | Log level is 'Msg'.\nMsg   | src/boomerang/core/Project.cpp          |  350 | Loading plugins...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/ppc.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/x86.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/st20.ssl'...\nMsg   | src/boomerang/core/Project.cpp          |  364 | Loaded plugins:\nMsg   | src/boomerang/core/Project.cpp          |  366 |   C Code Generator plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone PPC decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone x86 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   ST20 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS4GW loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ELF32 loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS Exe loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Mach-O loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ST20 .bin loader plugin [experimental] 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Win32 PE loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   PPC FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   ST20 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   X86 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  382 |   C Symbol Provider plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  386 |   DFA Type Recovery plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  111 | Loading binary file '/tmp/tmpdr0zadrc/target.bin'\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  291 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  374 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  433 | Microdisassembler out of step at offset 4561\nMsg   | src/boomerang/db/Prog.cpp               |  351 | Reading library signatures...\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001530\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001530\nMsg   | src/boomerang/core/Project.cpp          |  197 | Found 1 procs\nMsg   | src/boomerang/core/Project.cpp          |  222 | Decompiling...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001530'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001559: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001559 arpl ax, dx'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001584: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001584 arpl ax, dx'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  210 | Transforming from SSA form...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  139 | Removing unused global variables...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   94 | Compressing CFG...\n"
+    "error": "Decompilation failed: Level | File                                    | Line | Message\n====================================================================================================\nMsg   | src/boomerang/util/log/Log.cpp          |  152 | This is Boomerang 4110413\nMsg   | src/boomerang/util/log/Log.cpp          |  153 | Log initialized.\nMsg   | src/boomerang/util/log/Log.cpp          |  154 | Log level is 'Msg'.\nMsg   | src/boomerang/core/Project.cpp          |  350 | Loading plugins...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/ppc.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/x86.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/st20.ssl'...\nMsg   | src/boomerang/core/Project.cpp          |  364 | Loaded plugins:\nMsg   | src/boomerang/core/Project.cpp          |  366 |   C Code Generator plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone PPC decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone x86 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   ST20 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS4GW loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ELF32 loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS Exe loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Mach-O loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ST20 .bin loader plugin [experimental] 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Win32 PE loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   PPC FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   ST20 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   X86 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  382 |   C Symbol Provider plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  386 |   DFA Type Recovery plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  111 | Loading binary file '/tmp/tmpdr0zadrc/target.bin'\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  291 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  374 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  433 | Microdisassembler out of step at offset 4561\nMsg   | src/boomerang/db/Prog.cpp               |  351 | Reading library signatures...\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001530\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001530\nMsg   | src/boomerang/core/Project.cpp          |  197 | Found 1 procs\nMsg   | src/boomerang/core/Project.cpp          |  222 | Decompiling...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001530'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001559: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001559 arpl ax, dx'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001584: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001584 arpl ax, dx'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  210 | Transforming from SSA form...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  139 | Removing unused global variables...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   94 | Compressing CFG...\n",
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "radare2",
@@ -6423,7 +6531,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 1,
     "time_ms": 219,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "angr",
@@ -6540,7 +6650,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 1,
     "time_ms": 935,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "snowman",
@@ -6646,7 +6758,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 1,
     "time_ms": 610,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "revng",
@@ -6755,7 +6869,9 @@ const SCORES = [
     "nesting_depth": 5,
     "consensus_rank": 6,
     "time_ms": 18520,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "reko",
@@ -6861,7 +6977,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 1,
     "time_ms": 866,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "fission",
@@ -6967,7 +7085,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 8,
     "time_ms": 26017,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "ghidra",
@@ -7080,7 +7200,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 2,
     "time_ms": 10166,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "boomerang",
@@ -7197,7 +7319,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 3,
     "time_ms": 202,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "radare2",
@@ -7308,7 +7432,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 219,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "angr",
@@ -7425,7 +7551,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 1,
     "time_ms": 935,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "snowman",
@@ -7531,7 +7659,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 610,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "revng",
@@ -7640,7 +7770,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 3,
     "time_ms": 18520,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "reko",
@@ -7746,7 +7878,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 866,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "fission",
@@ -7852,7 +7986,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 8,
     "time_ms": 26017,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "ghidra",
@@ -7964,7 +8100,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 2,
     "time_ms": 10166,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "boomerang",
@@ -8081,7 +8219,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 2,
     "time_ms": 202,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "radare2",
@@ -8192,7 +8332,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 2,
     "time_ms": 219,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "angr",
@@ -8309,7 +8451,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 1,
     "time_ms": 935,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "snowman",
@@ -8415,7 +8559,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 2,
     "time_ms": 610,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "revng",
@@ -8524,7 +8670,9 @@ const SCORES = [
     "nesting_depth": 4,
     "consensus_rank": 2,
     "time_ms": 18520,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "reko",
@@ -8630,7 +8778,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 2,
     "time_ms": 866,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "fission",
@@ -8736,7 +8886,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 2,
     "time_ms": 7807,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "ghidra",
@@ -8848,7 +9000,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 3,
     "time_ms": 29739,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "boomerang",
@@ -8954,7 +9108,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 4,
     "time_ms": 122,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "radare2",
@@ -9065,7 +9221,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 4,
     "time_ms": 555,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "angr",
@@ -9182,7 +9340,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 1,
     "time_ms": 1354,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "snowman",
@@ -9299,7 +9459,9 @@ const SCORES = [
     "nesting_depth": 2,
     "consensus_rank": 4,
     "time_ms": 663,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "revng",
@@ -9408,7 +9570,9 @@ const SCORES = [
     "nesting_depth": 3,
     "consensus_rank": 4,
     "time_ms": 31242,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   },
   {
     "decompiler": "reko",
@@ -9514,7 +9678,9 @@ const SCORES = [
     "nesting_depth": 1,
     "consensus_rank": 4,
     "time_ms": 2709,
-    "error": null
+    "error": null,
+    "has_parity_diff": false,
+    "parity_diff_path": ""
   }
 ];
 const DECOMPILER_COLORS = {"fission": "#6366f1", "ghidra": "#f59e0b", "boomerang": "#10b981", "radare2": "#ef4444", "angr": "#06b6d4", "snowman": "#8b5cf6", "revng": "#ec4899", "reko": "#f97316"};
@@ -10162,7 +10328,10 @@ function renderTable() {
       <td>${s.goto_count}</td>
       <td>${s.time_ms}ms</td>
       <td>${outputDiagnosticsHtml(s)}<br><span class="badge ${statusClass}" style="margin-top:4px;">${statusText}</span></td>
-      <td>${hasCode ? `<button type="button" class="code-btn" data-row-id="${s._rowId}">🔬 View</button>` : '<span style="color:#6b7280">—</span>'}</td>
+      <td>
+        ${hasCode ? `<button type="button" class="code-btn" data-row-id="${s._rowId}">🔬 View</button>` : '<span style="color:#6b7280">—</span>'}
+        ${s.has_parity_diff ? `<button type="button" class="parity-btn" data-row-id="${s._rowId}" style="margin-left: 6px;">🔍 Parity Diff</button>` : ''}
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -10177,6 +10346,13 @@ document.querySelector('#resultsTable tbody').addEventListener('click', event =>
   if (codeBtn) {
     const row = SCORES[Number(codeBtn.dataset.rowId)];
     if (row) showCode(event, row.decompiled_code || '', row.decompiler, row.function_name, row.compiler_variant);
+    return;
+  }
+
+  const parityBtn = event.target.closest('.parity-btn');
+  if (parityBtn) {
+    const row = SCORES[Number(parityBtn.dataset.rowId)];
+    if (row) showParityDiff(row);
     return;
   }
 
@@ -10283,11 +10459,142 @@ function closeModal() {
 window.addEventListener('click', (e) => {
   const modal = document.getElementById('errorModal');
   if (e.target === modal) closeModal();
+  const parityModal = document.getElementById('parityModal');
+  if (e.target === parityModal) closeParityModal();
 });
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeModal(); closeCodeModal(); }
+  if (e.key === 'Escape') { closeModal(); closeCodeModal(); closeParityModal(); }
 });
+
+// Initialize Mermaid.js
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  flowchart: { useMaxWidth: false, htmlLabels: true }
+});
+
+async function renderMermaidGraph(containerId, mermaidCode) {
+  const container = document.getElementById(containerId);
+  const uniqueId = "id_" + containerId + "_" + Math.floor(Math.random() * 1000000);
+  try {
+    const { svg } = await mermaid.render(uniqueId, mermaidCode);
+    container.innerHTML = svg;
+  } catch (err) {
+    console.error("Mermaid error: ", err);
+    container.innerHTML = `<pre style="color: #ef4444; font-family: monospace; font-size: 0.85rem; padding: 10px;">Mermaid Error:\n${escapeHtml(err.message || String(err))}\nCode:\n${escapeHtml(mermaidCode)}</pre>`;
+    const badSvg = document.getElementById(uniqueId);
+    if (badSvg) badSvg.remove();
+  }
+}
+
+function formatInstruction(inst) {
+  if (typeof inst === 'string') return inst;
+  if (!inst) return '';
+  const addr = inst.address || inst.addr || '';
+  const bytes = inst.bytes || '';
+  const mnemonic = inst.mnemonic || inst.op || '';
+  const operands = inst.operands || (inst.inputs ? inst.inputs.join(', ') : '');
+  let parts = [];
+  if (addr) parts.push(addr + ':');
+  if (mnemonic) parts.push(mnemonic);
+  if (operands) parts.push(operands);
+  if (bytes) parts.push('(' + bytes + ')');
+  return parts.join(' ');
+}
+
+function isSameInstruction(inst1, inst2) {
+  if (!inst1 || !inst2) return false;
+  const m1 = (inst1.mnemonic || inst1.op || '').toLowerCase().trim();
+  const m2 = (inst2.mnemonic || inst2.op || '').toLowerCase().trim();
+  const b1 = (inst1.bytes || '').toLowerCase().trim();
+  const b2 = (inst2.bytes || '').toLowerCase().trim();
+  const ad1 = (inst1.address || inst1.addr || '').toLowerCase().trim();
+  const ad2 = (inst2.address || inst2.addr || '').toLowerCase().trim();
+  return m1 === m2 && b1 === b2 && ad1 === ad2;
+}
+
+function renderDisasmDiff(refContainer, candContainer, refDisasm, candDisasm) {
+  const refLines = [];
+  const candLines = [];
+  const maxLength = Math.max(refDisasm.length, candDisasm.length);
+  for (let i = 0; i < maxLength; i++) {
+    const refInst = refDisasm[i];
+    const candInst = candDisasm[i];
+    const refText = refInst ? formatInstruction(refInst) : '';
+    const candText = candInst ? formatInstruction(candInst) : '';
+    let isMismatch = !refInst || !candInst || !isSameInstruction(refInst, candInst);
+    const mismatchStyle = isMismatch ? 'style="background: #450a0a; color: #fca5a5;"' : '';
+    refLines.push(`<div ${mismatchStyle} style="padding: 2px 5px; white-space: pre;">${escapeHtml(refText) || '&nbsp;'}</div>`);
+    candLines.push(`<div ${mismatchStyle} style="padding: 2px 5px; white-space: pre;">${escapeHtml(candText) || '&nbsp;'}</div>`);
+  }
+  refContainer.innerHTML = refLines.join('');
+  candContainer.innerHTML = candLines.join('');
+}
+
+function showParityDiff(row) {
+  if (!row.has_parity_diff || !row.parity_diff_path) return;
+  fetch(row.parity_diff_path)
+    .then(response => {
+      if (!response.ok) throw new Error("HTTP error " + response.status);
+      return response.json();
+    })
+    .then(data => {
+      document.getElementById('parityModalTitle').textContent = `Parity Diff: ${row.decompiler} vs Ghidra - ${row.function_name} (${row.compiler_variant})`;
+      document.getElementById('candCFGTitle').textContent = `Candidate (${row.decompiler})`;
+      document.getElementById('candASMTitle').textContent = `Candidate Disassembly (${row.decompiler})`;
+      document.getElementById('mismatchInfoText').textContent = `Mismatch Info: ${data.mismatch_info || 'None'}`;
+      
+      const modal = document.getElementById('parityModal');
+      modal.dataset.refCFG = JSON.stringify(data.reference_cfg || {});
+      modal.dataset.candCFG = JSON.stringify(data.candidate_cfg || {});
+      modal.dataset.refASM = JSON.stringify(data.reference_disasm || []);
+      modal.dataset.candASM = JSON.stringify(data.candidate_disasm || []);
+      modal.dataset.refMermaid = data.reference_mermaid || '';
+      modal.dataset.candMermaid = data.candidate_mermaid || '';
+      
+      modal.style.display = 'flex';
+      switchParityTab('cfg');
+    })
+    .catch(error => {
+      console.error("Error loading parity diff:", error);
+      alert("Failed to load parity diff: " + error.message);
+    });
+}
+
+function switchParityTab(tab) {
+  const modal = document.getElementById('parityModal');
+  const cfgTab = document.getElementById('parityTabCFG');
+  const asmTab = document.getElementById('parityTabASM');
+  const cfgBtn = document.getElementById('cfgTabBtn');
+  const asmBtn = document.getElementById('asmTabBtn');
+  
+  if (tab === 'cfg') {
+    cfgTab.style.display = 'flex';
+    asmTab.style.display = 'none';
+    cfgBtn.classList.add('active');
+    asmBtn.classList.remove('active');
+    renderMermaidGraph('refCFGContainer', modal.dataset.refMermaid || 'graph TD\n    empty["Empty CFG"]');
+    renderMermaidGraph('candCFGContainer', modal.dataset.candMermaid || 'graph TD\n    empty["Empty CFG"]');
+  } else {
+    cfgTab.style.display = 'none';
+    asmTab.style.display = 'flex';
+    cfgBtn.classList.remove('active');
+    asmBtn.classList.add('active');
+    const refDisasm = JSON.parse(modal.dataset.refASM || '[]');
+    const candDisasm = JSON.parse(modal.dataset.candASM || '[]');
+    renderDisasmDiff(
+      document.getElementById('refASMContainer'),
+      document.getElementById('candASMContainer'),
+      refDisasm,
+      candDisasm
+    );
+  }
+}
+
+function closeParityModal() {
+  document.getElementById('parityModal').style.display = 'none';
+}
 
 renderTable();
 </script>
@@ -10322,6 +10629,51 @@ renderTable();
     </div>
     <div style="padding: 1.5rem; overflow-y: auto; flex-grow: 1;">
       <pre style="background: #090d16; border: 1px solid var(--border); padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; color: #ef4444; white-space: pre-wrap;" id="modalErrorContent"></pre>
+    </div>
+  </div>
+</div>
+
+<!-- Parity Diff Modal -->
+<div id="parityModal" onclick="if(event.target===this)closeParityModal()" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1100; justify-content: center; align-items: center;">
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 95%; max-width: 1400px; height: 90%; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+    <div style="padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #1f2937;">
+      <h3 style="font-weight: 600;" id="parityModalTitle">Visual Parity Diff</h3>
+      <div style="display: flex; gap: 10px;">
+        <button id="cfgTabBtn" class="tab-btn active" onclick="switchParityTab('cfg')">📊 Control Flow Graph</button>
+        <button id="asmTabBtn" class="tab-btn" onclick="switchParityTab('asm')">💻 Assembly Comparison</button>
+        <button onclick="closeParityModal()" style="background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1; margin-left: 10px;">&times;</button>
+      </div>
+    </div>
+    <div style="padding: 1.5rem; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; background: #090d16;">
+      
+      <!-- CFG Tab -->
+      <div id="parityTabCFG" style="display: flex; flex-grow: 1; gap: 20px; height: 100%;">
+        <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; background: #0b0f17; overflow: hidden;">
+          <div style="padding: 8px 12px; background: #1e293b; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.85rem;">Reference (Ghidra)</div>
+          <div style="flex-grow: 1; overflow: auto; padding: 15px; display: flex; justify-content: center; align-items: flex-start;" id="refCFGContainer"></div>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; background: #0b0f17; overflow: hidden;">
+          <div style="padding: 8px 12px; background: #1e293b; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.85rem;" id="candCFGTitle">Candidate</div>
+          <div style="flex-grow: 1; overflow: auto; padding: 15px; display: flex; justify-content: center; align-items: flex-start;" id="candCFGContainer"></div>
+        </div>
+      </div>
+      
+      <!-- Assembly Tab -->
+      <div id="parityTabASM" style="display: none; flex-grow: 1; gap: 20px; height: 100%;">
+        <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; background: #0b0f17; overflow: hidden;">
+          <div style="padding: 8px 12px; background: #1e293b; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.85rem;">Reference Disassembly</div>
+          <div style="flex-grow: 1; overflow: auto; padding: 10px; font-family: monospace; font-size: 0.85rem; line-height: 1.5;" id="refASMContainer"></div>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; background: #0b0f17; overflow: hidden;">
+          <div style="padding: 8px 12px; background: #1e293b; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.85rem;" id="candASMTitle">Candidate Disassembly</div>
+          <div style="flex-grow: 1; overflow: auto; padding: 10px; font-family: monospace; font-size: 0.85rem; line-height: 1.5;" id="candASMContainer"></div>
+        </div>
+      </div>
+
+    </div>
+    <div style="padding: 0.75rem 1.25rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #111827; font-size: 0.8rem; color: var(--muted);">
+      <div id="mismatchInfoText">Mismatch Info: </div>
+      <button onclick="closeParityModal()" class="code-btn">Close</button>
     </div>
   </div>
 </div>

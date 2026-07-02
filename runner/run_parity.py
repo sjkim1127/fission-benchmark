@@ -127,53 +127,130 @@ def run_parity_benchmarks(
             except Exception as e:
                 results.append(BenchmarkResult(subject=subj, stage="function_discovery", status="error", reference="manifest", candidate=decompiler, error=str(e)))
 
-        # 2. Assembly Parity
+        # Fetch reference (ghidra) data once
+        ref_asm = []
         try:
             ref_asm = fetch_data("ghidra", "disasm", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-            for cand in decompilers:
-                if cand == "ghidra":
-                    continue
-                cand_asm = fetch_data(cand, "disasm", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-                res = compare_assembly(subj, "ghidra", cand, ref_asm, cand_asm)
-                results.append(res)
-        except Exception as e:
-            results.append(BenchmarkResult(subject=subj, stage="assembly_parity", status="error", reference="ghidra", candidate="all", error=str(e)))
+        except Exception:
+            pass
 
-        # 3. Decode Parity
+        ref_dec = []
         try:
             ref_dec = fetch_data("ghidra", "decode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-            for cand in decompilers:
-                if cand == "ghidra":
-                    continue
-                cand_dec = fetch_data(cand, "decode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-                res = compare_decode(subj, "ghidra", cand, ref_dec, cand_dec)
-                results.append(res)
-        except Exception as e:
-            results.append(BenchmarkResult(subject=subj, stage="decode_parity", status="error", reference="ghidra", candidate="all", error=str(e)))
+        except Exception:
+            pass
 
-        # 4. P-code Parity
+        ref_pcode = []
         try:
             ref_pcode = fetch_data("ghidra", "pcode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-            for cand in decompilers:
-                if cand == "ghidra":
-                    continue
-                cand_pcode = fetch_data(cand, "pcode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-                res = compare_pcode(subj, "ghidra", cand, ref_pcode, cand_pcode)
-                results.append(res)
-        except Exception as e:
-            results.append(BenchmarkResult(subject=subj, stage="pcode_parity", status="error", reference="ghidra", candidate="all", error=str(e)))
+        except Exception:
+            pass
 
-        # 5. CFG Parity
+        ref_cfg = {"blocks": [], "edges": []}
         try:
             ref_cfg = fetch_data("ghidra", "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-            for cand in decompilers:
-                if cand == "ghidra":
-                    continue
+        except Exception:
+            pass
+
+        # Check other stages and generate diff files if mismatches occur
+        for cand in decompilers:
+            if cand == "ghidra":
+                continue
+            
+            cand_asm = []
+            cand_dec = []
+            cand_pcode = []
+            cand_cfg = {"blocks": [], "edges": []}
+
+            asm_res = None
+            dec_res = None
+            pcode_res = None
+            cfg_res = None
+
+            # 2. Assembly Parity
+            try:
+                cand_asm = fetch_data(cand, "disasm", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
+                asm_res = compare_assembly(subj, "ghidra", cand, ref_asm, cand_asm)
+                results.append(asm_res)
+            except Exception as e:
+                asm_res = BenchmarkResult(subject=subj, stage="assembly_parity", status="error", reference="ghidra", candidate=cand, error=str(e))
+                results.append(asm_res)
+
+            # 3. Decode Parity
+            try:
+                cand_dec = fetch_data(cand, "decode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
+                dec_res = compare_decode(subj, "ghidra", cand, ref_dec, cand_dec)
+                results.append(dec_res)
+            except Exception as e:
+                dec_res = BenchmarkResult(subject=subj, stage="decode_parity", status="error", reference="ghidra", candidate=cand, error=str(e))
+                results.append(dec_res)
+
+            # 4. P-code Parity
+            try:
+                cand_pcode = fetch_data(cand, "pcode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
+                pcode_res = compare_pcode(subj, "ghidra", cand, ref_pcode, cand_pcode)
+                results.append(pcode_res)
+            except Exception as e:
+                pcode_res = BenchmarkResult(subject=subj, stage="pcode_parity", status="error", reference="ghidra", candidate=cand, error=str(e))
+                results.append(pcode_res)
+
+            # 5. CFG Parity
+            try:
                 cand_cfg = fetch_data(cand, "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-                res = compare_cfg(subj, "ghidra", cand, ref_cfg, cand_cfg)
-                results.append(res)
-        except Exception as e:
-            results.append(BenchmarkResult(subject=subj, stage="cfg_parity", status="error", reference="ghidra", candidate="all", error=str(e)))
+                cfg_res = compare_cfg(subj, "ghidra", cand, ref_cfg, cand_cfg)
+                results.append(cfg_res)
+            except Exception as e:
+                cfg_res = BenchmarkResult(subject=subj, stage="cfg_parity", status="error", reference="ghidra", candidate=cand, error=str(e))
+                results.append(cfg_res)
+
+            # Detect mismatch
+            has_mismatch = (
+                (asm_res and asm_res.status == "mismatch") or
+                (dec_res and dec_res.status == "mismatch") or
+                (pcode_res and pcode_res.status == "mismatch") or
+                (cfg_res and cfg_res.status == "mismatch")
+            )
+
+            if has_mismatch:
+                mismatch_info_list = []
+                if asm_res and asm_res.status == "mismatch":
+                    mismatch_info_list.append(f"assembly: {asm_res.mismatch_kind}")
+                if dec_res and dec_res.status == "mismatch":
+                    mismatch_info_list.append(f"decode: {dec_res.mismatch_kind}")
+                if pcode_res and pcode_res.status == "mismatch":
+                    mismatch_info_list.append(f"pcode: {pcode_res.mismatch_kind}")
+                if cfg_res and cfg_res.status == "mismatch":
+                    mismatch_info_list.append(f"cfg: {cfg_res.mismatch_kind}")
+                
+                mismatch_info = "; ".join(mismatch_info_list)
+
+                # Generate Mermaids
+                try:
+                    from runner.graph_utils import generate_mermaid
+                except ModuleNotFoundError:
+                    from graph_utils import generate_mermaid
+                ref_mermaid = generate_mermaid(ref_cfg, cand_cfg)
+                cand_mermaid = generate_mermaid(cand_cfg, ref_cfg)
+
+                payload = {
+                    "reference_cfg": ref_cfg,
+                    "candidate_cfg": cand_cfg,
+                    "reference_disasm": ref_asm,
+                    "candidate_disasm": cand_asm,
+                    "mismatch_info": mismatch_info,
+                    "reference_mermaid": ref_mermaid,
+                    "candidate_mermaid": cand_mermaid,
+                }
+
+                # Save static JSON files
+                binary_name = os.path.basename(subj.binary)
+                PARITY_DIFFS_DIR = Path(os.environ.get("PARITY_DIFFS_DIR", "results/parity_diffs"))
+                diff_dir = PARITY_DIFFS_DIR / binary_name / subj.function
+                diff_dir.mkdir(parents=True, exist_ok=True)
+                diff_file = diff_dir / f"{cand}.json"
+                with open(diff_file, "w") as f:
+                    json.dump(payload, f, indent=2)
+                print(f"  [PARITY DIFF] Mismatch detected. Saved static diff dump to: {diff_file}")
 
         # 6. IR Invariants (Only checked for Fission)
         try:

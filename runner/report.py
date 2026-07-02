@@ -218,33 +218,68 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
 
     fn_names = sorted(set(s.function_name for s in scores))
 
+    import os
+    # Load corpus manifests to map (function_name, compiler_variant) to binary_name
+    manifest_map = {}
+    manifests_dir = Path(f"corpus/{corpus_split}/manifests")
+    if manifests_dir.exists():
+        for manifest_path in manifests_dir.glob("*.json"):
+            try:
+                with open(manifest_path) as f:
+                    data = json.load(f)
+                    for entry in data.get("functions", []):
+                        fn_name = entry.get("name")
+                        for var in entry.get("compiler_variants", []):
+                            comp = var.get("compiler")
+                            opt = var.get("opt")
+                            bin_path = var.get("binary")
+                            if fn_name and comp and opt and bin_path:
+                                variant = f"{comp} {opt}"
+                                manifest_map[(fn_name, variant)] = os.path.basename(bin_path)
+            except Exception as e:
+                print(f"Error loading manifest {manifest_path} for map: {e}")
+
     # We will serialize scores and color dict to JSON to inject directly into script
-    scores_json = json.dumps([{
-        "decompiler": s.decompiler,
-        "function_name": s.function_name,
-        "compiler_variant": s.compiler_variant,
-        "source_similarity": s.source_similarity,
-        "semantic_score": s.semantic_score,
-        "semantic_error": s.semantic_error,
-        "fail_category": getattr(s, "fail_category", "") or "",
-        "cases_passed": getattr(s, "cases_passed", 0),
-        "cases_total": getattr(s, "cases_total", 0),
-        "correctness_score": getattr(s, "correctness_score", getattr(s, "composite_score", 0.0)),
-        "correctness_rank": getattr(s, "correctness_rank", getattr(s, "consensus_rank", None)),
-        "readability_proxy_score": getattr(s, "readability_proxy_score", None),
-        "composite_score": getattr(s, "composite_score", 0.0),
-        "structural_penalty": getattr(s, "structural_penalty", 0.0),
-        "uses_intrinsics": getattr(s, "uses_intrinsics", False),
-        "decompiled_code": getattr(s, "decompiled_code", "") or "",
-        "readability_metrics": getattr(s, "readability_metrics", {}) or {},
-        "ast_similarity": getattr(s, "ast_similarity", {}) or {},
-        "output_diagnostics": getattr(s, "output_diagnostics", {}) or {},
-        "goto_count": s.goto_count,
-        "nesting_depth": s.nesting_depth,
-        "consensus_rank": s.consensus_rank,
-        "time_ms": s.time_ms,
-        "error": s.error,
-    } for s in scores], indent=2)
+    serialized_scores = []
+    for s in scores:
+        has_parity_diff = False
+        parity_diff_path = ""
+        binary_name = manifest_map.get((s.function_name, s.compiler_variant))
+        if binary_name:
+            diff_file = RESULTS_DIR / "parity_diffs" / binary_name / s.function_name / f"{s.decompiler}.json"
+            if diff_file.exists():
+                has_parity_diff = True
+                parity_diff_path = f"../results/parity_diffs/{binary_name}/{s.function_name}/{s.decompiler}.json"
+        
+        serialized_scores.append({
+            "decompiler": s.decompiler,
+            "function_name": s.function_name,
+            "compiler_variant": s.compiler_variant,
+            "source_similarity": s.source_similarity,
+            "semantic_score": s.semantic_score,
+            "semantic_error": s.semantic_error,
+            "fail_category": getattr(s, "fail_category", "") or "",
+            "cases_passed": getattr(s, "cases_passed", 0),
+            "cases_total": getattr(s, "cases_total", 0),
+            "correctness_score": getattr(s, "correctness_score", getattr(s, "composite_score", 0.0)),
+            "correctness_rank": getattr(s, "correctness_rank", getattr(s, "consensus_rank", None)),
+            "readability_proxy_score": getattr(s, "readability_proxy_score", None),
+            "composite_score": getattr(s, "composite_score", 0.0),
+            "structural_penalty": getattr(s, "structural_penalty", 0.0),
+            "uses_intrinsics": getattr(s, "uses_intrinsics", False),
+            "decompiled_code": getattr(s, "decompiled_code", "") or "",
+            "readability_metrics": getattr(s, "readability_metrics", {}) or {},
+            "ast_similarity": getattr(s, "ast_similarity", {}) or {},
+            "output_diagnostics": getattr(s, "output_diagnostics", {}) or {},
+            "goto_count": s.goto_count,
+            "nesting_depth": s.nesting_depth,
+            "consensus_rank": s.consensus_rank,
+            "time_ms": s.time_ms,
+            "error": s.error,
+            "has_parity_diff": has_parity_diff,
+            "parity_diff_path": parity_diff_path,
+        })
+    scores_json = json.dumps(serialized_scores, indent=2)
 
     html_template = r"""<!DOCTYPE html>
 <html lang="en">
@@ -254,6 +289,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
 <title>Fission Benchmark Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 <style>
   :root {
     --bg: #090d16;
@@ -810,6 +846,11 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
     opacity: 0.5;
     cursor: not-allowed;
   }
+  .parity-btn { background: #1e1b4b; border: 1px solid #312e81; color: #c7d2fe; padding: 3px 10px; border-radius: 5px; cursor: pointer; font-size: 0.78rem; transition: all 0.15s; }
+  .parity-btn:hover { background: #312e81; color: #eff6ff; border-color: #6366f1; }
+  .tab-btn { background: #1f2937; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.15s; }
+  .tab-btn:hover { background: #374151; color: var(--text); }
+  .tab-btn.active { background: var(--accent-indigo); border-color: var(--accent-indigo); color: white; }
 </style>
 </head>
 <body>
@@ -1601,7 +1642,10 @@ function renderTable() {
       <td>${s.goto_count}</td>
       <td>${s.time_ms}ms</td>
       <td>${outputDiagnosticsHtml(s)}<br><span class="badge ${statusClass}" style="margin-top:4px;">${statusText}</span></td>
-      <td>${hasCode ? `<button type="button" class="code-btn" data-row-id="${s._rowId}">🔬 View</button>` : '<span style="color:#6b7280">—</span>'}</td>
+      <td>
+        ${hasCode ? `<button type="button" class="code-btn" data-row-id="${s._rowId}">🔬 View</button>` : '<span style="color:#6b7280">—</span>'}
+        ${s.has_parity_diff ? `<button type="button" class="parity-btn" data-row-id="${s._rowId}" style="margin-left: 6px;">🔍 Parity Diff</button>` : ''}
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -1616,6 +1660,13 @@ document.querySelector('#resultsTable tbody').addEventListener('click', event =>
   if (codeBtn) {
     const row = SCORES[Number(codeBtn.dataset.rowId)];
     if (row) showCode(event, row.decompiled_code || '', row.decompiler, row.function_name, row.compiler_variant);
+    return;
+  }
+
+  const parityBtn = event.target.closest('.parity-btn');
+  if (parityBtn) {
+    const row = SCORES[Number(parityBtn.dataset.rowId)];
+    if (row) showParityDiff(row);
     return;
   }
 
@@ -1722,11 +1773,142 @@ function closeModal() {
 window.addEventListener('click', (e) => {
   const modal = document.getElementById('errorModal');
   if (e.target === modal) closeModal();
+  const parityModal = document.getElementById('parityModal');
+  if (e.target === parityModal) closeParityModal();
 });
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeModal(); closeCodeModal(); }
+  if (e.key === 'Escape') { closeModal(); closeCodeModal(); closeParityModal(); }
 });
+
+// Initialize Mermaid.js
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  flowchart: { useMaxWidth: false, htmlLabels: true }
+});
+
+async function renderMermaidGraph(containerId, mermaidCode) {
+  const container = document.getElementById(containerId);
+  const uniqueId = "id_" + containerId + "_" + Math.floor(Math.random() * 1000000);
+  try {
+    const { svg } = await mermaid.render(uniqueId, mermaidCode);
+    container.innerHTML = svg;
+  } catch (err) {
+    console.error("Mermaid error: ", err);
+    container.innerHTML = `<pre style="color: #ef4444; font-family: monospace; font-size: 0.85rem; padding: 10px;">Mermaid Error:\n${escapeHtml(err.message || String(err))}\nCode:\n${escapeHtml(mermaidCode)}</pre>`;
+    const badSvg = document.getElementById(uniqueId);
+    if (badSvg) badSvg.remove();
+  }
+}
+
+function formatInstruction(inst) {
+  if (typeof inst === 'string') return inst;
+  if (!inst) return '';
+  const addr = inst.address || inst.addr || '';
+  const bytes = inst.bytes || '';
+  const mnemonic = inst.mnemonic || inst.op || '';
+  const operands = inst.operands || (inst.inputs ? inst.inputs.join(', ') : '');
+  let parts = [];
+  if (addr) parts.push(addr + ':');
+  if (mnemonic) parts.push(mnemonic);
+  if (operands) parts.push(operands);
+  if (bytes) parts.push('(' + bytes + ')');
+  return parts.join(' ');
+}
+
+function isSameInstruction(inst1, inst2) {
+  if (!inst1 || !inst2) return false;
+  const m1 = (inst1.mnemonic || inst1.op || '').toLowerCase().trim();
+  const m2 = (inst2.mnemonic || inst2.op || '').toLowerCase().trim();
+  const b1 = (inst1.bytes || '').toLowerCase().trim();
+  const b2 = (inst2.bytes || '').toLowerCase().trim();
+  const ad1 = (inst1.address || inst1.addr || '').toLowerCase().trim();
+  const ad2 = (inst2.address || inst2.addr || '').toLowerCase().trim();
+  return m1 === m2 && b1 === b2 && ad1 === ad2;
+}
+
+function renderDisasmDiff(refContainer, candContainer, refDisasm, candDisasm) {
+  const refLines = [];
+  const candLines = [];
+  const maxLength = Math.max(refDisasm.length, candDisasm.length);
+  for (let i = 0; i < maxLength; i++) {
+    const refInst = refDisasm[i];
+    const candInst = candDisasm[i];
+    const refText = refInst ? formatInstruction(refInst) : '';
+    const candText = candInst ? formatInstruction(candInst) : '';
+    let isMismatch = !refInst || !candInst || !isSameInstruction(refInst, candInst);
+    const mismatchStyle = isMismatch ? 'style="background: #450a0a; color: #fca5a5;"' : '';
+    refLines.push(`<div ${mismatchStyle} style="padding: 2px 5px; white-space: pre;">${escapeHtml(refText) || '&nbsp;'}</div>`);
+    candLines.push(`<div ${mismatchStyle} style="padding: 2px 5px; white-space: pre;">${escapeHtml(candText) || '&nbsp;'}</div>`);
+  }
+  refContainer.innerHTML = refLines.join('');
+  candContainer.innerHTML = candLines.join('');
+}
+
+function showParityDiff(row) {
+  if (!row.has_parity_diff || !row.parity_diff_path) return;
+  fetch(row.parity_diff_path)
+    .then(response => {
+      if (!response.ok) throw new Error("HTTP error " + response.status);
+      return response.json();
+    })
+    .then(data => {
+      document.getElementById('parityModalTitle').textContent = `Parity Diff: ${row.decompiler} vs Ghidra - ${row.function_name} (${row.compiler_variant})`;
+      document.getElementById('candCFGTitle').textContent = `Candidate (${row.decompiler})`;
+      document.getElementById('candASMTitle').textContent = `Candidate Disassembly (${row.decompiler})`;
+      document.getElementById('mismatchInfoText').textContent = `Mismatch Info: ${data.mismatch_info || 'None'}`;
+      
+      const modal = document.getElementById('parityModal');
+      modal.dataset.refCFG = JSON.stringify(data.reference_cfg || {});
+      modal.dataset.candCFG = JSON.stringify(data.candidate_cfg || {});
+      modal.dataset.refASM = JSON.stringify(data.reference_disasm || []);
+      modal.dataset.candASM = JSON.stringify(data.candidate_disasm || []);
+      modal.dataset.refMermaid = data.reference_mermaid || '';
+      modal.dataset.candMermaid = data.candidate_mermaid || '';
+      
+      modal.style.display = 'flex';
+      switchParityTab('cfg');
+    })
+    .catch(error => {
+      console.error("Error loading parity diff:", error);
+      alert("Failed to load parity diff: " + error.message);
+    });
+}
+
+function switchParityTab(tab) {
+  const modal = document.getElementById('parityModal');
+  const cfgTab = document.getElementById('parityTabCFG');
+  const asmTab = document.getElementById('parityTabASM');
+  const cfgBtn = document.getElementById('cfgTabBtn');
+  const asmBtn = document.getElementById('asmTabBtn');
+  
+  if (tab === 'cfg') {
+    cfgTab.style.display = 'flex';
+    asmTab.style.display = 'none';
+    cfgBtn.classList.add('active');
+    asmBtn.classList.remove('active');
+    renderMermaidGraph('refCFGContainer', modal.dataset.refMermaid || 'graph TD\n    empty["Empty CFG"]');
+    renderMermaidGraph('candCFGContainer', modal.dataset.candMermaid || 'graph TD\n    empty["Empty CFG"]');
+  } else {
+    cfgTab.style.display = 'none';
+    asmTab.style.display = 'flex';
+    cfgBtn.classList.remove('active');
+    asmBtn.classList.add('active');
+    const refDisasm = JSON.parse(modal.dataset.refASM || '[]');
+    const candDisasm = JSON.parse(modal.dataset.candASM || '[]');
+    renderDisasmDiff(
+      document.getElementById('refASMContainer'),
+      document.getElementById('candASMContainer'),
+      refDisasm,
+      candDisasm
+    );
+  }
+}
+
+function closeParityModal() {
+  document.getElementById('parityModal').style.display = 'none';
+}
 
 renderTable();
 </script>
@@ -1761,6 +1943,51 @@ renderTable();
     </div>
     <div style="padding: 1.5rem; overflow-y: auto; flex-grow: 1;">
       <pre style="background: #090d16; border: 1px solid var(--border); padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; color: #ef4444; white-space: pre-wrap;" id="modalErrorContent"></pre>
+    </div>
+  </div>
+</div>
+
+<!-- Parity Diff Modal -->
+<div id="parityModal" onclick="if(event.target===this)closeParityModal()" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1100; justify-content: center; align-items: center;">
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 95%; max-width: 1400px; height: 90%; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+    <div style="padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #1f2937;">
+      <h3 style="font-weight: 600;" id="parityModalTitle">Visual Parity Diff</h3>
+      <div style="display: flex; gap: 10px;">
+        <button id="cfgTabBtn" class="tab-btn active" onclick="switchParityTab('cfg')">📊 Control Flow Graph</button>
+        <button id="asmTabBtn" class="tab-btn" onclick="switchParityTab('asm')">💻 Assembly Comparison</button>
+        <button onclick="closeParityModal()" style="background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1; margin-left: 10px;">&times;</button>
+      </div>
+    </div>
+    <div style="padding: 1.5rem; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; background: #090d16;">
+      
+      <!-- CFG Tab -->
+      <div id="parityTabCFG" style="display: flex; flex-grow: 1; gap: 20px; height: 100%;">
+        <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; background: #0b0f17; overflow: hidden;">
+          <div style="padding: 8px 12px; background: #1e293b; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.85rem;">Reference (Ghidra)</div>
+          <div style="flex-grow: 1; overflow: auto; padding: 15px; display: flex; justify-content: center; align-items: flex-start;" id="refCFGContainer"></div>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; background: #0b0f17; overflow: hidden;">
+          <div style="padding: 8px 12px; background: #1e293b; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.85rem;" id="candCFGTitle">Candidate</div>
+          <div style="flex-grow: 1; overflow: auto; padding: 15px; display: flex; justify-content: center; align-items: flex-start;" id="candCFGContainer"></div>
+        </div>
+      </div>
+      
+      <!-- Assembly Tab -->
+      <div id="parityTabASM" style="display: none; flex-grow: 1; gap: 20px; height: 100%;">
+        <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; background: #0b0f17; overflow: hidden;">
+          <div style="padding: 8px 12px; background: #1e293b; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.85rem;">Reference Disassembly</div>
+          <div style="flex-grow: 1; overflow: auto; padding: 10px; font-family: monospace; font-size: 0.85rem; line-height: 1.5;" id="refASMContainer"></div>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; background: #0b0f17; overflow: hidden;">
+          <div style="padding: 8px 12px; background: #1e293b; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.85rem;" id="candASMTitle">Candidate Disassembly</div>
+          <div style="flex-grow: 1; overflow: auto; padding: 10px; font-family: monospace; font-size: 0.85rem; line-height: 1.5;" id="candASMContainer"></div>
+        </div>
+      </div>
+
+    </div>
+    <div style="padding: 0.75rem 1.25rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #111827; font-size: 0.8rem; color: var(--muted);">
+      <div id="mismatchInfoText">Mismatch Info: </div>
+      <button onclick="closeParityModal()" class="code-btn">Close</button>
     </div>
   </div>
 </div>

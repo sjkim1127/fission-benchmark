@@ -1,28 +1,25 @@
 {
-  "total_rows": 48,
+  "total_rows": 36,
   "by_stage": {
-    "assembly_parity": 9,
-    "cfg_parity": 9,
-    "decode_parity": 9,
-    "function_discovery": 9,
-    "ir_invariants": 3,
-    "pcode_parity": 9
+    "assembly_parity": 7,
+    "cfg_parity": 7,
+    "decode_parity": 7,
+    "function_discovery": 7,
+    "ir_invariants": 1,
+    "pcode_parity": 7
   },
   "by_status": {
-    "match": 31,
-    "mismatch": 17
+    "match": 20,
+    "mismatch": 16
   },
   "by_mismatch_kind": {
-    "block_count": 3,
-    "empty_cfg_blocks": 3,
-    "function_metadata": 1,
+    "block_count": 2,
+    "empty_cfg_blocks": 1,
     "function_set": 5,
-    "instruction_count": 5,
-    "none": 31
+    "instruction_count": 8,
+    "none": 20
   },
   "by_variant": {
-    "gcc -O0": 16,
-    "gcc -O2": 16,
-    "gcc-m32 -O0": 16
+    "gcc -O0": 36
   }
 }
