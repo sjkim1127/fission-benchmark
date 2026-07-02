@@ -210,7 +210,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
 
 
     fn_names = sorted(set(s.function_name for s in scores))
-    
+
     # We will serialize scores and color dict to JSON to inject directly into script
     scores_json = json.dumps([{
         "decompiler": s.decompiler,
@@ -727,6 +727,10 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
   
   .badge.success { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
   .badge.error { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+  .badge.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.22); }
+  .badge.neutral { background: rgba(148, 163, 184, 0.1); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2); }
+  .badge-button { appearance: none; font-family: inherit; cursor: pointer; }
+  .badge-button:hover { filter: brightness(1.12); }
   
   .rank-badge {
     font-size: 0.75rem;
@@ -834,7 +838,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
 <div class="section-title">
   <div>
     <h2>Decompiler Scoreboard</h2>
-    <p>Cards show decompilation success, correctness, similarity, readability coverage, and runtime.</p>
+    <p>Cards separate output coverage, semantic correctness, source similarity, readability evidence, and runtime.</p>
   </div>
 </div>
 <div class="kpi-grid" id="kpiContainer"></div>
@@ -843,7 +847,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
 <div class="charts-grid">
   <div class="card">
     <div class="card-header">
-      <h2>Correctness, Composite, Similarity</h2>
+      <h2>Correctness, Evidence, Similarity</h2>
     </div>
     <div class="chart-container">
       <canvas id="barChart"></canvas>
@@ -861,7 +865,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
   
   <div class="card">
     <div class="card-header">
-      <h2>Per-Function Composite</h2>
+      <h2>Per-Function Evidence Score</h2>
       <div class="card-actions">
         <select id="functionChartSelector"></select>
       </div>
@@ -916,7 +920,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
           <th data-key="function_name">Function</th>
           <th data-key="compiler_variant">Variant</th>
           <th data-key="decompiler">Decompiler</th>
-          <th data-key="composite_score">Composite ⭐</th>
+          <th data-key="composite_score">Evidence</th>
           <th data-key="semantic_score">Semantic</th>
           <th>Readability Proxies</th>
           <th data-key="consensus_rank">Rank</th>
@@ -945,7 +949,8 @@ const DECOMPILER_COLORS = __DECOMPILER_COLORS__;
 
 // Helper to group scores
 const scoresByGroup = {};
-SCORES.forEach(s => {
+SCORES.forEach((s, index) => {
+  s._rowId = index;
   const key = s.function_name + '|' + s.compiler_variant;
   if (!scoresByGroup[key]) scoresByGroup[key] = [];
   scoresByGroup[key].push(s);
@@ -984,12 +989,34 @@ variants.forEach(v => {
 });
 
 function pct(value) {
-  return `${(Number(value || 0) * 100).toFixed(1)}%`;
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return 'N/A';
+  return `${(Number(value) * 100).toFixed(1)}%`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function mean(rows, selector) {
-  if (!rows.length) return 0;
+  if (!rows.length) return null;
   return rows.reduce((sum, row) => sum + Number(selector(row) || 0), 0) / rows.length;
+}
+
+function hasOutput(row) {
+  return Boolean(row.decompiled_code && row.decompiled_code.trim());
+}
+
+function hasSemanticCases(row) {
+  return Number(row.cases_total || 0) > 0;
+}
+
+function semanticPasses(row) {
+  return hasSemanticCases(row) && Number(row.cases_passed || 0) === Number(row.cases_total || 0);
 }
 
 function readabilityValue(row, metric) {
@@ -1017,8 +1044,10 @@ function averageReadability(rows, metric) {
 // Calculate global and per-decompiler statistics.
 const totalRows = SCORES.length;
 const totalGroups = Object.keys(scoresByGroup).length;
-const totalValid = SCORES.filter(s => s.error === null).length;
-const totalSemanticPassed = SCORES.filter(s => (s.semantic_score || 0) >= 1).length;
+const totalOutputRows = SCORES.filter(hasOutput).length;
+const totalAdapterErrors = SCORES.filter(s => s.error).length;
+const totalSemanticRows = SCORES.filter(hasSemanticCases).length;
+const totalSemanticPassed = SCORES.filter(semanticPasses).length;
 const totalWithReadability = SCORES.filter(s => s.readability_metrics && Object.keys(s.readability_metrics).length > 0).length;
 
 const overviewContainer = document.getElementById('overviewContainer');
@@ -1029,19 +1058,21 @@ const overviewContainer = document.getElementById('overviewContainer');
     sub: `${fnNames.length} functions × ${variants.length} variants × ${decompilers.length} decompilers`
   },
   {
-    label: 'Decompiler Success',
-    value: totalRows ? `${((totalValid / totalRows) * 100).toFixed(1)}%` : '0.0%',
-    sub: `${totalValid.toLocaleString()} rows returned code, ${(totalRows - totalValid).toLocaleString()} rows errored`
+    label: 'Decompiler Output',
+    value: totalRows ? `${((totalOutputRows / totalRows) * 100).toFixed(1)}%` : 'N/A',
+    sub: `${totalOutputRows.toLocaleString()} rows returned code, ${totalAdapterErrors.toLocaleString()} adapter errors`
   },
   {
     label: 'Semantic Correctness',
-    value: totalRows ? `${((totalSemanticPassed / totalRows) * 100).toFixed(1)}%` : '0.0%',
-    sub: `${totalSemanticPassed.toLocaleString()} rows passed all available execution tests`
+    value: totalSemanticRows ? `${((totalSemanticPassed / totalSemanticRows) * 100).toFixed(1)}%` : 'N/A',
+    sub: totalSemanticRows
+      ? `${totalSemanticPassed.toLocaleString()} / ${totalSemanticRows.toLocaleString()} tested rows passed execution checks`
+      : 'No rows had executable semantic test cases'
   },
   {
     label: 'Readability Coverage',
-    value: totalRows ? `${((totalWithReadability / totalRows) * 100).toFixed(1)}%` : '0.0%',
-    sub: `${totalWithReadability.toLocaleString()} rows include AST/proxy readability evidence`
+    value: totalOutputRows ? `${((totalWithReadability / totalOutputRows) * 100).toFixed(1)}%` : 'N/A',
+    sub: `${totalWithReadability.toLocaleString()} output rows include AST/proxy readability evidence`
   }
 ].forEach(item => {
   const card = document.createElement('div');
@@ -1057,16 +1088,20 @@ const overviewContainer = document.getElementById('overviewContainer');
 const stats = {};
 decompilers.forEach(d => {
   const decScores = SCORES.filter(s => s.decompiler === d);
-  const validScores = decScores.filter(s => s.error === null);
-  const avgSim = mean(validScores, s => s.source_similarity);
-  const avgSem = mean(validScores, s => s.semantic_score);
-  const avgComposite = mean(validScores, s => s.composite_score);
-  const successCount = validScores.length;
-  const successRate = decScores.length ? (successCount / decScores.length) * 100 : 0;
+  const outputScores = decScores.filter(hasOutput);
+  const semanticRows = decScores.filter(hasSemanticCases);
+  const semanticPassed = decScores.filter(semanticPasses).length;
+  const avgSim = mean(outputScores, s => s.source_similarity);
+  const avgSem = mean(semanticRows, s => s.semantic_score);
+  const avgComposite = mean(outputScores, s => s.composite_score);
+  const outputCount = outputScores.length;
+  const outputRate = decScores.length ? (outputCount / decScores.length) * 100 : null;
+  const semanticRate = semanticRows.length ? semanticPassed / semanticRows.length : null;
+  const adapterErrors = decScores.filter(s => s.error).length;
   const totalGotos = decScores.reduce((sum, s) => sum + (s.goto_count || 0), 0);
-  const avgTime = mean(decScores, s => s.time_ms);
+  const avgTime = mean(decScores.filter(s => Number(s.time_ms || 0) > 0), s => s.time_ms);
   const readabilityRows = decScores.filter(s => s.readability_metrics && Object.keys(s.readability_metrics).length > 0);
-  const readabilityCoverage = decScores.length ? (readabilityRows.length / decScores.length) * 100 : 0;
+  const readabilityCoverage = outputScores.length ? (readabilityRows.length / outputScores.length) * 100 : null;
   const avgGnr = averageReadability(readabilityRows, 'gnr');
   const avgType = averageReadability(readabilityRows, 'type');
   const avgExpr = averageReadability(readabilityRows, 'expr');
@@ -1074,8 +1109,9 @@ decompilers.forEach(d => {
   const avgArtifacts = averageReadability(readabilityRows, 'artifacts');
 
   stats[d] = {
-    avgSim, avgSem, avgComposite, successRate, totalGotos, avgTime,
-    readabilityCoverage, avgGnr, avgType, avgExpr, avgCf, avgArtifacts
+    avgSim, avgSem, avgComposite, outputRate, outputCount, adapterErrors,
+    semanticRate, semanticPassed, semanticTotal: semanticRows.length,
+    totalGotos, avgTime, readabilityCoverage, avgGnr, avgType, avgExpr, avgCf, avgArtifacts
   };
 });
 
@@ -1084,6 +1120,12 @@ const kpiContainer = document.getElementById('kpiContainer');
 decompilers.forEach(d => {
   const s = stats[d];
   const color = DECOMPILER_COLORS[d] || '#888';
+  const hasAnyOutput = s.outputCount > 0;
+  const scoreLabel = hasAnyOutput ? `${pct(s.avgComposite)} <span style="font-size: 0.85rem; color: var(--muted); font-weight: normal;">evidence</span>` : '<span style="font-size:1.35rem;color:var(--muted);">No output</span>';
+  const semanticText = s.semanticTotal ? `${pct(s.semanticRate)} (${s.semanticPassed}/${s.semanticTotal})` : 'N/A';
+  const readabilityText = s.readabilityCoverage === null ? 'N/A' : `${s.readabilityCoverage.toFixed(0)}%`;
+  const artifactsText = s.readabilityCoverage === null ? 'N/A' : s.avgArtifacts.toFixed(1);
+  const avgTimeText = s.avgTime === null ? 'N/A' : `${s.avgTime.toFixed(0)}ms`;
   
   const card = document.createElement('div');
   card.className = 'kpi-card';
@@ -1092,17 +1134,18 @@ decompilers.forEach(d => {
       <span class="kpi-title">${d}</span>
       <span class="kpi-color-dot" style="background-color: ${color}"></span>
     </div>
-    <div class="kpi-value">${pct(s.avgComposite)} <span style="font-size: 0.85rem; color: var(--muted); font-weight: normal;">composite</span></div>
+    <div class="kpi-value">${scoreLabel}</div>
     <div class="kpi-bar-bg">
-      <div class="kpi-bar-fill" style="width: ${Math.min(100, s.avgComposite * 100)}%; background-color: ${color}"></div>
+      <div class="kpi-bar-fill" style="width: ${hasAnyOutput ? Math.min(100, s.avgComposite * 100) : 0}%; background-color: ${color}"></div>
     </div>
     <div class="kpi-stats">
-      <div class="kpi-stat-item">Semantic: <strong>${pct(s.avgSem)}</strong></div>
+      <div class="kpi-stat-item">Semantic: <strong>${semanticText}</strong></div>
       <div class="kpi-stat-item">Similarity: <strong>${pct(s.avgSim)}</strong></div>
-      <div class="kpi-stat-item">Success: <strong>${s.successRate.toFixed(0)}%</strong></div>
-      <div class="kpi-stat-item">Readability: <strong>${s.readabilityCoverage.toFixed(0)}%</strong></div>
-      <div class="kpi-stat-item">Artifacts: <strong>${s.avgArtifacts.toFixed(1)}</strong></div>
-      <div class="kpi-stat-item">Avg Time: <strong>${s.avgTime.toFixed(0)}ms</strong></div>
+      <div class="kpi-stat-item">Output: <strong>${s.outputRate === null ? 'N/A' : `${s.outputRate.toFixed(0)}% (${s.outputCount}/${SCORES.filter(x => x.decompiler === d).length})`}</strong></div>
+      <div class="kpi-stat-item">Readability: <strong>${readabilityText}</strong></div>
+      <div class="kpi-stat-item">Artifacts: <strong>${artifactsText}</strong></div>
+      <div class="kpi-stat-item">Avg Time: <strong>${avgTimeText}</strong></div>
+      ${s.adapterErrors ? `<div class="kpi-stat-item">Adapter Errors: <strong>${s.adapterErrors}</strong></div>` : ''}
     </div>
   `;
   kpiContainer.appendChild(card);
@@ -1110,7 +1153,8 @@ decompilers.forEach(d => {
 
 // Setup global metric chart.
 const globalBarCtx = document.getElementById('barChart').getContext('2d');
-const sortedDecompilers = [...decompilers].sort((a, b) => stats[b].avgComposite - stats[a].avgComposite);
+const scoreForSort = d => stats[d].avgComposite ?? -1;
+const sortedDecompilers = [...decompilers].sort((a, b) => scoreForSort(b) - scoreForSort(a));
 new Chart(globalBarCtx, {
   type: 'bar',
   data: {
@@ -1118,12 +1162,12 @@ new Chart(globalBarCtx, {
     datasets: [
       {
         label: 'Semantic',
-        data: sortedDecompilers.map(d => stats[d].avgSem),
+        data: sortedDecompilers.map(d => stats[d].semanticRate),
         backgroundColor: 'rgba(16, 185, 129, 0.72)',
         borderRadius: 5
       },
       {
-        label: 'Composite',
+        label: 'Evidence Score',
         data: sortedDecompilers.map(d => stats[d].avgComposite),
         backgroundColor: 'rgba(96, 165, 250, 0.74)',
         borderRadius: 5
@@ -1156,25 +1200,25 @@ new Chart(readabilityCtx, {
     datasets: [
       {
         label: 'Generic Naming Ratio',
-        data: sortedDecompilers.map(d => stats[d].avgGnr),
+        data: sortedDecompilers.map(d => stats[d].readabilityCoverage === null ? null : stats[d].avgGnr),
         backgroundColor: 'rgba(239, 68, 68, 0.66)',
         borderRadius: 5
       },
       {
         label: 'Type Specificity',
-        data: sortedDecompilers.map(d => stats[d].avgType),
+        data: sortedDecompilers.map(d => stats[d].readabilityCoverage === null ? null : stats[d].avgType),
         backgroundColor: 'rgba(34, 211, 238, 0.70)',
         borderRadius: 5
       },
       {
         label: 'Expression Simplicity',
-        data: sortedDecompilers.map(d => 1 - Math.min(1, stats[d].avgExpr)),
+        data: sortedDecompilers.map(d => stats[d].readabilityCoverage === null ? null : 1 - Math.min(1, stats[d].avgExpr)),
         backgroundColor: 'rgba(168, 85, 247, 0.66)',
         borderRadius: 5
       },
       {
         label: 'Structured CF',
-        data: sortedDecompilers.map(d => stats[d].avgCf),
+        data: sortedDecompilers.map(d => stats[d].readabilityCoverage === null ? null : stats[d].avgCf),
         backgroundColor: 'rgba(16, 185, 129, 0.66)',
         borderRadius: 5
       }
@@ -1220,7 +1264,7 @@ function updatePerFuncChart(funcName) {
       label: d,
       data: variants.map(v => {
         const match = dScores.find(s => s.compiler_variant === v);
-        return match && !match.error ? match.composite_score : 0;
+        return match && hasOutput(match) ? match.composite_score : null;
       }),
       backgroundColor: DECOMPILER_COLORS[d] || '#888',
       borderRadius: 4
@@ -1313,25 +1357,33 @@ function copyToClipboard(text, btnId) {
 // ── Code Viewer Modal ─────────────────────────────────────────────────────────
 
 function syntaxHighlight(code) {
-  // Simple C syntax highlighting
-  const keywords = /\b(int|void|char|float|double|long|short|unsigned|signed|return|if|else|while|for|do|switch|case|break|continue|goto|struct|typedef|static|const|extern|sizeof|NULL|true|false|uint8_t|uint16_t|uint32_t|uint64_t|int8_t|int16_t|int32_t|int64_t)\b/g;
-  const types = /\b(dword|qword|byte|word|undefined[0-9]?|ulong|ulonglong|longlong|uchar|ushort|uint)\b/g;
-  const comments = /(\/\/[^\n]*)|(\/\*[\s\S]*?\*\/)/g;
-  const numbers = /\b(0x[0-9a-fA-F]+|\d+)\b/g;
-  const strings = /"([^"\\]|\\.)*"/g;
-  
-  let escaped = code
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-  
-  escaped = escaped
-    .replace(comments, m => `<span class="code-comment">${m}</span>`)
-    .replace(strings, m => `<span class="code-string">${m}</span>`)
-    .replace(types, m => `<span class="code-type">${m}</span>`)
-    .replace(keywords, m => `<span class="code-keyword">${m}</span>`)
-    .replace(numbers, m => `<span class="code-number">${m}</span>`);
-  return escaped;
+  const token = /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"([^"\\]|\\.)*"|\b(?:int|void|char|float|double|long|short|unsigned|signed|return|if|else|while|for|do|switch|case|break|continue|goto|struct|typedef|static|const|extern|sizeof|NULL|true|false|uint8_t|uint16_t|uint32_t|uint64_t|int8_t|int16_t|int32_t|int64_t)\b|\b(?:dword|qword|byte|word|undefined[0-9]?|ulong|ulonglong|longlong|uchar|ushort|uint)\b|\b(?:0x[0-9a-fA-F]+|\d+)\b/g;
+  const keyword = /^(?:int|void|char|float|double|long|short|unsigned|signed|return|if|else|while|for|do|switch|case|break|continue|goto|struct|typedef|static|const|extern|sizeof|NULL|true|false|uint8_t|uint16_t|uint32_t|uint64_t|int8_t|int16_t|int32_t|int64_t)$/;
+  const type = /^(?:dword|qword|byte|word|undefined[0-9]?|ulong|ulonglong|longlong|uchar|ushort|uint)$/;
+  const number = /^(?:0x[0-9a-fA-F]+|\d+)$/;
+  let html = '';
+  let last = 0;
+  for (const match of code.matchAll(token)) {
+    const value = match[0];
+    html += escapeHtml(code.slice(last, match.index));
+    const escaped = escapeHtml(value);
+    if (value.startsWith('//') || value.startsWith('/*')) {
+      html += `<span class="code-comment">${escaped}</span>`;
+    } else if (value.startsWith('"')) {
+      html += `<span class="code-string">${escaped}</span>`;
+    } else if (keyword.test(value)) {
+      html += `<span class="code-keyword">${escaped}</span>`;
+    } else if (type.test(value)) {
+      html += `<span class="code-type">${escaped}</span>`;
+    } else if (number.test(value)) {
+      html += `<span class="code-number">${escaped}</span>`;
+    } else {
+      html += escaped;
+    }
+    last = match.index + value.length;
+  }
+  html += escapeHtml(code.slice(last));
+  return html;
 }
 
 let currentCodeData = null;
@@ -1373,6 +1425,7 @@ let currentSort = { key: 'function_name', asc: true };
 
 function getSimilarityClass(val, hasError) {
   if (hasError) return 'poor';
+  if (val === null || val === undefined) return 'poor';
   if (val >= 0.8) return 'excellent';
   if (val >= 0.5) return 'good';
   if (val >= 0.2) return 'weak';
@@ -1403,6 +1456,25 @@ function readabilityProxyHtml(s) {
     + `${cfScore === undefined ? '' : `cf ${Number(cfScore).toFixed(2)}<br>`}`
     + `${artifacts === undefined ? '' : `art ${artifacts}`}`
     + `<span style="color:#9ca3af">${parse}</span></span>`;
+}
+
+function semanticHtml(s) {
+  if (s.error) {
+    return `<button type="button" class="badge error badge-button semantic-detail-btn" data-row-id="${s._rowId}">Adapter error</button>`;
+  }
+  if (!hasSemanticCases(s)) {
+    const label = s.fail_category === 'no_wrapper' ? 'No wrapper' : 'No test';
+    return `<span class="badge neutral">${label}</span>`;
+  }
+  const semPct = `${(s.semantic_score * 100).toFixed(0)}% (${s.cases_passed}/${s.cases_total})`;
+  const intrinFlag = s.uses_intrinsics ? ' ⚠️' : '';
+  if (semanticPasses(s)) {
+    return `<span class="badge success">${semPct}${intrinFlag}</span>`;
+  }
+  const failCatLabels = {'compile_error':'Compile','runtime_error':'Runtime','timeout':'Timeout','assertion_fail':'Assert','no_wrapper':'No wrapper','':'Fail'};
+  const failCat = s.fail_category || '';
+  const label = failCatLabels[failCat] || 'Fail';
+  return `<button type="button" class="badge error badge-button semantic-detail-btn" data-row-id="${s._rowId}" title="${escapeHtml(failCat)}">${label}: ${semPct}${intrinFlag}</button>`;
 }
 
 function renderTable() {
@@ -1439,47 +1511,36 @@ function renderTable() {
     }
     
     const rankLabel = getRankBadge(s.consensus_rank);
-    const compScore = (s.composite_score || 0);
+    const hasCode = hasOutput(s);
+    const compScore = hasCode ? (s.composite_score || 0) : null;
     const simClass = getSimilarityClass(compScore, s.error);
-    const statusClass = s.error ? 'error' : 'success';
-    const statusText = s.error ? '❌ Error' : '✓ Success';
-    const failCatLabels = {'compile_error':'🔴','runtime_error':'🟠','timeout':'🟡','assertion_fail':'🟤','no_wrapper':'⚪','':''};
-    const failCat = s.fail_category || '';
-    const failIcon = failCatLabels[failCat] !== undefined ? failCatLabels[failCat] : '🟤';
-    const semPct = s.cases_total > 0
-      ? `${(s.semantic_score*100).toFixed(0)}% (${s.cases_passed}/${s.cases_total})`
-      : (s.semantic_score >= 1.0 ? 'Pass' : 'Fail');
-    const intrinFlag = s.uses_intrinsics ? ' ⚠️' : '';
-    const errTxt = (s.semantic_error||'').replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$');
-    const semHtml = s.error
-      ? '<span class="badge error">N/A</span>'
-      : (s.semantic_score >= 1.0
-          ? `<span class="badge success">${semPct}${intrinFlag}</span>`
-          : `<span class="badge error" title="${failCat}" style="cursor:pointer;" onclick="openModal('${s.decompiler}','${s.function_name}','${s.compiler_variant}','${errTxt}')">${failIcon} ${semPct}${intrinFlag}</span>`);
-    
-    tr.innerHTML = `
-      <td><strong>${s.function_name}</strong></td>
-      <td>${s.compiler_variant}</td>
-      <td>
-        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${DECOMPILER_COLORS[s.decompiler] || '#888'}; margin-right:6px;"></span>
-        ${s.decompiler}
-      </td>
-      <td>
-        <div class="sim-cell">
+    const statusClass = s.error ? 'error' : (hasCode ? 'success' : 'warning');
+    const statusText = s.error ? 'Error' : (hasCode ? 'Output' : 'No output');
+    const scoreHtml = hasCode
+      ? `<div class="sim-cell">
           <span class="sim-badge ${simClass}">${compScore.toFixed(3)}</span>
           <div class="sim-bar-bg">
             <div class="sim-bar-fill ${simClass}" style="width: ${compScore * 100}%"></div>
           </div>
         </div>
-        <small style="color:#9ca3af;font-size:0.75em;">sim:${s.source_similarity.toFixed(3)}</small>
+        <small style="color:#9ca3af;font-size:0.75em;">sim:${s.source_similarity.toFixed(3)}</small>`
+      : `<span class="badge neutral">N/A</span>`;
+
+    tr.innerHTML = `
+      <td><strong>${escapeHtml(s.function_name)}</strong></td>
+      <td>${escapeHtml(s.compiler_variant)}</td>
+      <td>
+        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${DECOMPILER_COLORS[s.decompiler] || '#888'}; margin-right:6px;"></span>
+        ${escapeHtml(s.decompiler)}
       </td>
-      <td>${semHtml}</td>
+      <td>${scoreHtml}</td>
+      <td>${semanticHtml(s)}</td>
       <td>${readabilityProxyHtml(s)}</td>
       <td>${rankLabel}</td>
       <td>${s.goto_count}</td>
       <td>${s.time_ms}ms</td>
       <td><span class="badge ${statusClass}">${statusText}</span></td>
-      <td>${s.decompiled_code ? `<button class="code-btn" onclick="showCode(event, ${JSON.stringify(s.decompiled_code).replace(/\\/g,'\\\\')}, '${s.decompiler}', '${s.function_name}', '${s.compiler_variant}')">🔬 View</button>` : '<span style="color:#6b7280">—</span>'}</td>
+      <td>${hasCode ? `<button type="button" class="code-btn" data-row-id="${s._rowId}">🔬 View</button>` : '<span style="color:#6b7280">—</span>'}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -1488,6 +1549,23 @@ function renderTable() {
   document.getElementById('prevBtn').disabled = currentPage === 1;
   document.getElementById('nextBtn').disabled = currentPage === totalPages;
 }
+
+document.querySelector('#resultsTable tbody').addEventListener('click', event => {
+  const codeBtn = event.target.closest('.code-btn');
+  if (codeBtn) {
+    const row = SCORES[Number(codeBtn.dataset.rowId)];
+    if (row) showCode(event, row.decompiled_code || '', row.decompiler, row.function_name, row.compiler_variant);
+    return;
+  }
+
+  const semanticBtn = event.target.closest('.semantic-detail-btn');
+  if (semanticBtn) {
+    const row = SCORES[Number(semanticBtn.dataset.rowId)];
+    if (!row) return;
+    const detail = row.error || row.semantic_error || 'No error details recorded.';
+    openModal(row.decompiler, row.function_name, row.compiler_variant, detail);
+  }
+});
 
 function filterScores() {
   const query = document.getElementById('searchInput').value.toLowerCase();
