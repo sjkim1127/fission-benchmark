@@ -118,11 +118,13 @@ jobs:
 
       - name: Resolve Fission release version
         id: fission-version
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           requested="${FISSION_VERSION:-latest}"
           if [ "$requested" = "latest" ]; then
-            resolved="$(python -c 'import json, urllib.request; print(json.load(urllib.request.urlopen("https://api.github.com/repos/sjkim1127/Fission/releases/latest", timeout=30))["tag_name"])')"
+            resolved="$(gh api repos/sjkim1127/Fission/releases/latest --jq .tag_name)"
           else
             resolved="$requested"
           fi
