@@ -129,6 +129,56 @@ int proc_0x0000155f(int value, int lo, int hi) { return value; }
     assert "proc_0x00001181" not in extracted
 
 
+def test_boomerang_extracts_function_by_32bit_pe_rva_address(monkeypatch) -> None:
+    monkeypatch.setitem(sys.modules, "disasm_helper", types.ModuleType("disasm_helper"))
+    server = load_module("boomerang_server_32", ROOT / "docker/boomerang/server.py")
+    code = """
+/** address: 0x000015d6 */
+int proc_0x000015d6(int value, int lo, int hi) { return value; }
+"""
+
+    name, extracted = server.extract_function_by_address(code, "0x4015d6")
+
+    assert name == "proc_0x000015d6"
+    assert "return value" in extracted
+
+
+def test_boomerang_cli_entry_address_uses_pe_rva(monkeypatch, tmp_path) -> None:
+    monkeypatch.setitem(sys.modules, "disasm_helper", types.ModuleType("disasm_helper"))
+    server = load_module("boomerang_server_entry", ROOT / "docker/boomerang/server.py")
+
+    class OptionalHeader:
+        ImageBase = 0x140000000
+        Magic = 0x20B
+
+    class PE:
+        OPTIONAL_HEADER = OptionalHeader()
+
+    pefile = types.ModuleType("pefile")
+    pefile.PE = lambda *_args, **_kwargs: PE()
+    monkeypatch.setitem(sys.modules, "pefile", pefile)
+
+    assert server.boomerang_entry_address(tmp_path / "target.exe", "0x14000155f") == "0x155f"
+
+
+def test_boomerang_cli_entry_address_keeps_pe32_va(monkeypatch, tmp_path) -> None:
+    monkeypatch.setitem(sys.modules, "disasm_helper", types.ModuleType("disasm_helper"))
+    server = load_module("boomerang_server_entry32", ROOT / "docker/boomerang/server.py")
+
+    class OptionalHeader:
+        ImageBase = 0x400000
+        Magic = 0x10B
+
+    class PE:
+        OPTIONAL_HEADER = OptionalHeader()
+
+    pefile = types.ModuleType("pefile")
+    pefile.PE = lambda *_args, **_kwargs: PE()
+    monkeypatch.setitem(sys.modules, "pefile", pefile)
+
+    assert server.boomerang_entry_address(tmp_path / "target.exe", "0x4015d6") == "0x4015d6"
+
+
 def test_boomerang_reports_missing_requested_address(monkeypatch) -> None:
     monkeypatch.setitem(sys.modules, "disasm_helper", types.ModuleType("disasm_helper"))
     server = load_module("boomerang_server_missing", ROOT / "docker/boomerang/server.py")

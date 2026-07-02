@@ -112,7 +112,36 @@ def address_aliases(addr: str) -> set[str]:
     if value >= 0x100000000:
         rva = value & 0xFFFFF
         aliases.update({f"{rva:x}", f"{rva:08x}", f"0x{rva:x}", f"0x{rva:08x}"})
+    if value >= 0x400000:
+        rva = value & 0xFFFFF
+        aliases.update({f"{rva:x}", f"{rva:08x}", f"0x{rva:x}", f"0x{rva:08x}"})
     return {alias.lower() for alias in aliases}
+
+def boomerang_entry_address(binary_path: Path, addr: str) -> str:
+    """Return the address form Boomerang expects for -E.
+
+    Boomerang's PE loader decodes entrypoints by image-relative RVA, while the
+    corpus manifests store absolute VA addresses. Other formats are left as-is.
+    """
+    value = validate_address(addr)
+    try:
+        import pefile  # type: ignore
+
+        pe = pefile.PE(str(binary_path), fast_load=True)
+        image_base = int(pe.OPTIONAL_HEADER.ImageBase)
+        if int(getattr(pe.OPTIONAL_HEADER, "Magic", 0)) == 0x20B and value >= image_base:
+            rva = value - image_base
+            if rva > 0:
+                return f"0x{rva:x}"
+    except Exception:
+        pass
+
+    for image_base in (0x140000000,):
+        if value >= image_base:
+            rva = value - image_base
+            if rva > 0:
+                return f"0x{rva:x}"
+    return f"0x{value:x}"
 
 def extract_function_by_address(code: str, addr: str) -> tuple[str, str]:
     """Extract one Boomerang function by the address comment above it."""
@@ -163,8 +192,7 @@ def decompile_batch(req: BatchDecompileRequest):
         args = ["boomerang-cli"]
         for addr in req.addresses:
             try:
-                val = int(addr, 16) if addr.lower().startswith("0x") else int(addr)
-                args.extend(["-E", f"0x{val:x}"])
+                args.extend(["-E", boomerang_entry_address(binary_path, addr)])
             except ValueError:
                 pass
         args.append(str(binary_path))
