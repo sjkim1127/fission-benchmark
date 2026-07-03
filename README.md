@@ -106,6 +106,7 @@ python runner/runner.py --use-holdout
 ```
 fission-benchmark/
 ├── benchmark/
+│   ├── KNOWN_ISSUES.md  Infrastructure freeze policy and remaining trust gaps
 │   ├── decode_parity/    Instruction decoder parity runner
 │   ├── assembly_parity/  Instruction listing parity runner
 │   ├── pcode_parity/     Raw p-code parity runner
@@ -216,6 +217,11 @@ run first when diagnosing Fission regressions:
 8. `benchmark/telemetry` aggregates JSONL rows by stage, status, mismatch kind,
    compiler, and optimization level.
 9. `runner/` remains the decompiler-output quality benchmark.
+
+Benchmark infrastructure is currently in reliability-maintenance mode. Before
+adding new axes, default decompilers, or composite rankings, check
+`benchmark/KNOWN_ISSUES.md`; the preferred next step is to turn confirmed
+benchmark failures into Fission-side fixes and golden repros.
 
 Parity runners accept command templates. Templates can use corpus subject fields
 such as `{binary}`, `{addr}`, `{function}`, `{compiler}`, and `{opt}` and must
