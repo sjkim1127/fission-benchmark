@@ -890,7 +890,7 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
 <div class="section-title">
   <div>
     <h2>Decompiler Scoreboard</h2>
-    <p>Cards separate output coverage, semantic correctness, source similarity, readability evidence, and runtime.</p>
+    <p>Cards separate output coverage, semantic correctness, source similarity, proxy evidence emission, AST parse coverage, and runtime.</p>
   </div>
 </div>
 <div class="kpi-grid" id="kpiContainer"></div>
@@ -1071,6 +1071,14 @@ function semanticPasses(row) {
   return hasSemanticCases(row) && Number(row.cases_passed || 0) === Number(row.cases_total || 0);
 }
 
+function hasReadabilityEvidence(row) {
+  return Boolean(row.readability_metrics && Object.keys(row.readability_metrics).length > 0);
+}
+
+function hasAstParseEvidence(row) {
+  return hasReadabilityEvidence(row) && row.readability_metrics.parse_ok === true;
+}
+
 function readabilityValue(row, metric) {
   const rm = row.readability_metrics || {};
   if (metric === 'gnr') return rm.generic_naming_ratio?.raw?.ratio;
@@ -1100,7 +1108,9 @@ const totalOutputRows = SCORES.filter(hasOutput).length;
 const totalAdapterErrors = SCORES.filter(s => s.error).length;
 const totalSemanticRows = SCORES.filter(hasSemanticCases).length;
 const totalSemanticPassed = SCORES.filter(semanticPasses).length;
-const totalWithReadability = SCORES.filter(s => s.readability_metrics && Object.keys(s.readability_metrics).length > 0).length;
+const totalAvgSemantic = mean(SCORES.filter(hasSemanticCases), s => s.semantic_score);
+const totalWithReadabilityEvidence = SCORES.filter(s => hasOutput(s) && hasReadabilityEvidence(s)).length;
+const totalAstParseOk = SCORES.filter(s => hasOutput(s) && hasAstParseEvidence(s)).length;
 const totalDirectFunctions = SCORES.filter(s => s.output_diagnostics?.status === 'direct_function').length;
 const totalNeedsNormalization = SCORES.filter(s => s.output_diagnostics?.status === 'needs_normalization').length;
 const totalBoundaryMismatch = SCORES.filter(s => s.output_diagnostics?.status === 'boundary_mismatch').length;
@@ -1125,15 +1135,20 @@ const overviewContainer = document.getElementById('overviewContainer');
   },
   {
     label: 'Semantic Correctness',
-    value: totalSemanticRows ? `${((totalSemanticPassed / totalSemanticRows) * 100).toFixed(1)}%` : 'N/A',
+    value: totalSemanticRows ? pct(totalAvgSemantic) : 'N/A',
     sub: totalSemanticRows
-      ? `${totalSemanticPassed.toLocaleString()} / ${totalSemanticRows.toLocaleString()} tested rows passed execution checks`
+      ? `${totalSemanticPassed.toLocaleString()} / ${totalSemanticRows.toLocaleString()} tested rows passed every execution check`
       : 'No rows had executable semantic test cases'
   },
   {
-    label: 'Readability Coverage',
-    value: totalOutputRows ? `${((totalWithReadability / totalOutputRows) * 100).toFixed(1)}%` : 'N/A',
-    sub: `${totalWithReadability.toLocaleString()} output rows include AST/proxy readability evidence`
+    label: 'Proxy Evidence',
+    value: totalOutputRows ? `${((totalWithReadabilityEvidence / totalOutputRows) * 100).toFixed(1)}%` : 'N/A',
+    sub: `${totalWithReadabilityEvidence.toLocaleString()} output rows include readability proxy fields`
+  },
+  {
+    label: 'AST Parse Coverage',
+    value: totalOutputRows ? `${((totalAstParseOk / totalOutputRows) * 100).toFixed(1)}%` : 'N/A',
+    sub: `${totalAstParseOk.toLocaleString()} output rows parsed successfully for AST-based metrics`
   }
 ].forEach(item => {
   const card = document.createElement('div');
@@ -1155,7 +1170,10 @@ decompilers.forEach(d => {
   const avgSim = mean(outputScores, s => s.source_similarity);
   const avgSem = mean(semanticRows, s => s.semantic_score);
   const avgCorrectness = mean(outputScores, s => s.correctness_score ?? s.composite_score);
-  const avgReadabilityProxy = mean(outputScores.filter(s => s.readability_proxy_score !== null && s.readability_proxy_score !== undefined), s => s.readability_proxy_score);
+  const avgReadabilityProxy = mean(
+    outputScores.filter(s => hasAstParseEvidence(s) && s.readability_proxy_score !== null && s.readability_proxy_score !== undefined),
+    s => s.readability_proxy_score
+  );
   const outputCount = outputScores.length;
   const outputRate = decScores.length ? (outputCount / decScores.length) * 100 : null;
   const semanticRate = semanticRows.length ? semanticPassed / semanticRows.length : null;
@@ -1167,19 +1185,22 @@ decompilers.forEach(d => {
   const boundaryMismatch = outputScores.filter(s => s.output_diagnostics?.status === 'boundary_mismatch').length;
   const wholeProgram = outputScores.filter(s => s.output_diagnostics?.status === 'whole_program_output').length;
   const boundaryRate = outputScores.length ? (directFunctions / outputScores.length) * 100 : null;
-  const readabilityRows = decScores.filter(s => s.readability_metrics && Object.keys(s.readability_metrics).length > 0);
-  const readabilityCoverage = outputScores.length ? (readabilityRows.length / outputScores.length) * 100 : null;
-  const avgGnr = averageReadability(readabilityRows, 'gnr');
-  const avgType = averageReadability(readabilityRows, 'type');
-  const avgExpr = averageReadability(readabilityRows, 'expr');
-  const avgCf = averageReadability(readabilityRows, 'cf');
-  const avgArtifacts = averageReadability(readabilityRows, 'artifacts');
+  const readabilityEvidenceRows = outputScores.filter(hasReadabilityEvidence);
+  const astParseRows = outputScores.filter(hasAstParseEvidence);
+  const readabilityEvidenceCoverage = outputScores.length ? (readabilityEvidenceRows.length / outputScores.length) * 100 : null;
+  const astParseCoverage = outputScores.length ? (astParseRows.length / outputScores.length) * 100 : null;
+  const avgGnr = averageReadability(astParseRows, 'gnr');
+  const avgType = averageReadability(astParseRows, 'type');
+  const avgExpr = averageReadability(astParseRows, 'expr');
+  const avgCf = averageReadability(astParseRows, 'cf');
+  const avgArtifacts = averageReadability(readabilityEvidenceRows, 'artifacts');
 
   stats[d] = {
     avgSim, avgSem, avgCorrectness, avgReadabilityProxy, outputRate, outputCount, adapterErrors,
     semanticRate, semanticPassed, semanticTotal: semanticRows.length,
     totalGotos, avgTime, directFunctions, needsNormalization, boundaryMismatch, wholeProgram, boundaryRate,
-    readabilityCoverage, avgGnr, avgType, avgExpr, avgCf, avgArtifacts
+    readabilityEvidenceCoverage, astParseCoverage, astParseCount: astParseRows.length,
+    avgGnr, avgType, avgExpr, avgCf, avgArtifacts
   };
 });
 
@@ -1190,10 +1211,11 @@ decompilers.forEach(d => {
   const color = DECOMPILER_COLORS[d] || '#888';
   const hasAnyOutput = s.outputCount > 0;
   const scoreLabel = hasAnyOutput ? `${pct(s.avgCorrectness)} <span style="font-size: 0.85rem; color: var(--muted); font-weight: normal;">correctness</span>` : '<span style="font-size:1.35rem;color:var(--muted);">No output</span>';
-  const semanticText = s.semanticTotal ? `${pct(s.semanticRate)} (${s.semanticPassed}/${s.semanticTotal})` : 'N/A';
-  const readabilityText = s.readabilityCoverage === null ? 'N/A' : `${s.readabilityCoverage.toFixed(0)}%`;
+  const semanticText = s.semanticTotal ? `${pct(s.avgSem)} avg (${s.semanticPassed}/${s.semanticTotal} full)` : 'N/A';
+  const evidenceText = s.readabilityEvidenceCoverage === null ? 'N/A' : `${s.readabilityEvidenceCoverage.toFixed(0)}%`;
+  const astParseText = s.astParseCoverage === null ? 'N/A' : `${s.astParseCoverage.toFixed(0)}% (${s.astParseCount}/${s.outputCount})`;
   const boundaryText = s.boundaryRate === null ? 'N/A' : `${s.boundaryRate.toFixed(0)}% (${s.directFunctions}/${s.outputCount})`;
-  const artifactsText = s.readabilityCoverage === null ? 'N/A' : s.avgArtifacts.toFixed(1);
+  const artifactsText = s.readabilityEvidenceCoverage === null ? 'N/A' : s.avgArtifacts.toFixed(1);
   const avgTimeText = s.avgTime === null ? 'N/A' : `${s.avgTime.toFixed(0)}ms`;
   
   const card = document.createElement('div');
@@ -1213,7 +1235,8 @@ decompilers.forEach(d => {
       <div class="kpi-stat-item">Output: <strong>${s.outputRate === null ? 'N/A' : `${s.outputRate.toFixed(0)}% (${s.outputCount}/${SCORES.filter(x => x.decompiler === d).length})`}</strong></div>
       <div class="kpi-stat-item">Boundary: <strong>${boundaryText}</strong></div>
       <div class="kpi-stat-item">Readability Proxy: <strong>${s.avgReadabilityProxy === null ? 'N/A' : pct(s.avgReadabilityProxy)}</strong></div>
-      <div class="kpi-stat-item">Readability: <strong>${readabilityText}</strong></div>
+      <div class="kpi-stat-item">Evidence: <strong>${evidenceText}</strong></div>
+      <div class="kpi-stat-item">AST Parse: <strong>${astParseText}</strong></div>
       <div class="kpi-stat-item">Artifacts: <strong>${artifactsText}</strong></div>
       <div class="kpi-stat-item">Avg Time: <strong>${avgTimeText}</strong></div>
       ${s.adapterErrors ? `<div class="kpi-stat-item">Adapter Errors: <strong>${s.adapterErrors}</strong></div>` : ''}
@@ -1232,8 +1255,8 @@ new Chart(globalBarCtx, {
     labels: sortedDecompilers,
     datasets: [
       {
-        label: 'Semantic',
-        data: sortedDecompilers.map(d => stats[d].semanticRate),
+        label: 'Mean Semantic',
+        data: sortedDecompilers.map(d => stats[d].avgSem),
         backgroundColor: 'rgba(16, 185, 129, 0.72)',
         borderRadius: 5
       },
@@ -1277,25 +1300,25 @@ new Chart(readabilityCtx, {
     datasets: [
       {
         label: 'Generic Naming Ratio',
-        data: sortedDecompilers.map(d => stats[d].readabilityCoverage === null ? null : stats[d].avgGnr),
+        data: sortedDecompilers.map(d => stats[d].astParseCoverage === null ? null : stats[d].avgGnr),
         backgroundColor: 'rgba(239, 68, 68, 0.66)',
         borderRadius: 5
       },
       {
         label: 'Type Specificity',
-        data: sortedDecompilers.map(d => stats[d].readabilityCoverage === null ? null : stats[d].avgType),
+        data: sortedDecompilers.map(d => stats[d].astParseCoverage === null ? null : stats[d].avgType),
         backgroundColor: 'rgba(34, 211, 238, 0.70)',
         borderRadius: 5
       },
       {
         label: 'Expression Simplicity',
-        data: sortedDecompilers.map(d => stats[d].readabilityCoverage === null ? null : 1 - Math.min(1, stats[d].avgExpr)),
+        data: sortedDecompilers.map(d => stats[d].astParseCoverage === null ? null : 1 - Math.min(1, stats[d].avgExpr)),
         backgroundColor: 'rgba(168, 85, 247, 0.66)',
         borderRadius: 5
       },
       {
         label: 'Structured CF',
-        data: sortedDecompilers.map(d => stats[d].readabilityCoverage === null ? null : stats[d].avgCf),
+        data: sortedDecompilers.map(d => stats[d].astParseCoverage === null ? null : stats[d].avgCf),
         backgroundColor: 'rgba(16, 185, 129, 0.66)',
         borderRadius: 5
       }

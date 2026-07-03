@@ -120,9 +120,10 @@ def test_assign_consensus_ranks_handles_ties_correctly() -> None:
 
 
 def test_new_correctness_formula_happy_path() -> None:
-    # Formula: sem * 0.50 + ast * 0.15 + read * 0.15 + sim * 0.10 + (1 - structural_penalty) * 0.10
-    # Values: sem=0.8, ast=0.9, read=0.7, sim=0.6, sp=0.2
-    # Expect: 0.8*0.50 + 0.9*0.15 + 0.7*0.15 + 0.6*0.10 + 0.8*0.10 = 0.40 + 0.135 + 0.105 + 0.06 + 0.08 = 0.78
+    # Formula: sem * 0.80 + sim * 0.10 + (1 - structural_penalty) * 0.10
+    # Values: sem=0.8, sim=0.6, sp=0.2
+    # Expect: 0.8*0.80 + 0.6*0.10 + 0.8*0.10 = 0.64 + 0.06 + 0.08 = 0.78
+    # ast_score and readability_score are ignored for correctness ranking.
     score = compute_correctness_score(
         semantic_score=0.8,
         source_similarity=0.6,
@@ -134,8 +135,7 @@ def test_new_correctness_formula_happy_path() -> None:
 
 
 def test_ast_parsing_failures_map_to_zero_score() -> None:
-    # If s.ast_similarity has available == False, ast_score must be 0.0.
-    # We construct a FunctionScore with available = False but high similarity entries to verify they are ignored.
+    # AST similarity is supporting evidence only, so parse failures must not affect correctness ranking.
     scores = [
         FunctionScore(
             decompiler="fission",
@@ -156,21 +156,17 @@ def test_ast_parsing_failures_map_to_zero_score() -> None:
         )
     ]
     
-    # Formula: sem * 0.50 + ast * 0.15 + read * 0.15 + sim * 0.10 + (1 - sp) * 0.10
     # With sp=0.1 (since nesting_depth=1, max_depth=1, delta=1, depth_pen=1/3, sp=0.3*1/3 = 0.1)
-    # If ast_score is 0.0:
-    # 1.0*0.50 + 0.0*0.15 + 1.0*0.15 + 1.0*0.10 + 0.9*0.10 = 0.50 + 0.0 + 0.15 + 0.10 + 0.09 = 0.84
-    # If ast_score was 1.0 (from similarity entries):
-    # 1.0*0.50 + 1.0*0.15 + 1.0*0.15 + 1.0*0.10 + 0.9*0.10 = 0.99
+    # 1.0*0.80 + 1.0*0.10 + 0.9*0.10 = 0.99
     ranked = assign_consensus_ranks(scores)
-    assert ranked[0].correctness_score == 0.84
+    assert ranked[0].correctness_score == 0.99
 
 
 def test_semantic_failures_cap_correctness_score() -> None:
     # If semantic_score == 0.0, correctness_score must be capped at 0.15.
     # Let's set other components to 1.0:
-    # raw = 0.0*0.50 + 1.0*0.15 + 1.0*0.15 + 1.0*0.10 + 1.0*0.10 = 0.50
-    # Gated score must be min(0.50, 0.15) = 0.15
+    # raw = 0.0*0.80 + 1.0*0.10 + 1.0*0.10 = 0.20
+    # Gated score must be min(0.20, 0.15) = 0.15
     score = compute_correctness_score(
         semantic_score=0.0,
         source_similarity=1.0,
@@ -203,9 +199,8 @@ def test_ast_similarity_robust_sub_key_lookup() -> None:
         )
     ]
 
-    # ast_score should be (0.0 + 0.9 + 0.0) / 3.0 = 0.3
-    # Formula: sem * 0.50 + ast * 0.15 + read * 0.15 + sim * 0.10 + (1 - sp) * 0.10
+    # AST similarity values are recorded but excluded from correctness ranking.
     # With sp=0.1:
-    # 1.0*0.50 + 0.3*0.15 + 1.0*0.15 + 1.0*0.10 + 0.9*0.10 = 0.50 + 0.045 + 0.15 + 0.10 + 0.09 = 0.885
+    # 1.0*0.80 + 1.0*0.10 + 0.9*0.10 = 0.99
     ranked = assign_consensus_ranks(scores)
-    assert ranked[0].correctness_score == 0.885
+    assert ranked[0].correctness_score == 0.99

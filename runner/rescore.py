@@ -5,7 +5,7 @@ Usage:
     python runner/rescore.py [--input results/latest.json] [--show-top 10]
 
 This script reads a previous JSON result file, applies the correctness_score formula
-(semantic*0.50 + ast*0.15 + readability*0.15 + sim*0.10 + (1-structural_penalty)*0.10), and outputs a ranking diff table
+(semantic*0.80 + sim*0.10 + (1-structural_penalty)*0.10), and outputs a ranking diff table
 comparing old source_similarity ranks vs new correctness_score ranks.
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from scoring import compute_correctness_score, compute_structural_penalty, WEIGHT_SEMANTIC, WEIGHT_SIMILARITY, WEIGHT_STRUCTURAL, WEIGHT_AST, WEIGHT_READABILITY
+from scoring import compute_correctness_score, compute_structural_penalty, WEIGHT_SEMANTIC, WEIGHT_SIMILARITY, WEIGHT_STRUCTURAL
 
 
 def rescore(input_path: Path, show_top: int = 20) -> None:
@@ -51,20 +51,8 @@ def rescore(input_path: Path, show_top: int = 20) -> None:
             src_gotos.get(fn, 0),
             src_depths.get(fn, 0),
         )
-        ast_similarity = r.get("ast_similarity", {})
-        ast_score = 0.0
-        if ast_similarity and ast_similarity.get("available") is True:
-            ast_score = (
-                (ast_similarity.get("identifier_placeholder") or {}).get("similarity", 0.0)
-                + (ast_similarity.get("type_erased") or {}).get("similarity", 0.0)
-                + (ast_similarity.get("control_flow_normalized") or {}).get("similarity", 0.0)
-            ) / 3.0
-        readability_score = r.get("readability_proxy_score")
-        if readability_score is None:
-            readability_score = 0.0
-
         correctness = compute_correctness_score(
-            sem, sim, sp, ast_score=ast_score, readability_score=readability_score
+            sem, sim, sp
         ) if not error else 0.0
 
         records.append({
@@ -82,7 +70,7 @@ def rescore(input_path: Path, show_top: int = 20) -> None:
 
     print(f"\n{'='*90}")
     print("  RESCORE DIFF  |  Old rank = source_similarity rank  |  New rank = correctness_score rank")
-    print(f"  Weights: semantic={WEIGHT_SEMANTIC:.0%}  ast={WEIGHT_AST:.0%}  readability={WEIGHT_READABILITY:.0%}  similarity={WEIGHT_SIMILARITY:.0%}  structural={WEIGHT_STRUCTURAL:.0%}")
+    print(f"  Weights: semantic={WEIGHT_SEMANTIC:.0%}  similarity={WEIGHT_SIMILARITY:.0%}  structural={WEIGHT_STRUCTURAL:.0%}")
     print(f"{'='*90}")
     print(f"{'Function':20s} {'Variant':16s} {'Decomp':10s} {'OldSim':8s} {'OldRk':6s} {'NewCorr':8s} {'NewRk':6s} {'Delta':5s}  {'Change':20s}")
     print(f"{'-'*20} {'-'*16} {'-'*10} {'-'*8} {'-'*6} {'-'*8} {'-'*6} {'-'*4}  {'-'*20}")
