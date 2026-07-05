@@ -15,9 +15,9 @@
   "by_mismatch_kind": {
     "block_count": 3,
     "empty_cfg_blocks": 3,
-    "function_metadata": 2,
-    "function_set": 3,
-    "instruction_count": 6,
+    "function_metadata": 1,
+    "function_set": 5,
+    "instruction_count": 5,
     "none": 31
   },
   "by_variant": {
