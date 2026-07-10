@@ -580,7 +580,7 @@
   <div class="meta-badges">
     <div class="meta-badge">Corpus: <strong id="corpusName">dev</strong></div>
     <div class="meta-badge">Functions: <strong id="funcCount">10</strong></div>
-    <div class="meta-badge">Updated: <strong id="genTime">2026-07-10 01:31 UTC</strong></div>
+    <div class="meta-badge">Updated: <strong id="genTime">2026-07-10 06:18 UTC</strong></div>
   </div>
 </header>
 
@@ -718,123 +718,32 @@ const SCORES = [
     "decompiler": "fission",
     "function_name": "count_bits",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.1349,
-    "semantic_score": 0.3333333333333333,
-    "semantic_error": "Case 5: Runtime failed (exit code 1)",
-    "fail_category": "runtime_error",
-    "cases_passed": 2,
-    "cases_total": 6,
-    "correctness_score": 0.3522,
-    "correctness_rank": 2,
-    "readability_proxy_score": 0.5283,
-    "composite_score": 0.3522,
-    "structural_penalty": 0.28,
-    "uses_intrinsics": true,
-    "decompiled_code": "int count_bits(uint param_1)\n{\n    int local_4;\n    ulonglong home_0;\n    uint param_10;\n    ulonglong rax = 0;\n    uchar reg;\n    ulonglong rsp;\n    int uVar13;\n\n    reg = __sborrow(rsp, 16);\n    param_10 = param_1;\n    local_4 = rax;\n    goto block_140001550;\nblock_140001544:\n    reg = 0;\n    uVar13 = param_10 & 1;\n    reg = uVar13 < 0;\n    reg = uVar13 == 0;\n    reg = (__popcount(uVar13 % 256) & 1) == 0;\n    reg = __carry(local_4, uVar13);\n    reg = __scarry(local_4, uVar13);\n    local_4 += uVar13;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    param_10 >>= 1;\nblock_140001550:\n    reg = 0;\n    reg = param_10 == 0;\n    if (!reg) {\n        goto block_140001544;\n    }\n    reg = -16 <= rsp;\n    reg = __scarry(rsp, 16);\n    return uVar13;\n}\n",
-    "decompiled_code_nir": "int count_bits(uint param_1)\n{\n    int local_4;\n    ulonglong home_0;\n    uint param_10;\n    ulonglong rax = 0;\n    uchar reg;\n    ulonglong rsp;\n    int uVar13;\n\n    reg = __sborrow(rsp, 16);\n    param_10 = param_1;\n    local_4 = rax;\n    goto block_140001550;\nblock_140001544:\n    reg = 0;\n    uVar13 = param_10 & 1;\n    reg = uVar13 < 0;\n    reg = uVar13 == 0;\n    reg = (__popcount(uVar13 % 256) & 1) == 0;\n    reg = __carry(local_4, uVar13);\n    reg = __scarry(local_4, uVar13);\n    local_4 += uVar13;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    param_10 >>= 1;\nblock_140001550:\n    reg = 0;\n    reg = param_10 == 0;\n    if (!reg) {\n        goto block_140001544;\n    }\n    reg = -16 <= rsp;\n    reg = __scarry(rsp, 16);\n    return uVar13;\n}\n",
+    "source_similarity": 0.0,
+    "semantic_score": 0.0,
+    "semantic_error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
+    "fail_category": "adapter_error",
+    "cases_passed": 0,
+    "cases_total": 0,
+    "correctness_score": 0.0,
+    "correctness_rank": null,
+    "readability_proxy_score": null,
+    "composite_score": 0.0,
+    "structural_penalty": 0.0,
+    "uses_intrinsics": false,
+    "decompiled_code": "",
+    "decompiled_code_nir": "",
     "decompiled_code_hir": "",
     "pseudocode_layer": "",
-    "readability_metrics": {
-      "validated_against_humans": false,
-      "composite_score": null,
-      "parse_ok": true,
-      "parse_error": null,
-      "generic_naming_ratio": {
-        "raw": {
-          "generic": 15,
-          "total": 48,
-          "ratio": 0.3125
-        },
-        "normalized": 0.6875
-      },
-      "type_specificity": {
-        "raw": {
-          "average": 0.5,
-          "typed_nodes": 9
-        },
-        "normalized": 0.5
-      },
-      "expression_complexity": {
-        "raw": {
-          "operator_count": 34,
-          "avg_expression_depth": 3.2059,
-          "max_cast_depth": 0,
-          "ternary_count": 0,
-          "comma_count": 0,
-          "temporary_identifier_count": 24,
-          "loc": 36,
-          "temporary_identifier_loc_ratio": 0.6667
-        },
-        "normalized": 0.6206
-      },
-      "structured_control_flow": {
-        "raw": {
-          "structured_constructs": 1,
-          "goto_count": 2,
-          "nesting_depth": 2,
-          "irreducible_loop_suspected": false,
-          "state_flag_count": 0,
-          "structured_ratio": 0.3333
-        },
-        "normalized": 0.3333
-      },
-      "unresolved_artifacts": {
-        "raw": {
-          "total": 6,
-          "details": {
-            "sleigh_intrinsic": 6,
-            "word_macro": 0,
-            "register_name": 0,
-            "collapsed_type": 0
-          }
-        },
-        "normalized": 0.5
-      }
-    },
+    "readability_metrics": {},
     "readability_metrics_hir": {},
     "readability_proxy_score_hir": null,
-    "ast_similarity": {
-      "available": true,
-      "algorithm": "zhang_shasha",
-      "identifier_placeholder": {
-        "raw_distance": 125,
-        "normalized_distance": 0.5656,
-        "similarity": 0.4344
-      },
-      "type_erased": {
-        "raw_distance": 125,
-        "normalized_distance": 0.5656,
-        "similarity": 0.4344
-      },
-      "control_flow_normalized": {
-        "raw_distance": 134,
-        "normalized_distance": 0.6063,
-        "similarity": 0.3937
-      }
-    },
-    "output_diagnostics": {
-      "status": "direct_function",
-      "issues": [
-        "expected_address_missing"
-      ],
-      "function_definition_count": 1,
-      "function_definitions_sample": [
-        "count_bits"
-      ],
-      "target_name_present": true,
-      "expected_address_present": false,
-      "whole_program_like": false,
-      "truncated_output": false,
-      "harness_blockers": [],
-      "dotted_names_sample": [],
-      "register_inputs_sample": [],
-      "decompiler": "fission"
-    },
-    "goto_count": 2,
-    "nesting_depth": 2,
-    "consensus_rank": 2,
-    "time_ms": 3246,
-    "error": null,
+    "ast_similarity": {},
+    "output_diagnostics": {},
+    "goto_count": 0,
+    "nesting_depth": 0,
+    "consensus_rank": null,
+    "time_ms": 3,
+    "error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
     "has_parity_diff": true,
     "parity_diff_path": "../results/parity_diffs/control_flow_gcc_O0.exe/count_bits/fission.json"
   },
@@ -849,7 +758,7 @@ const SCORES = [
     "cases_passed": 0,
     "cases_total": 6,
     "correctness_score": 0.15,
-    "correctness_rank": 3,
+    "correctness_rank": 2,
     "readability_proxy_score": 0.8085,
     "composite_score": 0.15,
     "structural_penalty": 0.0,
@@ -961,8 +870,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 2,
-    "consensus_rank": 3,
-    "time_ms": 4439,
+    "consensus_rank": 2,
+    "time_ms": 4089,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -973,12 +882,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.2791,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpu13s6zd_/test_5.c: In function \u2018proc_0x00001530\u2019:\n/tmp/tmpu13s6zd_/test_5.c:45:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019?\n   45 |     __size32 local1;            // m[esp - 8]\n      |     ^~~~~~~~\n      |     __ssize_t\n",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpsqo3yi11/test_5.c: In function \u2018proc_0x00001530\u2019:\n/tmp/tmpsqo3yi11/test_5.c:45:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019?\n   45 |     __size32 local1;            // m[esp - 8]\n      |     ^~~~~~~~\n      |     __ssize_t\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
     "correctness_score": 0.1279,
-    "correctness_rank": 7,
+    "correctness_rank": 6,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1279,
     "structural_penalty": 0.0,
@@ -1074,8 +983,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 2,
-    "consensus_rank": 7,
-    "time_ms": 36,
+    "consensus_rank": 6,
+    "time_ms": 68,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -1086,12 +995,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.6376,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmph5rong0r/test_5.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.count_bits(unsigned int x)\n      |        ^\n",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpyvakkpwd/test_5.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.count_bits(unsigned int x)\n      |        ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
     "correctness_score": 0.15,
-    "correctness_rank": 3,
+    "correctness_rank": 2,
     "readability_proxy_score": 0.4,
     "composite_score": 0.15,
     "structural_penalty": 0.0,
@@ -1192,8 +1101,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 2,
-    "consensus_rank": 3,
-    "time_ms": 83,
+    "consensus_rank": 2,
+    "time_ms": 99,
     "error": null,
     "has_parity_diff": true,
     "parity_diff_path": "../results/parity_diffs/control_flow_gcc_O0.exe/count_bits/radare2.json"
@@ -1317,7 +1226,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 421,
+    "time_ms": 378,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -1328,12 +1237,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.556,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/usr/bin/ld: /tmp/cciLNn9N.o: in function `main':\ntest_5.c:(.text+0x44): undefined reference to `count_bits'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 5: Compilation failed:\n/usr/bin/ld: /tmp/ccx5ZGDO.o: in function `main':\ntest_5.c:(.text+0x44): undefined reference to `count_bits'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
     "correctness_score": 0.15,
-    "correctness_rank": 3,
+    "correctness_rank": 2,
     "readability_proxy_score": 0.698,
     "composite_score": 0.15,
     "structural_penalty": 0.0,
@@ -1440,8 +1349,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 2,
-    "consensus_rank": 3,
-    "time_ms": 575,
+    "consensus_rank": 2,
+    "time_ms": 606,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -1495,7 +1404,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 0,
     "consensus_rank": null,
-    "time_ms": 12230,
+    "time_ms": 7879,
     "error": "Decompiler output does not match requested function name or address",
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -1506,12 +1415,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.4078,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp8oksi1pr/test_5.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 count_bits(uint32 ecx)\n      | ^~~~~~\n      | word\n/tmp/tmp8oksi1pr/test_5.c:41:19: error: unknown type name \u2018uint32\u2019; did you mean \u2018uint\u2019?\n   41 | word32 count_bits(uint32 ecx)\n      |            ",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpgwansxlh/test_5.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 count_bits(uint32 ecx)\n      | ^~~~~~\n      | word\n/tmp/tmpgwansxlh/test_5.c:41:19: error: unknown type name \u2018uint32\u2019; did you mean \u2018uint\u2019?\n   41 | word32 count_bits(uint32 ecx)\n      |            ",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
     "correctness_score": 0.1408,
-    "correctness_rank": 6,
+    "correctness_rank": 5,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1408,
     "structural_penalty": 0.0,
@@ -1607,8 +1516,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 1,
-    "consensus_rank": 6,
-    "time_ms": 515,
+    "consensus_rank": 5,
+    "time_ms": 444,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -1617,123 +1526,32 @@ const SCORES = [
     "decompiler": "fission",
     "function_name": "clamp",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.4145,
-    "semantic_score": 0.6666666666666666,
-    "semantic_error": "Case 1: Runtime failed (exit code 1)",
-    "fail_category": "runtime_error",
-    "cases_passed": 4,
-    "cases_total": 6,
-    "correctness_score": 0.6748,
-    "correctness_rank": 2,
-    "readability_proxy_score": 0.6868,
-    "composite_score": 0.6748,
+    "source_similarity": 0.0,
+    "semantic_score": 0.0,
+    "semantic_error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
+    "fail_category": "adapter_error",
+    "cases_passed": 0,
+    "cases_total": 0,
+    "correctness_score": 0.0,
+    "correctness_rank": null,
+    "readability_proxy_score": null,
+    "composite_score": 0.0,
     "structural_penalty": 0.0,
     "uses_intrinsics": false,
-    "decompiled_code": "uint clamp(uint param_1, uint param_2, uint param_3)\n{\n    ulonglong home_0;\n    uint param_10;\n    uint param_18;\n    uint param_20;\n\n    param_10 = param_1;\n    param_18 = param_2;\n    param_20 = param_3;\n    return param_10;\n}\n",
-    "decompiled_code_nir": "uint clamp(uint param_1, uint param_2, uint param_3)\n{\n    ulonglong home_0;\n    uint param_10;\n    uint param_18;\n    uint param_20;\n\n    param_10 = param_1;\n    param_18 = param_2;\n    param_20 = param_3;\n    return param_10;\n}\n",
+    "decompiled_code": "",
+    "decompiled_code_nir": "",
     "decompiled_code_hir": "",
     "pseudocode_layer": "",
-    "readability_metrics": {
-      "validated_against_humans": false,
-      "composite_score": null,
-      "parse_ok": true,
-      "parse_error": null,
-      "generic_naming_ratio": {
-        "raw": {
-          "generic": 13,
-          "total": 15,
-          "ratio": 0.8667
-        },
-        "normalized": 0.1333
-      },
-      "type_specificity": {
-        "raw": {
-          "average": 0.5,
-          "typed_nodes": 8
-        },
-        "normalized": 0.5
-      },
-      "expression_complexity": {
-        "raw": {
-          "operator_count": 3,
-          "avg_expression_depth": 2.0,
-          "max_cast_depth": 0,
-          "ternary_count": 0,
-          "comma_count": 0,
-          "temporary_identifier_count": 13,
-          "loc": 11,
-          "temporary_identifier_loc_ratio": 1.1818
-        },
-        "normalized": 0.8006
-      },
-      "structured_control_flow": {
-        "raw": {
-          "structured_constructs": 0,
-          "goto_count": 0,
-          "nesting_depth": 1,
-          "irreducible_loop_suspected": false,
-          "state_flag_count": 0,
-          "structured_ratio": 1.0
-        },
-        "normalized": 1.0
-      },
-      "unresolved_artifacts": {
-        "raw": {
-          "total": 0,
-          "details": {
-            "sleigh_intrinsic": 0,
-            "word_macro": 0,
-            "register_name": 0,
-            "collapsed_type": 0
-          }
-        },
-        "normalized": 1.0
-      }
-    },
+    "readability_metrics": {},
     "readability_metrics_hir": {},
     "readability_proxy_score_hir": null,
-    "ast_similarity": {
-      "available": true,
-      "algorithm": "zhang_shasha",
-      "identifier_placeholder": {
-        "raw_distance": 20,
-        "normalized_distance": 0.1786,
-        "similarity": 0.8214
-      },
-      "type_erased": {
-        "raw_distance": 20,
-        "normalized_distance": 0.1786,
-        "similarity": 0.8214
-      },
-      "control_flow_normalized": {
-        "raw_distance": 28,
-        "normalized_distance": 0.25,
-        "similarity": 0.75
-      }
-    },
-    "output_diagnostics": {
-      "status": "direct_function",
-      "issues": [
-        "expected_address_missing"
-      ],
-      "function_definition_count": 1,
-      "function_definitions_sample": [
-        "clamp"
-      ],
-      "target_name_present": true,
-      "expected_address_present": false,
-      "whole_program_like": false,
-      "truncated_output": false,
-      "harness_blockers": [],
-      "dotted_names_sample": [],
-      "register_inputs_sample": [],
-      "decompiler": "fission"
-    },
+    "ast_similarity": {},
+    "output_diagnostics": {},
     "goto_count": 0,
-    "nesting_depth": 1,
-    "consensus_rank": 2,
-    "time_ms": 3246,
-    "error": null,
+    "nesting_depth": 0,
+    "consensus_rank": null,
+    "time_ms": 3,
+    "error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
     "has_parity_diff": false,
     "parity_diff_path": ""
   },
@@ -1748,7 +1566,7 @@ const SCORES = [
     "cases_passed": 0,
     "cases_total": 6,
     "correctness_score": 0.1321,
-    "correctness_rank": 5,
+    "correctness_rank": 4,
     "readability_proxy_score": 0.5547,
     "composite_score": 0.1321,
     "structural_penalty": 0.1,
@@ -1862,8 +1680,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 2,
-    "consensus_rank": 5,
-    "time_ms": 4439,
+    "consensus_rank": 4,
+    "time_ms": 4089,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -1874,12 +1692,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.2394,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/usr/bin/ld: /tmp/cc0zlHd5.o: in function `main':\ntest_5.c:(.text+0x28): undefined reference to `clamp'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 5: Compilation failed:\n/usr/bin/ld: /tmp/ccjsb9bC.o: in function `main':\ntest_5.c:(.text+0x28): undefined reference to `clamp'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
     "correctness_score": 0.1239,
-    "correctness_rank": 6,
+    "correctness_rank": 5,
     "readability_proxy_score": 0.9,
     "composite_score": 0.1239,
     "structural_penalty": 0.0,
@@ -1986,8 +1804,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 1,
-    "consensus_rank": 6,
-    "time_ms": 36,
+    "consensus_rank": 5,
+    "time_ms": 68,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -1998,12 +1816,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.4848,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp0iz8lfb2/test_5.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.clamp(int value,int lo,int hi)\n      |        ^\n",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp2e8pduki/test_5.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.clamp(int value,int lo,int hi)\n      |        ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
     "correctness_score": 0.1385,
-    "correctness_rank": 4,
+    "correctness_rank": 3,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1385,
     "structural_penalty": 0.1,
@@ -2104,8 +1922,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 2,
-    "consensus_rank": 4,
-    "time_ms": 83,
+    "consensus_rank": 3,
+    "time_ms": 99,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -2229,7 +2047,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 421,
+    "time_ms": 378,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -2240,12 +2058,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0099,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp7i0mdjun/test_5.c: In function \u2018fun_14000155f\u2019:\n/tmp/tmp7i0mdjun/test_5.c:44:9: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   44 |     if (reinterpret_cast<int32_t>(ecx) >= reinterpret_cast<int32_t>(edx)) {\n      |         ^~~~~~~~~~~~~~~~\n/tmp/tmp7i0mdjun/test_5.c:44:",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpje8r6j73/test_5.c: In function \u2018fun_14000155f\u2019:\n/tmp/tmpje8r6j73/test_5.c:44:9: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   44 |     if (reinterpret_cast<int32_t>(ecx) >= reinterpret_cast<int32_t>(edx)) {\n      |         ^~~~~~~~~~~~~~~~\n/tmp/tmpje8r6j73/test_5.c:44:",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
     "correctness_score": 0.081,
-    "correctness_rank": 8,
+    "correctness_rank": 7,
     "readability_proxy_score": 0.4,
     "composite_score": 0.081,
     "structural_penalty": 0.2,
@@ -2341,8 +2159,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 3,
-    "consensus_rank": 8,
-    "time_ms": 575,
+    "consensus_rank": 7,
+    "time_ms": 606,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -2353,12 +2171,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0376,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp9b4ru_qy/test_5.c: In function \u2018_ABI\u2019:\n/tmp/tmp9b4ru_qy/test_5.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x14000155f_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), st",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmppq7kfaz5/test_5.c: In function \u2018_ABI\u2019:\n/tmp/tmppq7kfaz5/test_5.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x14000155f_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), st",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
     "correctness_score": 0.1038,
-    "correctness_rank": 7,
+    "correctness_rank": 6,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1038,
     "structural_penalty": 0.0,
@@ -2457,8 +2275,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 1,
-    "consensus_rank": 7,
-    "time_ms": 12230,
+    "consensus_rank": 6,
+    "time_ms": 7879,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -2469,12 +2287,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.4066,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp6obl1q1v/test_5.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 clamp(int32 ecx, int32 edx, int32 r8d)\n      | ^~~~~~\n      | word\n/tmp/tmp6obl1q1v/test_5.c:41:14: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | word32 clamp(int32 ecx, int32 e",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpwz85oa1v/test_5.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 clamp(int32 ecx, int32 edx, int32 r8d)\n      | ^~~~~~\n      | word\n/tmp/tmpwz85oa1v/test_5.c:41:14: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | word32 clamp(int32 ecx, int32 e",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
     "correctness_score": 0.1407,
-    "correctness_rank": 3,
+    "correctness_rank": 2,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1407,
     "structural_penalty": 0.0,
@@ -2570,8 +2388,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 1,
-    "consensus_rank": 3,
-    "time_ms": 515,
+    "consensus_rank": 2,
+    "time_ms": 444,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -2580,123 +2398,32 @@ const SCORES = [
     "decompiler": "fission",
     "function_name": "signum",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0571,
-    "semantic_score": 0.2,
-    "semantic_error": "Case 4: Runtime failed (exit code 1)",
-    "fail_category": "runtime_error",
-    "cases_passed": 1,
-    "cases_total": 5,
-    "correctness_score": 0.2457,
-    "correctness_rank": 3,
-    "readability_proxy_score": 0.7684,
-    "composite_score": 0.2457,
-    "structural_penalty": 0.2,
+    "source_similarity": 0.0,
+    "semantic_score": 0.0,
+    "semantic_error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
+    "fail_category": "adapter_error",
+    "cases_passed": 0,
+    "cases_total": 0,
+    "correctness_score": 0.0,
+    "correctness_rank": null,
+    "readability_proxy_score": null,
+    "composite_score": 0.0,
+    "structural_penalty": 0.0,
     "uses_intrinsics": false,
-    "decompiled_code": "ulonglong signum(int param_1)\n{\n    ulonglong home_0;\n    int param_10;\n    ulonglong reg;\n\n    {\n        param_10 = param_1;\n        reg = 0;\n        param_10 = param_10;\n        reg = param_10 < 0;\n        reg = param_10 == 0;\n        if (reg) {\n            reg = 0;\n            reg = param_10 < 0;\n        }\n    }\n    return reg;\n}\n",
-    "decompiled_code_nir": "ulonglong signum(int param_1)\n{\n    ulonglong home_0;\n    int param_10;\n    ulonglong reg;\n\n    {\n        param_10 = param_1;\n        reg = 0;\n        param_10 = param_10;\n        reg = param_10 < 0;\n        reg = param_10 == 0;\n        if (reg) {\n            reg = 0;\n            reg = param_10 < 0;\n        }\n    }\n    return reg;\n}\n",
+    "decompiled_code": "",
+    "decompiled_code_nir": "",
     "decompiled_code_hir": "",
     "pseudocode_layer": "",
-    "readability_metrics": {
-      "validated_against_humans": false,
-      "composite_score": null,
-      "parse_ok": true,
-      "parse_error": null,
-      "generic_naming_ratio": {
-        "raw": {
-          "generic": 9,
-          "total": 19,
-          "ratio": 0.4737
-        },
-        "normalized": 0.5263
-      },
-      "type_specificity": {
-        "raw": {
-          "average": 0.5,
-          "typed_nodes": 5
-        },
-        "normalized": 0.5
-      },
-      "expression_complexity": {
-        "raw": {
-          "operator_count": 10,
-          "avg_expression_depth": 2.3,
-          "max_cast_depth": 0,
-          "ternary_count": 0,
-          "comma_count": 0,
-          "temporary_identifier_count": 9,
-          "loc": 18,
-          "temporary_identifier_loc_ratio": 0.5
-        },
-        "normalized": 0.8156
-      },
-      "structured_control_flow": {
-        "raw": {
-          "structured_constructs": 1,
-          "goto_count": 0,
-          "nesting_depth": 3,
-          "irreducible_loop_suspected": false,
-          "state_flag_count": 0,
-          "structured_ratio": 1.0
-        },
-        "normalized": 1.0
-      },
-      "unresolved_artifacts": {
-        "raw": {
-          "total": 0,
-          "details": {
-            "sleigh_intrinsic": 0,
-            "word_macro": 0,
-            "register_name": 0,
-            "collapsed_type": 0
-          }
-        },
-        "normalized": 1.0
-      }
-    },
+    "readability_metrics": {},
     "readability_metrics_hir": {},
     "readability_proxy_score_hir": null,
-    "ast_similarity": {
-      "available": true,
-      "algorithm": "zhang_shasha",
-      "identifier_placeholder": {
-        "raw_distance": 34,
-        "normalized_distance": 0.272,
-        "similarity": 0.728
-      },
-      "type_erased": {
-        "raw_distance": 34,
-        "normalized_distance": 0.272,
-        "similarity": 0.728
-      },
-      "control_flow_normalized": {
-        "raw_distance": 38,
-        "normalized_distance": 0.304,
-        "similarity": 0.696
-      }
-    },
-    "output_diagnostics": {
-      "status": "direct_function",
-      "issues": [
-        "expected_address_missing"
-      ],
-      "function_definition_count": 1,
-      "function_definitions_sample": [
-        "signum"
-      ],
-      "target_name_present": true,
-      "expected_address_present": false,
-      "whole_program_like": false,
-      "truncated_output": false,
-      "harness_blockers": [],
-      "dotted_names_sample": [],
-      "register_inputs_sample": [],
-      "decompiler": "fission"
-    },
+    "ast_similarity": {},
+    "output_diagnostics": {},
     "goto_count": 0,
-    "nesting_depth": 3,
-    "consensus_rank": 3,
-    "time_ms": 3246,
-    "error": null,
+    "nesting_depth": 0,
+    "consensus_rank": null,
+    "time_ms": 3,
+    "error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
     "has_parity_diff": false,
     "parity_diff_path": ""
   },
@@ -2824,7 +2551,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 2,
-    "time_ms": 4439,
+    "time_ms": 4089,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -2835,12 +2562,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.2667,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccxPRcND.o: in function `main':\ntest_4.c:(.text+0x1e): undefined reference to `signum'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccs6xkvB.o: in function `main':\ntest_4.c:(.text+0x1e): undefined reference to `signum'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1267,
-    "correctness_rank": 6,
+    "correctness_rank": 5,
     "readability_proxy_score": 0.9,
     "composite_score": 0.1267,
     "structural_penalty": 0.0,
@@ -2947,8 +2674,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 1,
-    "consensus_rank": 6,
-    "time_ms": 36,
+    "consensus_rank": 5,
+    "time_ms": 68,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -2959,12 +2686,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.5412,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpar2bj7j3/test_4.c:42:10: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | ulong dbg.signum(int value)\n      |          ^\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpl2nz95qa/test_4.c:42:10: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | ulong dbg.signum(int value)\n      |          ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1341,
-    "correctness_rank": 5,
+    "correctness_rank": 4,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1341,
     "structural_penalty": 0.2,
@@ -3065,8 +2792,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 3,
-    "consensus_rank": 5,
-    "time_ms": 83,
+    "consensus_rank": 4,
+    "time_ms": 99,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -3190,7 +2917,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 1,
-    "time_ms": 421,
+    "time_ms": 378,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -3201,12 +2928,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.2912,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/cc8zMiM8.o: in function `main':\ntest_4.c:(.text+0x50): undefined reference to `signum'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccypiQgv.o: in function `main':\ntest_4.c:(.text+0x50): undefined reference to `signum'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1091,
-    "correctness_rank": 7,
+    "correctness_rank": 6,
     "readability_proxy_score": 0.879,
     "composite_score": 0.1091,
     "structural_penalty": 0.2,
@@ -3313,8 +3040,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 3,
-    "consensus_rank": 7,
-    "time_ms": 575,
+    "consensus_rank": 6,
+    "time_ms": 606,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -3325,12 +3052,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0592,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp9eeq5e7i/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmp9eeq5e7i/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x14000158c_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), struct_204 stack_arguments _STACK) {\n      | ^~~~~~~~~~~\n/tmp/tmp9eeq5e7i/test_4.c:42:",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpqxfgawx7/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpqxfgawx7/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x14000158c_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), struct_204 stack_arguments _STACK) {\n      | ^~~~~~~~~~~\n/tmp/tmpqxfgawx7/test_4.c:42:",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1059,
-    "correctness_rank": 8,
+    "correctness_rank": 7,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1059,
     "structural_penalty": 0.0,
@@ -3429,8 +3156,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 1,
-    "consensus_rank": 8,
-    "time_ms": 12230,
+    "consensus_rank": 7,
+    "time_ms": 7879,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -3441,12 +3168,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.4228,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpe2goxm3x/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 signum(int32 ecx)\n      | ^~~~~~\n      | word\n/tmp/tmpe2goxm3x/test_4.c:41:15: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | word32 signum(int32 ecx)\n      |               ^~~~~",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp6w0ntboj/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 signum(int32 ecx)\n      | ^~~~~~\n      | word\n/tmp/tmp6w0ntboj/test_4.c:41:15: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | word32 signum(int32 ecx)\n      |               ^~~~~",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1423,
-    "correctness_rank": 4,
+    "correctness_rank": 3,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1423,
     "structural_penalty": 0.0,
@@ -3542,8 +3269,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 1,
-    "consensus_rank": 4,
-    "time_ms": 515,
+    "consensus_rank": 3,
+    "time_ms": 444,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -3552,112 +3279,32 @@ const SCORES = [
     "decompiler": "fission",
     "function_name": "checksum",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.1028,
+    "source_similarity": 0.0,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmphfbum14h/test_4.c: In function \u2018checksum\u2019:\n/tmp/tmphfbum14h/test_4.c:62:13: error: invalid operands to binary % (have \u2018uchar *\u2019 {aka \u2018unsigned char *\u2019} and \u2018int\u2019)\n   62 |     local_4 %= 256;\n      |             ^~\n",
-    "fail_category": "compile_error",
+    "semantic_error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
+    "fail_category": "adapter_error",
     "cases_passed": 0,
-    "cases_total": 5,
-    "correctness_score": 0.0823,
-    "correctness_rank": 8,
-    "readability_proxy_score": 0.2,
-    "composite_score": 0.0823,
-    "structural_penalty": 0.28,
+    "cases_total": 0,
+    "correctness_score": 0.0,
+    "correctness_rank": null,
+    "readability_proxy_score": null,
+    "composite_score": 0.0,
+    "structural_penalty": 0.0,
     "uses_intrinsics": false,
-    "decompiled_code": "uint checksum(longlong param_1, ulonglong param_2)\n{\n    uchar * local_10;\n    uchar * local_4;\n    longlong param_10;\n    ulonglong param_18;\n    uchar * rax = 0;\n\n    param_10 = param_1;\n    param_18 = param_2;\n    local_4 = rax;\n    local_10 = rax;\n    goto block_1400015f8;\nblock_1400015d5:\n    local_10 = local_10;\n    local_10 += param_10;\n    local_10 = (uint)*local_10;\n    local_4 = local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 += (uchar)(ulonglong)local_10;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 %= 256;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = local_4;\n    local_10++;\nblock_1400015f8:\n    if (local_10 < param_18) {\n        goto block_1400015d5;\n    }\n    return local_4;\n}\n",
-    "decompiled_code_nir": "uint checksum(longlong param_1, ulonglong param_2)\n{\n    uchar * local_10;\n    uchar * local_4;\n    longlong param_10;\n    ulonglong param_18;\n    uchar * rax = 0;\n\n    param_10 = param_1;\n    param_18 = param_2;\n    local_4 = rax;\n    local_10 = rax;\n    goto block_1400015f8;\nblock_1400015d5:\n    local_10 = local_10;\n    local_10 += param_10;\n    local_10 = (uint)*local_10;\n    local_4 = local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 += (uchar)(ulonglong)local_10;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 %= 256;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = local_4;\n    local_10++;\nblock_1400015f8:\n    if (local_10 < param_18) {\n        goto block_1400015d5;\n    }\n    return local_4;\n}\n",
+    "decompiled_code": "",
+    "decompiled_code_nir": "",
     "decompiled_code_hir": "",
     "pseudocode_layer": "",
-    "readability_metrics": {
-      "validated_against_humans": false,
-      "composite_score": null,
-      "parse_ok": false,
-      "parse_error": ":27:24: before: param_1",
-      "generic_naming_ratio": {
-        "raw": {
-          "generic": 0,
-          "total": 0,
-          "ratio": 1.0
-        },
-        "normalized": 0.0
-      },
-      "type_specificity": {
-        "raw": {
-          "average": 0.0,
-          "typed_nodes": 0
-        },
-        "normalized": 0.0
-      },
-      "expression_complexity": {
-        "raw": {
-          "operator_count": 0,
-          "avg_expression_depth": 0.0,
-          "max_cast_depth": 0,
-          "ternary_count": 0,
-          "comma_count": 0,
-          "temporary_identifier_count": 0,
-          "loc": 30,
-          "temporary_identifier_loc_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "structured_control_flow": {
-        "raw": {
-          "structured_constructs": 0,
-          "goto_count": 2,
-          "nesting_depth": 2,
-          "irreducible_loop_suspected": false,
-          "state_flag_count": 0,
-          "structured_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "unresolved_artifacts": {
-        "raw": {
-          "total": 0,
-          "details": {
-            "sleigh_intrinsic": 0,
-            "word_macro": 0,
-            "register_name": 0,
-            "collapsed_type": 0
-          }
-        },
-        "normalized": 1.0
-      }
-    },
+    "readability_metrics": {},
     "readability_metrics_hir": {},
     "readability_proxy_score_hir": null,
-    "ast_similarity": {
-      "available": false,
-      "algorithm": "zhang_shasha",
-      "error": ":27:24: before: param_1",
-      "identifier_placeholder": null,
-      "type_erased": null,
-      "control_flow_normalized": null
-    },
-    "output_diagnostics": {
-      "status": "direct_function",
-      "issues": [
-        "expected_address_missing"
-      ],
-      "function_definition_count": 1,
-      "function_definitions_sample": [
-        "checksum"
-      ],
-      "target_name_present": true,
-      "expected_address_present": false,
-      "whole_program_like": false,
-      "truncated_output": false,
-      "harness_blockers": [],
-      "dotted_names_sample": [],
-      "register_inputs_sample": [],
-      "decompiler": "fission"
-    },
-    "goto_count": 2,
-    "nesting_depth": 2,
-    "consensus_rank": 8,
-    "time_ms": 3246,
-    "error": null,
+    "ast_similarity": {},
+    "output_diagnostics": {},
+    "goto_count": 0,
+    "nesting_depth": 0,
+    "consensus_rank": null,
+    "time_ms": 3,
+    "error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
     "has_parity_diff": false,
     "parity_diff_path": ""
   },
@@ -3775,7 +3422,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 2,
-    "time_ms": 4439,
+    "time_ms": 4089,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -3786,7 +3433,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1856,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccCzwP4s.o: in function `main':\ntest_4.c:(.text+0x3e): undefined reference to `checksum'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccfPypWM.o: in function `main':\ntest_4.c:(.text+0x3e): undefined reference to `checksum'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -3899,7 +3546,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 4,
-    "time_ms": 36,
+    "time_ms": 68,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -3910,7 +3557,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.4539,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp1k52sikz/test_4.c:42:17: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | unsigned int dbg.checksum(int *buf,size_t len)\n      |                 ^\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpqzazcgx_/test_4.c:42:17: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | unsigned int dbg.checksum(int *buf,size_t len)\n      |                 ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -4017,7 +3664,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 83,
+    "time_ms": 99,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -4141,7 +3788,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 421,
+    "time_ms": 378,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -4152,7 +3799,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1288,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpay_vair7/test_4.c: In function \u2018fun_1400015b4\u2019:\n/tmp/tmpay_vair7/test_4.c:53:17: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   53 |         eax8 = *reinterpret_cast<unsigned char*>(v7 + reinterpret_cast<int64_t>(v4));\n      |                 ^~~~~~~~~~~~~~~~\n/tmp/tmpay",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpij943eqx/test_4.c: In function \u2018fun_1400015b4\u2019:\n/tmp/tmpij943eqx/test_4.c:53:17: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   53 |         eax8 = *reinterpret_cast<unsigned char*>(v7 + reinterpret_cast<int64_t>(v4));\n      |                 ^~~~~~~~~~~~~~~~\n/tmp/tmpij",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -4254,7 +3901,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 6,
-    "time_ms": 575,
+    "time_ms": 606,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -4265,7 +3912,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0438,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp_2axinw5/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmp_2axinw5/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x1400015b4_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_203 stack_arguments _STACK) {\n      ",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpymy9khav/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpymy9khav/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x1400015b4_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_203 stack_arguments _STACK) {\n      ",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -4370,7 +4017,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 7,
-    "time_ms": 12230,
+    "time_ms": 7879,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -4381,7 +4028,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1762,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpg_6538wk/test_4.c:41:1: error: unknown type name \u2018ui32\u2019\n   41 | ui32 checksum(Eq_552 rcx, Eq_553 rdx)\n      | ^~~~\n/tmp/tmpg_6538wk/test_4.c:41:15: error: unknown type name \u2018Eq_552\u2019\n   41 | ui32 checksum(Eq_552 rcx, Eq_553 rdx)\n      |               ^~~~~~\n/tmp/tmpg_6538wk/test_4.c:41:27: er",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpwx7kw528/test_4.c:41:1: error: unknown type name \u2018ui32\u2019\n   41 | ui32 checksum(Eq_552 rcx, Eq_553 rdx)\n      | ^~~~\n/tmp/tmpwx7kw528/test_4.c:41:15: error: unknown type name \u2018Eq_552\u2019\n   41 | ui32 checksum(Eq_552 rcx, Eq_553 rdx)\n      |               ^~~~~~\n/tmp/tmpwx7kw528/test_4.c:41:27: er",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -4483,7 +4130,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 5,
-    "time_ms": 515,
+    "time_ms": 444,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -4492,112 +4139,32 @@ const SCORES = [
     "decompiler": "fission",
     "function_name": "classify_range",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0928,
-    "semantic_score": 0.2,
-    "semantic_error": "Case 4: Runtime failed (exit code 1)",
-    "fail_category": "runtime_error",
-    "cases_passed": 1,
-    "cases_total": 5,
-    "correctness_score": 0.1993,
-    "correctness_rank": 3,
-    "readability_proxy_score": 0.2,
-    "composite_score": 0.1993,
-    "structural_penalty": 0.7,
+    "source_similarity": 0.0,
+    "semantic_score": 0.0,
+    "semantic_error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
+    "fail_category": "adapter_error",
+    "cases_passed": 0,
+    "cases_total": 0,
+    "correctness_score": 0.0,
+    "correctness_rank": null,
+    "readability_proxy_score": null,
+    "composite_score": 0.0,
+    "structural_penalty": 0.0,
     "uses_intrinsics": false,
-    "decompiled_code": "int classify_range(int param_1)\n{\n    ulonglong home_0;\n    int param_10;\n    longlong rax;\n\n    param_10 = param_1;\n    param_10 = param_10;\n    if (param_10 == 10) {\n        goto block_140001645;\n    }\n    param_10 = param_10;\n    if (10 < param_10) {\n        goto block_14000164c;\n    }\n    if (!param_10) {\n        goto block_140001637;\n    }\n    if (param_10 < 0) {\n        goto block_14000164c;\n    }\n    rax = param_10 - 1;\n    rax = rax;\n    if (2 < rax) {\n        goto block_14000164c;\n    }\n    goto block_14000163e;\nblock_140001637:\n    goto block_14000165e;\nblock_14000163e:\n    goto block_14000165e;\nblock_140001645:\n    goto block_14000165e;\nblock_14000164c:\nblock_14000165e:\n    return rax;\n}\n",
-    "decompiled_code_nir": "int classify_range(int param_1)\n{\n    ulonglong home_0;\n    int param_10;\n    longlong rax;\n\n    param_10 = param_1;\n    param_10 = param_10;\n    if (param_10 == 10) {\n        goto block_140001645;\n    }\n    param_10 = param_10;\n    if (10 < param_10) {\n        goto block_14000164c;\n    }\n    if (!param_10) {\n        goto block_140001637;\n    }\n    if (param_10 < 0) {\n        goto block_14000164c;\n    }\n    rax = param_10 - 1;\n    rax = rax;\n    if (2 < rax) {\n        goto block_14000164c;\n    }\n    goto block_14000163e;\nblock_140001637:\n    goto block_14000165e;\nblock_14000163e:\n    goto block_14000165e;\nblock_140001645:\n    goto block_14000165e;\nblock_14000164c:\nblock_14000165e:\n    return rax;\n}\n",
+    "decompiled_code": "",
+    "decompiled_code_nir": "",
     "decompiled_code_hir": "",
     "pseudocode_layer": "",
-    "readability_metrics": {
-      "validated_against_humans": false,
-      "composite_score": null,
-      "parse_ok": false,
-      "parse_error": ":31:14: before: rax",
-      "generic_naming_ratio": {
-        "raw": {
-          "generic": 0,
-          "total": 0,
-          "ratio": 1.0
-        },
-        "normalized": 0.0
-      },
-      "type_specificity": {
-        "raw": {
-          "average": 0.0,
-          "typed_nodes": 0
-        },
-        "normalized": 0.0
-      },
-      "expression_complexity": {
-        "raw": {
-          "operator_count": 0,
-          "avg_expression_depth": 0.0,
-          "max_cast_depth": 0,
-          "ternary_count": 0,
-          "comma_count": 0,
-          "temporary_identifier_count": 0,
-          "loc": 36,
-          "temporary_identifier_loc_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "structured_control_flow": {
-        "raw": {
-          "structured_constructs": 0,
-          "goto_count": 9,
-          "nesting_depth": 2,
-          "irreducible_loop_suspected": false,
-          "state_flag_count": 0,
-          "structured_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "unresolved_artifacts": {
-        "raw": {
-          "total": 0,
-          "details": {
-            "sleigh_intrinsic": 0,
-            "word_macro": 0,
-            "register_name": 0,
-            "collapsed_type": 0
-          }
-        },
-        "normalized": 1.0
-      }
-    },
+    "readability_metrics": {},
     "readability_metrics_hir": {},
     "readability_proxy_score_hir": null,
-    "ast_similarity": {
-      "available": false,
-      "algorithm": "zhang_shasha",
-      "error": ":31:14: before: rax",
-      "identifier_placeholder": null,
-      "type_erased": null,
-      "control_flow_normalized": null
-    },
-    "output_diagnostics": {
-      "status": "direct_function",
-      "issues": [
-        "expected_address_missing"
-      ],
-      "function_definition_count": 1,
-      "function_definitions_sample": [
-        "classify_range"
-      ],
-      "target_name_present": true,
-      "expected_address_present": false,
-      "whole_program_like": false,
-      "truncated_output": false,
-      "harness_blockers": [],
-      "dotted_names_sample": [],
-      "register_inputs_sample": [],
-      "decompiler": "fission"
-    },
-    "goto_count": 9,
-    "nesting_depth": 2,
-    "consensus_rank": 3,
-    "time_ms": 3246,
-    "error": null,
+    "ast_similarity": {},
+    "output_diagnostics": {},
+    "goto_count": 0,
+    "nesting_depth": 0,
+    "consensus_rank": null,
+    "time_ms": 3,
+    "error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
     "has_parity_diff": false,
     "parity_diff_path": ""
   },
@@ -4725,7 +4292,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 2,
-    "time_ms": 4439,
+    "time_ms": 4089,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -4736,12 +4303,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1865,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/cc3eCvyR.o: in function `main':\ntest_4.c:(.text+0x1e): undefined reference to `classify_range'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccrzyM4p.o: in function `main':\ntest_4.c:(.text+0x1e): undefined reference to `classify_range'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1187,
-    "correctness_rank": 4,
+    "correctness_rank": 3,
     "readability_proxy_score": 0.9,
     "composite_score": 0.1187,
     "structural_penalty": 0.0,
@@ -4848,8 +4415,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 1,
-    "consensus_rank": 4,
-    "time_ms": 36,
+    "consensus_rank": 3,
+    "time_ms": 68,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -4860,12 +4427,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1439,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpoav05t71/test_4.c:42:10: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | ulong dbg.classify_range(int value)\n      |          ^\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpflze1emw/test_4.c:42:10: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | ulong dbg.classify_range(int value)\n      |          ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1044,
-    "correctness_rank": 5,
+    "correctness_rank": 4,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1044,
     "structural_penalty": 0.1,
@@ -4966,8 +4533,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 3,
-    "consensus_rank": 5,
-    "time_ms": 83,
+    "consensus_rank": 4,
+    "time_ms": 99,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -5091,7 +4658,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 421,
+    "time_ms": 378,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -5102,12 +4669,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0455,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/cc6fOBlh.o: in function `main':\ntest_4.c:(.text+0x87): undefined reference to `classify_range'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccc4r3U1.o: in function `main':\ntest_4.c:(.text+0x87): undefined reference to `classify_range'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.0245,
-    "correctness_rank": 8,
+    "correctness_rank": 7,
     "readability_proxy_score": 0.7516,
     "composite_score": 0.0245,
     "structural_penalty": 0.8,
@@ -5214,8 +4781,8 @@ const SCORES = [
     },
     "goto_count": 7,
     "nesting_depth": 3,
-    "consensus_rank": 8,
-    "time_ms": 575,
+    "consensus_rank": 7,
+    "time_ms": 606,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -5226,12 +4793,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0418,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp5yb_cmmn/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmp5yb_cmmn/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x14000160b_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), struct_202 stack_arguments _STACK) {\n      | ^~~~~~~~~~~\n/tmp/tmp5yb_cmmn/test_4.c:42:",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp8gqia5of/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmp8gqia5of/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x14000160b_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), struct_202 stack_arguments _STACK) {\n      | ^~~~~~~~~~~\n/tmp/tmp8gqia5of/test_4.c:42:",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.0842,
-    "correctness_rank": 7,
+    "correctness_rank": 6,
     "readability_proxy_score": 0.4,
     "composite_score": 0.0842,
     "structural_penalty": 0.2,
@@ -5330,8 +4897,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 4,
-    "consensus_rank": 7,
-    "time_ms": 12230,
+    "consensus_rank": 6,
+    "time_ms": 7879,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -5342,12 +4909,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0824,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpv0p209eq/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 classify_range(Eq_568 ecx)\n      | ^~~~~~\n      | word\n/tmp/tmpv0p209eq/test_4.c:41:23: error: unknown type name \u2018Eq_568\u2019\n   41 | word32 classify_range(Eq_568 ecx)\n      |                       ^~~",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp2fefsk0u/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 classify_range(Eq_568 ecx)\n      | ^~~~~~\n      | word\n/tmp/tmp2fefsk0u/test_4.c:41:23: error: unknown type name \u2018Eq_568\u2019\n   41 | word32 classify_range(Eq_568 ecx)\n      |                       ^~~",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.0882,
-    "correctness_rank": 6,
+    "correctness_rank": 5,
     "readability_proxy_score": 0.4,
     "composite_score": 0.0882,
     "structural_penalty": 0.2,
@@ -5443,8 +5010,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 4,
-    "consensus_rank": 6,
-    "time_ms": 515,
+    "consensus_rank": 5,
+    "time_ms": 444,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -5453,112 +5020,32 @@ const SCORES = [
     "decompiler": "fission",
     "function_name": "saturating_add",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.063,
-    "semantic_score": 0.6,
-    "semantic_error": "Case 2: Runtime failed (exit code 1)",
-    "fail_category": "runtime_error",
-    "cases_passed": 3,
-    "cases_total": 5,
-    "correctness_score": 0.5343,
-    "correctness_rank": 2,
-    "readability_proxy_score": 0.0667,
-    "composite_score": 0.5343,
-    "structural_penalty": 0.52,
-    "uses_intrinsics": true,
-    "decompiled_code": "int saturating_add(int param_1, int param_2)\n{\n    int local_4;\n    ulonglong home_0;\n    int param_10;\n    int param_18;\n    int iVar47;\n    uchar reg;\n    longlong rsp;\n\n    reg = rsp < 16;\n    reg = __sborrow(rsp, 16);\n    reg = rsp < 0;\n    reg = rsp == 0;\n    reg = (__popcount(rsp % 256) & 1) == 0;\n    param_10 = param_1;\n    param_18 = param_2;\n    reg = __carry(param_18, param_10);\n    reg = __scarry(param_18, param_10);\n    local_4 = param_18 + param_10;\n    local_4 = local_4;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = local_4;\n    reg = 0;\n    param_18 = param_18;\n    reg = param_18 < 0;\n    reg = param_18 == 0;\n    if (reg) {\n        goto block_14000168e;\n    }\n    local_4 = local_4;\n    param_10 = param_10;\n    reg = __sborrow(local_4, param_10);\n    reg = local_4 - param_10 < 0;\n    if (param_10 <= local_4) {\n        goto block_14000168e;\n    }\n    goto block_1400016a6;\nblock_14000168e:\n    reg = 0;\n    reg = param_18 < 0;\n    if (reg) {\n        reg = __sborrow(local_4, param_10);\n        iVar47 = local_4 - param_10;\n        reg = iVar47 < 0;\n        reg = iVar47 == 0;\n    }\nblock_1400016a6:\n    reg = -16 <= rsp;\n    reg = __scarry(rsp, 16);\n    return local_4;\n}\n",
-    "decompiled_code_nir": "int saturating_add(int param_1, int param_2)\n{\n    int local_4;\n    ulonglong home_0;\n    int param_10;\n    int param_18;\n    int iVar47;\n    uchar reg;\n    longlong rsp;\n\n    reg = rsp < 16;\n    reg = __sborrow(rsp, 16);\n    reg = rsp < 0;\n    reg = rsp == 0;\n    reg = (__popcount(rsp % 256) & 1) == 0;\n    param_10 = param_1;\n    param_18 = param_2;\n    reg = __carry(param_18, param_10);\n    reg = __scarry(param_18, param_10);\n    local_4 = param_18 + param_10;\n    local_4 = local_4;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = local_4;\n    reg = 0;\n    param_18 = param_18;\n    reg = param_18 < 0;\n    reg = param_18 == 0;\n    if (reg) {\n        goto block_14000168e;\n    }\n    local_4 = local_4;\n    param_10 = param_10;\n    reg = __sborrow(local_4, param_10);\n    reg = local_4 - param_10 < 0;\n    if (param_10 <= local_4) {\n        goto block_14000168e;\n    }\n    goto block_1400016a6;\nblock_14000168e:\n    reg = 0;\n    reg = param_18 < 0;\n    if (reg) {\n        reg = __sborrow(local_4, param_10);\n        iVar47 = local_4 - param_10;\n        reg = iVar47 < 0;\n        reg = iVar47 == 0;\n    }\nblock_1400016a6:\n    reg = -16 <= rsp;\n    reg = __scarry(rsp, 16);\n    return local_4;\n}\n",
+    "source_similarity": 0.0,
+    "semantic_score": 0.0,
+    "semantic_error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
+    "fail_category": "adapter_error",
+    "cases_passed": 0,
+    "cases_total": 0,
+    "correctness_score": 0.0,
+    "correctness_rank": null,
+    "readability_proxy_score": null,
+    "composite_score": 0.0,
+    "structural_penalty": 0.0,
+    "uses_intrinsics": false,
+    "decompiled_code": "",
+    "decompiled_code_nir": "",
     "decompiled_code_hir": "",
     "pseudocode_layer": "",
-    "readability_metrics": {
-      "validated_against_humans": false,
-      "composite_score": null,
-      "parse_ok": false,
-      "parse_error": ":35:14: before: rsp",
-      "generic_naming_ratio": {
-        "raw": {
-          "generic": 0,
-          "total": 0,
-          "ratio": 1.0
-        },
-        "normalized": 0.0
-      },
-      "type_specificity": {
-        "raw": {
-          "average": 0.0,
-          "typed_nodes": 0
-        },
-        "normalized": 0.0
-      },
-      "expression_complexity": {
-        "raw": {
-          "operator_count": 0,
-          "avg_expression_depth": 0.0,
-          "max_cast_depth": 0,
-          "ternary_count": 0,
-          "comma_count": 0,
-          "temporary_identifier_count": 0,
-          "loc": 53,
-          "temporary_identifier_loc_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "structured_control_flow": {
-        "raw": {
-          "structured_constructs": 0,
-          "goto_count": 3,
-          "nesting_depth": 2,
-          "irreducible_loop_suspected": false,
-          "state_flag_count": 0,
-          "structured_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "unresolved_artifacts": {
-        "raw": {
-          "total": 8,
-          "details": {
-            "sleigh_intrinsic": 8,
-            "word_macro": 0,
-            "register_name": 0,
-            "collapsed_type": 0
-          }
-        },
-        "normalized": 0.3333
-      }
-    },
+    "readability_metrics": {},
     "readability_metrics_hir": {},
     "readability_proxy_score_hir": null,
-    "ast_similarity": {
-      "available": false,
-      "algorithm": "zhang_shasha",
-      "error": ":35:14: before: rsp",
-      "identifier_placeholder": null,
-      "type_erased": null,
-      "control_flow_normalized": null
-    },
-    "output_diagnostics": {
-      "status": "direct_function",
-      "issues": [
-        "expected_address_missing"
-      ],
-      "function_definition_count": 1,
-      "function_definitions_sample": [
-        "saturating_add"
-      ],
-      "target_name_present": true,
-      "expected_address_present": false,
-      "whole_program_like": false,
-      "truncated_output": false,
-      "harness_blockers": [],
-      "dotted_names_sample": [],
-      "register_inputs_sample": [],
-      "decompiler": "fission"
-    },
-    "goto_count": 3,
-    "nesting_depth": 2,
-    "consensus_rank": 2,
-    "time_ms": 3246,
-    "error": null,
+    "ast_similarity": {},
+    "output_diagnostics": {},
+    "goto_count": 0,
+    "nesting_depth": 0,
+    "consensus_rank": null,
+    "time_ms": 3,
+    "error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
     "has_parity_diff": false,
     "parity_diff_path": ""
   },
@@ -5573,7 +5060,7 @@ const SCORES = [
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1052,
-    "correctness_rank": 5,
+    "correctness_rank": 4,
     "readability_proxy_score": 0.5509,
     "composite_score": 0.1052,
     "structural_penalty": 0.2,
@@ -5686,8 +5173,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 3,
-    "consensus_rank": 5,
-    "time_ms": 4439,
+    "consensus_rank": 4,
+    "time_ms": 4089,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -5698,12 +5185,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1818,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccW0HX9M.o: in function `main':\ntest_4.c:(.text+0x23): undefined reference to `saturating_add'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccjHh8ou.o: in function `main':\ntest_4.c:(.text+0x23): undefined reference to `saturating_add'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1182,
-    "correctness_rank": 4,
+    "correctness_rank": 3,
     "readability_proxy_score": 0.9,
     "composite_score": 0.1182,
     "structural_penalty": 0.0,
@@ -5810,8 +5297,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 1,
-    "consensus_rank": 4,
-    "time_ms": 36,
+    "consensus_rank": 3,
+    "time_ms": 68,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -5822,12 +5309,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.2273,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp1_3a76yr/test_4.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.saturating_add(int a,int b)\n      |        ^\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpvkw_tjwd/test_4.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.saturating_add(int a,int b)\n      |        ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1027,
-    "correctness_rank": 6,
+    "correctness_rank": 5,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1027,
     "structural_penalty": 0.2,
@@ -5928,8 +5415,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 3,
-    "consensus_rank": 6,
-    "time_ms": 83,
+    "consensus_rank": 5,
+    "time_ms": 99,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -6053,7 +5540,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 1,
-    "time_ms": 421,
+    "time_ms": 378,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -6064,12 +5551,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0347,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccwOkz9v.o: in function `main':\ntest_4.c:(.text+0x64): undefined reference to `saturating_add'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccLjtEID.o: in function `main':\ntest_4.c:(.text+0x64): undefined reference to `saturating_add'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.0835,
-    "correctness_rank": 8,
+    "correctness_rank": 7,
     "readability_proxy_score": 0.8689,
     "composite_score": 0.0835,
     "structural_penalty": 0.2,
@@ -6176,8 +5663,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 3,
-    "consensus_rank": 8,
-    "time_ms": 575,
+    "consensus_rank": 7,
+    "time_ms": 606,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -6188,12 +5675,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0862,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpiehe3649/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpiehe3649/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x140001660_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_201 stack_arguments _STACK) {\n      ",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpp7q_cyhh/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpp7q_cyhh/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x140001660_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_201 stack_arguments _STACK) {\n      ",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.0886,
-    "correctness_rank": 7,
+    "correctness_rank": 6,
     "readability_proxy_score": 0.4,
     "composite_score": 0.0886,
     "structural_penalty": 0.2,
@@ -6292,8 +5779,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 3,
-    "consensus_rank": 7,
-    "time_ms": 12230,
+    "consensus_rank": 6,
+    "time_ms": 7879,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -6304,12 +5791,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1866,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpyqc0l6_3/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 saturating_add(int32 ecx, int32 edx)\n      | ^~~~~~\n      | word\n/tmp/tmpyqc0l6_3/test_4.c:41:23: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | word32 saturating_add(int32 ecx, ",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpsvbbdz3w/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 saturating_add(int32 ecx, int32 edx)\n      | ^~~~~~\n      | word\n/tmp/tmpsvbbdz3w/test_4.c:41:23: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | word32 saturating_add(int32 ecx, ",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1187,
-    "correctness_rank": 3,
+    "correctness_rank": 2,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1187,
     "structural_penalty": 0.0,
@@ -6405,8 +5892,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 1,
-    "consensus_rank": 3,
-    "time_ms": 515,
+    "consensus_rank": 2,
+    "time_ms": 444,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -6415,112 +5902,32 @@ const SCORES = [
     "decompiler": "fission",
     "function_name": "rc4_init",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0306,
+    "source_similarity": 0.0,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpnn9gjdeu/test_4.c: In function \u2018rc4_init\u2019:\n/tmp/tmpnn9gjdeu/test_4.c:52:5: error: \u2018reg\u2019 undeclared (first use in this function)\n   52 |     reg = __sborrow(rsp, 16);\n      |     ^~~\n/tmp/tmpnn9gjdeu/test_4.c:52:5: note: each undeclared identifier is reported only once for each function it ap",
-    "fail_category": "compile_error",
+    "semantic_error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
+    "fail_category": "adapter_error",
     "cases_passed": 0,
-    "cases_total": 5,
-    "correctness_score": 0.0471,
-    "correctness_rank": 7,
-    "readability_proxy_score": 0.0,
-    "composite_score": 0.0471,
-    "structural_penalty": 0.56,
-    "uses_intrinsics": true,
-    "decompiled_code": "void rc4_init(uchar * param_1, uchar * param_2, uint param_3)\n{\n    uchar * local_9;\n    ulonglong home_0;\n    uint param_20;\n    uchar * iVar10;\n    uchar * rax = 0;\n    ulonglong rsp;\n    uint uVar58;\n    longlong xVar68;\n\n    reg = __sborrow(rsp, 16);\n    local_9 = param_1;\n    local_9 = param_2;\n    param_20 = param_3;\n    local_9 = rax;\n    goto block_14000156a;\nblock_140001554:\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = __carry(local_9, local_9);\n    reg = __scarry(local_9, local_9);\n    local_9 *= 2;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    *local_9 = (uchar)(ulonglong)local_9;\n    reg = 4294967295 <= local_9;\n    reg = __scarry(local_9, 1);\n    local_9++;\nblock_14000156a:\n    reg = __sborrow(local_9, 255);\n    iVar10 = local_9 - 255;\n    reg = iVar10 < 0;\n    reg = iVar10 == 0;\n    if (local_9 <= 255) {\n        goto block_140001554;\n    }\n    local_9 = rax;\n    goto block_14000160f;\nblock_14000157f:\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = __carry(local_9, local_9);\n    reg = __scarry(local_9, local_9);\n    local_9 *= 2;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (uint)*local_9;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    uVar58 = (longlong)(ulonglong)local_9 >> 32;\n    xVar68 = ((ulonglong)uVar58 << 32 | (ulonglong)(ulonglong)local_9) % (longlong)param_20;\n    reg = __carry(local_9, xVar68);\n    reg = __scarry(local_9, xVar68);\n    local_9 += xVar68;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (uint)*local_9;\n    local_9 = (uint)(uchar)(ulonglong)local_9;\n    local_9 = (int)((int)((uchar)(ulonglong)local_9 + (ulonglong)(ulonglong)local_9) + (ulonglong)(ulonglong)local_9);\n    local_9 = (ulonglong)(ulonglong)local_9;\n    local_9 = (uchar *)((ulonglong)local_9 >> 31);\n    reg = (local_9 >> 30 & 1) != 0;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (uchar *)((ulonglong)local_9 >> 24);\n    reg = (local_9 / 8388608 & 1) != 0;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    reg = __carry(local_9, local_9);\n    reg = __scarry(local_9, local_9);\n    local_9 *= 2;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (uint)(uchar)(ulonglong)local_9;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = local_9 < local_9;\n    reg = __sborrow(local_9, local_9);\n    local_9 = (ulonglong)(ulonglong)local_9 - (ulonglong)(ulonglong)local_9;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = __carry(local_9, local_9);\n    reg = __scarry(local_9, local_9);\n    local_9 *= 2;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (uint)*local_9;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = __carry(local_9, local_9);\n    reg = __scarry(local_9, local_9);\n    local_9 *= 2;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = __carry(local_9, local_9);\n    reg = __scarry(local_9, local_9);\n    local_9 *= 2;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (uint)*local_9;\n    *local_9 = (uchar)(ulonglong)local_9;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    iVar10 = (longlong)(ulonglong)local_9;\n    reg = __carry(iVar10, local_9);\n    reg = __scarry(iVar10, local_9);\n    iVar10 += (ulonglong)local_9;\n    reg = iVar10 < 0;\n    reg = iVar10 == 0;\n    reg = (__popcount(iVar10 % 256) & 1) == 0;\n    *iVar10 = (uchar)(ulonglong)local_9;\n    reg = 4294967295 <= local_9;\n    reg = __scarry(local_9, 1);\n    local_9++;\nblock_14000160f:\n    reg = __sborrow(local_9, 255);\n    iVar10 = local_9 - 255;\n    reg = iVar10 < 0;\n    reg = iVar10 == 0;\n    if (local_9 <= 255) {\n        goto block_14000157f;\n    }\n    reg = -16 <= rsp;\n    reg = __scarry(rsp, 16);\n    return;\n}\n",
-    "decompiled_code_nir": "void rc4_init(uchar * param_1, uchar * param_2, uint param_3)\n{\n    uchar * local_9;\n    ulonglong home_0;\n    uint param_20;\n    uchar * iVar10;\n    uchar * rax = 0;\n    ulonglong rsp;\n    uint uVar58;\n    longlong xVar68;\n\n    reg = __sborrow(rsp, 16);\n    local_9 = param_1;\n    local_9 = param_2;\n    param_20 = param_3;\n    local_9 = rax;\n    goto block_14000156a;\nblock_140001554:\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = __carry(local_9, local_9);\n    reg = __scarry(local_9, local_9);\n    local_9 *= 2;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    *local_9 = (uchar)(ulonglong)local_9;\n    reg = 4294967295 <= local_9;\n    reg = __scarry(local_9, 1);\n    local_9++;\nblock_14000156a:\n    reg = __sborrow(local_9, 255);\n    iVar10 = local_9 - 255;\n    reg = iVar10 < 0;\n    reg = iVar10 == 0;\n    if (local_9 <= 255) {\n        goto block_140001554;\n    }\n    local_9 = rax;\n    goto block_14000160f;\nblock_14000157f:\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = __carry(local_9, local_9);\n    reg = __scarry(local_9, local_9);\n    local_9 *= 2;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (uint)*local_9;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    uVar58 = (longlong)(ulonglong)local_9 >> 32;\n    xVar68 = ((ulonglong)uVar58 << 32 | (ulonglong)(ulonglong)local_9) % (longlong)param_20;\n    reg = __carry(local_9, xVar68);\n    reg = __scarry(local_9, xVar68);\n    local_9 += xVar68;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (uint)*local_9;\n    local_9 = (uint)(uchar)(ulonglong)local_9;\n    local_9 = (int)((int)((uchar)(ulonglong)local_9 + (ulonglong)(ulonglong)local_9) + (ulonglong)(ulonglong)local_9);\n    local_9 = (ulonglong)(ulonglong)local_9;\n    local_9 = (uchar *)((ulonglong)local_9 >> 31);\n    reg = (local_9 >> 30 & 1) != 0;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (uchar *)((ulonglong)local_9 >> 24);\n    reg = (local_9 / 8388608 & 1) != 0;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    reg = __carry(local_9, local_9);\n    reg = __scarry(local_9, local_9);\n    local_9 *= 2;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (uint)(uchar)(ulonglong)local_9;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = local_9 < local_9;\n    reg = __sborrow(local_9, local_9);\n    local_9 = (ulonglong)(ulonglong)local_9 - (ulonglong)(ulonglong)local_9;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = __carry(local_9, local_9);\n    reg = __scarry(local_9, local_9);\n    local_9 *= 2;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (uint)*local_9;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = __carry(local_9, local_9);\n    reg = __scarry(local_9, local_9);\n    local_9 *= 2;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    reg = __carry(local_9, local_9);\n    reg = __scarry(local_9, local_9);\n    local_9 *= 2;\n    reg = local_9 < 0;\n    reg = local_9 == 0;\n    reg = (__popcount(local_9 % 256) & 1) == 0;\n    local_9 = (uint)*local_9;\n    *local_9 = (uchar)(ulonglong)local_9;\n    local_9 = (ulonglong)(ulonglong)local_9;\n    iVar10 = (longlong)(ulonglong)local_9;\n    reg = __carry(iVar10, local_9);\n    reg = __scarry(iVar10, local_9);\n    iVar10 += (ulonglong)local_9;\n    reg = iVar10 < 0;\n    reg = iVar10 == 0;\n    reg = (__popcount(iVar10 % 256) & 1) == 0;\n    *iVar10 = (uchar)(ulonglong)local_9;\n    reg = 4294967295 <= local_9;\n    reg = __scarry(local_9, 1);\n    local_9++;\nblock_14000160f:\n    reg = __sborrow(local_9, 255);\n    iVar10 = local_9 - 255;\n    reg = iVar10 < 0;\n    reg = iVar10 == 0;\n    if (local_9 <= 255) {\n        goto block_14000157f;\n    }\n    reg = -16 <= rsp;\n    reg = __scarry(rsp, 16);\n    return;\n}\n",
+    "cases_total": 0,
+    "correctness_score": 0.0,
+    "correctness_rank": null,
+    "readability_proxy_score": null,
+    "composite_score": 0.0,
+    "structural_penalty": 0.0,
+    "uses_intrinsics": false,
+    "decompiled_code": "",
+    "decompiled_code_nir": "",
     "decompiled_code_hir": "",
     "pseudocode_layer": "",
-    "readability_metrics": {
-      "validated_against_humans": false,
-      "composite_score": null,
-      "parse_ok": false,
-      "parse_error": ":36:14: before: xVar68",
-      "generic_naming_ratio": {
-        "raw": {
-          "generic": 0,
-          "total": 0,
-          "ratio": 1.0
-        },
-        "normalized": 0.0
-      },
-      "type_specificity": {
-        "raw": {
-          "average": 0.0,
-          "typed_nodes": 0
-        },
-        "normalized": 0.0
-      },
-      "expression_complexity": {
-        "raw": {
-          "operator_count": 0,
-          "avg_expression_depth": 0.0,
-          "max_cast_depth": 0,
-          "ternary_count": 0,
-          "comma_count": 0,
-          "temporary_identifier_count": 0,
-          "loc": 136,
-          "temporary_identifier_loc_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "structured_control_flow": {
-        "raw": {
-          "structured_constructs": 0,
-          "goto_count": 4,
-          "nesting_depth": 2,
-          "irreducible_loop_suspected": false,
-          "state_flag_count": 0,
-          "structured_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "unresolved_artifacts": {
-        "raw": {
-          "total": 34,
-          "details": {
-            "sleigh_intrinsic": 34,
-            "word_macro": 0,
-            "register_name": 0,
-            "collapsed_type": 0
-          }
-        },
-        "normalized": 0.0
-      }
-    },
+    "readability_metrics": {},
     "readability_metrics_hir": {},
     "readability_proxy_score_hir": null,
-    "ast_similarity": {
-      "available": false,
-      "algorithm": "zhang_shasha",
-      "error": ":36:14: before: xVar68",
-      "identifier_placeholder": null,
-      "type_erased": null,
-      "control_flow_normalized": null
-    },
-    "output_diagnostics": {
-      "status": "direct_function",
-      "issues": [
-        "expected_address_missing"
-      ],
-      "function_definition_count": 1,
-      "function_definitions_sample": [
-        "rc4_init"
-      ],
-      "target_name_present": true,
-      "expected_address_present": false,
-      "whole_program_like": false,
-      "truncated_output": false,
-      "harness_blockers": [],
-      "dotted_names_sample": [],
-      "register_inputs_sample": [],
-      "decompiler": "fission"
-    },
-    "goto_count": 4,
-    "nesting_depth": 2,
-    "consensus_rank": 7,
-    "time_ms": 26537,
-    "error": null,
+    "ast_similarity": {},
+    "output_diagnostics": {},
+    "goto_count": 0,
+    "nesting_depth": 0,
+    "consensus_rank": null,
+    "time_ms": 5,
+    "error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
     "has_parity_diff": false,
     "parity_diff_path": ""
   },
@@ -6639,7 +6046,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 2,
-    "time_ms": 10201,
+    "time_ms": 7773,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -6650,7 +6057,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0,
     "semantic_score": 0.0,
-    "semantic_error": "Decompilation failed: Level | File                                    | Line | Message\n====================================================================================================\nMsg   | src/boomerang/util/log/Log.cpp          |  152 | This is Boomerang 4110413\nMsg   | src/boomerang/util/log/Log.cpp          |  153 | Log initialized.\nMsg   | src/boomerang/util/log/Log.cpp          |  154 | Log level is 'Msg'.\nMsg   | src/boomerang/core/Project.cpp          |  350 | Loading plugins...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/ppc.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/x86.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/st20.ssl'...\nMsg   | src/boomerang/core/Project.cpp          |  364 | Loaded plugins:\nMsg   | src/boomerang/core/Project.cpp          |  366 |   C Code Generator plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone PPC decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone x86 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   ST20 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS4GW loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ELF32 loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS Exe loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Mach-O loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ST20 .bin loader plugin [experimental] 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Win32 PE loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   PPC FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   ST20 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   X86 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  382 |   C Symbol Provider plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  386 |   DFA Type Recovery plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  111 | Loading binary file '/tmp/tmpcwikktwc/target.bin'\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  291 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  374 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  433 | Microdisassembler out of step at offset 4561\nMsg   | src/boomerang/db/Prog.cpp               |  351 | Reading library signatures...\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001530\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001530\nMsg   | src/boomerang/core/Project.cpp          |  197 | Found 1 procs\nMsg   | src/boomerang/core/Project.cpp          |  222 | Decompiling...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001530'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001559: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001559 arpl ax, dx'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001584: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001584 arpl ax, dx'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  210 | Transforming from SSA form...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  139 | Removing unused global variables...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   94 | Compressing CFG...\n",
+    "semantic_error": "Decompilation failed: Level | File                                    | Line | Message\n====================================================================================================\nMsg   | src/boomerang/util/log/Log.cpp          |  152 | This is Boomerang 4110413\nMsg   | src/boomerang/util/log/Log.cpp          |  153 | Log initialized.\nMsg   | src/boomerang/util/log/Log.cpp          |  154 | Log level is 'Msg'.\nMsg   | src/boomerang/core/Project.cpp          |  350 | Loading plugins...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/ppc.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/x86.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/st20.ssl'...\nMsg   | src/boomerang/core/Project.cpp          |  364 | Loaded plugins:\nMsg   | src/boomerang/core/Project.cpp          |  366 |   C Code Generator plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone PPC decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone x86 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   ST20 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS4GW loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ELF32 loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS Exe loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Mach-O loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ST20 .bin loader plugin [experimental] 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Win32 PE loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   PPC FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   ST20 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   X86 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  382 |   C Symbol Provider plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  386 |   DFA Type Recovery plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  111 | Loading binary file '/tmp/tmpxwzlaho2/target.bin'\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  291 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  374 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  433 | Microdisassembler out of step at offset 4561\nMsg   | src/boomerang/db/Prog.cpp               |  351 | Reading library signatures...\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001530\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001530\nMsg   | src/boomerang/core/Project.cpp          |  197 | Found 1 procs\nMsg   | src/boomerang/core/Project.cpp          |  222 | Decompiling...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001530'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001559: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001559 arpl ax, dx'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001584: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001584 arpl ax, dx'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  210 | Transforming from SSA form...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  139 | Removing unused global variables...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   94 | Compressing CFG...\n",
     "fail_category": "adapter_error",
     "cases_passed": 0,
     "cases_total": 0,
@@ -6672,8 +6079,8 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 0,
     "consensus_rank": null,
-    "time_ms": 181,
-    "error": "Decompilation failed: Level | File                                    | Line | Message\n====================================================================================================\nMsg   | src/boomerang/util/log/Log.cpp          |  152 | This is Boomerang 4110413\nMsg   | src/boomerang/util/log/Log.cpp          |  153 | Log initialized.\nMsg   | src/boomerang/util/log/Log.cpp          |  154 | Log level is 'Msg'.\nMsg   | src/boomerang/core/Project.cpp          |  350 | Loading plugins...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/ppc.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/x86.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/st20.ssl'...\nMsg   | src/boomerang/core/Project.cpp          |  364 | Loaded plugins:\nMsg   | src/boomerang/core/Project.cpp          |  366 |   C Code Generator plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone PPC decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone x86 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   ST20 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS4GW loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ELF32 loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS Exe loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Mach-O loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ST20 .bin loader plugin [experimental] 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Win32 PE loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   PPC FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   ST20 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   X86 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  382 |   C Symbol Provider plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  386 |   DFA Type Recovery plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  111 | Loading binary file '/tmp/tmpcwikktwc/target.bin'\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  291 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  374 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  433 | Microdisassembler out of step at offset 4561\nMsg   | src/boomerang/db/Prog.cpp               |  351 | Reading library signatures...\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001530\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001530\nMsg   | src/boomerang/core/Project.cpp          |  197 | Found 1 procs\nMsg   | src/boomerang/core/Project.cpp          |  222 | Decompiling...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001530'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001559: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001559 arpl ax, dx'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001584: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001584 arpl ax, dx'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  210 | Transforming from SSA form...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  139 | Removing unused global variables...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   94 | Compressing CFG...\n",
+    "time_ms": 194,
+    "error": "Decompilation failed: Level | File                                    | Line | Message\n====================================================================================================\nMsg   | src/boomerang/util/log/Log.cpp          |  152 | This is Boomerang 4110413\nMsg   | src/boomerang/util/log/Log.cpp          |  153 | Log initialized.\nMsg   | src/boomerang/util/log/Log.cpp          |  154 | Log level is 'Msg'.\nMsg   | src/boomerang/core/Project.cpp          |  350 | Loading plugins...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/ppc.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/x86.ssl'...\nMsg   | src/boomerang/ssl/RTLInstDict.cpp       |   60 | Loading machine specifications from '/usr/local/share/boomerang/ssl/st20.ssl'...\nMsg   | src/boomerang/core/Project.cpp          |  364 | Loaded plugins:\nMsg   | src/boomerang/core/Project.cpp          |  366 |   C Code Generator plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone PPC decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   Capstone x86 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  370 |   ST20 decoder plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS4GW loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ELF32 loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   DOS Exe loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Mach-O loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   ST20 .bin loader plugin [experimental] 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  374 |   Win32 PE loader plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   PPC FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   ST20 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  378 |   X86 FrontEnd plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  382 |   C Symbol Provider plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  386 |   DFA Type Recovery plugin 4110413 (by 'Boomerang developers')\nMsg   | src/boomerang/core/Project.cpp          |  111 | Loading binary file '/tmp/tmpxwzlaho2/target.bin'\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  291 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  374 | Microdisassembler out of step at offset 5357\nWarn  | src/boomerang-plugins/loader/pe/Win32Bi |  433 | Microdisassembler out of step at offset 4561\nMsg   | src/boomerang/db/Prog.cpp               |  351 | Reading library signatures...\nMsg   | src/boomerang/core/Project.cpp          |  187 | Decoding specified entrypoint at address 0x00001530\nMsg   | src/boomerang/frontend/DefaultFrontEnd. |  193 | Starting disassembly at address 0x00001530\nMsg   | src/boomerang/core/Project.cpp          |  197 | Found 1 procs\nMsg   | src/boomerang/core/Project.cpp          |  222 | Decompiling...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   39 | Decompiling entry point 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |   44 | Visiting procedure 'proc_0x00001530'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001559: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001559 arpl ax, dx'\nError | src/boomerang/ssl/RTLInstDict.cpp       |  120 | Cannot instantiate instruction 'ARPLREG16REG16' at address 0x00001584: No instruction template takes 2 arguments\nError | src/boomerang/frontend/DefaultFrontEnd. |  793 | Cannot lift instruction '0x00001584 arpl ax, dx'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  127 | Decompiling procedure 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProcDecompiler.cpp |  162 | Finished decompile of 'proc_0x00001530'\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  203 | Removing unused returns...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  110 | Performing global type analysis...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  210 | Transforming from SSA form...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |  139 | Removing unused global variables...\nMsg   | src/boomerang/decomp/ProgDecompiler.cpp |   94 | Compressing CFG...\n",
     "has_parity_diff": false,
     "parity_diff_path": ""
   },
@@ -6683,7 +6090,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.5009,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp1p24rua4/test_4.c:42:9: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | void dbg.rc4_init(uint8_t *s,int *key,int key_len)\n      |         ^\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpvmkwutdh/test_4.c:42:9: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | void dbg.rc4_init(uint8_t *s,int *key,int key_len)\n      |         ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -6790,7 +6197,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 233,
+    "time_ms": 124,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -6914,7 +6321,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 923,
+    "time_ms": 707,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -6925,7 +6332,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0263,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpceothl_7/test_4.c: In function \u2018fun_140001530\u2019:\n/tmp/tmpceothl_7/test_4.c:69:10: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   69 |         *reinterpret_cast<signed char*>(reinterpret_cast<int64_t>(v4) + v8) = *reinterpret_cast<signed char*>(&edx9);\n      |          ^~",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmphak6u2pf/test_4.c: In function \u2018fun_140001530\u2019:\n/tmp/tmphak6u2pf/test_4.c:69:10: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   69 |         *reinterpret_cast<signed char*>(reinterpret_cast<int64_t>(v4) + v8) = *reinterpret_cast<signed char*>(&edx9);\n      |          ^~",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -7027,7 +6434,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 5,
-    "time_ms": 617,
+    "time_ms": 611,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -7038,7 +6445,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0163,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpmpqot89f/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpmpqot89f/test_4.c:42:39: error: unknown type name \u2018generic64_t\u2019\n   42 | void function_0x140001530_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_1",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpdxkg1t5j/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpdxkg1t5j/test_4.c:42:39: error: unknown type name \u2018generic64_t\u2019\n   42 | void function_0x140001530_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_1",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -7143,7 +6550,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 5,
     "consensus_rank": 6,
-    "time_ms": 18127,
+    "time_ms": 12879,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -7154,7 +6561,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1287,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpu0o14xo1/test_4.c:41:39: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | void rc4_init(byte rcx[], byte rdx[], int32 r8d)\n      |                                       ^~~~~\n      |                                       int32_t\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp8pnmyvmh/test_4.c:41:39: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | void rc4_init(byte rcx[], byte rdx[], int32 r8d)\n      |                                       ^~~~~\n      |                                       int32_t\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
@@ -7256,7 +6663,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 4,
-    "time_ms": 917,
+    "time_ms": 1170,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -7265,112 +6672,32 @@ const SCORES = [
     "decompiler": "fission",
     "function_name": "rc4_crypt",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0095,
+    "source_similarity": 0.0,
     "semantic_score": 0.0,
-    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmpk502atqx/test_3.c: In function \u2018rc4_crypt\u2019:\n/tmp/tmpk502atqx/test_3.c:52:5: error: \u2018reg\u2019 undeclared (first use in this function)\n   52 |     reg = rsp < 16;\n      |     ^~~\n/tmp/tmpk502atqx/test_3.c:52:5: note: each undeclared identifier is reported only once for each function it appears in\n",
-    "fail_category": "compile_error",
+    "semantic_error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
+    "fail_category": "adapter_error",
     "cases_passed": 0,
-    "cases_total": 4,
-    "correctness_score": 0.073,
-    "correctness_rank": 8,
-    "readability_proxy_score": 0.0,
-    "composite_score": 0.073,
-    "structural_penalty": 0.28,
-    "uses_intrinsics": true,
-    "decompiled_code": "int rc4_crypt(uchar * param_1, uchar * param_2, uint param_3)\n{\n    uchar * local_d;\n    uchar * local_4;\n    uchar * param_18;\n    longlong param_20;\n    int iVar13;\n    uchar * rax = 0;\n    longlong rsp;\n    uchar * xVar197;\n\n    reg = rsp < 16;\n    reg = __sborrow(rsp, 16);\n    reg = rsp < 0;\n    reg = rsp == 0;\n    reg = (__popcount(rsp % 256) & 1) == 0;\n    local_d = param_1;\n    param_18 = param_2;\n    param_20 = param_3;\n    local_4 = rax;\n    local_d = rax;\n    goto block_140001731;\nblock_140001652:\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (int)(local_4 + 1);\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (uchar *)((ulonglong)local_4 >> 31);\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = (local_4 >> 30 & 1) != 0;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = (uchar *)((ulonglong)local_4 >> 24);\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = (local_4 / 8388608 & 1) != 0;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    reg = __carry(local_4, local_4);\n    reg = __scarry(local_4, local_4);\n    local_4 *= 2;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = (uint)(uchar)(ulonglong)local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = local_4 < local_4;\n    reg = __sborrow(local_4, local_4);\n    local_4 = (ulonglong)(ulonglong)local_4 - (ulonglong)(ulonglong)local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(local_d, local_4);\n    reg = __scarry(local_d, local_4);\n    local_d += (ulonglong)local_4;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)*local_d;\n    local_d = (uint)(uchar)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (ulonglong)(ulonglong)local_d;\n    local_d = (uchar *)((ulonglong)local_d >> 31);\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = (local_d >> 30 & 1) != 0;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uchar *)((ulonglong)local_d >> 24);\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = (local_d / 8388608 & 1) != 0;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)(uchar)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < local_d;\n    reg = __sborrow(local_d, local_d);\n    local_d = (ulonglong)(ulonglong)local_d - (ulonglong)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(local_d, local_4);\n    reg = __scarry(local_d, local_4);\n    local_d += (ulonglong)local_4;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)*local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(local_d, local_4);\n    reg = __scarry(local_d, local_4);\n    local_d += (ulonglong)local_4;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)*local_d;\n    *local_d = (uchar)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    xVar197 = (longlong)(ulonglong)local_d;\n    reg = __carry(xVar197, local_d);\n    reg = __scarry(xVar197, local_d);\n    xVar197 += (ulonglong)local_d;\n    reg = xVar197 < 0;\n    reg = xVar197 == 0;\n    reg = (__popcount(xVar197 % 256) & 1) == 0;\n    *xVar197 = (uchar)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(param_18, local_d);\n    reg = __scarry(param_18, local_d);\n    param_18 += (ulonglong)local_d;\n    reg = param_18 < 0;\n    reg = param_18 == 0;\n    reg = (__popcount(param_18 % 256) & 1) == 0;\n    xVar197 = (uint)*param_18;\n    xVar197 = (ulonglong)(ulonglong)xVar197;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(local_d, local_4);\n    reg = __scarry(local_d, local_4);\n    local_d += (ulonglong)local_4;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    iVar13 = *local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)*local_d;\n    reg = __carry(local_d, iVar13);\n    reg = __scarry(local_d, iVar13);\n    local_d += iVar13;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(param_18, local_d);\n    reg = __scarry(param_18, local_d);\n    param_18 += (ulonglong)local_d;\n    reg = param_18 < 0;\n    reg = param_18 == 0;\n    reg = (__popcount(param_18 % 256) & 1) == 0;\n    param_2 = (ulonglong)(ulonglong)xVar197;\n    reg = 0;\n    param_2 = (uchar *)((ulonglong)param_2 ^ *local_d);\n    param_2 = (ulonglong)(ulonglong)param_2;\n    reg = param_2 < 0;\n    reg = param_2 == 0;\n    reg = (__popcount(param_2 % 256) & 1) == 0;\n    *param_18 = (uchar)(ulonglong)param_2;\n    reg = 4294967295 <= local_d;\n    reg = __scarry(local_d, 1);\n    local_d++;\nblock_140001731:\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < param_20;\n    reg = __sborrow(local_d, param_20);\n    iVar13 = (ulonglong)(ulonglong)local_d - param_20;\n    reg = iVar13 < 0;\n    reg = iVar13 == 0;\n    reg = (__popcount(iVar13 % 256) & 1) == 0;\n    if (local_d < param_20) {\n        goto block_140001652;\n    }\n    reg = -16 <= rsp;\n    reg = __scarry(rsp, 16);\n    reg = rsp < 0;\n    reg = rsp == 0;\n    reg = (__popcount(rsp % 256) & 1) == 0;\n    return local_d;\n}\n",
-    "decompiled_code_nir": "int rc4_crypt(uchar * param_1, uchar * param_2, uint param_3)\n{\n    uchar * local_d;\n    uchar * local_4;\n    uchar * param_18;\n    longlong param_20;\n    int iVar13;\n    uchar * rax = 0;\n    longlong rsp;\n    uchar * xVar197;\n\n    reg = rsp < 16;\n    reg = __sborrow(rsp, 16);\n    reg = rsp < 0;\n    reg = rsp == 0;\n    reg = (__popcount(rsp % 256) & 1) == 0;\n    local_d = param_1;\n    param_18 = param_2;\n    param_20 = param_3;\n    local_4 = rax;\n    local_d = rax;\n    goto block_140001731;\nblock_140001652:\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (int)(local_4 + 1);\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    local_4 = (uchar *)((ulonglong)local_4 >> 31);\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = (local_4 >> 30 & 1) != 0;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = (uchar *)((ulonglong)local_4 >> 24);\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = (local_4 / 8388608 & 1) != 0;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    reg = __carry(local_4, local_4);\n    reg = __scarry(local_4, local_4);\n    local_4 *= 2;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = (uint)(uchar)(ulonglong)local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = local_4 < local_4;\n    reg = __sborrow(local_4, local_4);\n    local_4 = (ulonglong)(ulonglong)local_4 - (ulonglong)(ulonglong)local_4;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = local_4 < 0;\n    reg = local_4 == 0;\n    reg = (__popcount(local_4 % 256) & 1) == 0;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(local_d, local_4);\n    reg = __scarry(local_d, local_4);\n    local_d += (ulonglong)local_4;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)*local_d;\n    local_d = (uint)(uchar)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (ulonglong)(ulonglong)local_d;\n    local_d = (uchar *)((ulonglong)local_d >> 31);\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = (local_d >> 30 & 1) != 0;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uchar *)((ulonglong)local_d >> 24);\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = (local_d / 8388608 & 1) != 0;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)(uchar)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < local_d;\n    reg = __sborrow(local_d, local_d);\n    local_d = (ulonglong)(ulonglong)local_d - (ulonglong)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(local_d, local_4);\n    reg = __scarry(local_d, local_4);\n    local_d += (ulonglong)local_4;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)*local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(local_d, local_4);\n    reg = __scarry(local_d, local_4);\n    local_d += (ulonglong)local_4;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)*local_d;\n    *local_d = (uchar)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    xVar197 = (longlong)(ulonglong)local_d;\n    reg = __carry(xVar197, local_d);\n    reg = __scarry(xVar197, local_d);\n    xVar197 += (ulonglong)local_d;\n    reg = xVar197 < 0;\n    reg = xVar197 == 0;\n    reg = (__popcount(xVar197 % 256) & 1) == 0;\n    *xVar197 = (uchar)(ulonglong)local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(param_18, local_d);\n    reg = __scarry(param_18, local_d);\n    param_18 += (ulonglong)local_d;\n    reg = param_18 < 0;\n    reg = param_18 == 0;\n    reg = (__popcount(param_18 % 256) & 1) == 0;\n    xVar197 = (uint)*param_18;\n    xVar197 = (ulonglong)(ulonglong)xVar197;\n    local_4 = (ulonglong)(ulonglong)local_4;\n    reg = __carry(local_d, local_4);\n    reg = __scarry(local_d, local_4);\n    local_d += (ulonglong)local_4;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    iVar13 = *local_d;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (uint)*local_d;\n    reg = __carry(local_d, iVar13);\n    reg = __scarry(local_d, iVar13);\n    local_d += iVar13;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    reg = __carry(local_d, local_d);\n    reg = __scarry(local_d, local_d);\n    local_d *= 2;\n    reg = local_d < 0;\n    reg = local_d == 0;\n    reg = (__popcount(local_d % 256) & 1) == 0;\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = __carry(param_18, local_d);\n    reg = __scarry(param_18, local_d);\n    param_18 += (ulonglong)local_d;\n    reg = param_18 < 0;\n    reg = param_18 == 0;\n    reg = (__popcount(param_18 % 256) & 1) == 0;\n    param_2 = (ulonglong)(ulonglong)xVar197;\n    reg = 0;\n    param_2 = (uchar *)((ulonglong)param_2 ^ *local_d);\n    param_2 = (ulonglong)(ulonglong)param_2;\n    reg = param_2 < 0;\n    reg = param_2 == 0;\n    reg = (__popcount(param_2 % 256) & 1) == 0;\n    *param_18 = (uchar)(ulonglong)param_2;\n    reg = 4294967295 <= local_d;\n    reg = __scarry(local_d, 1);\n    local_d++;\nblock_140001731:\n    local_d = (ulonglong)(ulonglong)local_d;\n    reg = local_d < param_20;\n    reg = __sborrow(local_d, param_20);\n    iVar13 = (ulonglong)(ulonglong)local_d - param_20;\n    reg = iVar13 < 0;\n    reg = iVar13 == 0;\n    reg = (__popcount(iVar13 % 256) & 1) == 0;\n    if (local_d < param_20) {\n        goto block_140001652;\n    }\n    reg = -16 <= rsp;\n    reg = __scarry(rsp, 16);\n    reg = rsp < 0;\n    reg = rsp == 0;\n    reg = (__popcount(rsp % 256) & 1) == 0;\n    return local_d;\n}\n",
+    "cases_total": 0,
+    "correctness_score": 0.0,
+    "correctness_rank": null,
+    "readability_proxy_score": null,
+    "composite_score": 0.0,
+    "structural_penalty": 0.0,
+    "uses_intrinsics": false,
+    "decompiled_code": "",
+    "decompiled_code_nir": "",
     "decompiled_code_hir": "",
     "pseudocode_layer": "",
-    "readability_metrics": {
-      "validated_against_humans": false,
-      "composite_score": null,
-      "parse_ok": false,
-      "parse_error": ":32:14: before: param_20",
-      "generic_naming_ratio": {
-        "raw": {
-          "generic": 0,
-          "total": 0,
-          "ratio": 1.0
-        },
-        "normalized": 0.0
-      },
-      "type_specificity": {
-        "raw": {
-          "average": 0.0,
-          "typed_nodes": 0
-        },
-        "normalized": 0.0
-      },
-      "expression_complexity": {
-        "raw": {
-          "operator_count": 0,
-          "avg_expression_depth": 0.0,
-          "max_cast_depth": 0,
-          "ternary_count": 0,
-          "comma_count": 0,
-          "temporary_identifier_count": 0,
-          "loc": 207,
-          "temporary_identifier_loc_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "structured_control_flow": {
-        "raw": {
-          "structured_constructs": 0,
-          "goto_count": 2,
-          "nesting_depth": 2,
-          "irreducible_loop_suspected": false,
-          "state_flag_count": 0,
-          "structured_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "unresolved_artifacts": {
-        "raw": {
-          "total": 58,
-          "details": {
-            "sleigh_intrinsic": 58,
-            "word_macro": 0,
-            "register_name": 0,
-            "collapsed_type": 0
-          }
-        },
-        "normalized": 0.0
-      }
-    },
+    "readability_metrics": {},
     "readability_metrics_hir": {},
     "readability_proxy_score_hir": null,
-    "ast_similarity": {
-      "available": false,
-      "algorithm": "zhang_shasha",
-      "error": ":32:14: before: param_20",
-      "identifier_placeholder": null,
-      "type_erased": null,
-      "control_flow_normalized": null
-    },
-    "output_diagnostics": {
-      "status": "direct_function",
-      "issues": [
-        "expected_address_missing"
-      ],
-      "function_definition_count": 1,
-      "function_definitions_sample": [
-        "rc4_crypt"
-      ],
-      "target_name_present": true,
-      "expected_address_present": false,
-      "whole_program_like": false,
-      "truncated_output": false,
-      "harness_blockers": [],
-      "dotted_names_sample": [],
-      "register_inputs_sample": [],
-      "decompiler": "fission"
-    },
-    "goto_count": 2,
-    "nesting_depth": 2,
-    "consensus_rank": 8,
-    "time_ms": 26537,
-    "error": null,
+    "ast_similarity": {},
+    "output_diagnostics": {},
+    "goto_count": 0,
+    "nesting_depth": 0,
+    "consensus_rank": null,
+    "time_ms": 5,
+    "error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
     "has_parity_diff": false,
     "parity_diff_path": ""
   },
@@ -7489,7 +6816,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 10201,
+    "time_ms": 7773,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -7500,7 +6827,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1439,
     "semantic_score": 0.0,
-    "semantic_error": "Case 3: Compilation failed:\n/usr/bin/ld: /tmp/ccatQGIk.o: in function `main':\ntest_3.c:(.text+0x24e): undefined reference to `rc4_crypt'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 3: Compilation failed:\n/usr/bin/ld: /tmp/ccZKtx7j.o: in function `main':\ntest_3.c:(.text+0x24e): undefined reference to `rc4_crypt'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 4,
@@ -7613,7 +6940,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 4,
-    "time_ms": 181,
+    "time_ms": 194,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -7624,7 +6951,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.4244,
     "semantic_score": 0.0,
-    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmp_r4oma5b/test_3.c:42:9: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | void dbg.rc4_crypt(uint8_t *s,uint8_t *data,int data_len)\n      |         ^\n",
+    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmpk8i8ypaj/test_3.c:42:9: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | void dbg.rc4_crypt(uint8_t *s,uint8_t *data,int data_len)\n      |         ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 4,
@@ -7731,7 +7058,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 3,
-    "time_ms": 233,
+    "time_ms": 124,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -7855,7 +7182,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 2,
-    "time_ms": 923,
+    "time_ms": 707,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -7866,7 +7193,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0203,
     "semantic_score": 0.0,
-    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmp0iz8swis/test_3.c: In function \u2018fun_140001624\u2019:\n/tmp/tmp0iz8swis/test_3.c:70:10: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   70 |         *reinterpret_cast<uint32_t*>(&rax10) = v7;\n      |          ^~~~~~~~~~~~~~~~\n/tmp/tmp0iz8swis/test_3.c:70:10: note: each undeclar",
+    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmprz8pjx1u/test_3.c: In function \u2018fun_140001624\u2019:\n/tmp/tmprz8pjx1u/test_3.c:70:10: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   70 |         *reinterpret_cast<uint32_t*>(&rax10) = v7;\n      |          ^~~~~~~~~~~~~~~~\n/tmp/tmprz8pjx1u/test_3.c:70:10: note: each undeclar",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 4,
@@ -7968,7 +7295,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 6,
-    "time_ms": 617,
+    "time_ms": 611,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -7979,7 +7306,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.061,
     "semantic_score": 0.0,
-    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmp_q02y__i/test_3.c: In function \u2018_ABI\u2019:\n/tmp/tmp_q02y__i/test_3.c:42:39: error: unknown type name \u2018generic64_t\u2019\n   42 | void function_0x140001624_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_1",
+    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmpb0xxolkw/test_3.c: In function \u2018_ABI\u2019:\n/tmp/tmpb0xxolkw/test_3.c:42:39: error: unknown type name \u2018generic64_t\u2019\n   42 | void function_0x140001624_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_1",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 4,
@@ -8084,7 +7411,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 7,
-    "time_ms": 18127,
+    "time_ms": 12879,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -8095,7 +7422,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1178,
     "semantic_score": 0.0,
-    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmptydxdscj/test_3.c:41:28: error: unknown type name \u2018ui8\u2019\n   41 | void rc4_crypt(byte rcx[], ui8 rdx[], int32 r8d)\n      |                            ^~~\n/tmp/tmptydxdscj/test_3.c:41:39: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | void rc4_crypt(byte rcx[], ui8 rdx[], int",
+    "semantic_error": "Case 3: Compilation failed:\n/tmp/tmpmd5n7d78/test_3.c:41:28: error: unknown type name \u2018ui8\u2019\n   41 | void rc4_crypt(byte rcx[], ui8 rdx[], int32 r8d)\n      |                            ^~~\n/tmp/tmpmd5n7d78/test_3.c:41:39: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019?\n   41 | void rc4_crypt(byte rcx[], ui8 rdx[], int",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 4,
@@ -8197,7 +7524,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 5,
-    "time_ms": 917,
+    "time_ms": 1170,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -8206,112 +7533,32 @@ const SCORES = [
     "decompiler": "fission",
     "function_name": "crc32",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.0595,
+    "source_similarity": 0.0,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpyo0mzlqi/test_5.c: In function \u2018crc32\u2019:\n/tmp/tmpyo0mzlqi/test_5.c:59:46: error: invalid operands to binary ^ (have \u2018long long unsigned int\u2019 and \u2018uchar *\u2019 {aka \u2018unsigned char *\u2019})\n   59 |     local_1c = (uchar *)((ulonglong)local_1c ^ local_1c);\n      |                          ~~~~~~~~~~~~~~",
-    "fail_category": "compile_error",
+    "semantic_error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
+    "fail_category": "adapter_error",
     "cases_passed": 0,
-    "cases_total": 6,
-    "correctness_score": 0.0499,
-    "correctness_rank": 8,
-    "readability_proxy_score": 0.2,
-    "composite_score": 0.0499,
-    "structural_penalty": 0.56,
+    "cases_total": 0,
+    "correctness_score": 0.0,
+    "correctness_rank": null,
+    "readability_proxy_score": null,
+    "composite_score": 0.0,
+    "structural_penalty": 0.0,
     "uses_intrinsics": false,
-    "decompiled_code": "uint crc32(longlong param_1, ulonglong param_2)\n{\n    uchar * local_1c;\n    longlong param_10;\n    ulonglong param_18;\n    uchar * rax = 0;\n\n    param_10 = param_1;\n    param_18 = param_2;\n    local_1c = 4294967295;\n    local_1c = rax;\n    goto block_1400017b5;\nblock_140001766:\n    local_1c = local_1c;\n    local_1c += param_10;\n    local_1c = (uint)*local_1c;\n    local_1c = local_1c;\n    local_1c = (uint)(ulonglong)local_1c;\n    local_1c = (uchar *)((ulonglong)local_1c ^ local_1c);\n    local_1c = rax;\n    goto block_1400017aa;\nblock_140001787:\n    local_1c = local_1c;\n    local_1c = (uchar *)((ulonglong)local_1c & 1);\n    local_1c = -local_1c;\n    local_1c = local_1c;\n    local_1c = local_1c;\n    local_1c = (ulonglong)(ulonglong)local_1c;\n    local_1c = (uchar *)((ulonglong)local_1c >> 1);\n    local_1c = (ulonglong)(ulonglong)local_1c;\n    local_1c = local_1c;\n    local_1c = (ulonglong)(ulonglong)local_1c;\n    local_1c = (ulonglong)(ulonglong)local_1c;\n    local_1c = (uchar *)((ulonglong)local_1c & 3988292384);\n    local_1c = (uchar *)((ulonglong)local_1c ^ local_1c);\n    local_1c = local_1c;\n    local_1c++;\nblock_1400017aa:\n    if (local_1c <= 7) {\n        goto block_140001787;\n    }\n    local_1c++;\nblock_1400017b5:\n    if (local_1c < param_18) {\n        goto block_140001766;\n    }\n    return ~(uint)(ulonglong)local_1c;\n}\n",
-    "decompiled_code_nir": "uint crc32(longlong param_1, ulonglong param_2)\n{\n    uchar * local_1c;\n    longlong param_10;\n    ulonglong param_18;\n    uchar * rax = 0;\n\n    param_10 = param_1;\n    param_18 = param_2;\n    local_1c = 4294967295;\n    local_1c = rax;\n    goto block_1400017b5;\nblock_140001766:\n    local_1c = local_1c;\n    local_1c += param_10;\n    local_1c = (uint)*local_1c;\n    local_1c = local_1c;\n    local_1c = (uint)(ulonglong)local_1c;\n    local_1c = (uchar *)((ulonglong)local_1c ^ local_1c);\n    local_1c = rax;\n    goto block_1400017aa;\nblock_140001787:\n    local_1c = local_1c;\n    local_1c = (uchar *)((ulonglong)local_1c & 1);\n    local_1c = -local_1c;\n    local_1c = local_1c;\n    local_1c = local_1c;\n    local_1c = (ulonglong)(ulonglong)local_1c;\n    local_1c = (uchar *)((ulonglong)local_1c >> 1);\n    local_1c = (ulonglong)(ulonglong)local_1c;\n    local_1c = local_1c;\n    local_1c = (ulonglong)(ulonglong)local_1c;\n    local_1c = (ulonglong)(ulonglong)local_1c;\n    local_1c = (uchar *)((ulonglong)local_1c & 3988292384);\n    local_1c = (uchar *)((ulonglong)local_1c ^ local_1c);\n    local_1c = local_1c;\n    local_1c++;\nblock_1400017aa:\n    if (local_1c <= 7) {\n        goto block_140001787;\n    }\n    local_1c++;\nblock_1400017b5:\n    if (local_1c < param_18) {\n        goto block_140001766;\n    }\n    return ~(uint)(ulonglong)local_1c;\n}\n",
+    "decompiled_code": "",
+    "decompiled_code_nir": "",
     "decompiled_code_hir": "",
     "pseudocode_layer": "",
-    "readability_metrics": {
-      "validated_against_humans": false,
-      "composite_score": null,
-      "parse_ok": false,
-      "parse_error": ":27:21: before: param_1",
-      "generic_naming_ratio": {
-        "raw": {
-          "generic": 0,
-          "total": 0,
-          "ratio": 1.0
-        },
-        "normalized": 0.0
-      },
-      "type_specificity": {
-        "raw": {
-          "average": 0.0,
-          "typed_nodes": 0
-        },
-        "normalized": 0.0
-      },
-      "expression_complexity": {
-        "raw": {
-          "operator_count": 0,
-          "avg_expression_depth": 0.0,
-          "max_cast_depth": 0,
-          "ternary_count": 0,
-          "comma_count": 0,
-          "temporary_identifier_count": 0,
-          "loc": 47,
-          "temporary_identifier_loc_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "structured_control_flow": {
-        "raw": {
-          "structured_constructs": 0,
-          "goto_count": 4,
-          "nesting_depth": 2,
-          "irreducible_loop_suspected": false,
-          "state_flag_count": 0,
-          "structured_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "unresolved_artifacts": {
-        "raw": {
-          "total": 0,
-          "details": {
-            "sleigh_intrinsic": 0,
-            "word_macro": 0,
-            "register_name": 0,
-            "collapsed_type": 0
-          }
-        },
-        "normalized": 1.0
-      }
-    },
+    "readability_metrics": {},
     "readability_metrics_hir": {},
     "readability_proxy_score_hir": null,
-    "ast_similarity": {
-      "available": false,
-      "algorithm": "zhang_shasha",
-      "error": ":27:21: before: param_1",
-      "identifier_placeholder": null,
-      "type_erased": null,
-      "control_flow_normalized": null
-    },
-    "output_diagnostics": {
-      "status": "direct_function",
-      "issues": [
-        "expected_address_missing"
-      ],
-      "function_definition_count": 1,
-      "function_definitions_sample": [
-        "crc32"
-      ],
-      "target_name_present": true,
-      "expected_address_present": false,
-      "whole_program_like": false,
-      "truncated_output": false,
-      "harness_blockers": [],
-      "dotted_names_sample": [],
-      "register_inputs_sample": [],
-      "decompiler": "fission"
-    },
-    "goto_count": 4,
-    "nesting_depth": 2,
-    "consensus_rank": 8,
-    "time_ms": 26537,
-    "error": null,
+    "ast_similarity": {},
+    "output_diagnostics": {},
+    "goto_count": 0,
+    "nesting_depth": 0,
+    "consensus_rank": null,
+    "time_ms": 5,
+    "error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
     "has_parity_diff": false,
     "parity_diff_path": ""
   },
@@ -8321,7 +7568,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.3434,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpnl7yszir/test_5.c: In function \u2018crc32\u2019:\n/tmp/tmpnl7yszir/test_5.c:57:25: error: expected expression before \u2018)\u2019 token\n   57 |     crc = crc ^ *(byte *)(i + in_RCX);\n      |                         ^\n",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpfsqz0bda/test_5.c: In function \u2018crc32\u2019:\n/tmp/tmpfsqz0bda/test_5.c:57:25: error: expected expression before \u2018)\u2019 token\n   57 |     crc = crc ^ *(byte *)(i + in_RCX);\n      |                         ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -8429,7 +7676,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 2,
-    "time_ms": 10201,
+    "time_ms": 7773,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -8440,7 +7687,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1049,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/usr/bin/ld: /tmp/ccxW8jJX.o: in function `main':\ntest_5.c:(.text+0x42): undefined reference to `crc32'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 5: Compilation failed:\n/usr/bin/ld: /tmp/cc7Ba1M3.o: in function `main':\ntest_5.c:(.text+0x42): undefined reference to `crc32'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -8553,7 +7800,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 1,
     "consensus_rank": 4,
-    "time_ms": 181,
+    "time_ms": 194,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -8564,7 +7811,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.2991,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpvtdv0qek/test_5.c:42:13: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | uint32_t dbg.crc32(int *data,size_t length)\n      |             ^\n",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp16w8fbbg/test_5.c:42:13: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | uint32_t dbg.crc32(int *data,size_t length)\n      |             ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -8671,7 +7918,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 3,
-    "time_ms": 233,
+    "time_ms": 124,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -8795,7 +8042,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 1,
-    "time_ms": 923,
+    "time_ms": 707,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -8806,7 +8053,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0821,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp6owijj8u/test_5.c: In function \u2018fun_140001745\u2019:\n/tmp/tmp6owijj8u/test_5.c:55:17: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   55 |         eax8 = *reinterpret_cast<unsigned char*>(v7 + reinterpret_cast<int64_t>(v4));\n      |                 ^~~~~~~~~~~~~~~~\n/tmp/tmp6o",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpwupc0bp9/test_5.c: In function \u2018fun_140001745\u2019:\n/tmp/tmpwupc0bp9/test_5.c:55:17: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n   55 |         eax8 = *reinterpret_cast<unsigned char*>(v7 + reinterpret_cast<int64_t>(v4));\n      |                 ^~~~~~~~~~~~~~~~\n/tmp/tmpwu",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -8908,7 +8155,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 3,
     "consensus_rank": 6,
-    "time_ms": 617,
+    "time_ms": 611,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -8919,7 +8166,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.0683,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp51ninnnb/test_5.c: In function \u2018_ABI\u2019:\n/tmp/tmp51ninnnb/test_5.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x140001745_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_185 stack_arguments _STACK) {\n      ",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpjmvzbmlm/test_5.c: In function \u2018_ABI\u2019:\n/tmp/tmpjmvzbmlm/test_5.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x140001745_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_185 stack_arguments _STACK) {\n      ",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -9024,7 +8271,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 4,
     "consensus_rank": 7,
-    "time_ms": 18127,
+    "time_ms": 12879,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -9035,7 +8282,7 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1019,
     "semantic_score": 0.0,
-    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmpd3nb18ix/test_5.c:41:1: error: unknown type name \u2018ui32\u2019\n   41 | ui32 crc32(Eq_648 rcx, Eq_649 rdx)\n      | ^~~~\n/tmp/tmpd3nb18ix/test_5.c:41:12: error: unknown type name \u2018Eq_648\u2019\n   41 | ui32 crc32(Eq_648 rcx, Eq_649 rdx)\n      |            ^~~~~~\n/tmp/tmpd3nb18ix/test_5.c:41:24: error: unkn",
+    "semantic_error": "Case 5: Compilation failed:\n/tmp/tmp4adbm4t7/test_5.c:41:1: error: unknown type name \u2018ui32\u2019\n   41 | ui32 crc32(Eq_648 rcx, Eq_649 rdx)\n      | ^~~~\n/tmp/tmp4adbm4t7/test_5.c:41:12: error: unknown type name \u2018Eq_648\u2019\n   41 | ui32 crc32(Eq_648 rcx, Eq_649 rdx)\n      |            ^~~~~~\n/tmp/tmp4adbm4t7/test_5.c:41:24: error: unkn",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 6,
@@ -9137,7 +8384,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 5,
-    "time_ms": 917,
+    "time_ms": 1170,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -9146,112 +8393,32 @@ const SCORES = [
     "decompiler": "fission",
     "function_name": "sum_array",
     "compiler_variant": "gcc -O0",
-    "source_similarity": 0.1455,
-    "semantic_score": 0.4,
-    "semantic_error": "Case 4: Runtime failed (exit code -11)",
-    "fail_category": "runtime_error",
-    "cases_passed": 2,
-    "cases_total": 5,
-    "correctness_score": 0.4066,
-    "correctness_rank": 2,
-    "readability_proxy_score": 0.2,
-    "composite_score": 0.4066,
-    "structural_penalty": 0.28,
+    "source_similarity": 0.0,
+    "semantic_score": 0.0,
+    "semantic_error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
+    "fail_category": "adapter_error",
+    "cases_passed": 0,
+    "cases_total": 0,
+    "correctness_score": 0.0,
+    "correctness_rank": null,
+    "readability_proxy_score": null,
+    "composite_score": 0.0,
+    "structural_penalty": 0.0,
     "uses_intrinsics": false,
-    "decompiled_code": "ulonglong sum_array(uint * param_1, ulonglong param_2)\n{\n    longlong local_10;\n    longlong local_4;\n    uint * param_10;\n    ulonglong param_18;\n    longlong rax = 0;\n\n    param_10 = param_1;\n    param_18 = param_2;\n    local_4 = rax;\n    local_10 = rax;\n    goto block_14000156e;\nblock_140001551:\n    param_10 = param_10;\n    param_10 += local_10;\n    param_10 = *param_10;\n    local_4 += (ulonglong)(ulonglong)param_10;\n    local_10++;\nblock_14000156e:\n    if (local_10 < param_18) {\n        goto block_140001551;\n    }\n    return param_10;\n}\n",
-    "decompiled_code_nir": "ulonglong sum_array(uint * param_1, ulonglong param_2)\n{\n    longlong local_10;\n    longlong local_4;\n    uint * param_10;\n    ulonglong param_18;\n    longlong rax = 0;\n\n    param_10 = param_1;\n    param_18 = param_2;\n    local_4 = rax;\n    local_10 = rax;\n    goto block_14000156e;\nblock_140001551:\n    param_10 = param_10;\n    param_10 += local_10;\n    param_10 = *param_10;\n    local_4 += (ulonglong)(ulonglong)param_10;\n    local_10++;\nblock_14000156e:\n    if (local_10 < param_18) {\n        goto block_140001551;\n    }\n    return param_10;\n}\n",
+    "decompiled_code": "",
+    "decompiled_code_nir": "",
     "decompiled_code_hir": "",
     "pseudocode_layer": "",
-    "readability_metrics": {
-      "validated_against_humans": false,
-      "composite_score": null,
-      "parse_ok": false,
-      "parse_error": ":29:14: before: local_10",
-      "generic_naming_ratio": {
-        "raw": {
-          "generic": 0,
-          "total": 0,
-          "ratio": 1.0
-        },
-        "normalized": 0.0
-      },
-      "type_specificity": {
-        "raw": {
-          "average": 0.0,
-          "typed_nodes": 0
-        },
-        "normalized": 0.0
-      },
-      "expression_complexity": {
-        "raw": {
-          "operator_count": 0,
-          "avg_expression_depth": 0.0,
-          "max_cast_depth": 0,
-          "ternary_count": 0,
-          "comma_count": 0,
-          "temporary_identifier_count": 0,
-          "loc": 24,
-          "temporary_identifier_loc_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "structured_control_flow": {
-        "raw": {
-          "structured_constructs": 0,
-          "goto_count": 2,
-          "nesting_depth": 2,
-          "irreducible_loop_suspected": false,
-          "state_flag_count": 0,
-          "structured_ratio": 0.0
-        },
-        "normalized": 0.0
-      },
-      "unresolved_artifacts": {
-        "raw": {
-          "total": 0,
-          "details": {
-            "sleigh_intrinsic": 0,
-            "word_macro": 0,
-            "register_name": 0,
-            "collapsed_type": 0
-          }
-        },
-        "normalized": 1.0
-      }
-    },
+    "readability_metrics": {},
     "readability_metrics_hir": {},
     "readability_proxy_score_hir": null,
-    "ast_similarity": {
-      "available": false,
-      "algorithm": "zhang_shasha",
-      "error": ":29:14: before: local_10",
-      "identifier_placeholder": null,
-      "type_erased": null,
-      "control_flow_normalized": null
-    },
-    "output_diagnostics": {
-      "status": "direct_function",
-      "issues": [
-        "expected_address_missing"
-      ],
-      "function_definition_count": 1,
-      "function_definitions_sample": [
-        "sum_array"
-      ],
-      "target_name_present": true,
-      "expected_address_present": false,
-      "whole_program_like": false,
-      "truncated_output": false,
-      "harness_blockers": [],
-      "dotted_names_sample": [],
-      "register_inputs_sample": [],
-      "decompiler": "fission"
-    },
-    "goto_count": 2,
-    "nesting_depth": 2,
-    "consensus_rank": 2,
-    "time_ms": 6918,
-    "error": null,
+    "ast_similarity": {},
+    "output_diagnostics": {},
+    "goto_count": 0,
+    "nesting_depth": 0,
+    "consensus_rank": null,
+    "time_ms": 8,
+    "error": "Batch fallback failed with exit code 2: error: unexpected argument '--layer' found\n\n  tip: to pass '--layer' as a value, use '-- --layer'\n\nUsage: fission_cli decomp --json --benchmark <--addr <ADDR>|--all|--addresses-file <FILE>> <BINARY>\n\nFor more information, try '--help'.\n",
     "has_parity_diff": false,
     "parity_diff_path": ""
   },
@@ -9266,7 +8433,7 @@ const SCORES = [
     "cases_passed": 1,
     "cases_total": 5,
     "correctness_score": 0.3248,
-    "correctness_rank": 3,
+    "correctness_rank": 2,
     "readability_proxy_score": 0.3333,
     "composite_score": 0.3248,
     "structural_penalty": 0.0,
@@ -9368,8 +8535,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 2,
-    "consensus_rank": 3,
-    "time_ms": 28042,
+    "consensus_rank": 2,
+    "time_ms": 24161,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -9380,12 +8547,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.1379,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpflt_8dyw/test_4.c: In function \u2018proc_0x00001530\u2019:\n/tmp/tmpflt_8dyw/test_4.c:45:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019?\n   45 |     __size32 local0;            // m[esp - 8]\n      |     ^~~~~~~~\n      |     __ssize_t\n/tmp/tmpflt_8dyw/test_4.c:51:13: error: void value",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpr65sywg0/test_4.c: In function \u2018proc_0x00001530\u2019:\n/tmp/tmpr65sywg0/test_4.c:45:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019?\n   45 |     __size32 local0;            // m[esp - 8]\n      |     ^~~~~~~~\n      |     __ssize_t\n/tmp/tmpr65sywg0/test_4.c:51:13: error: void value",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1138,
-    "correctness_rank": 7,
+    "correctness_rank": 6,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1138,
     "structural_penalty": 0.0,
@@ -9481,8 +8648,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 2,
-    "consensus_rank": 7,
-    "time_ms": 168,
+    "consensus_rank": 6,
+    "time_ms": 134,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -9493,12 +8660,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.2857,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmp541152nt/test_4.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.sum_array(int *items,size_t len)\n      |        ^\n",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpvqsextha/test_4.c:42:8: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018.\u2019 token\n   42 | int dbg.sum_array(int *items,size_t len)\n      |        ^\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1286,
-    "correctness_rank": 5,
+    "correctness_rank": 4,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1286,
     "structural_penalty": 0.0,
@@ -9599,8 +8766,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 2,
-    "consensus_rank": 5,
-    "time_ms": 440,
+    "consensus_rank": 4,
+    "time_ms": 565,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -9724,7 +8891,7 @@ const SCORES = [
     "goto_count": 0,
     "nesting_depth": 2,
     "consensus_rank": 1,
-    "time_ms": 1619,
+    "time_ms": 1677,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -9735,12 +8902,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.3988,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccjaZBoZ.o: in function `main':\ntest_4.c:(.text+0x9f): undefined reference to `sum_array'\ncollect2: error: ld returned 1 exit status\n",
+    "semantic_error": "Case 4: Compilation failed:\n/usr/bin/ld: /tmp/ccswx5in.o: in function `main':\ntest_4.c:(.text+0x9f): undefined reference to `sum_array'\ncollect2: error: ld returned 1 exit status\n",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1399,
-    "correctness_rank": 4,
+    "correctness_rank": 3,
     "readability_proxy_score": 0.7014,
     "composite_score": 0.1399,
     "structural_penalty": 0.0,
@@ -9847,8 +9014,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 2,
-    "consensus_rank": 4,
-    "time_ms": 724,
+    "consensus_rank": 3,
+    "time_ms": 662,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -9859,12 +9026,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.065,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpgtdk59gh/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpgtdk59gh/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x140001530_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_195 stack_arguments _STACK) {\n      ",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpixdxv8_1/test_4.c: In function \u2018_ABI\u2019:\n/tmp/tmpixdxv8_1/test_4.c:42:1: error: unknown type name \u2018generic64_t\u2019\n   42 | generic64_t function_0x140001530_Code_x86_64(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_195 stack_arguments _STACK) {\n      ",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.0965,
-    "correctness_rank": 8,
+    "correctness_rank": 7,
     "readability_proxy_score": 0.4,
     "composite_score": 0.0965,
     "structural_penalty": 0.1,
@@ -9963,8 +9130,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 3,
-    "consensus_rank": 8,
-    "time_ms": 29668,
+    "consensus_rank": 7,
+    "time_ms": 35399,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
@@ -9975,12 +9142,12 @@ const SCORES = [
     "compiler_variant": "gcc -O0",
     "source_similarity": 0.2241,
     "semantic_score": 0.0,
-    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpezf7ntdo/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 sum_array(struct Eq_518 * rcx, uint64 rdx)\n      | ^~~~~~\n      | word\n/tmp/tmpezf7ntdo/test_4.c:41:39: error: unknown type name \u2018uint64\u2019; did you mean \u2018uint\u2019?\n   41 | word32 sum_array(struct Eq_51",
+    "semantic_error": "Case 4: Compilation failed:\n/tmp/tmpjianbu6p/test_4.c:41:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019?\n   41 | word32 sum_array(struct Eq_518 * rcx, uint64 rdx)\n      | ^~~~~~\n      | word\n/tmp/tmpjianbu6p/test_4.c:41:39: error: unknown type name \u2018uint64\u2019; did you mean \u2018uint\u2019?\n   41 | word32 sum_array(struct Eq_51",
     "fail_category": "compile_error",
     "cases_passed": 0,
     "cases_total": 5,
     "correctness_score": 0.1224,
-    "correctness_rank": 6,
+    "correctness_rank": 5,
     "readability_proxy_score": 0.4,
     "composite_score": 0.1224,
     "structural_penalty": 0.0,
@@ -10076,8 +9243,8 @@ const SCORES = [
     },
     "goto_count": 0,
     "nesting_depth": 1,
-    "consensus_rank": 6,
-    "time_ms": 2391,
+    "consensus_rank": 5,
+    "time_ms": 2588,
     "error": null,
     "has_parity_diff": false,
     "parity_diff_path": ""
