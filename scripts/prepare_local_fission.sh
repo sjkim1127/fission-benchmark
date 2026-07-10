@@ -152,6 +152,8 @@ build_cli_via_docker() {
   docker volume create fission-bench-cargo-git >/dev/null
   docker volume create fission-bench-cargo-target >/dev/null
 
+  # The official Rust image exports Cargo through PATH. A login shell resets
+  # that PATH on Debian and makes the fallback fail with `cargo: command not found`.
   docker run --rm \
     --platform "$DOCKER_PLATFORM" \
     -v "${FISSION_ROOT}:/src" \
@@ -162,7 +164,7 @@ build_cli_via_docker() {
     -w /src \
     -e CARGO_TERM_COLOR=always \
     rust:bookworm \
-    bash -lc "
+    bash -c "
       set -euo pipefail
       apt-get update -qq
       DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
