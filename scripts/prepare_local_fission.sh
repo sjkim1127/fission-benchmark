@@ -38,7 +38,8 @@ if [[ "${FISSION_CARGO_LOCKED:-1}" == "0" ]]; then
 fi
 
 die() { echo "error: $*" >&2; exit 1; }
-info() { echo "[prepare-local] $*"; }
+# Logs must go to stderr so command substitutions only capture paths.
+info() { echo "[prepare-local] $*" >&2; }
 
 if [[ -z "${FISSION_ROOT}" || ! -d "${FISSION_ROOT}" ]]; then
   die "FISSION_ROOT not found (set FISSION_ROOT=/path/to/Fission)"
