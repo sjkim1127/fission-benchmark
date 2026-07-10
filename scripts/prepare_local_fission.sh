@@ -1,13 +1,27 @@
 #!/usr/bin/env bash
 # Prepare a Linux fission_cli + utils bundle for docker-compose.local.yml.
 #
+# Mirrors Fission CD Linux matrix (see Fission/.github/workflows/cd.yml):
+#   cargo build -p fission-cli --locked --release --target x86_64-unknown-linux-gnu
+#
 # Output (default): .local/fission-bundle/{fission_cli,utils/,GIT_SHA}
-# Env overrides:
-#   FISSION_ROOT          path to Fission monorepo (default: ../Fission)
-#   FISSION_LOCAL_BUNDLE  output bundle dir
-#   FISSION_LINUX_CLI     prebuilt Linux ELF fission_cli (skip auto-build)
-#   FISSION_FORCE_DOCKER_BUILD=1  always rebuild CLI inside a Rust container
-#   FISSION_DOCKER_PLATFORM       docker platform for CLI build (default linux/amd64)
+#
+# Build preference order:
+#   1. FISSION_LINUX_CLI=…          explicit prebuilt Linux ELF
+#   2. existing target/…/fission_cli  reuse if already Linux ELF
+#   3. host cargo zigbuild            macOS/dev machines with Zig (fast path)
+#   4. host cargo --target            Linux x86_64 hosts (same as CD)
+#   5. Docker rust:bookworm           last resort (cached volumes)
+#
+# Env:
+#   FISSION_ROOT                 monorepo path (default: ../Fission)
+#   FISSION_LOCAL_BUNDLE         output bundle dir
+#   FISSION_LINUX_CLI            prebuilt Linux ELF (skip build)
+#   FISSION_LINUX_TARGET         default x86_64-unknown-linux-gnu
+#   FISSION_FORCE_DOCKER_BUILD=1 skip host builders; use Docker only
+#   FISSION_DOCKER_PLATFORM      default linux/amd64 (matches compose)
+#   FISSION_AUTO_INSTALL_ZIGBUILD=1  cargo install cargo-zigbuild when zig exists
+#   FISSION_CARGO_LOCKED=0       drop --locked if local Cargo.lock is dirty
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -15,6 +29,13 @@ FISSION_ROOT="${FISSION_ROOT:-$(cd "$ROOT_DIR/../Fission" 2>/dev/null && pwd || 
 BUNDLE="${FISSION_LOCAL_BUNDLE:-$ROOT_DIR/.local/fission-bundle}"
 FORCE_DOCKER="${FISSION_FORCE_DOCKER_BUILD:-0}"
 LINUX_CLI_OVERRIDE="${FISSION_LINUX_CLI:-}"
+LINUX_TARGET="${FISSION_LINUX_TARGET:-x86_64-unknown-linux-gnu}"
+DOCKER_PLATFORM="${FISSION_DOCKER_PLATFORM:-linux/amd64}"
+AUTO_ZIGBUILD="${FISSION_AUTO_INSTALL_ZIGBUILD:-1}"
+LOCKED_FLAG="--locked"
+if [[ "${FISSION_CARGO_LOCKED:-1}" == "0" ]]; then
+  LOCKED_FLAG=""
+fi
 
 die() { echo "error: $*" >&2; exit 1; }
 info() { echo "[prepare-local] $*"; }
@@ -25,105 +46,184 @@ fi
 if [[ ! -d "${FISSION_ROOT}/utils" ]]; then
   die "missing ${FISSION_ROOT}/utils"
 fi
+if [[ ! -f "${FISSION_ROOT}/Cargo.toml" ]]; then
+  die "FISSION_ROOT does not look like the Fission workspace: ${FISSION_ROOT}"
+fi
 
 mkdir -p "$BUNDLE"
 GIT_SHA="$(git -C "$FISSION_ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown)"
 echo "$GIT_SHA" >"$BUNDLE/GIT_SHA"
 
-is_linux_elf() {
+TARGET_CLI="${FISSION_ROOT}/target/${LINUX_TARGET}/release/fission_cli"
+NATIVE_CLI="${FISSION_ROOT}/target/release/fission_cli"
+
+is_linux_elf_x64() {
   local p="$1"
   [[ -f "$p" && -x "$p" ]] || return 1
   if command -v file >/dev/null 2>&1; then
-    file -b "$p" | grep -qi 'ELF' || return 1
+    local ft
+    ft="$(file -b "$p" 2>/dev/null || true)"
+    echo "$ft" | grep -qi 'ELF' || return 1
+    # Prefer x86-64 for default compose platform linux/amd64.
+    if [[ "$DOCKER_PLATFORM" == "linux/amd64" ]]; then
+      echo "$ft" | grep -Eqi 'x86-64|x86_64|AMD64|Intel 80386' || {
+        # Some `file` builds only say "ELF 64-bit LSB" — accept if also pie/exec.
+        echo "$ft" | grep -qi '64-bit' || return 1
+      }
+    fi
   fi
   return 0
 }
 
-pick_existing_cli() {
-  local candidates=(
-    "${FISSION_ROOT}/target/x86_64-unknown-linux-gnu/release/fission_cli"
-    "${FISSION_ROOT}/target/release/fission_cli"
-  )
-  local c
-  for c in "${candidates[@]}"; do
-    if is_linux_elf "$c"; then
-      echo "$c"
-      return 0
-    fi
-  done
+install_cli_to_bundle() {
+  local src="$1"
+  local dst="$BUNDLE/fission_cli"
+  # Same-path (e.g. FISSION_LINUX_CLI already points at the bundle) is a no-op.
+  if [[ "$(cd "$(dirname "$src")" && pwd)/$(basename "$src")" != \
+        "$(cd "$(dirname "$dst")" 2>/dev/null && pwd)/$(basename "$dst")" ]]; then
+    install -m 755 "$src" "$dst"
+  else
+    chmod 755 "$dst" 2>/dev/null || true
+  fi
+  is_linux_elf_x64 "$dst" \
+    || die "installed CLI is not a usable Linux ELF: $src ($(file -b "$src" 2>/dev/null || echo unknown))"
+}
+
+have_cargo_zigbuild() {
+  cargo zigbuild -h >/dev/null 2>&1
+}
+
+ensure_cargo_zigbuild() {
+  have_cargo_zigbuild && return 0
+  command -v zig >/dev/null 2>&1 || return 1
+  [[ "$AUTO_ZIGBUILD" == "1" ]] || return 1
+  info "installing cargo-zigbuild (one-time; Zig detected at $(command -v zig))"
+  cargo install cargo-zigbuild --locked
+  have_cargo_zigbuild
+}
+
+ensure_rust_target() {
+  if command -v rustup >/dev/null 2>&1; then
+    rustup target add "$LINUX_TARGET" >/dev/null 2>&1 || true
+  fi
+}
+
+# CD-equivalent host build (Linux runner or zig-linked cross).
+build_cli_host_cd_target() {
+  local out="$TARGET_CLI"
+  ensure_rust_target
+
+  if ensure_cargo_zigbuild; then
+    info "host cross-build (CD target): cargo zigbuild -p fission-cli ${LOCKED_FLAG} --release --target ${LINUX_TARGET}"
+    (
+      cd "$FISSION_ROOT"
+      # shellcheck disable=SC2086
+      cargo zigbuild -p fission-cli ${LOCKED_FLAG} --release --target "$LINUX_TARGET"
+    )
+    is_linux_elf_x64 "$out" || die "zigbuild produced non-Linux CLI at $out"
+    echo "$out"
+    return 0
+  fi
+
+  # Native Linux x86_64: same command as Fission/.github/workflows/cd.yml
+  if [[ "$(uname -s)" == "Linux" && "$(uname -m)" =~ ^(x86_64|amd64)$ ]]; then
+    info "host native build (CD): cargo build -p fission-cli ${LOCKED_FLAG} --release --target ${LINUX_TARGET}"
+    (
+      cd "$FISSION_ROOT"
+      # shellcheck disable=SC2086
+      cargo build -p fission-cli ${LOCKED_FLAG} --release --target "$LINUX_TARGET"
+    )
+    is_linux_elf_x64 "$out" || die "native build produced non-Linux CLI at $out"
+    echo "$out"
+    return 0
+  fi
+
   return 1
 }
 
 build_cli_via_docker() {
-  info "building linux fission_cli via Docker (rust:bookworm)..."
+  info "Docker build (CD-equivalent target ${LINUX_TARGET}, platform ${DOCKER_PLATFORM})..."
   info "  source: $FISSION_ROOT"
-  # Use the container's native arch so linux/arm64 hosts get arm64 ELF when
-  # compose is overridden; default compose platform is still linux/amd64.
-  # Note: first build is slow (full workspace). Prefer a prebuilt
-  # FISSION_LINUX_CLI or target/x86_64-unknown-linux-gnu/release/fission_cli.
+  info "  cargo registry/git/target caches: docker volumes fission-bench-*"
+
+  # Persistent caches make rebuilds much cheaper than a cold rust:bookworm each time.
+  docker volume create fission-bench-cargo-registry >/dev/null
+  docker volume create fission-bench-cargo-git >/dev/null
+  docker volume create fission-bench-cargo-target >/dev/null
+
   docker run --rm \
-    --platform "${FISSION_DOCKER_PLATFORM:-linux/amd64}" \
+    --platform "$DOCKER_PLATFORM" \
     -v "${FISSION_ROOT}:/src" \
     -v "${BUNDLE}:/out" \
+    -v fission-bench-cargo-registry:/usr/local/cargo/registry \
+    -v fission-bench-cargo-git:/usr/local/cargo/git \
+    -v fission-bench-cargo-target:/src/target \
     -w /src \
-    -e CARGO_HOME=/tmp/cargo-home \
-    -e CARGO_TARGET_DIR=/tmp/fission-target \
+    -e CARGO_TERM_COLOR=always \
     rust:bookworm \
-    bash -lc '
+    bash -lc "
       set -euo pipefail
       apt-get update -qq
       DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
         pkg-config libssl-dev build-essential cmake git >/dev/null
-      cargo build -p fission-cli --release
-      install -m 755 /tmp/fission-target/release/fission_cli /out/fission_cli
+      # Same package + flags as Fission CD (ubuntu-latest matrix row).
+      cargo build -p fission-cli ${LOCKED_FLAG} --release --target ${LINUX_TARGET}
+      install -m 755 target/${LINUX_TARGET}/release/fission_cli /out/fission_cli
       /out/fission_cli --version
-    '
+    "
+  is_linux_elf_x64 "$BUNDLE/fission_cli" || die "Docker build did not yield a Linux ELF CLI"
 }
 
-CLI_SRC=""
+# ── Resolve CLI ──────────────────────────────────────────────────────────────
+
 if [[ -n "$LINUX_CLI_OVERRIDE" ]]; then
-  is_linux_elf "$LINUX_CLI_OVERRIDE" || die "FISSION_LINUX_CLI is not a Linux ELF: $LINUX_CLI_OVERRIDE"
+  is_linux_elf_x64 "$LINUX_CLI_OVERRIDE" \
+    || die "FISSION_LINUX_CLI is not a Linux ELF: $LINUX_CLI_OVERRIDE"
   info "using FISSION_LINUX_CLI=$LINUX_CLI_OVERRIDE"
-  install -m 755 "$LINUX_CLI_OVERRIDE" "$BUNDLE/fission_cli"
-elif [[ "$FORCE_DOCKER" != "1" ]] && CLI_SRC="$(pick_existing_cli)"; then
-  info "reusing existing Linux CLI: $CLI_SRC"
-  install -m 755 "$CLI_SRC" "$BUNDLE/fission_cli"
+  install_cli_to_bundle "$LINUX_CLI_OVERRIDE"
+elif [[ "$FORCE_DOCKER" != "1" ]] && is_linux_elf_x64 "$TARGET_CLI"; then
+  info "reusing CD-target artifact: $TARGET_CLI"
+  install_cli_to_bundle "$TARGET_CLI"
+elif [[ "$FORCE_DOCKER" != "1" ]] && is_linux_elf_x64 "$NATIVE_CLI"; then
+  info "reusing native release artifact: $NATIVE_CLI"
+  install_cli_to_bundle "$NATIVE_CLI"
+elif [[ "$FORCE_DOCKER" != "1" ]] && BUILT="$(build_cli_host_cd_target)"; then
+  info "host build ok: $BUILT"
+  install_cli_to_bundle "$BUILT"
 else
   if ! command -v docker >/dev/null 2>&1; then
-    die "no Linux ELF fission_cli found and docker is unavailable for a container build"
+    die "no Linux ELF CLI and no docker; install Docker or cargo-zigbuild+zig, or set FISSION_LINUX_CLI"
   fi
   build_cli_via_docker
 fi
 
-is_linux_elf "$BUNDLE/fission_cli" || die "bundle fission_cli is not a Linux ELF"
+is_linux_elf_x64 "$BUNDLE/fission_cli" || die "bundle fission_cli is not a Linux ELF"
 
 info "syncing utils from ${FISSION_ROOT}/utils"
 rm -rf "$BUNDLE/utils"
-# Prefer hard copy for isolation; utils is large but local-only under .local/
 cp -a "${FISSION_ROOT}/utils" "$BUNDLE/utils"
 
-# Sanity: resource roots the adapter expects
 for need in sleigh-specs ghidra-data signatures; do
   [[ -d "$BUNDLE/utils/$need" ]] || die "utils missing $need"
 done
 
-# Write env snippet for compose
 ENV_SNIPPET="$ROOT_DIR/.env.local"
 {
   echo "# Generated by scripts/prepare_local_fission.sh — do not commit"
   echo "FISSION_LOCAL_BUNDLE=$BUNDLE"
   echo "FISSION_GIT_SHA=$GIT_SHA"
   echo "FISSION_SOURCE=local"
+  echo "FISSION_LINUX_TARGET=$LINUX_TARGET"
 } >"$ENV_SNIPPET"
 
 info "bundle ready: $BUNDLE"
 info "  fission_cli: $(file -b "$BUNDLE/fission_cli" 2>/dev/null || echo ok)"
 info "  git_sha:     $GIT_SHA"
+info "  target:      $LINUX_TARGET (CD linux matrix)"
 info "  env file:    $ENV_SNIPPET"
 cat <<EOF
 
 Next:
-  # load env (optional; compose also reads FISSION_* from shell)
   set -a; source .env.local; set +a
 
   docker compose -f docker-compose.yml -f docker-compose.local.yml \\
@@ -134,8 +234,17 @@ Next:
   python runner/runner.py --corpus dev --decompilers fission \\
     --output "results/local_\${FISSION_GIT_SHA}.json"
 
+Build tips (macOS):
+  # preferred one-liner after Zig is installed:
+  brew install zig
+  cargo install cargo-zigbuild --locked
+  # then re-run this script (uses cargo zigbuild --target ${LINUX_TARGET})
+
+  # or point at a prebuilt CD-compatible binary:
+  FISSION_LINUX_CLI=/path/to/fission_cli ./scripts/prepare_local_fission.sh
+
 IMPORTANT:
-  - Local results are for quality-loop observation only.
+  - Local results are quality-loop observation only.
   - Do NOT promote them to results/latest.json / GitHub Pages.
   - CI always uses FISSION_SOURCE=release (GitHub Release bake).
 EOF

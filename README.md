@@ -108,11 +108,14 @@ CI and GitHub Pages always use a **GitHub Release** Fission bake
 **current Linux `fission_cli` + `utils/`** into the same adapter:
 
 ```bash
-# 1) Build / collect a Linux ELF CLI + utils (not macOS Mach-O)
+# 1) Build / collect a Linux ELF CLI + utils (not macOS Mach-O).
+#    Prefer CD-equivalent target: x86_64-unknown-linux-gnu
+#    Order: FISSION_LINUX_CLI → existing target/… → cargo zigbuild → Docker
 scripts/prepare_local_fission.sh
 #    optional: FISSION_ROOT=/path/to/Fission
 #    optional: FISSION_LINUX_CLI=/path/to/linux/fission_cli
 #    optional: FISSION_FORCE_DOCKER_BUILD=1
+#    macOS tip: brew install zig && cargo install cargo-zigbuild --locked
 
 # 2) Start only the Fission adapter with the local overlay
 set -a && source .env.local && set +a
