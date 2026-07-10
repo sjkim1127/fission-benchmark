@@ -18,6 +18,8 @@ RESOURCE_ROOT = os.environ.get("FISSION_RESOURCE_ROOT", "/opt/fission-utils/util
 GHIDRA_DATA_DIR = os.environ.get("FISSION_GHIDRA_DATA_DIR", "/opt/fission-utils/utils/ghidra-data")
 DECOMP_TIMEOUT_MS = os.environ.get("FISSION_DECOMP_TIMEOUT_MS", "30000")
 RELEASE_VERSION_FILE = Path("/opt/fission-release-version")
+SOURCE_FILE = Path("/opt/fission-source")
+GIT_SHA_FILE = Path("/opt/fission-git-sha")
 
 class DecompileRequest(BaseModel):
     binary_b64: str
@@ -45,25 +47,42 @@ class BatchDecompileResponse(BaseModel):
     results: List[DecompileResultItem]
     time_ms: int
 
+def _read_text_file(path: Path, default: str = "") -> str:
+    try:
+        return path.read_text(encoding="utf-8").strip() or default
+    except Exception:
+        return default
+
+
 @app.get("/health")
 def health():
+    """Health probe with provenance for release vs local quality-loop bundles."""
     version = "unknown"
     release_version = os.environ.get("FISSION_RELEASE_VERSION", "unknown")
+    source = os.environ.get("FISSION_SOURCE") or _read_text_file(SOURCE_FILE, "release")
+    git_sha = os.environ.get("FISSION_GIT_SHA") or _read_text_file(GIT_SHA_FILE, "")
     try:
-        r = subprocess.run([str(FISSION_BIN), "--version"], capture_output=True, text=True, timeout=5)
+        r = subprocess.run(
+            [str(FISSION_BIN), "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
         version = r.stdout.strip() or r.stderr.strip()
     except Exception:
         pass
-    try:
-        release_version = RELEASE_VERSION_FILE.read_text(encoding="utf-8").strip() or release_version
-    except Exception:
-        pass
-    return {
+    release_version = _read_text_file(RELEASE_VERSION_FILE, release_version)
+    payload = {
         "status": "ok",
         "decompiler": "fission",
         "version": version,
         "release_version": release_version,
+        # "release" = GitHub Release bake (CI contract). "local" = host bundle mount.
+        "source": source if source in ("release", "local") else "release",
     }
+    if git_sha:
+        payload["git_sha"] = git_sha
+    return payload
 
 def run_fission_cli(args: List[str]):
     env = {

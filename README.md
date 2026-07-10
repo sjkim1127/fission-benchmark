@@ -101,6 +101,44 @@ GHIDRA_ENDPOINT=http://localhost:9001 python runner/runner.py --corpus dev
 python runner/runner.py --use-holdout
 ```
 
+### Local Fission build (quality loop only)
+
+CI and GitHub Pages always use a **GitHub Release** Fission bake
+(`FISSION_SOURCE=release`). For day-to-day decompiler work you can mount a
+**current Linux `fission_cli` + `utils/`** into the same adapter:
+
+```bash
+# 1) Build / collect a Linux ELF CLI + utils (not macOS Mach-O)
+scripts/prepare_local_fission.sh
+#    optional: FISSION_ROOT=/path/to/Fission
+#    optional: FISSION_LINUX_CLI=/path/to/linux/fission_cli
+#    optional: FISSION_FORCE_DOCKER_BUILD=1
+
+# 2) Start only the Fission adapter with the local overlay
+set -a && source .env.local && set +a
+docker compose -f docker-compose.yml -f docker-compose.local.yml \
+  --profile local up -d --build fission
+
+# 3) Confirm provenance
+curl -s "http://localhost:${FISSION_HOST_PORT:-8007}/health"
+# → "source": "local", "git_sha": "...", "release_version": "local-<sha>"
+
+# 4) Measure into a non-latest path (do not overwrite official latest)
+python runner/runner.py --corpus dev --decompilers fission \
+  --output "results/local_${FISSION_GIT_SHA}.json"
+```
+
+**Rules**
+
+| Path | Fission binary | Results |
+|---|---|---|
+| CI / Pages / `results/latest.*` | Release tag only | Official timeline |
+| Local quality loop | Current build (Linux ELF) | `results/local_<sha>.json` only |
+
+Local mode requires a **Linux ELF** matching the compose platform
+(`linux/amd64` by default). Host macOS arm64 binaries will not run in the
+container; `prepare_local_fission.sh` cross-builds via Docker when needed.
+
 ## Repository Layout
 
 ```
@@ -122,7 +160,7 @@ fission-benchmark/
 │   ├── ghidra/      Ghidra 12.x headless + FastAPI
 │   ├── retdec/      RetDec 5.x + FastAPI
 │   ├── radare2/     Radare2 + r2ghidra + FastAPI
-│   ├── fission/     Fission CLI + FastAPI (downloads from Releases)
+│   ├── fission/     Fission CLI + FastAPI (release bake; local mount overlay)
 │   ├── angr/        angr decompiler + FastAPI
 │   ├── snowman/     Snowman/nocode + FastAPI
 │   ├── revng/       rev.ng + FastAPI
@@ -148,10 +186,12 @@ fission-benchmark/
 
 ## Fission Release Tracking
 
-CI uses `FISSION_VERSION=latest` by default, so scheduled and manual benchmark
-runs pull the latest published Fission release. The benchmark workflow also
-accepts a cross-repository dispatch event so the Fission release pipeline can
-trigger a run immediately after publishing:
+CI sets `FISSION_SOURCE=release` and uses `FISSION_VERSION=latest` by default,
+so scheduled and manual benchmark runs pull the latest published Fission release
+only. The `/health` probe must report `"source": "release"` (CI fails on
+`local-*`). The benchmark workflow also accepts a cross-repository dispatch
+event so the Fission release pipeline can trigger a run immediately after
+publishing:
 
 ```bash
 gh api repos/sjkim1127/fission-benchmark/dispatches \
@@ -173,6 +213,11 @@ Response: { "decompiler": "ghidra", "name": "fibonacci", "code": "...", "time_ms
 
 GET /health
 Response: { "status": "ok", "decompiler": "ghidra", "version": "12.0" }
+
+# Fission also reports provenance:
+# { "status": "ok", "decompiler": "fission", "version": "...",
+#   "release_version": "v0.1.2"|"local-<sha>",
+#   "source": "release"|"local", "git_sha": "<optional>" }
 ```
 
 ## Adding a New Decompiler

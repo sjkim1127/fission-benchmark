@@ -1,10 +1,15 @@
 # fission-benchmark: Multi-decompiler comparison benchmark
 # Each decompiler runs as an isolated container exposing a uniform HTTP API.
 #
-# Usage:
+# Usage (CI / official — GitHub Release Fission only):
 #   docker compose build
 #   docker compose up -d
 #   python runner/runner.py --corpus dev
+#
+# Local current-build quality loop (never for Pages / official latest):
+#   scripts/prepare_local_fission.sh
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml \
+#     --profile local up -d --build fission
 
 services:
   corpus-builder:
@@ -22,12 +27,15 @@ services:
     build:
       context: ./docker/fission
       args:
+        # CI must leave this as release (Dockerfile default). Local overlay sets local.
+        FISSION_SOURCE: ${FISSION_SOURCE:-release}
         FISSION_VERSION: ${FISSION_VERSION:-latest}
     platform: linux/amd64
     ports: ["${FISSION_HOST_PORT:-8000}:8000"]
     volumes:
       - ./corpus:/corpus:ro
     environment:
+      - FISSION_SOURCE=${FISSION_SOURCE:-release}
       - FISSION_SLEIGH_SPEC_DIR=/sleigh-specs
       - FISSION_RESOURCE_ROOT=/opt/fission-utils/utils
       - FISSION_GHIDRA_DATA_DIR=/opt/fission-utils/utils/ghidra-data

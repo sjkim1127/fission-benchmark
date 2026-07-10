@@ -5,6 +5,8 @@
 name: Benchmark & Deploy
 
 env:
+  # Official / Pages contract: only GitHub Release bundles. Never FISSION_SOURCE=local.
+  FISSION_SOURCE: release
   FISSION_VERSION: ${{ github.event.client_payload.fission_version || github.event.inputs.fission_version || 'latest' }}
   FISSION_ASSETS_TAG: assets-v1
   CORPUS_TARGET: windows-x86_64
@@ -207,7 +209,21 @@ jobs:
 
       - name: Verify Fission container version
         run: |
-          python -c 'import json, os, urllib.request; expected = os.environ["FISSION_VERSION"].lstrip("v"); health = json.load(urllib.request.urlopen("http://localhost:8000/health", timeout=10)); actual = str(health.get("version", "")); release = str(health.get("release_version", "")); print(f"Fission health version: {actual}"); print(f"Fission release version: {release}"); assert not expected or release.lstrip("v") == expected, f"Fission image release mismatch: expected {expected}, got {release}"; print("✓ Version matches")'
+          python -c '
+          import json, os, urllib.request
+          expected = os.environ["FISSION_VERSION"].lstrip("v")
+          health = json.load(urllib.request.urlopen("http://localhost:8000/health", timeout=10))
+          actual = str(health.get("version", ""))
+          release = str(health.get("release_version", ""))
+          source = str(health.get("source", "release"))
+          print(f"Fission health version: {actual}")
+          print(f"Fission release version: {release}")
+          print(f"Fission source: {source}")
+          assert source == "release", f"CI must use release source, got {source!r}"
+          assert not str(release).startswith("local"), f"CI must not run local bundle: {release}"
+          assert not expected or release.lstrip("v") == expected, f"Fission image release mismatch: expected {expected}, got {release}"
+          print("✓ Version matches (release)")
+          '
 
       - name: Run dev benchmark
         timeout-minutes: 25

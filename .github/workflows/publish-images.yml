@@ -31,6 +31,8 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/fission-benchmark
+  # Published images always bake a GitHub Release Fission CLI (never local mount).
+  FISSION_SOURCE: release
   FISSION_VERSION: ${{ github.event.client_payload.fission_version || github.event.inputs.fission_version || 'latest' }}
 
 permissions:
@@ -131,6 +133,7 @@ jobs:
           push: true
           tags: ${{ steps.image-meta.outputs.tags }}
           build-args: |
+            FISSION_SOURCE=release
             FISSION_VERSION=${{ steps.image-meta.outputs.fission_version }}
           cache-from: type=local,src=/tmp/.buildx-cache-${{ matrix.service }}
           cache-to: type=local,dest=/tmp/.buildx-cache-${{ matrix.service }}-new,mode=max

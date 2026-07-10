@@ -58,6 +58,7 @@ jobs:
           load: true
           tags: fission-benchmark-${{ matrix.service }}:pr
           build-args: |
+            FISSION_SOURCE=release
             FISSION_VERSION=${{ steps.fission-version.outputs.version }}
           cache-from: type=local,src=/tmp/.buildx-cache-${{ matrix.service }}
           cache-to: type=local,dest=/tmp/.buildx-cache-${{ matrix.service }}-new,mode=max

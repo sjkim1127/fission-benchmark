@@ -22,3 +22,7 @@ corpus/*/binaries/
 
 # Local environment config
 .env
+.env.local
+
+# Local current-build Fission bundle (prepare_local_fission.sh)
+.local/

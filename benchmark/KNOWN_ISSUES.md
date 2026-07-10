@@ -93,6 +93,10 @@ Priority actions:
 - Keep release-triggered benchmark runs wired to the Fission release pipeline.
 - Verify `/health` exposes the expected Fission version in benchmark logs.
 - Avoid relying on Docker cache as proof that the latest release is installed.
+- CI must set `FISSION_SOURCE=release` and fail if `/health` reports `source=local`.
+- Local current-build mounts (`docker-compose.local.yml`, `scripts/prepare_local_fission.sh`)
+  are for quality-loop observation only; never promote `results/local_*.json` to
+  Pages / `results/latest.*`.
 
 ### Dashboard Semantics
 
