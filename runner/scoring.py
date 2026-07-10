@@ -42,8 +42,16 @@ class FunctionScore:
     composite_score: float = 0.0        # deprecated alias for correctness_score
     consensus_rank: int | None = None   # deprecated alias for correctness_rank
     uses_intrinsics: bool = False       # True if decompiled code uses __carry/__scarry etc.
-    decompiled_code: str = ""           # raw decompiled output (truncated for dashboard)
+    decompiled_code: str = ""           # primary surface used for scoring (NIR for Fission)
+    # Dual NIR/HIR surfaces when the adapter provides them (Fission dual printers).
+    # Semantic oracle always scores NIR; readability proxies prefer HIR.
+    decompiled_code_nir: str = ""
+    decompiled_code_hir: str = ""
+    pseudocode_layer: str = ""          # adapter-reported layer selection, e.g. "nir"
     readability_metrics: dict[str, Any] = field(default_factory=dict)
+    # Optional second readability pass on HIR (when dual surfaces differ).
+    readability_metrics_hir: dict[str, Any] = field(default_factory=dict)
+    readability_proxy_score_hir: float | None = None
     ast_similarity: dict[str, Any] = field(default_factory=dict)
     output_diagnostics: dict[str, Any] = field(default_factory=dict)
 

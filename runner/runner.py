@@ -152,29 +152,60 @@ async def decompile_batch_and_score(
             ))
             continue
 
-        code = item.get("code", "")
+        code = item.get("code", "") or ""
+        # Dual layers (Fission): semantic on NIR; readability prefers HIR.
+        code_nir = (item.get("code_nir") or code or "")
+        code_hir = (item.get("code_hir") or "")
+        # Semantic / diagnostics always use NIR-faithful primary.
+        semantic_code = code_nir or code
+        # Readability surface: HIR when present and non-empty, else primary.
+        readability_code = code_hir or semantic_code
         adapter_error = item.get("error")
-        output_diagnostics = analyze_output_diagnostics(fn.name, dname, code, expected_addr=variant.addr) if code else {}
+        output_diagnostics = (
+            analyze_output_diagnostics(fn.name, dname, semantic_code, expected_addr=variant.addr)
+            if semantic_code
+            else {}
+        )
         output_error = invalid_output_reason(
             output_diagnostics,
-            code,
+            semantic_code,
             duplicate_count=code_counts.get((code or "").strip(), 0),
-        ) if code else None
+        ) if semantic_code else None
         error = adapter_error or output_error
-        sim = source_similarity(function_source, code) if function_source and not error else 0.0
-        gotos, depth = structural_score(code) if not error else (0, 0)
-        uses_intrin = check_uses_intrinsics(code) if code else False
-        readability_metrics = analyze_readability(code, dname) if code and not error else {}
+        sim = (
+            source_similarity(function_source, semantic_code)
+            if function_source and not error
+            else 0.0
+        )
+        gotos, depth = structural_score(semantic_code) if not error else (0, 0)
+        uses_intrin = check_uses_intrinsics(semantic_code) if semantic_code else False
+        # Primary readability metrics: prefer HIR for Fission dual printers.
+        readability_metrics = (
+            analyze_readability(readability_code, dname)
+            if readability_code and not error
+            else {}
+        )
         readability_score = summarize_readability_proxy_score(readability_metrics)
+        readability_metrics_hir = {}
+        readability_score_hir = None
+        if (
+            not error
+            and code_hir
+            and code_nir
+            and code_hir.strip() != code_nir.strip()
+        ):
+            # Explicit HIR pass when dual surfaces differ (evidence only; not ranking).
+            readability_metrics_hir = analyze_readability(code_hir, dname)
+            readability_score_hir = summarize_readability_proxy_score(readability_metrics_hir)
         ast_similarity = (
-            ast_structure_similarity(function_source, code)
-            if function_source and code and not error
+            ast_structure_similarity(function_source, semantic_code)
+            if function_source and semantic_code and not error
             else {}
         )
 
         if not error:
             sem_score, sem_err, fail_cat, cases_passed, cases_total = verify_semantic_correctness(
-                fn.name, code
+                fn.name, semantic_code
             )
         else:
             sem_score, sem_err, fail_cat, cases_passed, cases_total = 0.0, error, "adapter_error", 0, 0
@@ -194,9 +225,14 @@ async def decompile_batch_and_score(
             cases_passed=cases_passed,
             cases_total=cases_total,
             uses_intrinsics=uses_intrin,
-            decompiled_code=code[:8000] if code else "",  # cap at 8KB for dashboard
+            decompiled_code=semantic_code[:8000] if semantic_code else "",
+            decompiled_code_nir=code_nir[:8000] if code_nir else "",
+            decompiled_code_hir=code_hir[:8000] if code_hir else "",
+            pseudocode_layer=str(item.get("layer") or ""),
             readability_metrics=readability_metrics,
             readability_proxy_score=readability_score,
+            readability_metrics_hir=readability_metrics_hir,
+            readability_proxy_score_hir=readability_score_hir,
             ast_similarity=ast_similarity,
             output_diagnostics=output_diagnostics,
         ))

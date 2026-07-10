@@ -70,5 +70,13 @@ Every result row may include:
 - `readability_metrics`: Phase 1 proxy families, raw and normalized.
 - `ast_similarity`: Phase 2 corpus-only AST similarity views.
 
+For Fission dual printers (when the adapter supplies both surfaces):
+
+- Semantic correctness still runs on **NIR** (`decompiled_code` / `code_nir`).
+- Primary `readability_metrics` prefer the **HIR** surface when available.
+- Optional `readability_metrics_hir` / `readability_proxy_score_hir` record an
+  explicit HIR-only proxy pass when NIR and HIR text differ.
+
 No result row should include a final `readability_score` until Phase 3 and Phase
-4 are complete.
+4 are complete. Dual NIR/HIR capture is evidence plumbing only — it does not
+promote HIR into the correctness ranking formula.

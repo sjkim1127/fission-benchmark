@@ -32,6 +32,8 @@ def test_fission_uses_addresses_file_batch_cli() -> None:
     assert "/tmp/addrs.txt" in command
     assert "--batch" not in command
     assert "--json" in command
+    assert "--layer" in command
+    assert command[command.index("--layer") + 1] == "nir"
 
 
 def test_fission_normalizes_new_batch_json_shape() -> None:
@@ -45,6 +47,40 @@ def test_fission_normalizes_new_batch_json_shape() -> None:
     assert server.normalize_decompile_results(payload) == [
         {"address": "0x4015b0", "name": "_fibonacci", "code": "int x;"}
     ]
+
+
+def test_fission_maps_dual_layer_cli_fields() -> None:
+    server = load_module("fission_server_dual", ROOT / "docker/fission/server.py")
+
+    item = server.decompile_result_from_cli_item(
+        {
+            "address": "0x14000158c",
+            "name": "signum",
+            "code": "int signum(int x) { ulonglong home_0; return x; }",
+            "code_nir": "int signum(int x) { ulonglong home_0; return x; }",
+            "code_hir": "int signum(int x) { return x; }",
+            "layer": "nir",
+        }
+    )
+
+    assert item.addr == "0x14000158c"
+    assert item.name == "signum"
+    assert "home_0" in item.code
+    assert item.code_nir and "home_0" in item.code_nir
+    assert item.code_hir and "home_0" not in item.code_hir
+    assert item.layer == "nir"
+
+
+def test_fission_dual_layer_falls_back_when_only_code_present() -> None:
+    server = load_module("fission_server_dual_fallback", ROOT / "docker/fission/server.py")
+
+    item = server.decompile_result_from_cli_item(
+        {"address": "0x1", "name": "f", "code": "int f(void) { return 1; }"}
+    )
+
+    assert item.code == "int f(void) { return 1; }"
+    assert item.code_nir == item.code
+    assert item.code_hir == item.code
 
 
 def test_ghidra_extracts_marker_from_info_prefixed_line() -> None:

@@ -29,6 +29,10 @@ class DecompileResponse(BaseModel):
     decompiler: str = "fission"
     name: str
     code: str
+    # Dual surfaces from Fission CLI (optional; older CLIs omit them).
+    code_nir: Optional[str] = None
+    code_hir: Optional[str] = None
+    layer: Optional[str] = None
     time_ms: int
     error: Optional[str] = None
 
@@ -39,7 +43,11 @@ class BatchDecompileRequest(BaseModel):
 class DecompileResultItem(BaseModel):
     addr: str
     name: str = "?"
+    # Primary code stays NIR-faithful for semantic oracle compatibility.
     code: str = ""
+    code_nir: Optional[str] = None
+    code_hir: Optional[str] = None
+    layer: Optional[str] = None
     error: Optional[str] = None
 
 class BatchDecompileResponse(BaseModel):
@@ -118,6 +126,7 @@ def resolve_binary(binary: str) -> str:
     return resolved
 
 def decompile_batch_command(binary_path: str, addresses_path: str) -> List[str]:
+    # Default primary `code` is NIR; CLI also emits code_nir/code_hir dual surfaces.
     return [
         str(FISSION_BIN),
         "decomp",
@@ -126,6 +135,8 @@ def decompile_batch_command(binary_path: str, addresses_path: str) -> List[str]:
         addresses_path,
         "--json",
         "--benchmark",
+        "--layer",
+        "nir",
         "--timeout-ms",
         DECOMP_TIMEOUT_MS,
     ]
@@ -137,6 +148,27 @@ def normalize_decompile_results(payload: object) -> list[dict]:
     if isinstance(payload, list):
         return payload
     return []
+
+
+def decompile_result_from_cli_item(item: dict, fallback_addr: Optional[str] = None) -> DecompileResultItem:
+    """Map Fission CLI JSON function row → adapter result (preserves dual layers)."""
+    code = item.get("code") or ""
+    code_nir = item.get("code_nir")
+    code_hir = item.get("code_hir")
+    # Older CLIs only have `code`; treat it as NIR when dual fields are absent.
+    if not code_nir and code:
+        code_nir = code
+    if not code_hir and code:
+        code_hir = code
+    return DecompileResultItem(
+        addr=item.get("addr") or item.get("address") or (fallback_addr or ""),
+        name=item.get("name", "?"),
+        code=code,
+        code_nir=code_nir,
+        code_hir=code_hir,
+        layer=item.get("layer"),
+        error=item.get("error"),
+    )
 
 @app.get("/functions")
 def functions(binary: str):
@@ -268,7 +300,14 @@ def decompile(req: DecompileRequest):
         item = resp.results[0]
         if item.error:
             return DecompileResponse(name="?", code="", time_ms=elapsed, error=item.error)
-        return DecompileResponse(name=item.name, code=item.code, time_ms=elapsed)
+        return DecompileResponse(
+            name=item.name,
+            code=item.code,
+            code_nir=item.code_nir,
+            code_hir=item.code_hir,
+            layer=item.layer,
+            time_ms=elapsed,
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -305,14 +344,7 @@ def decompile_batch(req: BatchDecompileRequest):
                 batch_failed = True
             else:
                 res_list = normalize_decompile_results(json.loads(result.stdout))
-                results = []
-                for item in res_list:
-                    results.append(DecompileResultItem(
-                        addr=item.get("addr") or item.get("address"),
-                        name=item.get("name", "?"),
-                        code=item.get("code", ""),
-                        error=item.get("error")
-                    ))
+                results = [decompile_result_from_cli_item(item) for item in res_list]
         except Exception:
             batch_failed = True
 
@@ -335,13 +367,7 @@ def decompile_batch(req: BatchDecompileRequest):
                     else:
                         res_list = normalize_decompile_results(json.loads(res_single.stdout))
                         if res_list:
-                            item = res_list[0]
-                            results.append(DecompileResultItem(
-                                addr=item.get("addr") or item.get("address") or addr,
-                                name=item.get("name", "?"),
-                                code=item.get("code", ""),
-                                error=item.get("error")
-                            ))
+                            results.append(decompile_result_from_cli_item(res_list[0], fallback_addr=addr))
                         else:
                             results.append(DecompileResultItem(
                                 addr=addr,
