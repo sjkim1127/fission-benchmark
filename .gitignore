@@ -26,3 +26,7 @@ corpus/*/binaries/
 
 # Local current-build Fission bundle (prepare_local_fission.sh)
 .local/
+
+# Vercel
+.vercel/
+.vercel
