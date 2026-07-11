@@ -28,11 +28,12 @@ GIT_SHA_FILE = Path("/opt/fission-git-sha")
 # ---------------------------------------------------------------------------
 _CAPABILITY_CACHE: Dict[str, bool] = {}
 _CAPABILITY_PROBED: bool = False
+_CAPABILITY_PROBE_ERROR: str | None = None
 
 
 def _probe_capabilities() -> None:
     """Populate _CAPABILITY_CACHE from `fission_cli decomp --help` output."""
-    global _CAPABILITY_PROBED
+    global _CAPABILITY_PROBED, _CAPABILITY_PROBE_ERROR
     if _CAPABILITY_PROBED:
         return
     _CAPABILITY_PROBED = True
@@ -44,11 +45,21 @@ def _probe_capabilities() -> None:
             timeout=10,
         )
         help_text = r.stdout + r.stderr
-        _CAPABILITY_CACHE["--layer"] = "--layer" in help_text
-        _CAPABILITY_CACHE["--benchmark"] = "--benchmark" in help_text
-        _CAPABILITY_CACHE["--timeout-ms"] = "--timeout-ms" in help_text
-    except Exception:
+        if r.returncode not in (0, 1):  # --help may exit 1 on some CLIs
+            _CAPABILITY_PROBE_ERROR = (
+                f"fission_cli decomp --help exited {r.returncode}: "
+                f"{help_text[:200]}"
+            )
+            _CAPABILITY_CACHE["--layer"] = False
+            _CAPABILITY_CACHE["--benchmark"] = False
+            _CAPABILITY_CACHE["--timeout-ms"] = False
+        else:
+            _CAPABILITY_CACHE["--layer"] = "--layer" in help_text
+            _CAPABILITY_CACHE["--benchmark"] = "--benchmark" in help_text
+            _CAPABILITY_CACHE["--timeout-ms"] = "--timeout-ms" in help_text
+    except Exception as exc:
         # If help fails, assume minimal capability set (no optional flags).
+        _CAPABILITY_PROBE_ERROR = str(exc)
         _CAPABILITY_CACHE["--layer"] = False
         _CAPABILITY_CACHE["--benchmark"] = False
         _CAPABILITY_CACHE["--timeout-ms"] = False
@@ -134,6 +145,10 @@ def health():
         "capabilities": {
             k: v for k, v in _CAPABILITY_CACHE.items()
         },
+        # Probe diagnostics — allows contract tests to distinguish between
+        # "probe ran but found no flags" vs "probe itself crashed".
+        "capability_probe_ok": _CAPABILITY_PROBE_ERROR is None,
+        "capability_probe_error": _CAPABILITY_PROBE_ERROR,
     }
     if git_sha:
         payload["git_sha"] = git_sha

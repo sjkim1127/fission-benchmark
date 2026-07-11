@@ -224,30 +224,97 @@ jobs:
               except Exception as e:
                   errors.append(f"Fission /health contract failed: {e}")
 
-          # ── 2. /decompile_batch with a known binary ────────────────────────
-          # Use the smallest corpus binary available (first *.exe or *.elf found).
-          corpus_dirs = list(Path("corpus/dev/binaries").glob("**/*.exe")) + \
-                        list(Path("corpus/dev/binaries").glob("**/*.elf"))
-          if not corpus_dirs:
-              # No binary available yet — skip decompile check.
-              print(f"⚠ No corpus binary found; skipping /decompile_batch smoke test.")
-          else:
-              binary_path = corpus_dirs[0]
-              binary_b64 = base64.b64encode(binary_path.read_bytes()).decode()
-              # Use addr 0x0 — we just want a non-crash response.
+          # ── Fission-specific: capability probe diagnostics ────────────────
+          if service == "fission":
               try:
-                  resp = post("/decompile_batch", {
-                      "binary_b64": binary_b64,
-                      "addresses": ["0x0"],
-                  })
-                  results = resp.get("results", [])
-                  assert isinstance(results, list), \
-                      f"Expected results list, got {type(results)}"
-                  # We do not assert non-empty code because 0x0 may not be a
-                  # valid function; we just verify the API does not crash.
-                  print(f"✓ /decompile_batch responded with {len(results)} result(s)")
+                  h = get("/health")
+                  probe_ok = h.get("capability_probe_ok")
+                  probe_err = h.get("capability_probe_error")
+                  assert probe_ok is True, (
+                      f"Capability probe failed — all capabilities will be False. "
+                      f"Error: {probe_err!r}. "
+                      f"This means optional flags like --layer, --benchmark will be "
+                      f"silently omitted even if the CLI supports them."
+                  )
+                  print(f"✓ Fission capability probe OK, capabilities={h.get('capabilities')}")
               except Exception as e:
-                  errors.append(f"/decompile_batch failed: {e}")
+                  errors.append(f"Fission capability probe check failed: {e}")
+
+          # ── 2. /decompile_batch with a REAL manifest address ───────────────
+          # We load the first available corpus manifest to get an actual binary
+          # path and a real function address.  This ensures the contract test
+          # catches CLI regressions (e.g. unknown --layer flag) that would
+          # produce non-empty results[] but with row.error != null.
+          manifest_dir = Path("corpus/dev/manifests")
+          manifest_files = sorted(manifest_dir.glob("*.json")) if manifest_dir.exists() else []
+
+          if not manifest_files:
+              print("⚠ No corpus manifests found; skipping /decompile_batch smoke test.")
+          else:
+              # Pick the first manifest with at least one function/variant.
+              target_binary = None
+              target_addr   = None
+              target_name   = None
+              for mf in manifest_files:
+                  try:
+                      m = json.loads(mf.read_text())
+                      for fn in m.get("functions", []):
+                          for var in fn.get("compiler_variants", []):
+                              bp = var.get("binary")
+                              addr = var.get("addr")
+                              if bp and addr:
+                                  target_binary = Path("corpus/dev") / bp
+                                  target_addr   = addr
+                                  target_name   = fn.get("name", "")
+                                  break
+                          if target_binary:
+                              break
+                  except Exception:
+                      continue
+                  if target_binary:
+                      break
+
+              if not target_binary or not target_binary.exists():
+                  print(f"⚠ Manifest binary not found on disk; skipping /decompile_batch smoke test.")
+              else:
+                  binary_b64 = base64.b64encode(target_binary.read_bytes()).decode()
+                  print(f"  Using binary={target_binary.name} addr={target_addr} fn={target_name}")
+                  try:
+                      resp = post("/decompile_batch", {
+                          "binary_b64": binary_b64,
+                          "addresses": [target_addr],
+                      })
+                      results = resp.get("results", [])
+
+                      # ── Mandatory assertions ─────────────────────────────────
+                      # 1. Must return exactly one result for one address
+                      assert isinstance(results, list), \
+                          f"results must be a list, got {type(results)}"
+                      assert len(results) == 1, \
+                          f"Expected 1 result for 1 address, got {len(results)}: {results}"
+
+                      row = results[0]
+
+                      # 2. Must not contain an adapter/CLI error
+                      row_error = row.get("error")
+                      assert not row_error, (
+                          f"Decompiler returned an error for addr={target_addr}: {row_error!r}\n"
+                          f"This indicates an adapter/CLI regression (e.g. unsupported flag)."
+                      )
+
+                      # 3. Address must round-trip correctly
+                      assert row.get("addr") == target_addr, \
+                          f"Expected addr={target_addr!r}, got {row.get('addr')!r}"
+
+                      # 4. Code must be non-empty
+                      code = row.get("code", "")
+                      assert isinstance(code, str) and code.strip(), \
+                          f"Decompiler returned empty code for addr={target_addr}. Full row: {row}"
+
+                      print(f"✓ /decompile_batch: addr={target_addr}, code={len(code)} chars, no error")
+
+                  except Exception as e:
+                      errors.append(f"/decompile_batch failed: {e}")
 
           if errors:
               for err in errors:
