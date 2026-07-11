@@ -23,6 +23,18 @@ services:
     command: ["python3", "scripts/build_corpus.py", "--split", "${CORPUS_SPLIT:-dev}"]
     profiles: ["tools"]
 
+  oracle:
+    build:
+      context: .
+      dockerfile: docker/oracle/Dockerfile
+    platform: linux/amd64
+    ports: ["8010:8000"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
   fission:
     build:
       context: ./docker/fission

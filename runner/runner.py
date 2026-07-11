@@ -27,6 +27,7 @@ from scoring import (
     structural_score,
 )
 from semantic import verify_semantic_correctness_async
+from differential_oracle import aggregate_oracle_evidence, verify_with_oracle
 from readability import analyze_readability, ast_structure_similarity, summarize_readability_proxy_score
 from output_diagnostics import analyze_output_diagnostics, invalid_output_reason
 from run_validity import build_envelope
@@ -155,6 +156,7 @@ async def decompile_batch_and_score(
     binary_path: Path,
     targets: List[tuple],  # list of (fn_object, variant_object, function_source)
     sem: asyncio.Semaphore,
+    oracle_endpoint: str | None,
 ) -> List[FunctionScore]:
     addresses = [t[1].addr for t in targets]
 
@@ -280,7 +282,25 @@ async def decompile_batch_and_score(
             else {}
         )
 
-        if not error:
+        oracle_evidence = {}
+        if not error and oracle_endpoint and fn.name in TEST_WRAPPERS:
+            differential = await verify_with_oracle(
+                client,
+                oracle_endpoint,
+                function_name=fn.name,
+                reference_code=function_source,
+                candidate_code=semantic_code,
+                cases=TEST_WRAPPERS[fn.name],
+                compiler_variant=variant_label,
+                reference_binary_sha256=hashlib.sha256(binary_path.read_bytes()).hexdigest(),
+            )
+            sem_score = differential.score
+            sem_err = differential.error
+            fail_cat = differential.category
+            cases_passed = differential.cases_passed
+            cases_total = differential.cases_total
+            oracle_evidence = differential.evidence or {}
+        elif not error:
             sem_score, sem_err, fail_cat, cases_passed, cases_total = await verify_semantic_correctness_async(
                 fn.name, semantic_code
             )
@@ -319,6 +339,7 @@ async def decompile_batch_and_score(
             readability_proxy_score_hir=readability_score_hir,
             ast_similarity=ast_similarity,
             output_diagnostics=output_diagnostics,
+            oracle_evidence=oracle_evidence,
         ))
 
         # Direct feedback output
@@ -339,6 +360,7 @@ async def run_all(
     corpus_split: str,
     limit: int | None,
     variant_limit: int | None,
+    oracle_endpoint: str | None,
 ) -> list[FunctionScore]:
     fn_list = functions  # [:limit] already applied by caller — do not slice again
     all_scores: list[FunctionScore] = []
@@ -384,7 +406,7 @@ async def run_all(
         for (dname, url, binary_path), targets in groups.items():
             tasks.append(
                 decompile_batch_and_score(
-                    client, dname, url, binary_path, targets, sem
+                    client, dname, url, binary_path, targets, sem, oracle_endpoint
                 )
             )
 
@@ -475,7 +497,12 @@ def run(
     expected_rows = len(expected_cells)
 
     # Run event loop
-    scores = asyncio.run(run_all(fn_list, dec_map, corpus, limit, variant_limit))
+    oracle_endpoint = os.environ.get("ORACLE_ENDPOINT")
+    if run_mode == "official" and not oracle_endpoint:
+        raise typer.BadParameter("official runs require ORACLE_ENDPOINT")
+    scores = asyncio.run(
+        run_all(fn_list, dec_map, corpus, limit, variant_limit, oracle_endpoint)
+    )
 
     elapsed = time.monotonic() - start_monotonic
     finished_at = datetime.now(timezone.utc)
@@ -497,18 +524,7 @@ def run(
     except Exception:
         commit = "unknown"
 
-    wrapper_sha256 = hashlib.sha256(
-        json.dumps(TEST_WRAPPERS, sort_keys=True).encode("utf-8")
-    ).hexdigest()
-    binary_hash = hashlib.sha256()
-    for cell in sorted(expected_cells, key=lambda item: tuple(item.values())):
-        binary_hash.update(json.dumps(cell, sort_keys=True).encode("utf-8"))
-    try:
-        compiler_version = subprocess.check_output(
-            ["gcc", "--version"], text=True
-        ).splitlines()[0]
-    except Exception:
-        compiler_version = "unavailable"
+    oracle = aggregate_oracle_evidence(serialized)
     manifest_hash = hashlib.sha256()
     manifest_paths = sorted((CORPUS_ROOT / corpus / "manifests").glob("*.json"))
     for manifest_path in manifest_paths:
@@ -550,16 +566,7 @@ def run(
             "expected_cells": expected_cells,
             "observed_rows": len(serialized),
         },
-        oracle={
-            "mode": "example_cases",
-            "valid": False,
-            "target_abi": "host",
-            "compiler": "gcc",
-            "compiler_version": compiler_version,
-            "runner": sys.platform,
-            "wrapper_sha256": wrapper_sha256,
-            "reference_binary_sha256": binary_hash.hexdigest(),
-        },
+        oracle=oracle,
     )
 
     json_path.write_text(json.dumps(envelope, indent=2), encoding="utf-8")

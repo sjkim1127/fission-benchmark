@@ -142,7 +142,7 @@ jobs:
 
       - name: Pull or build decompiler images
         run: |
-          SERVICES="fission ghidra boomerang radare2 angr snowman revng reko"
+          SERVICES="fission ghidra boomerang radare2 angr snowman revng reko oracle"
           CHANGED_SERVICES=""
           if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
             CHANGED_SERVICES="$(git diff --name-only HEAD~1 HEAD | awk -F/ '/^docker\// {print $2}' | sort -u)"
@@ -194,8 +194,8 @@ jobs:
 
       - name: Start decompiler containers
         run: |
-          docker compose up -d fission ghidra boomerang radare2 angr snowman revng reko
-          for port in 8000 8001 8002 8003 8004 8005 8006 8008; do
+          docker compose up -d fission ghidra boomerang radare2 angr snowman revng reko oracle
+          for port in 8000 8001 8002 8003 8004 8005 8006 8008 8010; do
             ready=0
             for i in $(seq 1 30); do
               if curl -sf http://localhost:$port/health; then
@@ -233,6 +233,8 @@ jobs:
 
       - name: Run dev benchmark
         timeout-minutes: 25
+        env:
+          ORACLE_ENDPOINT: http://localhost:8010
         run: |
           EXTRA_ARGS=""
           if [ -n "$BENCHMARK_LIMIT" ] && [ "$BENCHMARK_LIMIT" != "0" ]; then
@@ -260,6 +262,8 @@ jobs:
         # Skip if validity gate failed — holdout on an invalid run wastes CI time.
         if: steps.fission-gate.outcome == 'success'
         timeout-minutes: 25
+        env:
+          ORACLE_ENDPOINT: http://localhost:8010
         run: |
           if ! find corpus/holdout/manifests -name '*.json' -print -quit | grep -q .; then
             echo "No holdout manifests found; writing empty holdout result set."

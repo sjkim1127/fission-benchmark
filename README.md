@@ -95,9 +95,10 @@ docker compose up -d
 # Wait for health checks
 curl http://localhost:8001/health  # Ghidra
 curl http://localhost:8003/health  # Radare2
+curl http://localhost:8010/health  # MinGW/Wine semantic oracle
 
 # Run benchmark (smoke, candidate JSON only — does not overwrite latest.*)
-python runner/runner.py --corpus dev
+ORACLE_ENDPOINT=http://localhost:8010 python runner/runner.py --corpus dev
 
 # Publication is intentionally unavailable until dev, locked holdout,
 # differential ABI oracle, and overfitting evidence all pass.
@@ -393,11 +394,21 @@ matching source function, not the whole source file.
 
 | Metric | Description |
 |---|---|
-| **Correctness Score** | `0.9 × semantic_score + 0.1 × source_similarity` — primary ranking metric |
-| **Semantic Score** | Functional equivalence via test-case execution |
+| **Correctness Score** | Finite semantic test-case pass rate only; untested rows are `null` and unranked |
+| **Semantic Score** | Test-case pass rate under the configured oracle profile |
 | **Source Similarity** | `difflib.SequenceMatcher` ratio vs normalized original C source |
 | **Structural Penalty** | Penalty for goto count and nesting depth |
-| **Consensus Rank** | Rank among all decompilers by correctness score for the same function |
+| **Correctness Rank** | Rank among tested rows by semantic correctness for the same function |
+
+Source similarity, structural complexity, and unvalidated readability proxies
+are diagnostic axes. They do not contribute to correctness or its rank.
+
+The local oracle service recompiles the reference source and candidate under
+the matching Windows x86/x86-64 MinGW ABI, then executes both with Wine. Its
+evidence is marked `oracle_subject: source_recompile`. This is useful for ABI
+diagnostics but is not accepted as official original-binary evidence. The
+publication gate requires `oracle_subject: original_binary`, so this
+intermediate mode cannot make a run publishable.
 
 ## Result Envelope Format
 

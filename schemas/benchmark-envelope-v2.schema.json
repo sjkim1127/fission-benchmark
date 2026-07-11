@@ -41,12 +41,15 @@
       "properties": {
         "mode": {"enum": ["example_cases", "differential"]},
         "valid": {"type": "boolean"},
+        "oracle_subject": {"enum": ["source_recompile", "original_binary"]},
         "target_abi": {"type": "string", "minLength": 1},
         "compiler": {"type": "string", "minLength": 1},
         "compiler_version": {"type": "string", "minLength": 1},
         "runner": {"type": "string", "minLength": 1},
         "wrapper_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "reference_binary_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        "reference_binary_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "row_evidence_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "tested_rows": {"type": "integer", "minimum": 0}
       },
       "additionalProperties": true
     },
@@ -71,7 +74,7 @@
         "properties": {
           "run": {"required": ["run_id", "started_at", "finished_at", "runner_commit", "corpus", "profile", "limits"]},
           "matrix": {"required": ["expected_decompilers", "expected_rows", "observed_rows", "expected_cells"]},
-          "oracle": {"required": ["target_abi", "compiler", "compiler_version", "runner", "wrapper_sha256", "reference_binary_sha256"]}
+          "oracle": {"required": ["oracle_subject", "target_abi", "compiler", "compiler_version", "runner", "wrapper_sha256", "reference_binary_sha256", "row_evidence_sha256", "tested_rows"]}
         }
       }
     }
@@ -101,7 +104,8 @@
         "correctness_rank": {"type": ["integer", "null"], "minimum": 1},
         "time_ms": {"type": "integer", "minimum": 0},
         "cases_passed": {"type": "integer", "minimum": 0},
-        "cases_total": {"type": "integer", "minimum": 0}
+        "cases_total": {"type": "integer", "minimum": 0},
+        "oracle_evidence": {"type": "object"}
       },
       "additionalProperties": true
     }

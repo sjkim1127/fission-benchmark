@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "runner"))
+from differential_oracle import aggregate_oracle_evidence
 import run_validity as rv
 
 
@@ -381,7 +382,20 @@ def test_official_without_matrix_is_not_publishable():
 
 def test_official_exact_matrix_is_candidate_valid_but_needs_final_gate():
     row = _make_row("fission")
-    row.update(semantic_score=1.0, correctness_score=1.0, cases_passed=1, cases_total=1)
+    row_evidence = {
+        "mode": "differential", "valid": True,
+        "oracle_subject": "original_binary",
+        "target_abi": "windows-x86_64", "compiler": "mingw",
+        "compiler_version": "1", "runner": "wine",
+        "wrapper_sha256": "a" * 64, "reference_binary_sha256": "b" * 64,
+    }
+    row.update(
+        semantic_score=1.0,
+        correctness_score=1.0,
+        cases_passed=1,
+        cases_total=1,
+        oracle_evidence=row_evidence,
+    )
     cell = {key: row[key] for key in ("decompiler", "function_name", "compiler_variant")}
     envelope = rv.build_envelope(
         [row],
@@ -402,12 +416,7 @@ def test_official_exact_matrix_is_candidate_valid_but_needs_final_gate():
             "observed_rows": 1,
             "expected_cells": [cell],
         },
-        oracle={
-            "mode": "differential", "valid": True,
-            "target_abi": "windows-x86_64", "compiler": "mingw",
-            "compiler_version": "1", "runner": "wine",
-            "wrapper_sha256": "a" * 64, "reference_binary_sha256": "b" * 64,
-        },
+        oracle=aggregate_oracle_evidence([row]),
     )
     verdict = rv.evaluate_run(rv.LoadedResult(rows=[row], envelope=envelope, legacy=False))
     assert verdict.valid
@@ -415,6 +424,43 @@ def test_official_exact_matrix_is_candidate_valid_but_needs_final_gate():
     assert verdict.semantic_harness_valid
     assert not verdict.publishable
     assert "final_publication_gate_required" in verdict.publish_reasons
+
+
+def test_oracle_top_level_evidence_cannot_override_row_evidence():
+    row = _make_row("fission")
+    row.update(semantic_score=1.0, cases_passed=1, cases_total=1, oracle_evidence={})
+    forged = {
+        "mode": "differential", "valid": True,
+        "oracle_subject": "original_binary",
+        "target_abi": "windows-x86_64", "compiler": "mingw",
+        "compiler_version": "1", "runner": "wine",
+        "wrapper_sha256": "a" * 64, "reference_binary_sha256": "b" * 64,
+        "row_evidence_sha256": "c" * 64, "tested_rows": 1,
+    }
+    envelope = rv.build_envelope([row], oracle=forged)
+
+    assert rv.oracle_evidence_valid(envelope) is False
+
+
+def test_source_recompile_oracle_is_not_original_binary_evidence():
+    row = _make_row("fission")
+    row.update(
+        semantic_score=1.0,
+        cases_passed=1,
+        cases_total=1,
+        oracle_evidence={
+            "mode": "differential", "valid": True,
+            "oracle_subject": "source_recompile",
+            "target_abi": "windows-x86_64", "compiler": "mingw",
+            "compiler_version": "1", "runner": "wine",
+            "wrapper_sha256": "a" * 64,
+            "reference_binary_sha256": "b" * 64,
+        },
+    )
+    envelope = rv.build_envelope([row], oracle=aggregate_oracle_evidence([row]))
+
+    assert envelope["oracle"]["valid"] is True
+    assert rv.oracle_evidence_valid(envelope) is False
 
 
 def test_missing_official_flag_is_not_publishable():

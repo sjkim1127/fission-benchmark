@@ -57,12 +57,15 @@ export const MatrixSchema = z.object({
 export const OracleSchema = z.object({
   mode: z.enum(["example_cases", "differential"]),
   valid: z.boolean(),
+  oracle_subject: z.enum(["source_recompile", "original_binary"]).optional(),
   target_abi: z.string().optional(),
   compiler: z.string().optional(),
   compiler_version: z.string().optional(),
   runner: z.string().optional(),
   wrapper_sha256: z.string().regex(/^[0-9a-f]{64}$/).optional(),
   reference_binary_sha256: z.string().regex(/^[0-9a-f]{64}$/).optional(),
+  row_evidence_sha256: z.string().regex(/^[0-9a-f]{64}$/).optional(),
+  tested_rows: z.number().int().nonnegative().optional(),
 });
 
 export const RowSchema = z.object({
@@ -83,6 +86,7 @@ export const RowSchema = z.object({
   decompiled_code: z.string().optional(),
   semantic_error: z.string().nullable().optional(),
   uses_intrinsics: z.boolean().optional(),
+  oracle_evidence: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const ToolchainSchema = z.object({
@@ -128,6 +132,20 @@ export const BenchmarkEnvelopeSchema = z.object({
   }
   if (envelope.oracle.mode !== "differential" || envelope.oracle.valid !== true) {
     context.addIssue({ code: "custom", message: "Official differential oracle evidence is invalid", path: ["oracle"] });
+  }
+  const requiredOracleFields = [
+    envelope.oracle.oracle_subject,
+    envelope.oracle.target_abi,
+    envelope.oracle.compiler,
+    envelope.oracle.compiler_version,
+    envelope.oracle.runner,
+    envelope.oracle.wrapper_sha256,
+    envelope.oracle.reference_binary_sha256,
+    envelope.oracle.row_evidence_sha256,
+    envelope.oracle.tested_rows,
+  ];
+  if (requiredOracleFields.some((value) => value === undefined || value === "")) {
+    context.addIssue({ code: "custom", message: "Official oracle linkage is incomplete", path: ["oracle"] });
   }
 });
 

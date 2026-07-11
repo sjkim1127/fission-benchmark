@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 from runner.holdout_report import aggregate_by_decompiler
+from runner.differential_oracle import aggregate_oracle_evidence
 from runner.publication_gate import evaluate_publication
 from runner.run_validity import build_envelope
 
@@ -22,6 +23,13 @@ def _candidate(corpus: str, run_id: str) -> dict:
         "time_ms": 1,
         "cases_passed": 1,
         "cases_total": 1,
+        "oracle_evidence": {
+            "mode": "differential", "valid": True,
+            "oracle_subject": "original_binary",
+            "target_abi": "windows-x86_64", "compiler": "mingw",
+            "compiler_version": "1", "runner": "wine",
+            "wrapper_sha256": "a" * 64, "reference_binary_sha256": "b" * 64,
+        },
     }
     cell = {key: row[key] for key in ("decompiler", "function_name", "compiler_variant")}
     return build_envelope(
@@ -44,12 +52,7 @@ def _candidate(corpus: str, run_id: str) -> dict:
             "observed_rows": 1,
             "expected_cells": [cell],
         },
-        oracle={
-            "mode": "differential", "valid": True,
-            "target_abi": "windows-x86_64", "compiler": "mingw",
-            "compiler_version": "1", "runner": "wine",
-            "wrapper_sha256": "a" * 64, "reference_binary_sha256": "b" * 64,
-        },
+        oracle=aggregate_oracle_evidence([row]),
     )
 
 

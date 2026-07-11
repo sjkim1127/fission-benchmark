@@ -69,15 +69,28 @@ def validate_envelope_schema(envelope: Mapping[str, Any]) -> None:
 
 
 def oracle_evidence_valid(envelope: Mapping[str, Any] | None) -> bool:
+    try:
+        from .differential_oracle import aggregate_oracle_evidence
+    except ImportError:
+        from differential_oracle import aggregate_oracle_evidence
+
     oracle = envelope.get("oracle", {}) if envelope else {}
     required = (
-        "target_abi", "compiler", "compiler_version", "runner",
+        "oracle_subject", "target_abi", "compiler", "compiler_version", "runner",
         "wrapper_sha256", "reference_binary_sha256",
     )
-    return (
+    declared_valid = (
         oracle.get("valid") is True
         and oracle.get("mode") == "differential"
+        and oracle.get("oracle_subject") == "original_binary"
         and all(isinstance(oracle.get(field), str) and oracle[field] for field in required)
+    )
+    if not declared_valid or not envelope:
+        return False
+    derived = aggregate_oracle_evidence(list(envelope.get("rows", [])))
+    linked_fields = (*required, "row_evidence_sha256", "tested_rows")
+    return derived.get("valid") is True and all(
+        oracle.get(field) == derived.get(field) for field in linked_fields
     )
 
 

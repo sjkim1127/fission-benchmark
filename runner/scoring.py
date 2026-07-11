@@ -54,6 +54,7 @@ class FunctionScore:
     readability_proxy_score_hir: float | None = None
     ast_similarity: dict[str, Any] = field(default_factory=dict)
     output_diagnostics: dict[str, Any] = field(default_factory=dict)
+    oracle_evidence: dict[str, Any] = field(default_factory=dict)
 
 
 # ── Correctness Score ─────────────────────────────────────────────────────────
