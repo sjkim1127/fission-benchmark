@@ -36,6 +36,21 @@ SOURCE_GOTO_COUNTS: dict[str, int] = {}
 SOURCE_NESTING_DEPTHS: dict[str, int] = {}
 
 
+def filter_functions(functions: list, requested: str | None) -> list:
+    """Select named functions while preserving corpus manifest order."""
+    if not requested:
+        return functions
+    names = [name.strip() for name in requested.split(",") if name.strip()]
+    if not names:
+        raise ValueError("function filter is empty")
+    requested_names = set(names)
+    available_names = {fn.name for fn in functions}
+    missing = sorted(requested_names - available_names)
+    if missing:
+        raise ValueError(f"unknown function(s): {', '.join(missing)}")
+    return [fn for fn in functions if fn.name in requested_names]
+
+
 def _load_source_metrics() -> None:
     """Load precomputed source-level structural metrics if available."""
     metrics_path = Path(__file__).parent.parent / "corpus" / "source_metrics.json"
@@ -309,7 +324,17 @@ def run(
     limit: Optional[int] = typer.Option(None, help="Limit number of functions analyzed"),
     variant_limit: Optional[int] = typer.Option(None, help="Limit compiler variants per function; 0 means all"),
     decompilers: Optional[str] = typer.Option(None, help="Comma-separated decompiler list"),
+    function: Optional[str] = typer.Option(
+        None,
+        "--function",
+        help="Comma-separated function names for focused regression runs",
+    ),
     output: Optional[str] = typer.Option(None, help="Override output JSON path"),
+    publish: bool = typer.Option(
+        True,
+        "--publish/--no-publish",
+        help="Update results/latest.*, Markdown, and GitHub Pages output",
+    ),
 ):
     """Run decompiler benchmark and generate report."""
     _load_source_metrics()
@@ -327,15 +352,24 @@ def run(
 
     # Load corpus using load_all
     c = Corpus.load_all(corpus)
+    try:
+        selected_functions = filter_functions(c.functions, function)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc), param_hint="--function") from exc
     typer.echo(f"Loading corpus: {corpus}")
     typer.echo(f"  {len(c.functions)} functions loaded")
+    if function:
+        typer.echo(
+            "  focused functions: "
+            + ", ".join(fn.name for fn in selected_functions)
+        )
     if limit:
         typer.echo(f"  function limit: {limit}")
     if variant_limit:
         typer.echo(f"  variant limit per function: {variant_limit}")
 
     # Run event loop
-    scores = asyncio.run(run_all(c.functions, dec_map, corpus, limit, variant_limit))
+    scores = asyncio.run(run_all(selected_functions, dec_map, corpus, limit, variant_limit))
 
     elapsed = time.monotonic() - start_time
 
@@ -353,12 +387,15 @@ def run(
 
     serialized = [asdict(s) for s in scores]
     json_path.write_text(json.dumps(serialized, indent=2), encoding="utf-8")
-    latest_json.write_text(json.dumps(serialized, indent=2), encoding="utf-8")
-
-    generate_report(scores, corpus_split=corpus)
+    if publish:
+        latest_json.write_text(json.dumps(serialized, indent=2), encoding="utf-8")
+        generate_report(scores, corpus_split=corpus)
 
     typer.echo(f"\n✅ Results saved to {json_path} ({elapsed:.1f}s)")
-    typer.echo("📊 Report generated: results/latest.md, docs/index.html")
+    if publish:
+        typer.echo("📊 Report generated: results/latest.md, docs/index.html")
+    else:
+        typer.echo("Focused result only; results/latest.* and docs/index.html were not updated.")
 
 
 if __name__ == "__main__":

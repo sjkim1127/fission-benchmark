@@ -97,6 +97,8 @@ Priority actions:
 - Local current-build mounts (`docker-compose.local.yml`, `scripts/prepare_local_fission.sh`)
   are for quality-loop observation only; never promote `results/local_*.json` to
   Pages / `results/latest.*`.
+- Focused local runs must pass `--no-publish`; use `--function NAME` to avoid
+  running unrelated corpus rows while validating a semantic fix.
 
 ### Dashboard Semantics
 

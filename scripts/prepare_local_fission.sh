@@ -235,7 +235,7 @@ Next:
   curl -s "http://localhost:\${FISSION_HOST_PORT:-8007}/health" | jq .
 
   python runner/runner.py --corpus dev --decompilers fission \\
-    --output "results/local_\${FISSION_GIT_SHA}.json"
+    --output "results/local_\${FISSION_GIT_SHA}.json" --no-publish
 
 Build tips (macOS):
   # preferred one-liner after Zig is installed:
