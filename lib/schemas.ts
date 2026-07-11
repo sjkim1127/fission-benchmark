@@ -46,8 +46,8 @@ export const RowSchema = z.object({
   binary: z.string().optional(),
   addr: z.string().optional(),
   source_similarity: z.number().default(0),
-  semantic_score: z.number().default(0),
-  correctness_score: z.number().nullable().default(0),
+  semantic_score: z.number().nullable().default(null),  // null = no_wrapper (untestable)
+  correctness_score: z.number().nullable().default(null),  // null = no_wrapper
   correctness_rank: z.string().nullable().optional(),
   goto_count: z.number().default(0),
   nesting_depth: z.number().default(0),
@@ -59,9 +59,20 @@ export const RowSchema = z.object({
   uses_intrinsics: z.boolean().optional(),
 });
 
+export const ToolchainSchema = z.object({
+  fission_version: z.string().optional(),
+  runner_commit: z.string().optional(),
+  runner_os: z.string().optional(),
+  python_version: z.string().optional(),
+  ci: z.string().optional(),
+  github_run_id: z.string().optional(),
+  github_actor: z.string().optional(),
+});
+
 export const BenchmarkEnvelopeSchema = z.object({
   schema_version: z.number().optional(),
   run: RunMetaSchema.optional(),
+  toolchain: ToolchainSchema.optional(),
   matrix: MatrixSchema.optional(),
   validity: ValiditySchema.optional(),
   rows: z.array(RowSchema),
@@ -71,3 +82,4 @@ export type BenchmarkEnvelope = z.infer<typeof BenchmarkEnvelopeSchema>;
 export type Row = z.infer<typeof RowSchema>;
 export type Validity = z.infer<typeof ValiditySchema>;
 export type RunMeta = z.infer<typeof RunMetaSchema>;
+export type Toolchain = z.infer<typeof ToolchainSchema>;

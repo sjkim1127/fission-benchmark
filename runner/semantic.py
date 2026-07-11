@@ -2,6 +2,7 @@
 Semantic verification engine.
 Compiles decompiled functions and runs them against unit test wrappers.
 """
+import asyncio
 import subprocess
 import tempfile
 from pathlib import Path
@@ -40,10 +41,11 @@ typedef struct Pair {
 } Pair;
 
 // SLEIGH/Fission intrinsics — type-generic computation-based implementations
-#define __carry(a, b) ((__typeof__(a))((a) + (b)) < (a))
-#define __borrow(a, b) ((a) < (b))
-#define __scarry(a, b) ((((__typeof__(a))((a) + (b)) < 0) != ((a) < 0)) && (((a) < 0) == ((b) < 0)))
-#define __sborrow(a, b) ((((__typeof__(a))((a) - (b)) < 0) != ((a) < 0)) && (((a) < 0) != ((b) < 0)))
+#define __carry(a, b)   (__builtin_add_overflow((a), (b), &(__typeof__(a)){0}))
+#define __borrow(a, b)  ((a) < (b))
+// Signed overflow detection: result sign differs from both operands' sign
+#define __scarry(a, b)  (__builtin_add_overflow(((__typeof__(a))(a)), ((__typeof__(a))(b)), &((__typeof__(a)){0})))
+#define __sborrow(a, b) (__builtin_sub_overflow(((__typeof__(a))(a)), ((__typeof__(a))(b)), &((__typeof__(a)){0})))
 
 #define __popcount(x) __builtin_popcount(x)
 """
@@ -69,14 +71,16 @@ def verify_semantic_correctness(
         ""                — fully passed
     """
     if func_name not in TEST_WRAPPERS:
-        return 0.0, f"No test wrapper defined for function {func_name}", "no_wrapper", 0, 0
+        # "no_wrapper" means the function is untestable, not that it failed.
+        # Return None semantic_score so correctness ranking can treat this separately.
+        return None, f"No test wrapper defined for function {func_name}", "no_wrapper", 0, 0
 
     if not decompiled_code.strip():
         return 0.0, "Empty decompilation output", "compile_error", 0, 0
 
     cases = TEST_WRAPPERS[func_name]
     if not cases:
-        return 0.0, "No test cases defined", "no_wrapper", 0, 0
+        return None, "No test cases defined", "no_wrapper", 0, 0
 
     cases_total = len(cases)
     cases_passed = 0
@@ -146,3 +150,16 @@ def verify_semantic_correctness(
         return score, None, "", cases_passed, cases_total
     else:
         return score, last_error, last_category or "assertion_fail", cases_passed, cases_total
+
+
+async def verify_semantic_correctness_async(
+    func_name: str,
+    decompiled_code: str,
+) -> tuple[float | None, str | None, str, int, int]:
+    """Async wrapper for verify_semantic_correctness.
+
+    Runs the blocking GCC compilation and execution in a thread pool so that the
+    asyncio event loop is not blocked during parallel batch decompilation scoring.
+    Use this from async contexts (runner.py decompile_batch_and_score).
+    """
+    return await asyncio.to_thread(verify_semantic_correctness, func_name, decompiled_code)

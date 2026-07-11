@@ -1,22 +1,16 @@
 # Fission Benchmark Report
 
-> [!WARNING]
-> **ARCHIVED LEGACY RESULT** — This file was originally measured before
-> the provenance envelope was introduced.  Original run timing and toolchain
-> version information are not available.  Official validity is **unverified**.
-
-**Measured at:** unknown (legacy)
-**Rendered at:** 2026-07-11 05:15 UTC
+**Measured at:** not recorded
+**Rendered at:** 2026-07-11 05:40 UTC
 **Corpus:** `dev`
 **Functions evaluated:** 21
 
 ---
 
-## ⚠️ LEGACY / UNVERIFIED
+## ⛔ INVALID RUN [backend_coverage_below_threshold]
 
 > Fission 84/84 rows clean (100.0%), all-backend 501/588 (85.2%).
-> Provenance incomplete — this result predates the envelope format.
-> Do not use these numbers as an official comparison.
+> Results below are **not publishable** under current thresholds.
 
 ## Summary — Correctness Score
 

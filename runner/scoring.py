@@ -30,13 +30,13 @@ class FunctionScore:
     nesting_depth: int
     time_ms: int
     error: str | None = None
-    semantic_score: float = 0.0         # fraction of test cases passed (0.0–1.0)
+    semantic_score: float | None = None     # None = no_wrapper (untestable); 0.0–1.0 otherwise
     semantic_error: str | None = None
     fail_category: str | None = None    # compile_error|runtime_error|timeout|assertion_fail|no_wrapper
     cases_passed: int = 0               # number of test cases passed
     cases_total: int = 0                # total number of test cases
     structural_penalty: float = 0.0     # 0.0–1.0 based on relative goto/nesting delta
-    correctness_score: float = 0.0      # semantic-gated correctness score
+    correctness_score: float | None = None  # None when no_wrapper and no other signal
     correctness_rank: int | None = None # set after all decompilers run
     readability_proxy_score: float | None = None  # unvalidated proxy evidence only
     composite_score: float = 0.0        # deprecated alias for correctness_score
@@ -74,25 +74,32 @@ SEMANTIC_ZERO_CAP = 0.15
 
 
 def compute_correctness_score(
-    semantic_score: float,
+    semantic_score: float | None,
     source_similarity: float,
     structural_penalty: float,
     ast_score: float = 0.0,
     readability_score: float = 0.0,
-) -> float:
+) -> float | None:
     """
     Compute semantic-gated correctness score.
 
     Formula: sem * 0.80 + sim * 0.10 + (1 - structural_penalty) * 0.10
 
-    Gating: if semantic_score == 0.0, correctness cannot exceed SEMANTIC_ZERO_CAP (0.15).
-    This ensures that a binary that compiles/runs but fails all tests, or fails to
-    compile entirely, cannot be ranked above a binary that passes even one test case.
+    Gating rules:
+    - If semantic_score is None (no_wrapper / untestable): score is similarity-only
+      (sim * 0.10 + (1-penalty) * 0.10), returned as a float but NOT gated by
+      SEMANTIC_ZERO_CAP, so untestable functions can still rank by code quality.
+    - If semantic_score == 0.0 (real failure): correctness cannot exceed
+      SEMANTIC_ZERO_CAP (0.15).
 
     The ast_score and readability_score parameters are accepted for compatibility
     with older callers, but they do not affect correctness_score.
     """
     _ = ast_score, readability_score
+    if semantic_score is None:
+        # Untestable: similarity + structural only (no semantic signal).
+        raw = source_similarity * WEIGHT_SIMILARITY + (1.0 - structural_penalty) * WEIGHT_STRUCTURAL
+        return round(raw, 4)
     raw = (
         semantic_score * WEIGHT_SEMANTIC
         + source_similarity * WEIGHT_SIMILARITY
@@ -158,40 +165,68 @@ def extract_function_source(source: str, function_name: str) -> str:
     """
     Extract one C function body from a source file.
 
-    This deliberately avoids a full C parser, but it handles the corpus style:
-    top-level function definitions with balanced braces and no preprocessor tricks
-    inside signatures. If extraction fails, callers can fall back to whole-file
-    source so benchmark runs keep producing data.
+    Handles:
+    - Standard C functions with any return type
+    - Qualifiers: static, inline, extern, __attribute__(...), __declspec(...)
+    - Functions returning pointers or function pointers (best-effort)
+
+    If extraction fails, callers can fall back to whole-file source.
     """
+    # Strip comments first so they don't confuse brace matching.
+    stripped = re.sub(r"/\*.*?\*/", "", source, flags=re.DOTALL)
+    stripped = re.sub(r"//[^\n]*", "", stripped)
+
+    # Match the function definition: optional qualifiers/return type, then function_name(
+    # We look for the name as a whole word, preceded by a non-identifier character.
     pattern = re.compile(
-        rf"(^|\n)\s*[\w\s\*]+?\b{re.escape(function_name)}\s*\([^;{{}}]*\)\s*\{{",
+        rf"(?:^|\n)(?:[\w\s\*,<>\[\]]+?)?\b{re.escape(function_name)}\s*\(",
         re.MULTILINE,
     )
-    match = pattern.search(source)
-    if not match:
-        return ""
 
-    start = match.start()
-    brace_start = source.find("{", match.end() - 1)
-    if brace_start == -1:
-        return ""
+    for match in pattern.finditer(stripped):
+        # Verify this is a definition (has a body), not a declaration (ends with ;)
+        # Scan forward to find the opening brace of the body.
+        rest = stripped[match.start():]
+        # Find matching { — skip past the parameter list first
+        paren_depth = 0
+        brace_start = -1
+        for idx, ch in enumerate(rest):
+            if ch == '(':
+                paren_depth += 1
+            elif ch == ')':
+                paren_depth -= 1
+            elif ch == '{' and paren_depth == 0:
+                brace_start = match.start() + idx
+                break
+            elif ch == ';' and paren_depth == 0:
+                break  # declaration, not definition
 
-    depth = 0
-    for idx in range(brace_start, len(source)):
-        ch = source[idx]
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-            if depth == 0:
-                return source[start : idx + 1].strip()
+        if brace_start == -1:
+            continue
+
+        # Now find the matching closing brace.
+        depth = 0
+        for idx in range(brace_start, len(stripped)):
+            c = stripped[idx]
+            if c == '{':
+                depth += 1
+            elif c == '}':
+                depth -= 1
+                if depth == 0:
+                    # Return from original source (with comments) for accurate similarity.
+                    fn_text = source[match.start():].split(stripped[brace_start:idx + 1])[-1]
+                    # Simpler: just use the stripped slice
+                    return stripped[match.start():idx + 1].strip()
+        break  # matched open brace but not close — malformed
+
     return ""
 
 
 def check_uses_intrinsics(code: str) -> bool:
     """Return True if decompiled code uses any SLEIGH intrinsic functions."""
+    # Use word-boundary matching to avoid false positives on names like __carry_flag.
     for name in INTRINSIC_NAMES:
-        if name in code:
+        if re.search(rf"\b{re.escape(name)}\b", code):
             return True
     return False
 
@@ -201,15 +236,38 @@ def count_gotos(code: str) -> int:
 
 
 def measure_nesting_depth(code: str) -> int:
-    """Estimate maximum nesting depth by brace counting."""
+    """Estimate maximum nesting depth by brace counting, ignoring string/char literals."""
     depth = 0
     max_depth = 0
-    for ch in code:
-        if ch == "{":
+    i = 0
+    while i < len(code):
+        ch = code[i]
+        # Skip C string literals: "..."
+        if ch == '"':
+            i += 1
+            while i < len(code):
+                if code[i] == '\\':  # escape sequence
+                    i += 2
+                    continue
+                if code[i] == '"':
+                    break
+                i += 1
+        # Skip C char literals: '...'
+        elif ch == "'":
+            i += 1
+            while i < len(code):
+                if code[i] == '\\':
+                    i += 2
+                    continue
+                if code[i] == "'":
+                    break
+                i += 1
+        elif ch == '{':
             depth += 1
             max_depth = max(max_depth, depth)
-        elif ch == "}":
+        elif ch == '}':
             depth = max(0, depth - 1)
+        i += 1
     return max_depth
 
 
@@ -249,11 +307,11 @@ def assign_consensus_ranks(
                 src_depths.get(s.function_name, 0),
             )
             s.correctness_score = compute_correctness_score(
-                s.semantic_score,
+                s.semantic_score,  # may be None for no_wrapper
                 s.source_similarity,
                 s.structural_penalty,
             )
-            s.composite_score = s.correctness_score
+            s.composite_score = s.correctness_score or 0.0
             s.uses_intrinsics = s.uses_intrinsics or check_uses_intrinsics(s.decompiled_code)
 
     # Group by (function_name, compiler_variant)
@@ -265,10 +323,13 @@ def assign_consensus_ranks(
     for group in groups.values():
         valid = [s for s in group if s.error is None]
         # Rank by correctness_score descending (semantic-gated).
-        valid.sort(key=lambda s: s.correctness_score, reverse=True)
+        # None (no_wrapper) is treated as 0.0 for ranking only.
+        valid.sort(key=lambda s: s.correctness_score if s.correctness_score is not None else 0.0, reverse=True)
         current_rank = 1
         for idx, s in enumerate(valid):
-            if idx > 0 and s.correctness_score < valid[idx - 1].correctness_score:
+            prev_score = valid[idx - 1].correctness_score if valid[idx - 1].correctness_score is not None else 0.0
+            curr_score = s.correctness_score if s.correctness_score is not None else 0.0
+            if idx > 0 and curr_score < prev_score:
                 current_rank = idx + 1
             s.correctness_rank = current_rank
             s.consensus_rank = current_rank

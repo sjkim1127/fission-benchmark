@@ -22,7 +22,7 @@ const DECOMPILER_COLORS: Record<string, string> = {
 
 function StatusIcon({ row }: { row: Row }) {
   if (row.error) return <span className={styles.statusError} title={row.error}>✗</span>;
-  if (row.semantic_score >= 1.0) return <span className={styles.statusPass}>✓</span>;
+  if ((row.semantic_score ?? 0) >= 1.0) return <span className={styles.statusPass}>✓</span>;
   return <span className={styles.statusPartial}>◐</span>;
 }
 
@@ -86,9 +86,9 @@ function CodeModal({ fnName, rows, onClose }: ModalProps) {
           <div className={styles.modalBody}>
             <div className={styles.modalMeta}>
               <span style={{ color }}>●</span>
-              <span>Correctness: <strong>{(activeRow.correctness_score ?? 0).toFixed(3)}</strong></span>
+              <span>Correctness: <strong>{((activeRow.correctness_score ?? 0)).toFixed(3)}</strong></span>
               <span>Similarity: <strong>{activeRow.source_similarity.toFixed(3)}</strong></span>
-              <span>Semantic: <strong>{activeRow.semantic_score >= 1.0 ? "✓ pass" : activeRow.semantic_score.toFixed(2)}</strong></span>
+              <span>Semantic: <strong>{activeRow.semantic_score == null ? '—' : (activeRow.semantic_score >= 1.0 ? '✓ pass' : activeRow.semantic_score.toFixed(2))}</strong></span>
               <span>{activeRow.time_ms}ms</span>
             </div>
 
@@ -129,7 +129,7 @@ function FunctionCard({ fnName, rows, onClick }: { fnName: string; rows: Row[]; 
             <div key={d} className={styles.scoreItem}>
               <span className={styles.scoreDec} style={{ color }}>{d[0].toUpperCase()}</span>
               {r ? <StatusIcon row={r} /> : <span className={styles.statusMissing}>–</span>}
-              <span className={styles.scoreVal}>{r?.error ? "err" : score.toFixed(2)}</span>
+              <span className={styles.scoreVal}>{r?.error ? "err" : (r?.correctness_score ?? 0).toFixed(2)}</span>
             </div>
           );
         })}
@@ -166,8 +166,8 @@ export function FunctionGrid({ functionNames, rows }: Props) {
       if (!fn.toLowerCase().includes(search.toLowerCase())) return false;
       const fnRows = rowsByFn.get(fn) ?? [];
       const fissionRow = fnRows.find((r) => r.decompiler === "fission");
-      if (filter === "pass" && (!fissionRow || fissionRow.error || fissionRow.semantic_score < 1.0)) return false;
-      if (filter === "fail" && (!fissionRow || (!fissionRow.error && fissionRow.semantic_score >= 1.0))) return false;
+      if (filter === "pass" && (!fissionRow || fissionRow.error || (fissionRow.semantic_score ?? 0) < 1.0)) return false;
+      if (filter === "fail" && (!fissionRow || (!fissionRow.error && (fissionRow.semantic_score ?? 0) >= 1.0))) return false;
       if (filter === "gap") {
         const fissionLow = !fissionRow || fissionRow.error || (fissionRow.correctness_score ?? 0) < 0.3;
         const othersOk = fnRows.filter((r) => r.decompiler !== "fission" && !r.error).some((r) => (r.correctness_score ?? 0) >= 0.3);

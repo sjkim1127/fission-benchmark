@@ -24,7 +24,7 @@ from scoring import (
     source_similarity,
     structural_score,
 )
-from semantic import verify_semantic_correctness
+from semantic import verify_semantic_correctness_async
 from report import generate_report
 from readability import analyze_readability, ast_structure_similarity, summarize_readability_proxy_score
 from output_diagnostics import analyze_output_diagnostics, invalid_output_reason
@@ -63,6 +63,10 @@ def _load_source_metrics() -> None:
         SOURCE_NESTING_DEPTHS.update(data.get("nesting_depths", {}))
 
 
+# Module-level flag to ensure .env is only parsed once per process.
+_ENV_LOADED = False
+
+
 def configured_decompilers() -> dict[str, str]:
     """Get configured decompiler HTTP endpoints from environment.
 
@@ -71,15 +75,18 @@ def configured_decompilers() -> dict[str, str]:
     Setting any endpoint to ``skip`` (case-insensitive) excludes that
     decompiler from the run without requiring changes to ``--decompilers``.
     """
-    # Automatically load .env if it exists in the workspace root
-    env_path = Path(__file__).resolve().parents[1] / ".env"
-    if env_path.exists():
-        for line in env_path.read_text().splitlines():
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                key, val = line.split("=", 1)
-                val_str = val.strip().strip(chr(39) + chr(34))
-                os.environ.setdefault(key.strip(), val_str)
+    global _ENV_LOADED
+    if not _ENV_LOADED:
+        # Load .env once if it exists in the workspace root.
+        env_path = Path(__file__).resolve().parents[1] / ".env"
+        if env_path.exists():
+            for line in env_path.read_text().splitlines():
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, val = line.split("=", 1)
+                    val_str = val.strip().strip(chr(39) + chr(34))
+                    os.environ.setdefault(key.strip(), val_str)
+        _ENV_LOADED = True
 
     # Default local dev ports mapped in docker-compose.yml.
     # Each entry can be overridden by {NAME}_ENDPOINT environment variable.
@@ -230,11 +237,23 @@ async def decompile_batch_and_score(
         )
 
         if not error:
-            sem_score, sem_err, fail_cat, cases_passed, cases_total = verify_semantic_correctness(
+            sem_score, sem_err, fail_cat, cases_passed, cases_total = await verify_semantic_correctness_async(
                 fn.name, semantic_code
             )
         else:
             sem_score, sem_err, fail_cat, cases_passed, cases_total = 0.0, error, "adapter_error", 0, 0
+
+        # H-4: no_wrapper returns None semantic_score — treat as similarity-only for correctness.
+        # The scoring engine will use SEMANTIC_ZERO_CAP gate only when sem_score==0.0 (real failure).
+        # None means "untestable" — do not cap correctness; score purely on similarity.
+        effective_sem = sem_score if sem_score is not None else 0.0
+
+        # C-2: prefer per-item timing from adapter if provided, fall back to apportioned batch time.
+        item_time_ms = item.get("time_ms")
+        if item_time_ms is not None:
+            fn_time_ms = int(item_time_ms)
+        else:
+            fn_time_ms = data.get("time_ms", 0) // max(len(targets), 1)
 
         fn_scores.append(FunctionScore(
             decompiler=dname,
@@ -243,9 +262,9 @@ async def decompile_batch_and_score(
             source_similarity=sim,
             goto_count=gotos,
             nesting_depth=depth,
-            time_ms=data.get("time_ms", 0) // len(targets),
+            time_ms=fn_time_ms,
             error=error,
-            semantic_score=sem_score,
+            semantic_score=effective_sem,
             semantic_error=sem_err,
             fail_category=fail_cat,
             cases_passed=cases_passed,
@@ -281,7 +300,7 @@ async def run_all(
     limit: int | None,
     variant_limit: int | None,
 ) -> list[FunctionScore]:
-    fn_list = functions[:limit] if limit else functions
+    fn_list = functions  # [:limit] already applied by caller — do not slice again
     all_scores: list[FunctionScore] = []
 
     # 1. Group decompile requests by (decompiler, binary_path)
@@ -464,6 +483,15 @@ def run(
                 "variant_limit": variant_limit,
                 "function": function
             }
+        },
+        toolchain={
+            "fission_version": os.environ.get("FISSION_VERSION", "unknown"),
+            "runner_commit": commit,
+            "runner_os": sys.platform,
+            "python_version": sys.version.split()[0],
+            "ci": os.environ.get("CI", "false"),
+            "github_run_id": os.environ.get("GITHUB_RUN_ID", ""),
+            "github_actor": os.environ.get("GITHUB_ACTOR", ""),
         },
         matrix={
             "expected_decompilers": list(dec_map.keys()),

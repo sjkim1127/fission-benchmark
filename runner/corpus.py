@@ -37,7 +37,19 @@ class Corpus:
         data = json.loads(manifest_path.read_text())
         functions = []
         for fn in data["functions"]:
-            variants = [CompilerVariant(**v) for v in fn.get("compiler_variants", [])]
+            variants = []
+            for v in fn.get("compiler_variants", []):
+                addr = v.get("addr", "0x0")
+                if not addr or addr == "0x0":
+                    import warnings
+                    warnings.warn(
+                        f"[corpus] {manifest_path.name}: function '{fn['name']}' variant "
+                        f"'{v.get('compiler', '?')} {v.get('opt', '?')}' has addr='{addr}'. "
+                        "Decompiler will likely fail to locate the function. "
+                        "Set a correct entry address in the manifest.",
+                        stacklevel=2,
+                    )
+                variants.append(CompilerVariant(**v))
             functions.append(FunctionEntry(
                 name=fn["name"],
                 source=fn["source"],
@@ -63,10 +75,22 @@ class Corpus:
             )
         manifest_dir = CORPUS_ROOT / split / "manifests"
         all_functions: list[FunctionEntry] = []
+        seen_names: dict[str, str] = {}  # function_name -> manifest filename
         for manifest in sorted(manifest_dir.glob("*.json")):
             c = cls.load(manifest)
             for fn in c.functions:
                 fn.split = split
+                if fn.name in seen_names:
+                    import warnings
+                    warnings.warn(
+                        f"[corpus] Duplicate function name '{fn.name}' found in "
+                        f"'{manifest.name}' and '{seen_names[fn.name]}'. "
+                        "This will produce duplicate cells and fail the matrix validity gate. "
+                        "Rename one of the entries.",
+                        stacklevel=2,
+                    )
+                else:
+                    seen_names[fn.name] = manifest.name
                 all_functions.append(fn)
         return cls(functions=all_functions)
 

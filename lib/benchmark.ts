@@ -44,7 +44,7 @@ export function groupByDecompiler(rows: BenchmarkEnvelope["rows"]) {
       s.clean++;
       s.totalCorrectness += row.correctness_score ?? 0;
       s.totalSimilarity += row.source_similarity;
-      if (row.semantic_score >= 1.0) s.semanticPass++;
+      if ((row.semantic_score ?? 0) >= 1.0) s.semanticPass++;
       s.totalTime += row.time_ms;
     }
   }

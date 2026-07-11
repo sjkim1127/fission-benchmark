@@ -44,7 +44,7 @@ on:
       benchmark_limit:
         description: "Function limit for dev/holdout benchmark; use 0 for full corpus"
         type: string
-        default: "10"
+        default: "0"
       benchmark_variant_limit:
         description: "Compiler variants per function; use 0 for all variants"
         type: string
@@ -267,6 +267,8 @@ jobs:
           fi
 
       - name: Run holdout benchmark
+        # Skip if validity gate failed — holdout on an invalid run wastes CI time.
+        if: steps.fission-gate.outcome == 'success'
         timeout-minutes: 25
         run: |
           if ! find corpus/holdout/manifests -name '*.json' -print -quit | grep -q .; then
@@ -301,6 +303,7 @@ jobs:
           python runner/runner.py --corpus holdout $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --run-mode "$RUN_MODE" --output results/holdout_latest.json
 
       - name: Run overfitting check
+        if: steps.fission-gate.outcome == 'success'
         run: |
           python runner/holdout_report.py \
             --dev results/dev_latest.json \
@@ -318,6 +321,7 @@ jobs:
             --update-latest
 
       - name: Run parity benchmarks
+        if: steps.fission-gate.outcome == 'success'
         run: |
           if [ -n "$PARITY_LIMIT" ] && [ "$PARITY_LIMIT" != "0" ]; then
             python runner/run_parity.py \
@@ -420,6 +424,7 @@ jobs:
           echo "Deployed to: $url" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Revalidate dashboard ISR cache
+        continue-on-error: true  # Best-effort — don't fail the deploy job on transient ISR errors
         env:
           REVALIDATE_URL: ${{ secrets.DASHBOARD_REVALIDATE_URL }}
           REVALIDATE_SECRET: ${{ secrets.DASHBOARD_REVALIDATE_SECRET }}

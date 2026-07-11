@@ -155,6 +155,8 @@ def evaluate_run(
     result: LoadedResult | Iterable[Mapping[str, Any]],
     *,
     legacy: bool = False,
+    fission_min_coverage: float | None = None,
+    backend_min_coverage: float | None = None,
 ) -> RunValidity:
     """Evaluate whether a benchmark run meets publishability thresholds.
 
@@ -165,6 +167,12 @@ def evaluate_run(
     legacy:
         If result is an Iterable, this marks whether it is legacy. If result is
         LoadedResult, the legacy flag on LoadedResult takes precedence.
+    fission_min_coverage:
+        Override the Fission minimum coverage threshold. Defaults to the module-level
+        ``FISSION_MIN_COVERAGE`` constant.
+    backend_min_coverage:
+        Override the all-backend minimum coverage threshold. Defaults to the module-level
+        ``BACKEND_MIN_COVERAGE`` constant.
     """
     if isinstance(result, LoadedResult):
         rows = list(result.rows)
@@ -174,6 +182,10 @@ def evaluate_run(
         rows = list(result)
         is_legacy = legacy
         envelope = None
+
+    # Use caller-supplied thresholds or fall back to module-level constants.
+    _fission_min = fission_min_coverage if fission_min_coverage is not None else FISSION_MIN_COVERAGE
+    _backend_min = backend_min_coverage if backend_min_coverage is not None else BACKEND_MIN_COVERAGE
 
     def _coverage(items):
         attempted = len(items)
@@ -243,7 +255,7 @@ def evaluate_run(
 
     if not fission_cov.attempted:
         reasons.append("no_fission_rows")
-    elif fission_cov.ratio < FISSION_MIN_COVERAGE:
+    elif fission_cov.ratio < _fission_min:
         reasons.append("fission_coverage_below_threshold")
 
     if expected_decompilers:
@@ -254,14 +266,14 @@ def evaluate_run(
                     reasons.append("backend_missing")
             else:
                 d_cov = _coverage(d_rows)
-                if d_cov.ratio < BACKEND_MIN_COVERAGE:
+                if d_cov.ratio < _backend_min:
                     if "backend_coverage_below_threshold" not in reasons:
                         reasons.append("backend_coverage_below_threshold")
     else:
         # Fallback if no matrix provided
         if not overall_cov.attempted:
             reasons.append("no_result_rows")
-        elif overall_cov.ratio < BACKEND_MIN_COVERAGE:
+        elif overall_cov.ratio < _backend_min:
             reasons.append("backend_coverage_below_threshold")
 
     measurement_valid = not reasons
@@ -375,13 +387,12 @@ def main(argv=None):
         print(f"::error::Cannot read {args.result_json}: {exc}", file=sys.stderr)
         return 1
 
-    # Allow threshold overrides (use sys.modules to avoid package path issues)
-    import sys as _sys
-    _self = _sys.modules[__name__]
-    _self.FISSION_MIN_COVERAGE = args.fission_min_coverage
-    _self.BACKEND_MIN_COVERAGE = args.backend_min_coverage
-
-    verdict = evaluate_run(loaded)
+    # Pass thresholds as parameters — never mutate module-level globals.
+    verdict = evaluate_run(
+        loaded,
+        fission_min_coverage=args.fission_min_coverage,
+        backend_min_coverage=args.backend_min_coverage,
+    )
     summary = verdict.summary_line()
     print(summary)
 
