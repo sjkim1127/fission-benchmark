@@ -16,7 +16,11 @@ export async function getLatestBenchmark(): Promise<BenchmarkEnvelope> {
   }
 
   const raw: unknown = await res.json();
-  return BenchmarkEnvelopeSchema.parse(raw);
+  const envelope = BenchmarkEnvelopeSchema.parse(raw);
+  if (envelope.validity?.publishable !== true) {
+    throw new Error("Latest benchmark artifact is not a publishable official run");
+  }
+  return envelope;
 }
 
 /** Group rows by decompiler for summary statistics */
@@ -26,15 +30,17 @@ export function groupByDecompiler(rows: BenchmarkEnvelope["rows"]) {
     clean: number;
     error: number;
     totalCorrectness: number;
+    correctnessTested: number;
     totalSimilarity: number;
     semanticPass: number;
+    semanticTested: number;
     totalTime: number;
   }>();
 
   for (const row of rows) {
     const d = row.decompiler;
     if (!map.has(d)) {
-      map.set(d, { attempted: 0, clean: 0, error: 0, totalCorrectness: 0, totalSimilarity: 0, semanticPass: 0, totalTime: 0 });
+      map.set(d, { attempted: 0, clean: 0, error: 0, totalCorrectness: 0, correctnessTested: 0, totalSimilarity: 0, semanticPass: 0, semanticTested: 0, totalTime: 0 });
     }
     const s = map.get(d)!;
     s.attempted++;
@@ -42,9 +48,15 @@ export function groupByDecompiler(rows: BenchmarkEnvelope["rows"]) {
       s.error++;
     } else {
       s.clean++;
-      s.totalCorrectness += row.correctness_score ?? 0;
+      if (row.correctness_score !== null && row.correctness_score !== undefined) {
+        s.totalCorrectness += row.correctness_score;
+        s.correctnessTested++;
+      }
       s.totalSimilarity += row.source_similarity;
-      if ((row.semantic_score ?? 0) >= 1.0) s.semanticPass++;
+      if (row.semantic_score !== null && row.semantic_score !== undefined) {
+        s.semanticTested++;
+        if (row.semantic_score >= 1.0) s.semanticPass++;
+      }
       s.totalTime += row.time_ms;
     }
   }
@@ -54,15 +66,15 @@ export function groupByDecompiler(rows: BenchmarkEnvelope["rows"]) {
     attempted: s.attempted,
     clean: s.clean,
     error: s.error,
-    avgCorrectness: s.clean > 0 ? s.totalCorrectness / s.clean : 0,
+    avgCorrectness: s.correctnessTested > 0 ? s.totalCorrectness / s.correctnessTested : null,
     avgSimilarity: s.clean > 0 ? s.totalSimilarity / s.clean : 0,
-    semanticPassPct: s.clean > 0 ? (s.semanticPass / s.clean) * 100 : 0,
+    semanticPassPct: s.semanticTested > 0 ? (s.semanticPass / s.semanticTested) * 100 : null,
     avgTimeMs: s.clean > 0 ? s.totalTime / s.clean : 0,
   })).sort((a, b) => {
     // Fission first, then sort by correctness desc
     if (a.decompiler === "fission") return -1;
     if (b.decompiler === "fission") return 1;
-    return b.avgCorrectness - a.avgCorrectness;
+    return (b.avgCorrectness ?? -1) - (a.avgCorrectness ?? -1);
   });
 }
 

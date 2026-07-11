@@ -7,9 +7,9 @@ interface DecompilerStat {
   attempted: number;
   clean: number;
   error: number;
-  avgCorrectness: number;
+  avgCorrectness: number | null;
   avgSimilarity: number;
-  semanticPassPct: number;
+  semanticPassPct: number | null;
   avgTimeMs: number;
 }
 
@@ -71,9 +71,9 @@ export function SummaryTable({ stats }: Props) {
                 <td className={styles.num}>{s.attempted}</td>
                 <td className={styles.num}>{s.clean}</td>
                 <td className={`${styles.num} ${s.error > 0 ? styles.errorCell : ""}`}>{s.error || "—"}</td>
-                <td><ScoreBar value={s.avgCorrectness} color={color} /></td>
+                <td>{s.avgCorrectness === null ? "N/A" : <ScoreBar value={s.avgCorrectness} color={color} />}</td>
                 <td><ScoreBar value={s.avgSimilarity} color={color} /></td>
-                <td className={styles.num}>{s.semanticPassPct.toFixed(1)}%</td>
+                <td className={styles.num}>{s.semanticPassPct === null ? "N/A" : `${s.semanticPassPct.toFixed(1)}%`}</td>
                 <td className={styles.num}>{s.avgTimeMs > 0 ? `${Math.round(s.avgTimeMs)}ms` : "—"}</td>
               </tr>
             );

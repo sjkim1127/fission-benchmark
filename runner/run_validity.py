@@ -123,6 +123,18 @@ class RunValidity:
     * ``"legacy_source"``     -- result predates envelope format
     """
 
+    matrix_valid: bool = False
+    adapter_output_valid: bool = False
+    semantic_harness_valid: bool = False
+    semantic_coverage_valid: bool = False
+    semantic_result_valid: bool = False
+    provenance_valid: bool = False
+    artifact_valid: bool = False
+    official_profile_valid: bool = False
+    holdout_valid: bool = False
+    semantic_attempted: int = 0
+    semantic_tested: int = 0
+
     def summary_line(self) -> str:
         """One-line human-readable summary for GITHUB_STEP_SUMMARY / logs."""
         cov = (
@@ -134,11 +146,35 @@ class RunValidity:
         if not self.valid:
             return f"INVALID MEASUREMENT [{', '.join(self.reasons)}] -- {cov}"
         if not self.publishable:
-            return (
-                f"VALID SMOKE MEASUREMENT [{', '.join(self.publish_reasons)}] -- {cov} "
-                f"-- NOT PUBLISHABLE"
-            )
+            return f"EXECUTION VALID [{', '.join(self.publish_reasons)}] -- {cov} -- NOT PUBLISHABLE"
         return f"VALID -- {cov}"
+
+
+def validity_dict(verdict: RunValidity) -> dict[str, Any]:
+    """Serialize the complete, stage-separated verdict contract."""
+    return {
+        "valid": verdict.valid,
+        "publishable": verdict.publishable,
+        "matrix_valid": verdict.matrix_valid,
+        "adapter_output_valid": verdict.adapter_output_valid,
+        "semantic_harness_valid": verdict.semantic_harness_valid,
+        "semantic_coverage_valid": verdict.semantic_coverage_valid,
+        "semantic_result_valid": verdict.semantic_result_valid,
+        "provenance_valid": verdict.provenance_valid,
+        "artifact_valid": verdict.artifact_valid,
+        "official_profile_valid": verdict.official_profile_valid,
+        "holdout_valid": verdict.holdout_valid,
+        "semantic_attempted": verdict.semantic_attempted,
+        "semantic_tested": verdict.semantic_tested,
+        "fission_coverage": round(verdict.fission.ratio, 4),
+        "fission_attempted": verdict.fission.attempted,
+        "fission_clean": verdict.fission.clean,
+        "backend_coverage": round(verdict.overall.ratio, 4),
+        "backend_attempted": verdict.overall.attempted,
+        "backend_clean": verdict.overall.clean,
+        "reasons": list(verdict.reasons),
+        "publish_reasons": list(verdict.publish_reasons),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -197,7 +233,7 @@ def evaluate_run(
     fission_cov = _coverage(fission_rows)
     overall_cov = _coverage(rows)
 
-    reasons = []
+    reasons: list[str] = []
 
     if is_legacy:
         reasons.append("legacy_flat_list")
@@ -214,7 +250,9 @@ def evaluate_run(
     run_meta = envelope.get("run", {}) if envelope else {}
     if run_meta.get("legacy_source"):
         publish_reasons.append("legacy_source")
-    if run_meta.get("official") is False:
+    if "official" not in run_meta:
+        publish_reasons.append("official_flag_missing")
+    elif run_meta.get("official") is False:
         publish_reasons.append("non_official_run")
 
     matrix = envelope.get("matrix", {}) if envelope else {}
@@ -276,14 +314,100 @@ def evaluate_run(
         elif overall_cov.ratio < _backend_min:
             reasons.append("backend_coverage_below_threshold")
 
+    matrix_failure_codes = {
+        "matrix_completeness_mismatch", "matrix_missing_cells",
+        "matrix_unexpected_cells", "matrix_duplicate_cells", "backend_missing",
+    }
+    matrix_valid = not any(reason in matrix_failure_codes for reason in reasons)
+    adapter_output_valid = not any(
+        reason in {
+            "no_fission_rows", "fission_coverage_below_threshold",
+            "no_result_rows", "backend_coverage_below_threshold",
+        }
+        for reason in reasons
+    )
     measurement_valid = not reasons
+
+    clean_rows = [row for row in rows if not is_output_failure(row)]
+    semantic_attempted = len(clean_rows)
+    tested_rows = [
+        row for row in clean_rows
+        if row.get("semantic_score") is not None and row.get("fail_category") != "no_wrapper"
+    ]
+    semantic_tested = len(tested_rows)
+    semantic_coverage_valid = (
+        semantic_attempted > 0 and semantic_tested == semantic_attempted
+    )
+    if not semantic_coverage_valid:
+        publish_reasons.append("semantic_coverage_incomplete")
+
+    semantic_result_valid = all(
+        isinstance(row.get("semantic_score"), (int, float))
+        and 0.0 <= float(row["semantic_score"]) <= 1.0
+        and int(row.get("cases_passed", 0)) <= int(row.get("cases_total", 0))
+        for row in tested_rows
+    )
+    if not semantic_result_valid:
+        publish_reasons.append("semantic_result_malformed")
+
+    semantic_harness_valid = run_meta.get("oracle_abi_valid") is True
+    if not semantic_harness_valid:
+        publish_reasons.append("oracle_abi_unverified")
+
+    limits = run_meta.get("limits") or {}
+    official_profile_valid = (
+        run_meta.get("official") is True
+        and all(limits.get(key) in (None, 0, "", "0") for key in ("limit", "variant_limit", "function"))
+        and run_meta.get("profile") == "realistic"
+    )
+    if not official_profile_valid:
+        publish_reasons.append("official_profile_invalid")
+
+    holdout_valid = run_meta.get("holdout_valid") is True
+    if not holdout_valid:
+        publish_reasons.append("holdout_unverified")
+
+    required_run_fields = ("run_id", "started_at", "finished_at", "runner_commit", "corpus", "official")
+    toolchain = envelope.get("toolchain", {}) if envelope else {}
+    provenance_valid = bool(envelope) and all(run_meta.get(key) is not None for key in required_run_fields) and bool(toolchain.get("runner_commit"))
+    if not provenance_valid:
+        publish_reasons.append("provenance_incomplete")
+
+    artifact_valid = bool(envelope and envelope.get("schema_version") == 2 and rows and run_meta.get("run_id"))
+    if not artifact_valid:
+        publish_reasons.append("artifact_invalid")
+
+    publish_reasons = list(dict.fromkeys(publish_reasons))
     return RunValidity(
         valid=measurement_valid,
-        publishable=measurement_valid and not publish_reasons,
+        publishable=(
+            measurement_valid
+            and matrix_valid
+            and adapter_output_valid
+            and semantic_harness_valid
+            and semantic_coverage_valid
+            and semantic_result_valid
+            and provenance_valid
+            and artifact_valid
+            and official_profile_valid
+            and holdout_valid
+            and not publish_reasons
+        ),
         fission=fission_cov,
         overall=overall_cov,
         reasons=tuple(reasons),
         publish_reasons=tuple(publish_reasons),
+        matrix_valid=matrix_valid,
+        adapter_output_valid=adapter_output_valid,
+        semantic_harness_valid=semantic_harness_valid,
+        semantic_coverage_valid=semantic_coverage_valid,
+        semantic_result_valid=semantic_result_valid,
+        provenance_valid=provenance_valid,
+        artifact_valid=artifact_valid,
+        official_profile_valid=official_profile_valid,
+        holdout_valid=holdout_valid,
+        semantic_attempted=semantic_attempted,
+        semantic_tested=semantic_tested,
     )
 
 
@@ -305,6 +429,22 @@ def load_result_file(path: Path) -> LoadedResult:
             raise ValueError(f"Unsupported or missing schema_version in {path}")
         if not isinstance(raw.get("rows"), list):
             raise ValueError(f"Envelope rows must be a list in {path}")
+        for index, row in enumerate(raw["rows"]):
+            if not isinstance(row, dict):
+                raise ValueError(f"Envelope row {index} must be an object in {path}")
+            for field in ("semantic_score", "source_similarity", "structural_penalty", "correctness_score"):
+                value = row.get(field)
+                if value is not None and (not isinstance(value, (int, float)) or not 0.0 <= float(value) <= 1.0):
+                    raise ValueError(f"Envelope row {index} has invalid {field}: {value!r}")
+            if int(row.get("time_ms", 0)) < 0:
+                raise ValueError(f"Envelope row {index} has negative time_ms")
+            if int(row.get("cases_passed", 0)) > int(row.get("cases_total", 0)):
+                raise ValueError(f"Envelope row {index} has cases_passed > cases_total")
+        if raw.get("run", {}).get("official") is True:
+            required = ("run_id", "started_at", "finished_at", "runner_commit", "corpus", "profile")
+            missing = [field for field in required if not raw.get("run", {}).get(field)]
+            if missing:
+                raise ValueError(f"Official envelope is missing run fields: {', '.join(missing)}")
         return LoadedResult(rows=raw["rows"], envelope=raw, legacy=False)
     raise ValueError(
         f"Unrecognised result format in {path}: "
@@ -334,18 +474,7 @@ def build_envelope(
     loaded = LoadedResult(rows=rows, envelope=temp_envelope, legacy=False)
     validity = evaluate_run(loaded)
 
-    temp_envelope["validity"] = {
-        "valid": validity.valid,
-        "publishable": validity.publishable,
-        "fission_coverage": round(validity.fission.ratio, 4),
-        "fission_attempted": validity.fission.attempted,
-        "fission_clean": validity.fission.clean,
-        "backend_coverage": round(validity.overall.ratio, 4),
-        "backend_attempted": validity.overall.attempted,
-        "backend_clean": validity.overall.clean,
-        "reasons": list(validity.reasons),
-        "publish_reasons": list(validity.publish_reasons),
-    }
+    temp_envelope["validity"] = validity_dict(validity)
     temp_envelope["rendered_at"] = _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime())
     
     return temp_envelope

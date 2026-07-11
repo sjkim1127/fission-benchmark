@@ -334,14 +334,40 @@ def test_valid_smoke_is_not_publishable():
 
 
 def test_official_run_is_publishable():
-    """Official run with passing coverage → valid=True and publishable=True."""
+    """Only a fully evidenced official profile is publishable."""
     rows = _fission_rows(10, 10) + _other_rows("ghidra", 10, 10)
-    envelope = rv.build_envelope(rows, run_meta={"official": True})
+    for row in rows:
+        row.update(semantic_score=1.0, cases_passed=1, cases_total=1)
+    envelope = rv.build_envelope(
+        rows,
+        run_meta={
+            "run_id": "official-test",
+            "started_at": "2026-01-01T00:00:00Z",
+            "finished_at": "2026-01-01T00:01:00Z",
+            "runner_commit": "abc123",
+            "corpus": "locked-holdout",
+            "official": True,
+            "profile": "realistic",
+            "oracle_abi_valid": True,
+            "holdout_valid": True,
+            "limits": {"limit": None, "variant_limit": None, "function": None},
+        },
+        toolchain={"runner_commit": "abc123"},
+    )
     loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
     verdict = rv.evaluate_run(loaded)
     assert verdict.valid
     assert verdict.publishable
     assert not verdict.publish_reasons
+
+
+def test_missing_official_flag_is_not_publishable():
+    rows = _fission_rows(1, 1)
+    envelope = rv.build_envelope(rows)
+    verdict = rv.evaluate_run(rv.LoadedResult(rows=rows, envelope=envelope, legacy=False))
+    assert verdict.valid
+    assert not verdict.publishable
+    assert "official_flag_missing" in verdict.publish_reasons
 
 
 def test_exact_heterogeneous_matrix_cells():

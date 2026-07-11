@@ -8,7 +8,16 @@ export const CoverageSchema = z.object({
 
 export const ValiditySchema = z.object({
   valid: z.boolean(),
-  publishable: z.boolean().nullable().optional(),
+  publishable: z.boolean(),
+  matrix_valid: z.boolean().optional(),
+  adapter_output_valid: z.boolean().optional(),
+  semantic_harness_valid: z.boolean().optional(),
+  semantic_coverage_valid: z.boolean().optional(),
+  semantic_result_valid: z.boolean().optional(),
+  provenance_valid: z.boolean().optional(),
+  artifact_valid: z.boolean().optional(),
+  official_profile_valid: z.boolean().optional(),
+  holdout_valid: z.boolean().optional(),
   fission_coverage: z.number().optional(),
   fission_attempted: z.number().optional(),
   fission_clean: z.number().optional(),
@@ -48,7 +57,7 @@ export const RowSchema = z.object({
   source_similarity: z.number().default(0),
   semantic_score: z.number().nullable().default(null),  // null = no_wrapper (untestable)
   correctness_score: z.number().nullable().default(null),  // null = no_wrapper
-  correctness_rank: z.string().nullable().optional(),
+  correctness_rank: z.number().int().nullable().optional(),
   goto_count: z.number().default(0),
   nesting_depth: z.number().default(0),
   time_ms: z.number().default(0),

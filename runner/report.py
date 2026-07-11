@@ -217,11 +217,12 @@ def generate_markdown(
             by_decomp_output_fail[d] += 1
         else:
             by_decomp_output_valid[d] += 1
-            by_decomp_correctness[d].append(
-                getattr(s, "correctness_score", getattr(s, "composite_score", 0.0))
-            )
+            correctness = getattr(s, "correctness_score", None)
+            if correctness is not None:
+                by_decomp_correctness[d].append(correctness)
             by_decomp_sim[d].append(s.source_similarity)
-            by_decomp_sem[d].append(s.semantic_score)
+            if s.semantic_score is not None:
+                by_decomp_sem[d].append(s.semantic_score)
 
         # Semantic oracle layer — counted independently of output validity
         if fail_cat == "compile_error":
@@ -290,18 +291,19 @@ def generate_markdown(
         fission_scores_fn = [s for s in fn_scores if s.decompiler == "fission" and s.error is None]
         other_scores_fn = [s for s in fn_scores if s.decompiler != "fission" and s.error is None]
         if fission_scores_fn and other_scores_fn:
-            fn_comp = getattr(fission_scores_fn[0], "correctness_score", getattr(fission_scores_fn[0], "composite_score", 0.0))
-            others_avg = sum(getattr(s, "correctness_score", getattr(s, "composite_score", 0.0)) for s in other_scores_fn) / len(other_scores_fn)
+            fn_comp = fission_scores_fn[0].correctness_score
+            other_values = [s.correctness_score for s in other_scores_fn if s.correctness_score is not None]
+            others_avg = sum(other_values) / len(other_values) if other_values else None
             if getattr(fission_scores_fn[0], "correctness_rank", fission_scores_fn[0].consensus_rank) == 1:
                 badge = " 🟢 Fission leads"
-            elif fn_comp < 0.20 and others_avg > 0.40:
+            elif fn_comp is not None and others_avg is not None and fn_comp < 0.20 and others_avg > 0.40:
                 badge = " 🔴 Fission-only gap"
-            elif fn_comp < 0.20 and others_avg < 0.20:
+            elif fn_comp is not None and others_avg is not None and fn_comp < 0.20 and others_avg < 0.20:
                 badge = " ⚪ Universally low (harness)"
         lines[-1] = lines[-1] + badge
 
         rows = []
-        for s in sorted(fn_scores, key=lambda x: -(getattr(x, "correctness_score", getattr(x, "composite_score", 0.0)))):
+        for s in sorted(fn_scores, key=lambda x: -(x.correctness_score if x.correctness_score is not None else -1.0)):
             correctness_rank = getattr(s, "correctness_rank", s.consensus_rank)
             rank = f"#{correctness_rank}" if correctness_rank else "—"
             fail_cat = getattr(s, "fail_category", "") or ""
@@ -317,13 +319,13 @@ def generate_markdown(
             status_icon = cat_icons.get(fail_cat, "❌")
             if s.error:
                 status_icon = f"❌ {s.error[:30]}"
-            sem_str = f"{s.semantic_score:.1%}"
-            if hasattr(s, "cases_passed") and getattr(s, "cases_total", 0) > 0:
+            sem_str = "n/a" if s.semantic_score is None else f"{s.semantic_score:.1%}"
+            if s.semantic_score is not None and hasattr(s, "cases_passed") and getattr(s, "cases_total", 0) > 0:
                 sem_str = f"{s.semantic_score:.1%} ({s.cases_passed}/{s.cases_total})"
             intrin_flag = " ⚠️intrin" if getattr(s, "uses_intrinsics", False) else ""
             rows.append([
                 s.decompiler, s.compiler_variant,
-                f"{getattr(s, 'correctness_score', getattr(s, 'composite_score', 0.0)):.3f}",
+                f"{s.correctness_score:.3f}" if s.correctness_score is not None else "n/a",
                 f"{s.source_similarity:.3f}",
                 sem_str + intrin_flag, rank,
                 str(s.goto_count), str(s.nesting_depth),
@@ -352,13 +354,13 @@ def generate_markdown(
 
     hard, gaps = [], []
     for fn_name, fn_scores in by_fn.items():
-        valid = [s for s in fn_scores if s.error is None]
+        valid = [s for s in fn_scores if s.error is None and s.correctness_score is not None]
         if not valid:
             continue
-        all_low = all(getattr(s, "correctness_score", getattr(s, "composite_score", s.source_similarity)) < 0.20 for s in valid)
+        all_low = all(s.correctness_score < 0.20 for s in valid)
         fission_scores = [s for s in valid if s.decompiler == "fission"]
-        others_ok = any(getattr(s, "correctness_score", getattr(s, "composite_score", s.source_similarity)) >= 0.20 for s in valid if s.decompiler != "fission")
-        fission_low = fission_scores and all(getattr(s, "correctness_score", getattr(s, "composite_score", s.source_similarity)) < 0.20 for s in fission_scores)
+        others_ok = any(s.correctness_score >= 0.20 for s in valid if s.decompiler != "fission")
+        fission_low = fission_scores and all(s.correctness_score < 0.20 for s in fission_scores)
 
         if all_low:
             hard.append(fn_name)
@@ -385,7 +387,9 @@ def generate_html(
     verdict: RunValidity | None = None,
     measured_at: str | None = None,
     legacy: bool = False,
+    results_dir: Path | None = None,
 ) -> str:
+    results_dir = results_dir or RESULTS_DIR
     ts = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
 
     by_decomp: dict[str, list[float]] = defaultdict(list)
@@ -393,7 +397,8 @@ def generate_html(
     for s in scores:
         if s.error is None:
             by_decomp[s.decompiler].append(s.source_similarity)
-            by_decomp_sem[s.decompiler].append(s.semantic_score)
+            if s.semantic_score is not None:
+                by_decomp_sem[s.decompiler].append(s.semantic_score)
 
 
 
@@ -427,7 +432,7 @@ def generate_html(
         parity_diff_path = ""
         binary_name = manifest_map.get((s.function_name, s.compiler_variant))
         if binary_name:
-            diff_file = RESULTS_DIR / "parity_diffs" / binary_name / s.function_name / f"{s.decompiler}.json"
+            diff_file = results_dir / "parity_diffs" / binary_name / s.function_name / f"{s.decompiler}.json"
             if diff_file.exists():
                 has_parity_diff = True
                 parity_diff_path = f"../results/parity_diffs/{binary_name}/{s.function_name}/{s.decompiler}.json"
@@ -1412,7 +1417,8 @@ decompilers.forEach(d => {
   const semanticPassed = decScores.filter(semanticPasses).length;
   const avgSim = mean(outputScores, s => s.source_similarity);
   const avgSem = mean(semanticRows, s => s.semantic_score);
-  const avgCorrectness = mean(outputScores, s => s.correctness_score ?? s.composite_score);
+  const correctnessRows = outputScores.filter(s => s.correctness_score !== null && s.correctness_score !== undefined);
+  const avgCorrectness = mean(correctnessRows, s => s.correctness_score);
   const avgReadabilityProxy = mean(
     outputScores.filter(s => hasAstParseEvidence(s) && s.readability_proxy_score !== null && s.readability_proxy_score !== undefined),
     s => s.readability_proxy_score
@@ -1607,7 +1613,7 @@ function updatePerFuncChart(funcName) {
       label: d,
       data: variants.map(v => {
         const match = dScores.find(s => s.compiler_variant === v);
-        return match && hasOutput(match) ? (match.correctness_score ?? match.composite_score) : null;
+        return match && hasOutput(match) ? match.correctness_score : null;
       }),
       backgroundColor: DECOMPILER_COLORS[d] || '#888',
       borderRadius: 4
@@ -1649,10 +1655,10 @@ function toCSVRow(s) {
   const artifactCount = rm.unresolved_artifacts?.raw?.total ?? '';
   const fields = [
     s.function_name, s.compiler_variant, s.decompiler,
-    ((s.correctness_score ?? s.composite_score) || 0).toFixed(4),
+    s.correctness_score === null || s.correctness_score === undefined ? '' : Number(s.correctness_score).toFixed(4),
     s.readability_proxy_score === null || s.readability_proxy_score === undefined ? '' : Number(s.readability_proxy_score).toFixed(4),
     s.source_similarity.toFixed(4),
-    (s.semantic_score || 0).toFixed(4),
+    s.semantic_score === null || s.semantic_score === undefined ? '' : Number(s.semantic_score).toFixed(4),
     gnr, typeScore, exprScore, cfScore, artifactCount,
     s.cases_passed || 0, s.cases_total || 0,
     s.fail_category || '',
@@ -1880,11 +1886,11 @@ function renderTable() {
     
     const rankLabel = getRankBadge(s.correctness_rank || s.consensus_rank);
     const hasCode = hasOutput(s);
-    const correctnessScore = hasCode ? ((s.correctness_score ?? s.composite_score) || 0) : null;
+    const correctnessScore = hasCode ? s.correctness_score : null;
     const simClass = getSimilarityClass(correctnessScore, s.error);
     const statusClass = s.error ? 'error' : (hasCode ? 'success' : 'warning');
     const statusText = s.error ? 'Error' : (hasCode ? 'Output' : 'No output');
-    const scoreHtml = hasCode
+    const scoreHtml = hasCode && correctnessScore !== null && correctnessScore !== undefined
       ? `<div class="sim-cell">
           <span class="sim-badge ${simClass}">${correctnessScore.toFixed(3)}</span>
           <div class="sim-bar-bg">
@@ -1963,14 +1969,14 @@ function filterScores() {
       const key = s.function_name + '|' + s.compiler_variant;
       const group = scoresByGroup[key] || [];
       const fissionScore = group.find(x => x.decompiler === 'fission');
-      const scoreOf = row => (row.correctness_score ?? row.composite_score ?? row.source_similarity ?? 0);
-      const othersOk = group.some(x => x.decompiler !== 'fission' && scoreOf(x) >= 0.3);
-      matchesGap = fissionScore && scoreOf(fissionScore) < 0.3 && othersOk;
+      const eligible = row => row.correctness_score !== null && row.correctness_score !== undefined;
+      const othersOk = group.some(x => x.decompiler !== 'fission' && eligible(x) && x.correctness_score >= 0.3);
+      matchesGap = fissionScore && eligible(fissionScore) && fissionScore.correctness_score < 0.3 && othersOk;
     } else if (gapType === 'hard') {
       const key = s.function_name + '|' + s.compiler_variant;
       const group = scoresByGroup[key] || [];
-      const scoreOf = row => (row.correctness_score ?? row.composite_score ?? row.source_similarity ?? 0);
-      matchesGap = group.every(x => scoreOf(x) < 0.3);
+      const eligible = group.filter(x => x.correctness_score !== null && x.correctness_score !== undefined);
+      matchesGap = eligible.length > 0 && eligible.every(x => x.correctness_score < 0.3);
     } else if (gapType === 'gotos') {
       matchesGap = s.decompiler === 'fission' && s.goto_count > 0;
     }
@@ -2325,14 +2331,25 @@ def generate_report(
     verdict: RunValidity | None = None,
     measured_at: str | None = None,
     legacy: bool = False,
+    results_dir: Path | None = None,
+    docs_dir: Path | None = None,
 ) -> None:
-    RESULTS_DIR.mkdir(exist_ok=True)
-    DOCS_DIR.mkdir(exist_ok=True)
+    results_dir = results_dir or RESULTS_DIR
+    docs_dir = docs_dir or DOCS_DIR
+    results_dir.mkdir(parents=True, exist_ok=True)
+    docs_dir.mkdir(parents=True, exist_ok=True)
 
     # Markdown
     md = generate_markdown(scores, corpus_split, verdict=verdict, measured_at=measured_at, legacy=legacy)
-    (RESULTS_DIR / "latest.md").write_text(md, encoding="utf-8")
+    (results_dir / "latest.md").write_text(md, encoding="utf-8")
 
     # HTML
-    html = generate_html(scores, corpus_split, verdict=verdict, measured_at=measured_at, legacy=legacy)
-    (DOCS_DIR / "index.html").write_text(html, encoding="utf-8")
+    html = generate_html(
+        scores,
+        corpus_split,
+        verdict=verdict,
+        measured_at=measured_at,
+        legacy=legacy,
+        results_dir=results_dir,
+    )
+    (docs_dir / "index.html").write_text(html, encoding="utf-8")

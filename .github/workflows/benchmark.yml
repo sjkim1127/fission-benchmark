@@ -48,7 +48,7 @@ on:
       benchmark_variant_limit:
         description: "Compiler variants per function; use 0 for all variants"
         type: string
-        default: "1"
+        default: "0"
       parity_limit:
         description: "Parity benchmark subject limit; use 0 for full parity"
         type: string
@@ -256,16 +256,6 @@ jobs:
             --github-env     "$GITHUB_ENV" \
             --github-summary "$GITHUB_STEP_SUMMARY"
 
-      - name: Determine publish mode
-        id: publish-mode
-        run: |
-          # should_publish: measurement must be valid AND run_mode must be official
-          if [ "$MEASUREMENT_VALID" = "true" ] && [ "$RUN_PUBLISHABLE" = "true" ]; then
-            echo "should_publish=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_publish=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Run holdout benchmark
         # Skip if validity gate failed — holdout on an invalid run wastes CI time.
         if: steps.fission-gate.outcome == 'success'
@@ -291,6 +281,10 @@ jobs:
               "rows": []
             }
             EOF
+            if [ "$PUBLISH_RESULTS" = "true" ]; then
+              echo "Official publication requires a non-empty holdout corpus."
+              exit 1
+            fi
             exit 0
           fi
           EXTRA_ARGS=""
@@ -303,13 +297,22 @@ jobs:
           python runner/runner.py --corpus holdout $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --run-mode "$RUN_MODE" --output results/holdout_latest.json
 
       - name: Run overfitting check
-        if: steps.fission-gate.outcome == 'success'
+        if: ${{ steps.fission-gate.outcome == 'success' && env.PUBLISH_RESULTS == 'true' }}
         run: |
           python runner/holdout_report.py \
             --dev results/dev_latest.json \
             --holdout results/holdout_latest.json \
-            --output results/overfitting_report.md || \
-            echo "⚠️ Overfitting detected — check overfitting_report.md" >> "$GITHUB_STEP_SUMMARY"
+            --output results/overfitting_report.md
+
+      - name: Determine publish mode
+        id: publish-mode
+        if: always()
+        run: |
+          if [ "$PUBLISH_RESULTS" = "true" ] && [ "$MEASUREMENT_VALID" = "true" ] && [ "$RUN_PUBLISHABLE" = "true" ]; then
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Restore published dashboard from dev results
         # Only update latest.* when measurement is valid AND run is publishable.
@@ -319,6 +322,7 @@ jobs:
             --input results/dev_latest.json \
             --corpus dev \
             --update-latest
+          python -c 'from pathlib import Path; from runner.artifact_integrity import verify_artifact_manifest; verify_artifact_manifest(Path("."))'
 
       - name: Run parity benchmarks
         if: steps.fission-gate.outcome == 'success'

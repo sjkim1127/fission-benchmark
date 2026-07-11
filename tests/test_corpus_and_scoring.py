@@ -115,15 +115,12 @@ def test_assign_consensus_ranks_handles_ties_correctly() -> None:
     # ghidra and angr have the exact same score, so they must have the same rank (1)
     assert ranks["ghidra"] == 1
     assert ranks["angr"] == 1
-    # fission has a lower score, so it must be ranked 3 (competition ranking: 1, 1, 3)
-    assert ranks["fission"] == 3
+    # Similarity is not correctness evidence; all three passed the same oracle.
+    assert ranks["fission"] == 1
 
 
 def test_new_correctness_formula_happy_path() -> None:
-    # Formula: sem * 0.80 + sim * 0.10 + (1 - structural_penalty) * 0.10
-    # Values: sem=0.8, sim=0.6, sp=0.2
-    # Expect: 0.8*0.80 + 0.6*0.10 + 0.8*0.10 = 0.64 + 0.06 + 0.08 = 0.78
-    # ast_score and readability_score are ignored for correctness ranking.
+    # Correctness is finite semantic test-case pass rate only.
     score = compute_correctness_score(
         semantic_score=0.8,
         source_similarity=0.6,
@@ -131,7 +128,7 @@ def test_new_correctness_formula_happy_path() -> None:
         ast_score=0.9,
         readability_score=0.7,
     )
-    assert score == 0.78
+    assert score == 0.8
 
 
 def test_ast_parsing_failures_map_to_zero_score() -> None:
@@ -156,17 +153,12 @@ def test_ast_parsing_failures_map_to_zero_score() -> None:
         )
     ]
     
-    # With sp=0.1 (since nesting_depth=1, max_depth=1, delta=1, depth_pen=1/3, sp=0.3*1/3 = 0.1)
-    # 1.0*0.80 + 1.0*0.10 + 0.9*0.10 = 0.99
     ranked = assign_consensus_ranks(scores)
-    assert ranked[0].correctness_score == 0.99
+    assert ranked[0].correctness_score == 1.0
 
 
 def test_semantic_failures_cap_correctness_score() -> None:
-    # If semantic_score == 0.0, correctness_score must be capped at 0.15.
-    # Let's set other components to 1.0:
-    # raw = 0.0*0.80 + 1.0*0.10 + 1.0*0.10 = 0.20
-    # Gated score must be min(0.20, 0.15) = 0.15
+    # A complete semantic failure has zero correctness, regardless of resemblance.
     score = compute_correctness_score(
         semantic_score=0.0,
         source_similarity=1.0,
@@ -174,7 +166,7 @@ def test_semantic_failures_cap_correctness_score() -> None:
         ast_score=1.0,
         readability_score=1.0,
     )
-    assert score == 0.15
+    assert score == 0.0
 
 
 def test_ast_similarity_robust_sub_key_lookup() -> None:
@@ -200,7 +192,22 @@ def test_ast_similarity_robust_sub_key_lookup() -> None:
     ]
 
     # AST similarity values are recorded but excluded from correctness ranking.
-    # With sp=0.1:
-    # 1.0*0.80 + 1.0*0.10 + 0.9*0.10 = 0.99
     ranked = assign_consensus_ranks(scores)
-    assert ranked[0].correctness_score == 0.99
+    assert ranked[0].correctness_score == 1.0
+
+
+def test_no_wrapper_has_no_correctness_or_rank() -> None:
+    score = FunctionScore(
+        decompiler="fission",
+        function_name="foo",
+        compiler_variant="gcc -O0",
+        source_similarity=1.0,
+        goto_count=0,
+        nesting_depth=0,
+        time_ms=1,
+        semantic_score=None,
+        fail_category="no_wrapper",
+    )
+    ranked = assign_consensus_ranks([score])
+    assert ranked[0].correctness_score is None
+    assert ranked[0].correctness_rank is None

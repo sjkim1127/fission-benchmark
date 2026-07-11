@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import time
+import uuid
 from datetime import datetime, timezone
 from dataclasses import asdict
 from pathlib import Path
@@ -354,7 +355,6 @@ async def run_all(
                     groups[key] = []
                 groups[key].append((fn, variant, function_source))
 
-    # Concurrency limit based on CPU count
     concurrency = os.cpu_count() or 4
     sem = asyncio.Semaphore(concurrency)
     typer.echo(f"Starting batch benchmark run with concurrency limit of {concurrency} workers.")
@@ -411,6 +411,11 @@ def run(
     started_at = datetime.now(timezone.utc)
     start_monotonic = time.monotonic()
     _load_source_metrics()
+
+    if run_mode == "official" and any((limit, variant_limit, function)):
+        raise typer.BadParameter(
+            "official runs cannot use --limit, --variant-limit, or --function"
+        )
 
     # Select decompilers
     all_dec = configured_decompilers()
@@ -491,12 +496,18 @@ def run(
     envelope = build_envelope(
         serialized,
         run_meta={
+            "run_id": str(uuid.uuid4()),
             "started_at": started_at.isoformat().replace("+00:00", "Z"),
             "finished_at": finished_at.isoformat().replace("+00:00", "Z"),
             "duration_ms": round(elapsed * 1000),
             "runner_commit": commit,
             "corpus": corpus,
             "official": run_mode == "official",
+            "requested_run_mode": run_mode,
+            "profile": "diagnostic",
+            "oracle_profile": "host-gcc-example-cases",
+            "oracle_abi_valid": False,
+            "holdout_valid": False,
             "limits": {
                 "limit": limit,
                 "variant_limit": variant_limit,
@@ -523,12 +534,15 @@ def run(
 
     json_path.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
     if publish:
-        latest_json.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
-
-        # Build loaded result manually since we already have the envelope
         from run_validity import LoadedResult, evaluate_run
         loaded = LoadedResult(rows=serialized, envelope=envelope, legacy=False)
         verdict = evaluate_run(loaded)
+        if not verdict.publishable:
+            raise typer.BadParameter(
+                "refusing to publish an ineligible run: "
+                + ", ".join(verdict.publish_reasons)
+            )
+        latest_json.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
 
         generate_report(scores, corpus_split=corpus, loaded_result=loaded, verdict=verdict)
 

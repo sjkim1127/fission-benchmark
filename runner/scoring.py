@@ -58,19 +58,13 @@ class FunctionScore:
 
 # ── Correctness Score ─────────────────────────────────────────────────────────
 
-# Weights for the correctness formula.
-#
-# Readability proxies and Phase 2 AST source-similarity evidence are deliberately
-# excluded from correctness ranking. They remain separately reported evidence
-# until the human comprehension study validates a future readability composite.
-WEIGHT_SEMANTIC = 0.80
+# Correctness is semantic evidence only. Source resemblance, structure and
+# readability remain independent diagnostic axes.
+WEIGHT_SEMANTIC = 1.0
 WEIGHT_AST = 0.0
 WEIGHT_READABILITY = 0.0
-WEIGHT_SIMILARITY = 0.10
-WEIGHT_STRUCTURAL = 0.10
-
-# If semantic == 0, correctness is capped at this value.
-SEMANTIC_ZERO_CAP = 0.15
+WEIGHT_SIMILARITY = 0.0
+WEIGHT_STRUCTURAL = 0.0
 
 
 def compute_correctness_score(
@@ -81,40 +75,22 @@ def compute_correctness_score(
     readability_score: float = 0.0,
 ) -> float | None:
     """
-    Compute semantic-gated correctness score.
+    Return finite semantic test-case pass rate, or ``None`` without an oracle.
 
-    Formula: sem * 0.80 + sim * 0.10 + (1 - structural_penalty) * 0.10
-
-    Gating rules:
-    - If semantic_score is None (no_wrapper / untestable): score is similarity-only
-      (sim * 0.10 + (1-penalty) * 0.10), returned as a float but NOT gated by
-      SEMANTIC_ZERO_CAP, so untestable functions can still rank by code quality.
-    - If semantic_score == 0.0 (real failure): correctness cannot exceed
-      SEMANTIC_ZERO_CAP (0.15).
-
-    The ast_score and readability_score parameters are accepted for compatibility
-    with older callers, but they do not affect correctness_score.
+    Other parameters remain for saved-result compatibility but never affect
+    correctness or ranking.
     """
-    _ = ast_score, readability_score
+    _ = source_similarity, structural_penalty, ast_score, readability_score
     if semantic_score is None:
-        # Untestable: similarity + structural only (no semantic signal).
-        raw = source_similarity * WEIGHT_SIMILARITY + (1.0 - structural_penalty) * WEIGHT_STRUCTURAL
-        return round(raw, 4)
-    raw = (
-        semantic_score * WEIGHT_SEMANTIC
-        + source_similarity * WEIGHT_SIMILARITY
-        + (1.0 - structural_penalty) * WEIGHT_STRUCTURAL
-    )
-    if semantic_score == 0.0:
-        return round(min(raw, SEMANTIC_ZERO_CAP), 4)
-    return round(raw, 4)
+        return None
+    return round(semantic_score, 4)
 
 
 def compute_composite(
     semantic_score: float,
     source_similarity: float,
     structural_penalty: float,
-) -> float:
+) -> float | None:
     """Deprecated compatibility wrapper for compute_correctness_score."""
     return compute_correctness_score(semantic_score, source_similarity, structural_penalty)
 
@@ -318,9 +294,15 @@ def assign_consensus_ranks(
 
     result = []
     for group in groups.values():
-        valid = [s for s in group if s.error is None]
-        # Rank by correctness_score descending (semantic-gated).
-        # None (no_wrapper) is treated as 0.0 for ranking only.
+        valid = [
+            s for s in group
+            if s.error is None and s.semantic_score is not None
+        ]
+        for s in group:
+            if s not in valid:
+                s.correctness_rank = None
+                s.consensus_rank = None
+        # Rank by finite semantic evidence only.
         valid.sort(key=lambda s: s.correctness_score if s.correctness_score is not None else 0.0, reverse=True)
         current_rank = 1
         for idx, s in enumerate(valid):

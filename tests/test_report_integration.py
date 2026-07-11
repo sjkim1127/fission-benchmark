@@ -100,18 +100,41 @@ def test_render_cli_preserves_input_hash(tmp_path):
          "error": None, "semantic_score": 1.0, "source_similarity": 0.8,
          "correctness_score": 0.92, "goto_count": 0, "nesting_depth": 0, "time_ms": 100}
     ]
-    envelope = rv.build_envelope(rows, run_meta={"official": True})
+    envelope = rv.build_envelope(rows, run_meta={"official": False})
     in_file = tmp_path / "input.json"
     in_file.write_text(json.dumps(envelope), encoding="utf-8")
 
     before_hash = hashlib.sha256(in_file.read_bytes()).hexdigest()
 
     # render_report without --update-latest should not touch the input file
-    subprocess.run(
+    output_dir = tmp_path / "rendered"
+    result = subprocess.run(
         [sys.executable, str(RUNNER_DIR / "render_report.py"),
-         "--input", str(in_file), "--corpus", "dev"],
+         "--input", str(in_file), "--corpus", "dev",
+         "--output-dir", str(output_dir)],
         capture_output=True, text=True, cwd=str(RUNNER_DIR.parent)
     )
+    assert result.returncode == 0, result.stderr
 
     after_hash = hashlib.sha256(in_file.read_bytes()).hexdigest()
     assert before_hash == after_hash, "render_report mutated the input file"
+    assert (output_dir / "results/artifact-manifest.json").is_file()
+
+
+def test_report_renders_no_wrapper_as_unmeasured(tmp_path):
+    score = _make_score()
+    score.semantic_score = None
+    score.correctness_score = None
+    score.correctness_rank = None
+    score.fail_category = "no_wrapper"
+
+    generate_report(
+        [score],
+        corpus_split="dev",
+        verdict=_make_verdict(valid=True, publishable=False),
+        results_dir=tmp_path / "results",
+        docs_dir=tmp_path / "docs",
+    )
+    markdown = (tmp_path / "results/latest.md").read_text(encoding="utf-8")
+    assert "n/a" in markdown
+    assert "no_test" in markdown

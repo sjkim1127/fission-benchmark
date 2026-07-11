@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 import sys
 from collections import Counter
@@ -29,7 +30,8 @@ from readability import summarize_readability_proxy_score
 from semantic import verify_semantic_correctness
 from test_wrappers import TEST_WRAPPERS
 from scoring import FunctionScore, assign_consensus_ranks, check_uses_intrinsics, compute_correctness_score
-from run_validity import load_result_file, build_envelope, evaluate_run, LoadedResult
+from run_validity import load_result_file, build_envelope, evaluate_run, LoadedResult, validity_dict
+from artifact_integrity import write_artifact_manifest, verify_artifact_manifest
 
 
 def _normalise_scores(data: list[dict], recompute_derived: bool = False, rerun_semantic: bool = False) -> list[FunctionScore]:
@@ -152,6 +154,11 @@ def main() -> None:
         help="Copy the normalised JSON to results/latest.json and regenerate latest.md / docs/index.html",
     )
     parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Isolated output root containing results/ and docs/ (required unless --update-latest)",
+    )
+    parser.add_argument(
         "--write-normalized",
         type=Path,
         default=None,
@@ -166,8 +173,19 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    if args.update_latest and args.output_dir:
+        parser.error("--output-dir and --update-latest are mutually exclusive")
+    if not args.update_latest and args.output_dir is None:
+        parser.error("--output-dir is required unless --update-latest is used")
+    output_root = Path(__file__).parent.parent if args.update_latest else args.output_dir.resolve()
+    results_dir = output_root / "results"
+    docs_dir = output_root / "docs"
+    results_dir.mkdir(parents=True, exist_ok=True)
+    docs_dir.mkdir(parents=True, exist_ok=True)
+
     # ── Load without modifying the input file ─────────────────────────────────
     loaded = load_result_file(args.input)
+    source_envelope_sha256 = hashlib.sha256(args.input.read_bytes()).hexdigest()
     rows = loaded.rows
     is_legacy = loaded.legacy
     envelope = loaded.envelope
@@ -186,12 +204,56 @@ def main() -> None:
     # ── Normalise / re-score ───────────────────────────────────────────────────
     scores = _normalise_scores(rows, recompute_derived=args.recompute_derived, rerun_semantic=args.rerun_semantic)
 
-    # ── Generate report artifacts ──────────────────────────────────────────────
-    # Pass measured_at and legacy flag so the banner is correct.
-    # Pass loaded_result and verdict to avoid recalculating invalid truths
-    loaded = LoadedResult(rows=[asdict(s) for s in scores], envelope=envelope, legacy=is_legacy)
+    serialized_rows = [asdict(score) for score in scores]
+    if not is_legacy and envelope:
+        out_envelope = copy.deepcopy(envelope)
+        out_envelope["rows"] = serialized_rows
+        if not out_envelope.get("run", {}).get("run_id"):
+            run_meta = out_envelope.setdefault("run", {})
+            run_meta["run_id"] = f"unprovenanced-{source_envelope_sha256[:12]}"
+            run_meta["official"] = False
+            run_meta["provenance_repair"] = "missing_run_id"
+        if args.recompute_derived or args.rerun_semantic:
+            run_meta = out_envelope.get("run", {})
+            parent_run_id = run_meta.get("run_id", "original-unknown")
+            derivations = []
+            if args.recompute_derived:
+                derivations.append("derived-recompute")
+            if args.rerun_semantic:
+                derivations.append("semantic-recompute")
+            run_meta["parent_run_id"] = parent_run_id
+            run_meta["run_id"] = f"derived-{parent_run_id}"
+            run_meta["derivation"] = ",".join(derivations)
+            run_meta["official"] = False
+            out_envelope["run"] = run_meta
+    else:
+        out_envelope = build_envelope(
+            serialized_rows,
+            run_meta={
+                "run_id": f"legacy-{source_envelope_sha256[:12]}",
+                "official": False,
+                "legacy_source": True,
+                "corpus": args.corpus,
+            },
+        )
+
+    loaded = LoadedResult(rows=serialized_rows, envelope=out_envelope, legacy=False)
     verdict = evaluate_run(loaded)
-    
+    out_envelope["validity"] = validity_dict(verdict)
+    artifact = {
+        "run_id": out_envelope.get("run", {}).get("run_id"),
+        "source_envelope_sha256": source_envelope_sha256,
+        "generated_from": str(args.input),
+    }
+    out_envelope["artifact"] = artifact
+    serialized = json.dumps(out_envelope, indent=2) + "\n"
+
+    if args.write_normalized:
+        args.write_normalized.parent.mkdir(parents=True, exist_ok=True)
+        args.write_normalized.write_text(serialized, encoding="utf-8")
+        print(f"Normalised rows written to {args.write_normalized}")
+
+    (results_dir / "latest.json").write_text(serialized, encoding="utf-8")
     generate_report(
         scores,
         corpus_split=args.corpus,
@@ -199,124 +261,86 @@ def main() -> None:
         legacy=is_legacy,
         loaded_result=loaded,
         verdict=verdict,
+        results_dir=results_dir,
+        docs_dir=docs_dir,
     )
 
-    # ── Write normalised JSON only if explicitly requested ─────────────────────
-    # NEVER write back to args.input.
-    if args.write_normalized or args.update_latest:
-        serialized_rows = [asdict(score) for score in scores]
-        
-        if not is_legacy and envelope:
-            out_envelope = copy.deepcopy(envelope)
-            out_envelope["rows"] = serialized_rows
-            
-            if args.recompute_derived or args.rerun_semantic:
-                run_meta = out_envelope.get("run", {})
-                parent_run_id = run_meta.get("run_id", "original-unknown")
-                derivations = []
-                if args.recompute_derived:
-                    derivations.append("derived-recompute")
-                if args.rerun_semantic:
-                    derivations.append("semantic-recompute")
-                
-                run_meta["parent_run_id"] = parent_run_id
-                run_meta["run_id"] = f"derived-{parent_run_id}"
-                run_meta["derivation"] = ",".join(derivations)
-                run_meta["official"] = False
-                out_envelope["run"] = run_meta
-                
-            # Re-evaluate validity
-            validity = evaluate_run(LoadedResult(rows=serialized_rows, envelope=out_envelope, legacy=False))
-            out_envelope["validity"] = {
-                "valid": validity.valid,
-                "publishable": validity.publishable,
-                "fission_coverage": round(validity.fission.ratio, 4),
-                "fission_attempted": validity.fission.attempted,
-                "fission_clean": validity.fission.clean,
-                "backend_coverage": round(validity.overall.ratio, 4),
-                "backend_attempted": validity.overall.attempted,
-                "backend_clean": validity.overall.clean,
-                "reasons": list(validity.reasons),
-                "publish_reasons": list(validity.publish_reasons),
-            }
-        else:
-            # Legacy promotion
-            out_envelope = build_envelope(
-                serialized_rows,
-                run_meta={
-                    "official": False,
-                    "legacy_source": True,
-                    "corpus": args.corpus,
-                }
-            )
-            
-        serialized = json.dumps(out_envelope, indent=2)
+    marker = f"run_id={artifact['run_id']} source_envelope_sha256={source_envelope_sha256}"
+    md_path = results_dir / "latest.md"
+    md_path.write_text(f"<!-- {marker} -->\n" + md_path.read_text(encoding="utf-8"), encoding="utf-8")
+    html_path = docs_dir / "index.html"
+    html_path.write_text(f"<!-- {marker} -->\n" + html_path.read_text(encoding="utf-8"), encoding="utf-8")
 
-        if args.write_normalized:
-            args.write_normalized.parent.mkdir(parents=True, exist_ok=True)
-            args.write_normalized.write_text(serialized, encoding="utf-8")
-            print(f"Normalised rows written to {args.write_normalized}")
+    # A compact dashboard envelope is always emitted so all publication files
+    # share one run and source linkage contract.
+    strip_fields = {
+        "decompiled_code", "decompiled_code_nir", "decompiled_code_hir",
+        "readability_metrics", "readability_metrics_hir",
+        "ast_similarity", "output_diagnostics", "semantic_error",
+    }
+    summary_rows = [
+        {key: value for key, value in row.items() if key not in strip_fields}
+        for row in serialized_rows
+    ]
 
-        if args.update_latest:
-            latest_path = Path("results/latest.json")
-            latest_path.parent.mkdir(exist_ok=True)
-            latest_path.write_text(serialized, encoding="utf-8")
-            print(f"results/latest.json updated ({len(scores)} rows)")
+    from collections import defaultdict
+    agg: dict = defaultdict(lambda: {
+        "attempted": 0, "clean": 0, "error": 0,
+        "correctness_sum": 0.0, "correctness_tested": 0,
+        "similarity_sum": 0.0, "semantic_pass": 0, "semantic_tested": 0,
+    })
+    for row in summary_rows:
+        stats = agg[row.get("decompiler", "unknown")]
+        stats["attempted"] += 1
+        if row.get("error"):
+            stats["error"] += 1
+            continue
+        stats["clean"] += 1
+        if row.get("correctness_score") is not None:
+            stats["correctness_sum"] += row["correctness_score"]
+            stats["correctness_tested"] += 1
+        stats["similarity_sum"] += row.get("source_similarity") or 0.0
+        if row.get("semantic_score") is not None:
+            stats["semantic_tested"] += 1
+            if row["semantic_score"] >= 1.0:
+                stats["semantic_pass"] += 1
 
-    if args.update_summary:
-        STRIP_FIELDS = {
-            "decompiled_code", "decompiled_code_nir", "decompiled_code_hir",
-            "readability_metrics", "readability_metrics_hir",
-            "ast_similarity", "output_diagnostics",
-            "semantic_error",  # ~18MB in typical result files
-        }
-        summary_rows = []
-        for row in serialized_rows if 'serialized_rows' in dir() else [asdict(s) for s in scores]:
-            summary_rows.append({k: v for k, v in row.items() if k not in STRIP_FIELDS})
+    agg_list = []
+    for decompiler, stats in agg.items():
+        tested = stats["semantic_tested"]
+        clean = stats["clean"]
+        correctness_tested = stats["correctness_tested"]
+        agg_list.append({
+            "decompiler": decompiler,
+            "attempted": stats["attempted"],
+            "clean": clean,
+            "error": stats["error"],
+            "avg_correctness": round(stats["correctness_sum"] / correctness_tested, 4) if correctness_tested else None,
+            "avg_similarity": round(stats["similarity_sum"] / clean, 4) if clean else 0.0,
+            "semantic_coverage_pct": round(tested / clean * 100, 2) if clean else 0.0,
+            "semantic_pass_pct": round(stats["semantic_pass"] / tested * 100, 2) if tested else None,
+        })
 
-        # Per-decompiler aggregates
-        from collections import defaultdict
-        agg: dict = defaultdict(lambda: {"attempted": 0, "clean": 0, "error": 0, "correctness_sum": 0.0, "similarity_sum": 0.0, "semantic_pass": 0})
-        for r in summary_rows:
-            d = r.get("decompiler", "unknown")
-            agg[d]["attempted"] += 1
-            if r.get("error"):
-                agg[d]["error"] += 1
-            else:
-                agg[d]["clean"] += 1
-                agg[d]["correctness_sum"] += r.get("correctness_score") or 0.0
-                agg[d]["similarity_sum"] += r.get("source_similarity") or 0.0
-                if (r.get("semantic_score") or 0.0) >= 1.0:
-                    agg[d]["semantic_pass"] += 1
+    summary_envelope = {
+        "schema_version": 2,
+        "run": loaded.envelope.get("run", {}),
+        "validity": loaded.envelope.get("validity", {}),
+        "matrix": {key: value for key, value in (loaded.envelope.get("matrix") or {}).items() if key != "expected_cells"},
+        "artifact": artifact,
+        "summary": agg_list,
+        "rows": summary_rows,
+    }
+    summary_path = results_dir / "latest-summary.json"
+    summary_path.write_text(json.dumps(summary_envelope, indent=2), encoding="utf-8")
+    print(f"results/latest-summary.json updated ({len(summary_rows)} rows, {summary_path.stat().st_size // 1024}KB)")
 
-        agg_list = []
-        for dec, s in agg.items():
-            agg_list.append({
-                "decompiler": dec,
-                "attempted": s["attempted"],
-                "clean": s["clean"],
-                "error": s["error"],
-                "avg_correctness": round(s["correctness_sum"] / s["clean"], 4) if s["clean"] else 0.0,
-                "avg_similarity": round(s["similarity_sum"] / s["clean"], 4) if s["clean"] else 0.0,
-                "semantic_pass_pct": round(s["semantic_pass"] / s["clean"] * 100, 2) if s["clean"] else 0.0,
-            })
-
-        if loaded.envelope:
-            summary_envelope = {
-                "schema_version": 2,
-                "run": loaded.envelope.get("run", {}),
-                "validity": loaded.envelope.get("validity", {}),
-                "matrix": {k: v for k, v in (loaded.envelope.get("matrix") or {}).items() if k != "expected_cells"},
-                "summary": agg_list,
-                "rows": summary_rows,
-            }
-        else:
-            summary_envelope = {"schema_version": 2, "summary": agg_list, "rows": summary_rows}
-
-        summary_path = Path("results/latest-summary.json")
-        summary_path.parent.mkdir(exist_ok=True)
-        summary_path.write_text(json.dumps(summary_envelope, indent=2), encoding="utf-8")
-        print(f"results/latest-summary.json updated ({len(summary_rows)} rows, {summary_path.stat().st_size // 1024}KB)")
+    write_artifact_manifest(
+        output_root,
+        run_id=artifact["run_id"],
+        source_envelope_sha256=source_envelope_sha256,
+        generated_from=str(args.input),
+    )
+    verify_artifact_manifest(output_root)
 
     print(
         f"Rendered {len(scores)} rows from {args.input} as corpus {args.corpus!r} "
