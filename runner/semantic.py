@@ -3,10 +3,14 @@ Semantic verification engine.
 Compiles decompiled functions and runs them against unit test wrappers.
 """
 import asyncio
+import re
 import subprocess
 import tempfile
 from pathlib import Path
-from test_wrappers import TEST_WRAPPERS
+try:
+    from .test_wrappers import TEST_WRAPPERS
+except ImportError:  # Direct script/module execution from runner/.
+    from test_wrappers import TEST_WRAPPERS
 
 STANDARD_HEADER = """
 #include <stdint.h>
@@ -49,6 +53,25 @@ typedef struct Pair {
 
 #define __popcount(x) __builtin_popcount(x)
 """
+
+
+def extract_function_declaration(
+    func_name: str,
+    decompiled_code: str,
+) -> str | None:
+    """Extract the target definition's signature as an extern declaration."""
+    names = [f"_{func_name}", func_name]
+    for name in names:
+        pattern = re.compile(
+            rf"(?m)^[ \t]*(?P<signature>[^;{{}}\n]*\b{re.escape(name)}\s*\([^;{{}}]*\))\s*\{{"
+        )
+        match = pattern.search(decompiled_code)
+        if match:
+            signature = " ".join(match.group("signature").split())
+            if signature.startswith("static "):
+                return None
+            return f"extern {signature};\n"
+    return None
 
 
 def verify_semantic_correctness(
@@ -95,18 +118,54 @@ def verify_semantic_correctness(
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
+        declaration = extract_function_declaration(func_name, decompiled_code)
+        if declaration is None:
+            return 0.0, "Target function declaration not found", "compile_error", 0, cases_total
+        function_file = tmpdir_path / "decompiled_function.c"
+        function_object = tmpdir_path / "decompiled_function.o"
+        function_file.write_text(STANDARD_HEADER + "\n" + decompiled_code, encoding="utf-8")
+
+        try:
+            result = subprocess.run(
+                [
+                    "gcc",
+                    "-w",
+                    "-O0",
+                    "-c",
+                    str(function_file),
+                    "-o",
+                    str(function_object),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5.0,
+            )
+            if result.returncode != 0:
+                error = f"Compilation failed:\n{result.stderr[:300]}"
+                return 0.0, error, "compile_error", 0, cases_total
+        except subprocess.TimeoutExpired:
+            return 0.0, "Compilation timed out (5s)", "timeout", 0, cases_total
+        except Exception as e:
+            return 0.0, f"Compiler execution failed: {e}", "compile_error", 0, cases_total
 
         for i, case_main in enumerate(cases):
-            source = STANDARD_HEADER + "\n" + alias + decompiled_code + "\n" + case_main
-            c_file = tmpdir_path / f"test_{i}.c"
-            bin_file = tmpdir_path / f"test_{i}"
-
-            c_file.write_text(source, encoding="utf-8")
-
-            # Compile
+            wrapper_file = tmpdir_path / f"wrapper_{i}.c"
+            bin_file = tmpdir_path / f"semantic_case_{i}"
+            wrapper_file.write_text(
+                STANDARD_HEADER + "\n" + alias + declaration + case_main,
+                encoding="utf-8",
+            )
             try:
                 result = subprocess.run(
-                    ["gcc", "-w", "-O0", str(c_file), "-o", str(bin_file)],
+                    [
+                        "gcc",
+                        "-w",
+                        "-O0",
+                        str(wrapper_file),
+                        str(function_object),
+                        "-o",
+                        str(bin_file),
+                    ],
                     capture_output=True,
                     text=True,
                     timeout=5.0,
