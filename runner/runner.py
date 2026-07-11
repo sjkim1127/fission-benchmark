@@ -54,6 +54,29 @@ def filter_functions(functions: list, requested: str | None) -> list:
     return [fn for fn in functions if fn.name in requested_names]
 
 
+def format_semantic_score(score: float | None) -> str:
+    """Format semantic evidence without treating an untestable row as failure."""
+    return "n/a" if score is None else f"{score:.2f}"
+
+
+def fission_toolchain_metadata() -> dict[str, str]:
+    """Return local/release Fission provenance exported by the adapter setup."""
+    git_sha = os.environ.get("FISSION_GIT_SHA", "")
+    version = (
+        os.environ.get("FISSION_VERSION")
+        or os.environ.get("FISSION_RELEASE_VERSION")
+        or (f"local-{git_sha}" if git_sha else "unknown")
+    )
+    return {
+        "fission_version": version,
+        "fission_git_sha": git_sha,
+        "fission_source": os.environ.get("FISSION_SOURCE", "unknown"),
+        "fission_source_fingerprint": os.environ.get(
+            "FISSION_SOURCE_FINGERPRINT", ""
+        ),
+    }
+
+
 def _load_source_metrics() -> None:
     """Load precomputed source-level structural metrics if available."""
     metrics_path = Path(__file__).parent.parent / "corpus" / "source_metrics.json"
@@ -243,11 +266,6 @@ async def decompile_batch_and_score(
         else:
             sem_score, sem_err, fail_cat, cases_passed, cases_total = 0.0, error, "adapter_error", 0, 0
 
-        # H-4: no_wrapper returns None semantic_score — treat as similarity-only for correctness.
-        # The scoring engine will use SEMANTIC_ZERO_CAP gate only when sem_score==0.0 (real failure).
-        # None means "untestable" — do not cap correctness; score purely on similarity.
-        effective_sem = sem_score if sem_score is not None else 0.0
-
         # C-2: prefer per-item timing from adapter if provided, fall back to apportioned batch time.
         item_time_ms = item.get("time_ms")
         if item_time_ms is not None:
@@ -264,7 +282,7 @@ async def decompile_batch_and_score(
             nesting_depth=depth,
             time_ms=fn_time_ms,
             error=error,
-            semantic_score=effective_sem,
+            semantic_score=sem_score,
             semantic_error=sem_err,
             fail_category=fail_cat,
             cases_passed=cases_passed,
@@ -285,9 +303,10 @@ async def decompile_batch_and_score(
         # Direct feedback output
         status = "✓" if not error else "✗"
         cat_tag = f" [{fail_cat}]" if fail_cat else ""
+        sem_text = format_semantic_score(sem_score)
         typer.echo(
             f"  {status} {dname:10s} {fn.name:15s} [{variant_label}] "
-            f"sim={sim:.3f} sem={sem_score:.2f} ({cases_passed}/{cases_total} cases){cat_tag} gotos={gotos}"
+            f"sim={sim:.3f} sem={sem_text} ({cases_passed}/{cases_total} cases){cat_tag} gotos={gotos}"
         )
 
     return fn_scores
@@ -485,7 +504,7 @@ def run(
             }
         },
         toolchain={
-            "fission_version": os.environ.get("FISSION_VERSION", "unknown"),
+            **fission_toolchain_metadata(),
             "runner_commit": commit,
             "runner_os": sys.platform,
             "python_version": sys.version.split()[0],

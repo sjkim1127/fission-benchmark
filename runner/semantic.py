@@ -54,7 +54,7 @@ typedef struct Pair {
 def verify_semantic_correctness(
     func_name: str,
     decompiled_code: str,
-) -> tuple[float, str | None, str, int, int]:
+) -> tuple[float | None, str | None, str, int, int]:
     """
     Verify correctness of decompiled code by running all test cases.
 
