@@ -39,9 +39,13 @@ Binary + Source (ground truth)
 
 | Layer | Mechanism |
 |---|---|
-| **Train/Holdout** | 80/20 function-level split (fixed seed). Holdout requires `--use-holdout` flag. |
+| **Train/Holdout** | 80/20 function-level split (fixed seed). Use `--corpus holdout` for holdout evaluation. |
 | **Cross-compiler** | Same source compiled with gcc -O0 and gcc -O2 — evaluated independently |
-| **Multi-decompiler consensus** | If all decompilers score low → objectively hard. Only Fission low → quality gap. |
+| **Multi-decompiler consensus** | If all decompilers score low → `⚪ Universally low (harness)`. Only Fission low → quality gap. |
+
+> **Current status**: holdout manifests are present but empty.
+> The overfitting report will show `No holdout data` for all decompilers until holdout binaries are built.
+> `--corpus holdout` works correctly once manifests are populated.
 
 ## Quick Start
 
@@ -93,12 +97,23 @@ python runner/runner.py --corpus dev --decompilers fission,ghidra
 # Full core decompiler set
 python runner/runner.py --corpus dev --decompilers fission,ghidra,boomerang,radare2,angr,snowman,revng,reko
 
-# Skip an unavailable service, or point one at a custom endpoint
+# Skip a specific decompiler via environment variable
 FISSION_ENDPOINT=skip python runner/runner.py --corpus dev
+GHIDRA_ENDPOINT=skip python runner/runner.py --corpus dev
+
+# Point a decompiler at a custom endpoint
 GHIDRA_ENDPOINT=http://localhost:9001 python runner/runner.py --corpus dev
+FISSION_ENDPOINT=http://localhost:9000 python runner/runner.py --corpus dev
+
+# Any {NAME}_ENDPOINT variable is supported:
+# BOOMERANG_ENDPOINT, RADARE2_ENDPOINT, ANGR_ENDPOINT,
+# SNOWMAN_ENDPOINT, REVNG_ENDPOINT, REKO_ENDPOINT
 
 # Holdout evaluation (release only — never during development)
-python runner/runner.py --use-holdout
+python runner/runner.py --corpus holdout
+
+# Full corpus (dev + holdout combined)
+python runner/runner.py --corpus full
 ```
 
 ### Local Fission build (quality loop only)

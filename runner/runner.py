@@ -61,7 +61,13 @@ def _load_source_metrics() -> None:
 
 
 def configured_decompilers() -> dict[str, str]:
-    """Get configured decompiler HTTP endpoints from environment."""
+    """Get configured decompiler HTTP endpoints from environment.
+
+    Each decompiler's endpoint can be overridden with the ``{NAME}_ENDPOINT``
+    environment variable (e.g. ``GHIDRA_ENDPOINT=http://host:9001``).
+    Setting any endpoint to ``skip`` (case-insensitive) excludes that
+    decompiler from the run without requiring changes to ``--decompilers``.
+    """
     # Automatically load .env if it exists in the workspace root
     env_path = Path(__file__).resolve().parents[1] / ".env"
     if env_path.exists():
@@ -72,18 +78,20 @@ def configured_decompilers() -> dict[str, str]:
                 val_str = val.strip().strip(chr(39) + chr(34))
                 os.environ.setdefault(key.strip(), val_str)
 
-    # Default local dev ports mapped in docker-compose.yml
+    # Default local dev ports mapped in docker-compose.yml.
+    # Each entry can be overridden by {NAME}_ENDPOINT environment variable.
     defaults = {
-        "fission": os.environ.get("FISSION_ENDPOINT", "http://localhost:8000"),
-        "ghidra": "http://localhost:8001",
-        "boomerang": "http://localhost:8002",
-        "radare2": "http://localhost:8003",
-        "angr": "http://localhost:8004",
-        "snowman": "http://localhost:8005",
-        "revng": "http://localhost:8006",
-        "reko": "http://localhost:8008",
+        "fission":   os.environ.get("FISSION_ENDPOINT",   "http://localhost:8000"),
+        "ghidra":    os.environ.get("GHIDRA_ENDPOINT",    "http://localhost:8001"),
+        "boomerang": os.environ.get("BOOMERANG_ENDPOINT", "http://localhost:8002"),
+        "radare2":   os.environ.get("RADARE2_ENDPOINT",   "http://localhost:8003"),
+        "angr":      os.environ.get("ANGR_ENDPOINT",      "http://localhost:8004"),
+        "snowman":   os.environ.get("SNOWMAN_ENDPOINT",   "http://localhost:8005"),
+        "revng":     os.environ.get("REVNG_ENDPOINT",     "http://localhost:8006"),
+        "reko":      os.environ.get("REKO_ENDPOINT",      "http://localhost:8008"),
     }
-    return defaults
+    # Exclude any endpoint explicitly set to "skip".
+    return {k: v for k, v in defaults.items() if v.lower() != "skip"}
 
 
 async def decompile_batch_and_score(

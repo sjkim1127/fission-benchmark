@@ -1,11 +1,12 @@
 # Benchmark Infrastructure Known Issues
 
-Status: infrastructure freeze, reliability fixes only.
+Status: **P0 fixes in progress** — Fission adapter compatibility and invalid-run
+gate are being repaired. The "infrastructure freeze / mature measuring instrument"
+declaration from an earlier revision was premature given the issues documented
+below. New benchmark axes remain deferred until P0 problems are resolved.
 
-This benchmark is now mature enough to act as a measuring instrument for
-Fission quality work. New benchmark axes, new decompiler backends, and new
-ranking formulas should be deferred unless they directly fix a trust problem in
-existing results.
+This benchmark tracks decompiler quality work. Infrastructure reliability fixes
+take priority over new axes, composite rankings, or readability formula changes.
 
 ## Operating Policy
 
@@ -142,3 +143,51 @@ Suggested Fission-side priorities:
 - `count_bits` parity mismatches and intrinsic-dependent codegen.
 - `clamp` and simple conditional branch recovery regressions.
 - Calling convention and parameter naming clarity that affects output review.
+
+---
+
+## Additional Known Issues (filed 2026-07-11)
+
+### Fission Adapter CLI Compatibility
+
+The Fission adapter previously passed `--layer nir` unconditionally to
+`fission_cli decomp`. CLI releases that do not support this flag rejected every
+decompile request, causing all Fission rows to fail silently while CI still
+published results and deployed to GitHub Pages.
+
+**Fix in progress**: The adapter now probes `fission_cli decomp --help` at
+startup and only adds optional flags (`--layer`, `--benchmark`, `--timeout-ms`)
+when they are confirmed to be present. A CI validity gate was added to block
+publication of runs where all Fission rows fail.
+
+### Parity Runner Empty-Match False Positive
+
+`run_parity.py` previously swallowed HTTP errors and timeouts, returning empty
+arrays. Because comparators treat equal inputs as a match, a double-empty
+response (both reference and candidate failed to fetch) was recorded as `match`.
+
+**Fix in progress**: `fetch_parity_data()` now returns a typed `FetchResult`
+with `status` in `{"ok", "empty", "fetch_error"}`. Comparators are gated on
+both sides being `status == "ok"`. Double-empty responses are recorded as
+`both_empty_invalid`.
+
+### Holdout Corpus Empty
+
+The `corpus/holdout/manifests/` directory exists but contains no manifests.
+The overfitting report shows `No holdout data` for all decompilers. The README
+previously described holdout functionality as active when it was not.
+
+**Current status**: Holdout evaluation will work once manifests are populated
+(e.g., by running `split_corpus_to_holdout` on existing dev manifests). The
+README has been updated to accurately reflect the current state.
+
+### Summary Table Survivorship Bias
+
+The previous summary table excluded error rows from the denominator, causing
+decompilers with high failure rates to appear to have higher average scores
+than they actually do.
+
+**Fix in progress**: All attempted rows are now counted. The summary table
+includes `Attempted`, `Valid`, `Adapter Fail`, and `Compile Fail` columns.
+Decompilers where all attempts failed are marked with ⛔ instead of being
+silently omitted from the ranking.

@@ -7,7 +7,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Union
 import requests
 
 from benchmark.assembly_parity.run import compare_assembly
@@ -31,7 +33,33 @@ PORT_MAPPING = {
     "revng": int(os.environ.get("REVNG_HOST_PORT", "8006")),
 }
 
-def fetch_data(
+
+@dataclass
+class FetchResult:
+    """Result of a single parity endpoint fetch.
+
+    Distinguishes between successful data, empty data, and fetch errors so that
+    callers can avoid treating a double-empty response as a valid match.
+
+    status values:
+      "ok"          — HTTP 200 with non-empty data
+      "empty"       — HTTP 200 but data is empty ([] or {blocks:[], edges:[]})
+      "fetch_error" — network error, timeout, or non-200 HTTP status
+    """
+    status: str  # "ok" | "empty" | "fetch_error"
+    data: Any = field(default_factory=list)
+    error: str | None = None
+
+    def is_usable(self) -> bool:
+        """Return True only when data was successfully fetched and is non-empty."""
+        return self.status == "ok"
+
+
+_EMPTY_LIST_FETCH = FetchResult(status="empty", data=[])
+_EMPTY_CFG_FETCH  = FetchResult(status="empty", data={"blocks": [], "edges": []})
+
+
+def fetch_parity_data(
     decompiler: str,
     endpoint: str,
     binary: str,
@@ -39,11 +67,23 @@ def fetch_data(
     arch: str = "",
     corpus: str = "dev",
     timeout: float = 5.0,
-):
+) -> FetchResult:
+    """Fetch data from a decompiler parity endpoint.
+
+    Returns a :class:`FetchResult` with status ``"ok"``, ``"empty"``, or
+    ``"fetch_error"``.  Callers must check ``FetchResult.status`` before
+    treating the data as meaningful — an empty result must never be compared
+    as a valid match.
+    """
+    is_cfg = endpoint == "cfg"
     port = PORT_MAPPING.get(decompiler)
     if not port:
-        return [] if endpoint != "cfg" else {"blocks": [], "edges": []}
-    
+        return FetchResult(
+            status="fetch_error",
+            data={"blocks": [], "edges": []} if is_cfg else [],
+            error=f"No port configured for decompiler {decompiler!r}",
+        )
+
     if not binary.startswith("corpus/"):
         binary = f"corpus/{corpus}/{binary}"
     url = f"http://localhost:{port}/{endpoint}?binary={binary}"
@@ -51,15 +91,82 @@ def fetch_data(
         url += f"&addr={addr}"
     if arch:
         url += f"&arch={arch}"
-        
+
     try:
         resp = requests.get(url, timeout=timeout)
-        if resp.status_code == 200:
-            return resp.json()
-    except Exception:
-        pass
-    
-    return [] if endpoint != "cfg" else {"blocks": [], "edges": []}
+        if resp.status_code != 200:
+            return FetchResult(
+                status="fetch_error",
+                data={"blocks": [], "edges": []} if is_cfg else [],
+                error=f"HTTP {resp.status_code}: {resp.text[:200]}",
+            )
+        data = resp.json()
+        # Determine emptiness.
+        if is_cfg:
+            is_empty = (
+                not data
+                or (not data.get("blocks") and not data.get("edges"))
+            )
+        else:
+            is_empty = not data
+        return FetchResult(
+            status="empty" if is_empty else "ok",
+            data=data,
+        )
+    except requests.Timeout:
+        return FetchResult(
+            status="fetch_error",
+            data={"blocks": [], "edges": []} if is_cfg else [],
+            error="Request timed out",
+        )
+    except Exception as exc:
+        return FetchResult(
+            status="fetch_error",
+            data={"blocks": [], "edges": []} if is_cfg else [],
+            error=str(exc),
+        )
+
+
+def _fetch_error_result(
+    subj: BenchmarkSubject,
+    stage: str,
+    reference: str,
+    candidate: str,
+    ref_fetch: FetchResult,
+    cand_fetch: FetchResult,
+) -> BenchmarkResult | None:
+    """Return a BenchmarkResult for invalid fetches, or None when both are ok."""
+    if ref_fetch.status == "ok" and cand_fetch.status == "ok":
+        return None
+
+    # Both empty — definitively invalid, never a match.
+    if ref_fetch.status == "empty" and cand_fetch.status == "empty":
+        return BenchmarkResult(
+            subject=subj,
+            stage=stage,
+            status="both_empty_invalid",
+            reference=reference,
+            candidate=candidate,
+            error="Both reference and candidate returned empty data — not a valid match",
+        )
+    if ref_fetch.status != "ok":
+        return BenchmarkResult(
+            subject=subj,
+            stage=stage,
+            status="reference_empty" if ref_fetch.status == "empty" else "fetch_error",
+            reference=reference,
+            candidate=candidate,
+            error=f"Reference fetch failed: {ref_fetch.error or ref_fetch.status}",
+        )
+    # candidate not ok
+    return BenchmarkResult(
+        subject=subj,
+        stage=stage,
+        status="candidate_empty" if cand_fetch.status == "empty" else "fetch_error",
+        reference=reference,
+        candidate=candidate,
+        error=f"Candidate fetch failed: {cand_fetch.error or cand_fetch.status}",
+    )
 
 def run_parity_benchmarks(
     corpus: str,
@@ -70,7 +177,7 @@ def run_parity_benchmarks(
     # Load subjects from corpus manifests
     manifests_dir = Path(f"corpus/{corpus}/manifests")
     subjects = []
-    
+
     # Iterate through all manifest files
     for manifest_path in sorted(manifests_dir.glob("*.json")):
         try:
@@ -79,11 +186,19 @@ def run_parity_benchmarks(
                 for entry in data.get("functions", []):
                     name = entry.get("name")
                     for var in entry.get("compiler_variants", []):
+                        raw_arch = var.get("arch")
+                        if not raw_arch:
+                            print(
+                                f"[WARNING] manifest {manifest_path.name}: "
+                                f"function {name!r} variant {var.get('compiler')} "
+                                f"missing 'arch' field — recorded as 'arch_unknown'. "
+                                f"Check that build_corpus.py writes the correct arch."
+                            )
                         subjects.append({
                             "name": name,
                             "binary": var.get("binary"),
                             "addr": var.get("addr"),
-                            "arch": var.get("arch", "x86_64"),
+                            "arch": raw_arch or "arch_unknown",
                             "compiler": var.get("compiler"),
                             "opt": var.get("opt"),
                         })
@@ -94,9 +209,9 @@ def run_parity_benchmarks(
         subjects = subjects[:limit]
 
     print(f"Loaded {len(subjects)} subjects for parity testing.")
-    
+
     results: list[BenchmarkResult] = []
-    
+
     decompilers = decompilers or list(PORT_MAPPING.keys())
     if "ghidra" not in decompilers:
         decompilers = ["ghidra", *decompilers]
@@ -128,80 +243,77 @@ def run_parity_benchmarks(
                 results.append(BenchmarkResult(subject=subj, stage="function_discovery", status="error", reference="manifest", candidate=decompiler, error=str(e)))
 
         # Fetch reference (ghidra) data once
-        ref_asm = []
-        try:
-            ref_asm = fetch_data("ghidra", "disasm", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-        except Exception:
-            pass
-
-        ref_dec = []
-        try:
-            ref_dec = fetch_data("ghidra", "decode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-        except Exception:
-            pass
-
-        ref_pcode = []
-        try:
-            ref_pcode = fetch_data("ghidra", "pcode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-        except Exception:
-            pass
-
-        ref_cfg = {"blocks": [], "edges": []}
-        try:
-            ref_cfg = fetch_data("ghidra", "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-        except Exception:
-            pass
+        ref_asm_fetch   = fetch_parity_data("ghidra", "disasm",  subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
+        ref_dec_fetch   = fetch_parity_data("ghidra", "decode",  subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
+        ref_pcode_fetch = fetch_parity_data("ghidra", "pcode",   subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
+        ref_cfg_fetch   = fetch_parity_data("ghidra", "cfg",     subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
 
         # Check other stages and generate diff files if mismatches occur
         for cand in decompilers:
             if cand == "ghidra":
                 continue
-            
-            cand_asm = []
-            cand_dec = []
-            cand_pcode = []
-            cand_cfg = {"blocks": [], "edges": []}
 
-            asm_res = None
-            dec_res = None
+            asm_res   = None
+            dec_res   = None
             pcode_res = None
-            cfg_res = None
+            cfg_res   = None
+
+            cand_asm_fetch   = fetch_parity_data(cand, "disasm", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
+            cand_dec_fetch   = fetch_parity_data(cand, "decode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
+            cand_pcode_fetch = fetch_parity_data(cand, "pcode",  subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
+            cand_cfg_fetch   = fetch_parity_data(cand, "cfg",    subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
 
             # 2. Assembly Parity
-            try:
-                cand_asm = fetch_data(cand, "disasm", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-                asm_res = compare_assembly(subj, "ghidra", cand, ref_asm, cand_asm)
+            invalid = _fetch_error_result(subj, "assembly_parity", "ghidra", cand, ref_asm_fetch, cand_asm_fetch)
+            if invalid is not None:
+                asm_res = invalid
                 results.append(asm_res)
-            except Exception as e:
-                asm_res = BenchmarkResult(subject=subj, stage="assembly_parity", status="error", reference="ghidra", candidate=cand, error=str(e))
-                results.append(asm_res)
+            else:
+                try:
+                    asm_res = compare_assembly(subj, "ghidra", cand, ref_asm_fetch.data, cand_asm_fetch.data)
+                    results.append(asm_res)
+                except Exception as e:
+                    asm_res = BenchmarkResult(subject=subj, stage="assembly_parity", status="error", reference="ghidra", candidate=cand, error=str(e))
+                    results.append(asm_res)
 
             # 3. Decode Parity
-            try:
-                cand_dec = fetch_data(cand, "decode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-                dec_res = compare_decode(subj, "ghidra", cand, ref_dec, cand_dec)
+            invalid = _fetch_error_result(subj, "decode_parity", "ghidra", cand, ref_dec_fetch, cand_dec_fetch)
+            if invalid is not None:
+                dec_res = invalid
                 results.append(dec_res)
-            except Exception as e:
-                dec_res = BenchmarkResult(subject=subj, stage="decode_parity", status="error", reference="ghidra", candidate=cand, error=str(e))
-                results.append(dec_res)
+            else:
+                try:
+                    dec_res = compare_decode(subj, "ghidra", cand, ref_dec_fetch.data, cand_dec_fetch.data)
+                    results.append(dec_res)
+                except Exception as e:
+                    dec_res = BenchmarkResult(subject=subj, stage="decode_parity", status="error", reference="ghidra", candidate=cand, error=str(e))
+                    results.append(dec_res)
 
             # 4. P-code Parity
-            try:
-                cand_pcode = fetch_data(cand, "pcode", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-                pcode_res = compare_pcode(subj, "ghidra", cand, ref_pcode, cand_pcode)
+            invalid = _fetch_error_result(subj, "pcode_parity", "ghidra", cand, ref_pcode_fetch, cand_pcode_fetch)
+            if invalid is not None:
+                pcode_res = invalid
                 results.append(pcode_res)
-            except Exception as e:
-                pcode_res = BenchmarkResult(subject=subj, stage="pcode_parity", status="error", reference="ghidra", candidate=cand, error=str(e))
-                results.append(pcode_res)
+            else:
+                try:
+                    pcode_res = compare_pcode(subj, "ghidra", cand, ref_pcode_fetch.data, cand_pcode_fetch.data)
+                    results.append(pcode_res)
+                except Exception as e:
+                    pcode_res = BenchmarkResult(subject=subj, stage="pcode_parity", status="error", reference="ghidra", candidate=cand, error=str(e))
+                    results.append(pcode_res)
 
             # 5. CFG Parity
-            try:
-                cand_cfg = fetch_data(cand, "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-                cfg_res = compare_cfg(subj, "ghidra", cand, ref_cfg, cand_cfg)
+            invalid = _fetch_error_result(subj, "cfg_parity", "ghidra", cand, ref_cfg_fetch, cand_cfg_fetch)
+            if invalid is not None:
+                cfg_res = invalid
                 results.append(cfg_res)
-            except Exception as e:
-                cfg_res = BenchmarkResult(subject=subj, stage="cfg_parity", status="error", reference="ghidra", candidate=cand, error=str(e))
-                results.append(cfg_res)
+            else:
+                try:
+                    cfg_res = compare_cfg(subj, "ghidra", cand, ref_cfg_fetch.data, cand_cfg_fetch.data)
+                    results.append(cfg_res)
+                except Exception as e:
+                    cfg_res = BenchmarkResult(subject=subj, stage="cfg_parity", status="error", reference="ghidra", candidate=cand, error=str(e))
+                    results.append(cfg_res)
 
             # Detect mismatch
             has_mismatch = (
@@ -221,7 +333,7 @@ def run_parity_benchmarks(
                     mismatch_info_list.append(f"pcode: {pcode_res.mismatch_kind}")
                 if cfg_res and cfg_res.status == "mismatch":
                     mismatch_info_list.append(f"cfg: {cfg_res.mismatch_kind}")
-                
+
                 mismatch_info = "; ".join(mismatch_info_list)
 
                 # Generate Mermaids
@@ -229,14 +341,14 @@ def run_parity_benchmarks(
                     from runner.graph_utils import generate_mermaid
                 except ModuleNotFoundError:
                     from graph_utils import generate_mermaid
-                ref_mermaid = generate_mermaid(ref_cfg, cand_cfg)
-                cand_mermaid = generate_mermaid(cand_cfg, ref_cfg)
+                ref_mermaid = generate_mermaid(ref_cfg_fetch.data, cand_cfg_fetch.data)
+                cand_mermaid = generate_mermaid(cand_cfg_fetch.data, ref_cfg_fetch.data)
 
                 payload = {
-                    "reference_cfg": ref_cfg,
-                    "candidate_cfg": cand_cfg,
-                    "reference_disasm": ref_asm,
-                    "candidate_disasm": cand_asm,
+                    "reference_cfg": ref_cfg_fetch.data,
+                    "candidate_cfg": cand_cfg_fetch.data,
+                    "reference_disasm": ref_asm_fetch.data,
+                    "candidate_disasm": cand_asm_fetch.data,
                     "mismatch_info": mismatch_info,
                     "reference_mermaid": ref_mermaid,
                     "candidate_mermaid": cand_mermaid,
@@ -256,13 +368,13 @@ def run_parity_benchmarks(
         try:
             # For invariants, we check if fission had any major normalization errors or empty output
             violations = []
-            fission_cfg = fetch_data("fission", "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
-            if not fission_cfg or not fission_cfg.get("blocks"):
-                violations.append({"kind": "empty_cfg_blocks"})
-            
+            fission_cfg_fetch = fetch_parity_data("fission", "cfg", subj.binary, subj.addr, subj.arch, corpus=corpus, timeout=request_timeout)
+            if not fission_cfg_fetch.is_usable():
+                violations.append({"kind": "empty_cfg_blocks", "fetch_status": fission_cfg_fetch.status})
+
             res = compare_invariants(subj, "fission", {
                 "violations": violations,
-                "metrics": {"block_count": len(fission_cfg.get("blocks", [])) if fission_cfg else 0}
+                "metrics": {"block_count": len(fission_cfg_fetch.data.get("blocks", [])) if fission_cfg_fetch.is_usable() else 0}
             })
             results.append(res)
         except Exception as e:
@@ -315,6 +427,11 @@ def main():
                 "candidate": r.candidate,
                 "mismatch_kind": getattr(r, "mismatch_kind", None),
                 "error": getattr(r, "error", None),
+                # Preserve expected/actual for auditability so reviewers can
+                # inspect what data was compared (or why comparison was skipped).
+                "expected": getattr(r, "expected", None),
+                "actual": getattr(r, "actual", None),
+                "metrics": getattr(r, "metrics", None),
             }
         else:
             row = r

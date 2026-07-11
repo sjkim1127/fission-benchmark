@@ -237,6 +237,59 @@ jobs:
           fi
           python runner/runner.py --corpus dev $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --output results/dev_latest.json
 
+      # -----------------------------------------------------------------------
+      # Fission validity gate — abort the publish path when every Fission row
+      # carries an adapter error.  An invalid run must NOT overwrite
+      # results/latest.* or be deployed to GitHub Pages.
+      # -----------------------------------------------------------------------
+      - name: Validate Fission coverage gate
+        id: fission-gate
+        run: |
+          python - <<'EOF'
+          import json, os, sys
+
+          path = "results/dev_latest.json"
+          try:
+              data = json.load(open(path))
+          except Exception as e:
+              print(f"::error::Cannot read {path}: {e}")
+              sys.exit(1)
+
+          fission_rows = [r for r in data if r.get("decompiler") == "fission"]
+          if not fission_rows:
+              msg = "INVALID RUN — No Fission rows found in results"
+              print(f"::error::{msg}")
+              # Write gate status for downstream steps
+              with open(os.environ["GITHUB_ENV"], "a") as f:
+                  f.write("FISSION_RUN_VALID=false\n")
+              with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+                  f.write(f"\n## ⛔ {msg}\n")
+              sys.exit(1)
+
+          total = len(fission_rows)
+          error_count = sum(1 for r in fission_rows if r.get("error"))
+          valid_count = total - error_count
+
+          if error_count == total:
+              msg = (
+                  f"INVALID RUN — All {total} Fission rows failed "
+                  f"(adapter error). Results NOT published."
+              )
+              print(f"::error::{msg}")
+              with open(os.environ["GITHUB_ENV"], "a") as f:
+                  f.write("FISSION_RUN_VALID=false\n")
+              with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+                  f.write(f"\n## ⛔ {msg}\n")
+              sys.exit(1)
+
+          msg = f"VALID — {valid_count}/{total} Fission rows succeeded"
+          print(msg)
+          with open(os.environ["GITHUB_ENV"], "a") as f:
+              f.write("FISSION_RUN_VALID=true\n")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write(f"\n## ✅ Fission Gate: {msg}\n")
+          EOF
+
       - name: Run holdout benchmark
         timeout-minutes: 25
         run: |
@@ -264,6 +317,8 @@ jobs:
             echo "⚠️ Overfitting detected — check overfitting_report.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Restore published dashboard from dev results
+        # Only update latest.* when the Fission gate passed.
+        if: ${{ env.FISSION_RUN_VALID == 'true' }}
         run: |
           python runner/render_report.py \
             --input results/dev_latest.json \
@@ -315,7 +370,8 @@ jobs:
           if-no-files-found: warn
 
       - name: Commit results
-        if: ${{ github.event.inputs.publish_results != 'false' }}
+        # Do not commit results from an invalid run (Fission gate failed).
+        if: ${{ github.event.inputs.publish_results != 'false' && env.FISSION_RUN_VALID == 'true' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

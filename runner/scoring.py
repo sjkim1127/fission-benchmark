@@ -291,7 +291,9 @@ def get_consensus_badge(
     Return a consensus badge for a function+variant group.
 
     🔴 Fission-only gap: Fission is low but others are not
-    ⚪ Universally hard: All decompilers are low
+    ⚪ Universally low (harness): All decompilers are low under the current
+        test harness — may indicate a common wrapper/ABI issue rather than
+        an objectively hard function
     🟢 Fission leads: Fission is #1
     """
     group = [
@@ -316,10 +318,10 @@ def get_consensus_badge(
     if fission_scores[0].correctness_rank == 1:
         return "🟢 Fission leads"
 
-    # All decompilers low
+    # All decompilers low under the current harness
     all_low = fission_correctness < low_threshold and all(c < low_threshold for c in others_correctness)
     if all_low:
-        return "⚪ Universally hard"
+        return "⚪ Universally low (harness)"
 
     # Fission-only gap: Fission is low, but at least one other is clearly higher
     others_avg = sum(others_correctness) / len(others_correctness) if others_correctness else 0.0

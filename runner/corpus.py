@@ -47,8 +47,20 @@ class Corpus:
 
     @classmethod
     def load_all(cls, split: str = "dev") -> "Corpus":
-        """Load all manifests from corpus/{split}/manifests/."""
-        assert split in ("dev", "holdout"), f"Invalid split: {split!r}"
+        """Load all manifests from corpus/{split}/manifests/.
+
+        ``split`` must be one of ``"dev"``, ``"holdout"``, or ``"full"``.
+        ``"full"`` loads both dev and holdout (used for release evaluation).
+        """
+        if split == "full":
+            dev = cls.load_all("dev")
+            holdout = cls.load_all("holdout")
+            return cls(functions=dev.functions + holdout.functions)
+        if split not in ("dev", "holdout"):
+            raise ValueError(
+                f"Invalid corpus split: {split!r}. "
+                f"Must be one of 'dev', 'holdout', or 'full'."
+            )
         manifest_dir = CORPUS_ROOT / split / "manifests"
         all_functions: list[FunctionEntry] = []
         for manifest in sorted(manifest_dir.glob("*.json")):

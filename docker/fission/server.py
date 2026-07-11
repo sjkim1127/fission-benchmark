@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -20,6 +20,44 @@ DECOMP_TIMEOUT_MS = os.environ.get("FISSION_DECOMP_TIMEOUT_MS", "30000")
 RELEASE_VERSION_FILE = Path("/opt/fission-release-version")
 SOURCE_FILE = Path("/opt/fission-source")
 GIT_SHA_FILE = Path("/opt/fission-git-sha")
+
+# ---------------------------------------------------------------------------
+# Capability probe — checked once per process lifetime and cached.
+# We inspect `fission_cli decomp --help` to discover supported flags so that
+# older CLI releases that do not have `--layer` still work correctly.
+# ---------------------------------------------------------------------------
+_CAPABILITY_CACHE: Dict[str, bool] = {}
+_CAPABILITY_PROBED: bool = False
+
+
+def _probe_capabilities() -> None:
+    """Populate _CAPABILITY_CACHE from `fission_cli decomp --help` output."""
+    global _CAPABILITY_PROBED
+    if _CAPABILITY_PROBED:
+        return
+    _CAPABILITY_PROBED = True
+    try:
+        r = subprocess.run(
+            [str(FISSION_BIN), "decomp", "--help"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        help_text = r.stdout + r.stderr
+        _CAPABILITY_CACHE["--layer"] = "--layer" in help_text
+        _CAPABILITY_CACHE["--benchmark"] = "--benchmark" in help_text
+        _CAPABILITY_CACHE["--timeout-ms"] = "--timeout-ms" in help_text
+    except Exception:
+        # If help fails, assume minimal capability set (no optional flags).
+        _CAPABILITY_CACHE["--layer"] = False
+        _CAPABILITY_CACHE["--benchmark"] = False
+        _CAPABILITY_CACHE["--timeout-ms"] = False
+
+
+def supports(flag: str) -> bool:
+    """Return True if the CLI binary supports the given flag."""
+    _probe_capabilities()
+    return _CAPABILITY_CACHE.get(flag, False)
 
 class DecompileRequest(BaseModel):
     binary_b64: str
@@ -81,6 +119,8 @@ def health():
     except Exception:
         pass
     release_version = _read_text_file(RELEASE_VERSION_FILE, release_version)
+    # Probe capabilities so they are available immediately on first health call.
+    _probe_capabilities()
     payload = {
         "status": "ok",
         "decompiler": "fission",
@@ -88,6 +128,12 @@ def health():
         "release_version": release_version,
         # "release" = GitHub Release bake (CI contract). "local" = host bundle mount.
         "source": source if source in ("release", "local") else "release",
+        # Capabilities discovered from `fission_cli decomp --help`.
+        # Consumers can use this to understand which optional flags are available
+        # without re-probing the CLI.
+        "capabilities": {
+            k: v for k, v in _CAPABILITY_CACHE.items()
+        },
     }
     if git_sha:
         payload["git_sha"] = git_sha
@@ -129,20 +175,31 @@ def resolve_binary(binary: str) -> str:
     return resolved
 
 def decompile_batch_command(binary_path: str, addresses_path: str) -> List[str]:
-    # Default primary `code` is NIR; CLI also emits code_nir/code_hir dual surfaces.
-    return [
+    """Build CLI command for batch decompilation.
+
+    Optional flags (``--layer``, ``--benchmark``, ``--timeout-ms``) are added
+    only when the capability probe confirms the current CLI version supports
+    them.  This prevents hard failures on older release bundles that predate
+    these flags.
+    """
+    cmd = [
         str(FISSION_BIN),
         "decomp",
         binary_path,
         "--addresses-file",
         addresses_path,
         "--json",
-        "--benchmark",
-        "--layer",
-        "nir",
-        "--timeout-ms",
-        DECOMP_TIMEOUT_MS,
     ]
+    # --benchmark and --timeout-ms are optional quality-of-life flags.
+    if supports("--benchmark"):
+        cmd.append("--benchmark")
+    if supports("--timeout-ms"):
+        cmd += ["--timeout-ms", DECOMP_TIMEOUT_MS]
+    # --layer nir: only add when the CLI explicitly supports it.
+    # Older releases output NIR by default anyway, so omitting is safe.
+    if supports("--layer"):
+        cmd += ["--layer", "nir"]
+    return cmd
 
 def normalize_decompile_results(payload: object) -> list[dict]:
     if isinstance(payload, dict):

@@ -70,38 +70,110 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
         "",
         "---",
         "",
+    ]
+
+    # ── Run validity banner ────────────────────────────────────────────────────
+    # A run is INVALID when every Fission row has an error (adapter failure).
+    fission_rows = [s for s in scores if s.decompiler == "fission"]
+    if not fission_rows:
+        lines += [
+            "## ⛔ INVALID RUN",
+            "",
+            "> **No Fission rows were found in this result set.**",
+            "> The benchmark did not run Fission — scores are not comparable.",
+            "",
+        ]
+        run_valid = False
+    elif all(s.error for s in fission_rows):
+        lines += [
+            "## ⛔ INVALID RUN — Fission Adapter Failure",
+            "",
+            "> **All Fission rows failed due to adapter errors.**",
+            f"> {len(fission_rows)}/{len(fission_rows)} Fission attempts errored.",
+            "> Results below show other decompilers only and should NOT be treated as",
+            "> an official benchmark comparison.",
+            "",
+        ]
+        run_valid = False
+    else:
+        valid_count = sum(1 for s in fission_rows if not s.error)
+        lines += [
+            f"## ✅ VALID RUN — {valid_count}/{len(fission_rows)} Fission rows succeeded",
+            "",
+        ]
+        run_valid = True
+
+    lines += [
         "## Summary — Correctness Score",
         "",
         "> Readability metrics are recorded as unvalidated raw proxies. They are not combined into a final readability score until the human validation study is complete.",
         "",
     ]
 
-    # Per-decompiler average (ranked by correctness_score)
+    # ── Per-decompiler coverage counts (all rows, including errors) ────────────
+    # Counting ALL attempted rows prevents survivorship bias: a decompiler that
+    # only rarely returns results should not appear to have a high average score
+    # just because the failures are excluded from the denominator.
+    by_decomp_attempted: dict[str, int] = defaultdict(int)
+    by_decomp_valid: dict[str, int] = defaultdict(int)
+    by_decomp_adapter_fail: dict[str, int] = defaultdict(int)
+    by_decomp_compile_fail: dict[str, int] = defaultdict(int)
     by_decomp_correctness: dict[str, list[float]] = defaultdict(list)
     by_decomp_sim: dict[str, list[float]] = defaultdict(list)
     by_decomp_sem: dict[str, list[float]] = defaultdict(list)
     for s in scores:
+        by_decomp_attempted[s.decompiler] += 1
+        fail_cat = getattr(s, "fail_category", "") or ""
         if s.error is None:
+            by_decomp_valid[s.decompiler] += 1
             by_decomp_correctness[s.decompiler].append(
                 getattr(s, "correctness_score", getattr(s, "composite_score", 0.0))
             )
             by_decomp_sim[s.decompiler].append(s.source_similarity)
             by_decomp_sem[s.decompiler].append(s.semantic_score)
+        elif fail_cat == "adapter_error":
+            by_decomp_adapter_fail[s.decompiler] += 1
+        elif fail_cat == "compile_error":
+            by_decomp_compile_fail[s.decompiler] += 1
 
-    rows = []
+    # Rank by avg correctness among valid rows; fall back to 0 if all errored.
+    def _avg_correctness(d: str) -> float:
+        comps = by_decomp_correctness.get(d, [])
+        return sum(comps) / len(comps) if comps else 0.0
+
     all_decomps = sorted(
-        by_decomp_correctness.keys(),
-        key=lambda d: -(sum(by_decomp_correctness[d]) / len(by_decomp_correctness[d])),
+        by_decomp_attempted.keys(),
+        key=lambda d: -_avg_correctness(d),
     )
+    rows = []
     for d in all_decomps:
-        comps = by_decomp_correctness[d]
-        sims = by_decomp_sim[d]
-        sems = by_decomp_sem[d]
-        avg_comp = sum(comps) / len(comps)
-        avg_sim = sum(sims) / len(sims)
-        avg_sem = sum(sems) / len(sems) if sems else 0.0
-        rows.append([f"**{d}**", f"{avg_comp:.3f}", f"{avg_sim:.3f}", f"{avg_sem * 100:.1f}%", f"{len(comps)}"])
-    lines.append(_md_table(["Decompiler", "Correctness", "Similarity", "Semantic Pass", "Functions"], rows))
+        attempted = by_decomp_attempted[d]
+        valid     = by_decomp_valid[d]
+        adapter   = by_decomp_adapter_fail[d]
+        compile_f = by_decomp_compile_fail[d]
+        comps = by_decomp_correctness.get(d, [])
+        sims  = by_decomp_sim.get(d, [])
+        sems  = by_decomp_sem.get(d, [])
+        avg_comp = sum(comps) / len(comps) if comps else 0.0
+        avg_sim  = sum(sims)  / len(sims)  if sims  else 0.0
+        avg_sem  = sum(sems)  / len(sems)  if sems  else 0.0
+        # Flag rows where all attempts failed
+        decomp_label = f"**{d}**" if valid > 0 else f"~~{d}~~ ⛔"
+        rows.append([
+            decomp_label,
+            str(attempted),
+            str(valid),
+            str(adapter),
+            str(compile_f),
+            f"{avg_comp:.3f}" if valid > 0 else "—",
+            f"{avg_sim:.3f}" if valid > 0 else "—",
+            f"{avg_sem * 100:.1f}%" if valid > 0 else "—",
+        ])
+    lines.append(_md_table(
+        ["Decompiler", "Attempted", "Valid", "Adapter Fail", "Compile Fail",
+         "Avg Correctness", "Avg Similarity", "Semantic Pass"],
+        rows,
+    ))
     lines += ["", "---", "", "## Per-Function Results", ""]
 
     # Per function
@@ -123,7 +195,7 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
             elif fn_comp < 0.20 and others_avg > 0.40:
                 badge = " 🔴 Fission-only gap"
             elif fn_comp < 0.20 and others_avg < 0.20:
-                badge = " ⚪ Universally hard"
+                badge = " ⚪ Universally low (harness)"
         lines[-1] = lines[-1] + badge
 
         rows = []
@@ -285,6 +357,28 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
             "parity_diff_path": parity_diff_path,
         })
     scores_json = json.dumps(serialized_scores, indent=2)
+
+    # Run validity — mirrors the logic in generate_markdown for consistency.
+    fission_rows = [s for s in scores if s.decompiler == "fission"]
+    if not fission_rows:
+        run_valid = False
+        fission_valid_count = 0
+        fission_total = 0
+    elif all(s.error for s in fission_rows):
+        run_valid = False
+        fission_valid_count = 0
+        fission_total = len(fission_rows)
+    else:
+        run_valid = True
+        fission_valid_count = sum(1 for s in fission_rows if not s.error)
+        fission_total = len(fission_rows)
+
+    run_meta_json = json.dumps({
+        "valid": run_valid,
+        "fission_valid": fission_valid_count,
+        "fission_total": fission_total,
+        "timestamp": ts,
+    })
 
     html_template = r"""<!DOCTYPE html>
 <html lang="en">
@@ -1003,6 +1097,31 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
 <script>
 const SCORES = __SCORES_JSON__;
 const DECOMPILER_COLORS = __DECOMPILER_COLORS__;
+const RUN_META = __RUN_META_JSON__;
+
+// ── Run validity banner ───────────────────────────────────────────────────────
+(function renderRunBanner() {
+  const banner = document.createElement('div');
+  const valid = RUN_META.valid;
+  const fv = RUN_META.fission_valid;
+  const ft = RUN_META.fission_total;
+  banner.style.cssText = [
+    'position:sticky','top:0','z-index:999','padding:0.6rem 1.5rem',
+    'font-weight:600','font-size:0.9rem','letter-spacing:0.02em',
+    'display:flex','align-items:center','gap:0.6rem',
+    valid
+      ? 'background:#064e3b;color:#6ee7b7;border-bottom:1px solid #065f46;'
+      : 'background:#7f1d1d;color:#fca5a5;border-bottom:1px solid #991b1b;',
+  ].join(';');
+  if (valid) {
+    banner.innerHTML = `✅ <span>VALID RUN</span> <span style="font-weight:400;color:#a7f3d0">${fv}/${ft} Fission rows succeeded &mdash; ${RUN_META.timestamp}</span>`;
+  } else if (ft === 0) {
+    banner.innerHTML = `⛔ <span>INVALID RUN</span> <span style="font-weight:400">No Fission rows in results &mdash; scores are not comparable</span>`;
+  } else {
+    banner.innerHTML = `⛔ <span>INVALID RUN</span> <span style="font-weight:400">All ${ft} Fission rows failed (adapter error) &mdash; results below exclude Fission</span>`;
+  }
+  document.body.prepend(banner);
+})();
 
 // Helper to group scores
 const scoresByGroup = {};
@@ -2029,6 +2148,7 @@ renderTable();
     html = html.replace("__FUNCTIONS_COUNT__", str(len(fn_names)))
     html = html.replace("__SCORES_JSON__", scores_json)
     html = html.replace("__DECOMPILER_COLORS__", json.dumps(DECOMPILER_COLORS))
+    html = html.replace("__RUN_META_JSON__", run_meta_json)
 
     return html
 
