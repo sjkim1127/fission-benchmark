@@ -11,14 +11,15 @@ considered VALID.  It is used by:
 Public API
 ----------
 ``is_output_failure(row)``  -- True when a row failed at the adapter/output layer
-``evaluate_run(rows)``      -- returns a :class:`RunValidity` dataclass
+``evaluate_run(result)``    -- returns a :class:`RunValidity` dataclass
 ``RunValidity``             -- frozen dataclass with .valid, .fission, .overall, .reasons
 ``Coverage``                -- frozen dataclass with .attempted, .clean, .ratio
+``LoadedResult``            -- dataclass containing rows, envelope, and legacy flag
 
 CLI usage (from benchmark.yml)
 -------------------------------
-    python -m runner.run_validity results/dev_latest.json \\
-        --github-env   "$GITHUB_ENV" \\
+    python -m runner.run_validity results/dev_latest.json \
+        --github-env   "$GITHUB_ENV" \
         --github-summary "$GITHUB_STEP_SUMMARY"
 
 Exit code 0 = VALID, 1 = INVALID.
@@ -29,7 +30,7 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, Optional
 
 # ---------------------------------------------------------------------------
 # Thresholds
@@ -45,6 +46,14 @@ BACKEND_MIN_COVERAGE: float = 0.90
 # ---------------------------------------------------------------------------
 # Core data types
 # ---------------------------------------------------------------------------
+
+
+@dataclass
+class LoadedResult:
+    """Result loaded from JSON, preserving envelope structure."""
+    rows: list[dict]
+    envelope: Optional[dict]
+    legacy: bool
 
 
 @dataclass(frozen=True)
@@ -78,11 +87,13 @@ class RunValidity:
     """Machine-readable failure codes when ``valid`` is False.
 
     Possible values:
-    * ``"no_fission_rows"``                -- no Fission rows in results
-    * ``"fission_coverage_below_threshold"`` -- Fission < FISSION_MIN_COVERAGE
-    * ``"no_result_rows"``                 -- result set is empty
-    * ``"backend_coverage_below_threshold"`` -- overall < BACKEND_MIN_COVERAGE
-    * ``"legacy_flat_list"``               -- result loaded from legacy format
+    * ``"no_fission_rows"``
+    * ``"fission_coverage_below_threshold"``
+    * ``"no_result_rows"``
+    * ``"backend_coverage_below_threshold"``
+    * ``"backend_missing"``
+    * ``"matrix_completeness_mismatch"``
+    * ``"legacy_flat_list"``
     """
 
     def summary_line(self) -> str:
@@ -109,25 +120,12 @@ class RunValidity:
 
 
 def is_output_failure(row: Mapping[str, Any]) -> bool:
-    """Return True when a result row failed at the adapter/output layer.
-
-    Any non-null ``error`` field -- from the adapter, CLI, HTTP layer, address
-    resolution, or result post-processing -- means the row did not produce
-    usable output.
-
-    ``fail_category == "adapter_error"`` is also treated as a failure even if
-    ``error`` is somehow absent (defensive).
-
-    Semantic-level failures (``fail_category`` in ``compile_error``,
-    ``runtime_error``, ``timeout``, ``no_wrapper``) are intentionally NOT
-    treated as output failures -- the decompiler returned code; it just did not
-    compile or pass tests.
-    """
+    """Return True when a result row failed at the adapter/output layer."""
     return bool(row.get("error")) or row.get("fail_category") == "adapter_error"
 
 
 def evaluate_run(
-    rows: Iterable[Mapping[str, Any]],
+    result: LoadedResult | Iterable[Mapping[str, Any]],
     *,
     legacy: bool = False,
 ) -> RunValidity:
@@ -135,14 +133,20 @@ def evaluate_run(
 
     Parameters
     ----------
-    rows:
-        Iterable of result-row dicts (the ``"rows"`` field in envelope format,
-        or the flat list in legacy format).
+    result:
+        A LoadedResult containing envelope and rows, or an Iterable of result-row dicts.
     legacy:
-        When True the run is marked with ``"legacy_flat_list"`` reason and
-        ``valid`` is always False, regardless of coverage numbers.
+        If result is an Iterable, this marks whether it is legacy. If result is
+        LoadedResult, the legacy flag on LoadedResult takes precedence.
     """
-    rows = list(rows)
+    if isinstance(result, LoadedResult):
+        rows = list(result.rows)
+        is_legacy = result.legacy
+        envelope = result.envelope
+    else:
+        rows = list(result)
+        is_legacy = legacy
+        envelope = None
 
     def _coverage(items):
         attempted = len(items)
@@ -156,7 +160,7 @@ def evaluate_run(
 
     reasons = []
 
-    if legacy:
+    if is_legacy:
         reasons.append("legacy_flat_list")
         return RunValidity(
             valid=False,
@@ -165,15 +169,35 @@ def evaluate_run(
             reasons=tuple(reasons),
         )
 
+    matrix = envelope.get("matrix", {}) if envelope else {}
+    expected_rows = matrix.get("expected_rows")
+    expected_decompilers = matrix.get("expected_decompilers")
+
+    if expected_rows is not None and len(rows) != expected_rows:
+        reasons.append("matrix_completeness_mismatch")
+
     if not fission_cov.attempted:
         reasons.append("no_fission_rows")
     elif fission_cov.ratio < FISSION_MIN_COVERAGE:
         reasons.append("fission_coverage_below_threshold")
 
-    if not overall_cov.attempted:
-        reasons.append("no_result_rows")
-    elif overall_cov.ratio < BACKEND_MIN_COVERAGE:
-        reasons.append("backend_coverage_below_threshold")
+    if expected_decompilers:
+        for d in expected_decompilers:
+            d_rows = [r for r in rows if r.get("decompiler") == d]
+            if not d_rows:
+                if "backend_missing" not in reasons:
+                    reasons.append("backend_missing")
+            else:
+                d_cov = _coverage(d_rows)
+                if d_cov.ratio < BACKEND_MIN_COVERAGE:
+                    if "backend_coverage_below_threshold" not in reasons:
+                        reasons.append("backend_coverage_below_threshold")
+    else:
+        # Fallback if no matrix provided
+        if not overall_cov.attempted:
+            reasons.append("no_result_rows")
+        elif overall_cov.ratio < BACKEND_MIN_COVERAGE:
+            reasons.append("backend_coverage_below_threshold")
 
     return RunValidity(
         valid=not reasons,
@@ -188,16 +212,16 @@ def evaluate_run(
 # ---------------------------------------------------------------------------
 
 
-def load_result_file(path: Path):
-    """Load a result JSON file and return (rows, is_legacy).
+def load_result_file(path: Path) -> LoadedResult:
+    """Load a result JSON file and return a LoadedResult.
 
     Supports envelope format (schema_version >= 2) and legacy flat-list.
     """
     raw = json.loads(path.read_text(encoding="utf-8"))
     if isinstance(raw, list):
-        return raw, True
+        return LoadedResult(rows=raw, envelope=None, legacy=True)
     if isinstance(raw, dict) and "rows" in raw:
-        return raw["rows"], False
+        return LoadedResult(rows=raw["rows"], envelope=raw, legacy=False)
     raise ValueError(
         f"Unrecognised result format in {path}: "
         f"expected a list or an envelope dict with 'rows'."
@@ -209,29 +233,36 @@ def build_envelope(
     *,
     run_meta=None,
     toolchain=None,
+    matrix=None,
 ):
     """Wrap flat rows in the v2 envelope format."""
     import time as _time
 
-    validity = evaluate_run(rows)
-
-    return {
+    # Temporarily construct an envelope dict so evaluate_run can check matrix
+    temp_envelope = {
         "schema_version": 2,
         "run": run_meta or {},
         "toolchain": toolchain or {},
-        "validity": {
-            "valid": validity.valid,
-            "fission_coverage": round(validity.fission.ratio, 4),
-            "fission_attempted": validity.fission.attempted,
-            "fission_clean": validity.fission.clean,
-            "backend_coverage": round(validity.overall.ratio, 4),
-            "backend_attempted": validity.overall.attempted,
-            "backend_clean": validity.overall.clean,
-            "reasons": list(validity.reasons),
-        },
-        "rendered_at": _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime()),
+        "matrix": matrix or {},
         "rows": rows,
     }
+    
+    loaded = LoadedResult(rows=rows, envelope=temp_envelope, legacy=False)
+    validity = evaluate_run(loaded)
+
+    temp_envelope["validity"] = {
+        "valid": validity.valid,
+        "fission_coverage": round(validity.fission.ratio, 4),
+        "fission_attempted": validity.fission.attempted,
+        "fission_clean": validity.fission.clean,
+        "backend_coverage": round(validity.overall.ratio, 4),
+        "backend_attempted": validity.overall.attempted,
+        "backend_clean": validity.overall.clean,
+        "reasons": list(validity.reasons),
+    }
+    temp_envelope["rendered_at"] = _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime())
+    
+    return temp_envelope
 
 
 # ---------------------------------------------------------------------------
@@ -265,7 +296,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     try:
-        rows, is_legacy = load_result_file(args.result_json)
+        loaded = load_result_file(args.result_json)
     except Exception as exc:
         print(f"::error::Cannot read {args.result_json}: {exc}", file=sys.stderr)
         return 1
@@ -275,7 +306,7 @@ def main(argv=None):
     _self.FISSION_MIN_COVERAGE = args.fission_min_coverage
     _self.BACKEND_MIN_COVERAGE = args.backend_min_coverage
 
-    verdict = evaluate_run(rows, legacy=is_legacy)
+    verdict = evaluate_run(loaded)
     summary = verdict.summary_line()
     print(summary)
 

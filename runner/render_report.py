@@ -13,6 +13,7 @@ For legacy flat-list files the timestamp is shown as "unknown (legacy)".
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import sys
 from collections import Counter
@@ -28,49 +29,60 @@ from readability import summarize_readability_proxy_score
 from semantic import verify_semantic_correctness
 from test_wrappers import TEST_WRAPPERS
 from scoring import FunctionScore, assign_consensus_ranks, check_uses_intrinsics
-from run_validity import load_result_file
+from run_validity import load_result_file, build_envelope, evaluate_run, LoadedResult
 
 
-def _normalise_scores(data: list[dict]) -> list[FunctionScore]:
-    """Convert raw row dicts to FunctionScore objects with re-scoring."""
+def _normalise_scores(data: list[dict], recompute_derived: bool = False, rerun_semantic: bool = False) -> list[FunctionScore]:
+    """Convert raw row dicts to FunctionScore objects with optional re-scoring."""
     score_fields = {field.name for field in fields(FunctionScore)}
     scores = [
         FunctionScore(**{k: v for k, v in row.items() if k in score_fields})
         for row in data
     ]
+    
+    # Simple migrations (always apply)
+    for score in scores:
+        if not score.correctness_score and score.composite_score:
+            score.correctness_score = score.composite_score
+        if score.correctness_rank is None and score.consensus_rank is not None:
+            score.correctness_rank = score.consensus_rank
+            
+    if not (recompute_derived or rerun_semantic):
+        return scores
+
     code_counts = Counter(
         score.decompiled_code.strip()
         for score in scores
         if score.decompiled_code.strip()
     )
     for score in scores:
-        if not score.correctness_score and score.composite_score:
-            score.correctness_score = score.composite_score
-        if score.correctness_rank is None and score.consensus_rank is not None:
-            score.correctness_rank = score.consensus_rank
-        if score.readability_metrics and score.readability_proxy_score is None:
-            score.readability_proxy_score = summarize_readability_proxy_score(
-                score.readability_metrics
-            )
-        if score.decompiled_code and not score.output_diagnostics:
-            score.output_diagnostics = analyze_output_diagnostics(
-                score.function_name,
-                score.decompiler,
-                score.decompiled_code,
-            )
-        if score.decompiled_code and not score.error:
-            reason = invalid_output_reason(
-                score.output_diagnostics,
-                score.decompiled_code,
-                duplicate_count=code_counts.get(score.decompiled_code.strip(), 0),
-            )
-            if reason:
-                score.error = reason
-                score.semantic_error = reason
-                score.fail_category = "adapter_error"
-                score.readability_metrics = {}
-                score.readability_proxy_score = None
-                score.ast_similarity = {}
+        if recompute_derived:
+            if score.readability_metrics and score.readability_proxy_score is None:
+                score.readability_proxy_score = summarize_readability_proxy_score(
+                    score.readability_metrics
+                )
+            if score.decompiled_code and not score.output_diagnostics:
+                score.output_diagnostics = analyze_output_diagnostics(
+                    score.function_name,
+                    score.decompiler,
+                    score.decompiled_code,
+                )
+            if score.decompiled_code and not score.error:
+                reason = invalid_output_reason(
+                    score.output_diagnostics,
+                    score.decompiled_code,
+                    duplicate_count=code_counts.get(score.decompiled_code.strip(), 0),
+                )
+                if reason:
+                    score.error = reason
+                    score.semantic_error = reason
+                    score.fail_category = "adapter_error"
+                    score.readability_metrics = {}
+                    score.readability_proxy_score = None
+                    score.ast_similarity = {}
+            if score.decompiled_code and not score.uses_intrinsics:
+                score.uses_intrinsics = check_uses_intrinsics(score.decompiled_code)
+
         if score.error:
             score.semantic_error = score.semantic_error or score.error
             score.fail_category = score.fail_category or "adapter_error"
@@ -84,26 +96,29 @@ def _normalise_scores(data: list[dict]) -> list[FunctionScore]:
             score.composite_score = 0.0
             score.correctness_rank = None
             score.consensus_rank = None
-        elif score.fail_category == "no_wrapper" and score.function_name in TEST_WRAPPERS:
-            (
-                score.semantic_score,
-                score.semantic_error,
-                score.fail_category,
-                score.cases_passed,
-                score.cases_total,
-            ) = verify_semantic_correctness(score.function_name, score.decompiled_code)
-        if score.decompiled_code and not score.uses_intrinsics:
-            score.uses_intrinsics = check_uses_intrinsics(score.decompiled_code)
+            
+        if rerun_semantic:
+            if score.fail_category == "no_wrapper" and score.function_name in TEST_WRAPPERS:
+                (
+                    score.semantic_score,
+                    score.semantic_error,
+                    score.fail_category,
+                    score.cases_passed,
+                    score.cases_total,
+                ) = verify_semantic_correctness(score.function_name, score.decompiled_code)
 
-    metrics_path = Path(__file__).parent.parent / "corpus" / "source_metrics.json"
-    if metrics_path.exists():
-        metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
-        return assign_consensus_ranks(
-            scores,
-            source_goto_counts=metrics.get("goto_counts", {}),
-            source_nesting_depths=metrics.get("nesting_depths", {}),
-        )
-    return assign_consensus_ranks(scores)
+    if recompute_derived:
+        metrics_path = Path(__file__).parent.parent / "corpus" / "source_metrics.json"
+        if metrics_path.exists():
+            metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+            return assign_consensus_ranks(
+                scores,
+                source_goto_counts=metrics.get("goto_counts", {}),
+                source_nesting_depths=metrics.get("nesting_depths", {}),
+            )
+        return assign_consensus_ranks(scores)
+        
+    return scores
 
 
 def main() -> None:
@@ -123,16 +138,20 @@ def main() -> None:
         default=None,
         help="Write the normalised (re-scored) rows to this path without touching --input",
     )
+    parser.add_argument("--recompute-derived", action="store_true", help="Recompute derived metrics (readability, output diagnostics, ranks)")
+    parser.add_argument("--rerun-semantic", action="store_true", help="Explicitly re-run semantic verification where applicable")
     args = parser.parse_args()
 
     # ── Load without modifying the input file ─────────────────────────────────
-    rows, is_legacy = load_result_file(args.input)
+    loaded = load_result_file(args.input)
+    rows = loaded.rows
+    is_legacy = loaded.legacy
+    envelope = loaded.envelope
 
     # Extract provenance from envelope when available
     measured_at: str | None = None
-    if not is_legacy:
-        raw = json.loads(args.input.read_text(encoding="utf-8"))
-        run_meta = raw.get("run", {})
+    if not is_legacy and envelope:
+        run_meta = envelope.get("run", {})
         measured_at = run_meta.get("finished_at") or run_meta.get("started_at")
 
     if is_legacy:
@@ -141,7 +160,7 @@ def main() -> None:
         measured_at_label = measured_at or "not recorded"
 
     # ── Normalise / re-score ───────────────────────────────────────────────────
-    scores = _normalise_scores(rows)
+    scores = _normalise_scores(rows, recompute_derived=args.recompute_derived, rerun_semantic=args.rerun_semantic)
 
     # ── Generate report artifacts ──────────────────────────────────────────────
     # Pass measured_at and legacy flag so the banner is correct.
@@ -154,18 +173,63 @@ def main() -> None:
 
     # ── Write normalised JSON only if explicitly requested ─────────────────────
     # NEVER write back to args.input.
-    serialized = json.dumps([asdict(score) for score in scores], indent=2)
+    if args.write_normalized or args.update_latest:
+        serialized_rows = [asdict(score) for score in scores]
+        
+        if not is_legacy and envelope:
+            out_envelope = copy.deepcopy(envelope)
+            out_envelope["rows"] = serialized_rows
+            
+            if args.recompute_derived or args.rerun_semantic:
+                run_meta = out_envelope.get("run", {})
+                parent_run_id = run_meta.get("run_id", "original-unknown")
+                derivations = []
+                if args.recompute_derived:
+                    derivations.append("derived-recompute")
+                if args.rerun_semantic:
+                    derivations.append("semantic-recompute")
+                
+                run_meta["parent_run_id"] = parent_run_id
+                run_meta["run_id"] = f"derived-{parent_run_id}"
+                run_meta["derivation"] = ",".join(derivations)
+                run_meta["official"] = False
+                out_envelope["run"] = run_meta
+                
+            # Re-evaluate validity
+            validity = evaluate_run(LoadedResult(rows=serialized_rows, envelope=out_envelope, legacy=False))
+            out_envelope["validity"] = {
+                "valid": validity.valid,
+                "fission_coverage": round(validity.fission.ratio, 4),
+                "fission_attempted": validity.fission.attempted,
+                "fission_clean": validity.fission.clean,
+                "backend_coverage": round(validity.overall.ratio, 4),
+                "backend_attempted": validity.overall.attempted,
+                "backend_clean": validity.overall.clean,
+                "reasons": list(validity.reasons),
+            }
+        else:
+            # Legacy promotion
+            out_envelope = build_envelope(
+                serialized_rows,
+                run_meta={
+                    "official": False,
+                    "legacy_source": True,
+                    "corpus": args.corpus,
+                }
+            )
+            
+        serialized = json.dumps(out_envelope, indent=2)
 
-    if args.write_normalized:
-        args.write_normalized.parent.mkdir(parents=True, exist_ok=True)
-        args.write_normalized.write_text(serialized, encoding="utf-8")
-        print(f"Normalised rows written to {args.write_normalized}")
+        if args.write_normalized:
+            args.write_normalized.parent.mkdir(parents=True, exist_ok=True)
+            args.write_normalized.write_text(serialized, encoding="utf-8")
+            print(f"Normalised rows written to {args.write_normalized}")
 
-    if args.update_latest:
-        latest_path = Path("results/latest.json")
-        latest_path.parent.mkdir(exist_ok=True)
-        latest_path.write_text(serialized, encoding="utf-8")
-        print(f"results/latest.json updated ({len(scores)} rows)")
+        if args.update_latest:
+            latest_path = Path("results/latest.json")
+            latest_path.parent.mkdir(exist_ok=True)
+            latest_path.write_text(serialized, encoding="utf-8")
+            print(f"results/latest.json updated ({len(scores)} rows)")
 
     print(
         f"Rendered {len(scores)} rows from {args.input} as corpus {args.corpus!r} "

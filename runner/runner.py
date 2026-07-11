@@ -27,6 +27,8 @@ from semantic import verify_semantic_correctness
 from report import generate_report
 from readability import analyze_readability, ast_structure_similarity, summarize_readability_proxy_score
 from output_diagnostics import analyze_output_diagnostics, invalid_output_reason
+from run_validity import build_envelope
+import subprocess
 
 app = typer.Typer(help="Fission decompiler benchmark runner.")
 
@@ -279,6 +281,7 @@ async def run_all(
     variant_limit: int | None,
 ) -> list[FunctionScore]:
     fn_list = functions[:limit] if limit else functions
+    all_scores: list[FunctionScore] = []
 
     # 1. Group decompile requests by (decompiler, binary_path)
     groups = {}
@@ -291,6 +294,19 @@ async def run_all(
         for variant in variants:
             binary_path = CORPUS_ROOT / corpus_split / variant.binary
             if not binary_path.exists():
+                for dname in decompilers:
+                    all_scores.append(FunctionScore(
+                        decompiler=dname,
+                        function_name=fn.name,
+                        compiler_variant=f"{variant.compiler} {variant.opt}",
+                        source_similarity=0.0,
+                        goto_count=0,
+                        nesting_depth=0,
+                        time_ms=0,
+                        error=f"Missing binary: {variant.binary}",
+                        semantic_error=f"Missing binary: {variant.binary}",
+                        fail_category="fixture_error",
+                    ))
                 continue
 
             for dname, url in decompilers.items():
@@ -303,8 +319,6 @@ async def run_all(
     concurrency = os.cpu_count() or 4
     sem = asyncio.Semaphore(concurrency)
     typer.echo(f"Starting batch benchmark run with concurrency limit of {concurrency} workers.")
-
-    all_scores: list[FunctionScore] = []
 
     async with httpx.AsyncClient() as client:
         tasks = []
@@ -352,7 +366,11 @@ def run(
     all_dec = configured_decompilers()
     if decompilers:
         selected = [d.strip() for d in decompilers.split(",")]
-        dec_map = {d: all_dec[d] for d in selected if d in all_dec}
+        dec_map = {}
+        for d in selected:
+            if d not in all_dec:
+                raise typer.BadParameter(f"Requested decompiler '{d}' is not configured or is skipped.")
+            dec_map[d] = all_dec[d]
     else:
         dec_map = all_dec
 
@@ -376,6 +394,14 @@ def run(
     if variant_limit:
         typer.echo(f"  variant limit per function: {variant_limit}")
 
+    fn_list = selected_functions[:limit] if limit else selected_functions
+    expected_functions = len(fn_list)
+    expected_variants = 0
+    for fn in fn_list:
+        variants = fn.compiler_variants[:variant_limit] if variant_limit else fn.compiler_variants
+        expected_variants += len(variants)
+    expected_rows = expected_variants * len(dec_map)
+
     # Run event loop
     scores = asyncio.run(run_all(selected_functions, dec_map, corpus, limit, variant_limit))
 
@@ -394,9 +420,39 @@ def run(
     latest_json = results_dir / "latest.json"
 
     serialized = [asdict(s) for s in scores]
-    json_path.write_text(json.dumps(serialized, indent=2), encoding="utf-8")
+    
+    try:
+        commit = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
+    except Exception:
+        commit = "unknown"
+
+    envelope = build_envelope(
+        serialized,
+        run_meta={
+            "started_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(start_time)),
+            "finished_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time())),
+            "runner_commit": commit,
+            "corpus": corpus,
+            "official": not bool(limit or variant_limit or function),
+            "limits": {
+                "limit": limit,
+                "variant_limit": variant_limit,
+                "function": function
+            }
+        },
+        matrix={
+            "expected_decompilers": list(dec_map.keys()),
+            "expected_functions": expected_functions,
+            "expected_variants_per_function": variant_limit if variant_limit else "all",
+            "expected_rows": expected_rows,
+            "observed_rows": len(serialized),
+            "missing_cells": []
+        }
+    )
+
+    json_path.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
     if publish:
-        latest_json.write_text(json.dumps(serialized, indent=2), encoding="utf-8")
+        latest_json.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
         generate_report(scores, corpus_split=corpus)
 
     typer.echo(f"\n✅ Results saved to {json_path} ({elapsed:.1f}s)")

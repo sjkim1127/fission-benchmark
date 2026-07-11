@@ -256,7 +256,23 @@ jobs:
           if ! find corpus/holdout/manifests -name '*.json' -print -quit | grep -q .; then
             echo "No holdout manifests found; writing empty holdout result set."
             mkdir -p results
-            echo '[]' > results/holdout_latest.json
+            cat << 'EOF' > results/holdout_latest.json
+            {
+              "schema_version": 2,
+              "run": {
+                "status": "skipped",
+                "skip_reason": "no_holdout_manifests",
+                "corpus": "holdout",
+                "official": false
+              },
+              "toolchain": {},
+              "validity": {
+                "valid": false,
+                "reasons": ["no_result_rows"]
+              },
+              "rows": []
+            }
+            EOF
             exit 0
           fi
           EXTRA_ARGS=""

@@ -18,8 +18,10 @@ from pathlib import Path
 OVERFITTING_THRESHOLD_PP = 10.0
 
 
+from run_validity import load_result_file
+
 def load_results(path: Path) -> list[dict]:
-    return json.loads(path.read_text())
+    return load_result_file(path).rows
 
 
 def aggregate_by_decompiler(results: list[dict]) -> dict[str, dict]:

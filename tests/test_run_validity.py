@@ -151,10 +151,10 @@ def test_legacy_flat_list_is_invalid(tmp_path):
     path = tmp_path / "legacy.json"
     path.write_text(json.dumps(flat))
 
-    rows, is_legacy = rv.load_result_file(path)
-    assert is_legacy is True
+    loaded = rv.load_result_file(path)
+    assert loaded.legacy is True
 
-    verdict = rv.evaluate_run(rows, legacy=True)
+    verdict = rv.evaluate_run(loaded)
     assert not verdict.valid
     assert "legacy_flat_list" in verdict.reasons
 
@@ -191,13 +191,13 @@ def test_render_report_does_not_modify_input(tmp_path):
     path.write_text(original_content)
 
     # Just loading must not change the file
-    loaded_rows, _ = rv.load_result_file(path)
+    loaded = rv.load_result_file(path)
     assert path.read_text() == original_content, (
         "load_result_file must not modify the input file"
     )
 
     # build_envelope also must not touch the file
-    rv.build_envelope(loaded_rows)
+    rv.build_envelope(loaded.rows)
     assert path.read_text() == original_content, (
         "build_envelope must not modify the input file"
     )
@@ -225,3 +225,17 @@ def test_envelope_invalid_marks_correctly():
 
     assert envelope["validity"]["valid"] is False
     assert "backend_coverage_below_threshold" in envelope["validity"]["reasons"]
+
+
+def test_matrix_missing_backend():
+    rows = _fission_rows(10, 10)
+    envelope = rv.build_envelope(rows, matrix={"expected_decompilers": ["fission", "ghidra"]})
+    assert envelope["validity"]["valid"] is False
+    assert "backend_missing" in envelope["validity"]["reasons"]
+
+
+def test_matrix_row_count_mismatch():
+    rows = _fission_rows(10, 10)
+    envelope = rv.build_envelope(rows, matrix={"expected_rows": 20})
+    assert envelope["validity"]["valid"] is False
+    assert "matrix_completeness_mismatch" in envelope["validity"]["reasons"]
