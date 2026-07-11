@@ -239,96 +239,16 @@ jobs:
 
       # -----------------------------------------------------------------------
       # Fission validity gate — abort the publish path when every Fission row
-      # carries an adapter error.  An invalid run must NOT overwrite
       # results/latest.* or be deployed to GitHub Pages.
+      # The validity logic lives in runner/run_validity.py (shared with report.py)
+      # so the CI gate and the dashboard banner are always in agreement.
       # -----------------------------------------------------------------------
       - name: Validate Fission coverage gate
         id: fission-gate
         run: |
-          python - <<'EOF'
-          import json, os, sys
-
-          # Minimum adapter success ratio required to publish results.
-          # Below this threshold the run is considered invalid regardless of
-          # how good the surviving rows look.
-          FISSION_MIN_COVERAGE   = 0.90   # 90 % of Fission rows must succeed
-          BACKEND_MIN_COVERAGE   = 0.90   # 90 % of all rows across all backends
-
-          path = "results/dev_latest.json"
-          try:
-              data = json.load(open(path))
-          except Exception as e:
-              print(f"::error::Cannot read {path}: {e}")
-              sys.exit(1)
-
-          def _is_adapter_error(row: dict) -> bool:
-              """Return True when the row is not a clean successful decompile.
-
-              Any non-null error field — whether from the adapter, CLI, HTTP
-              layer, or result post-processing — means the row did not produce
-              usable output and must not count toward valid coverage.
-              """
-              return (
-                  row.get("fail_category") == "adapter_error"
-                  or bool(row.get("error"))
-              )
-
-          fission_rows = [r for r in data if r.get("decompiler") == "fission"]
-          all_rows     = data
-
-          def _check_coverage(label: str, rows: list, min_ratio: float) -> str | None:
-              total = len(rows)
-              if total == 0:
-                  return f"INVALID RUN — No {label} rows found in results"
-              adapter_errors = sum(1 for r in rows if _is_adapter_error(r))
-              valid_count    = total - adapter_errors
-              ratio = valid_count / total
-              if ratio < min_ratio:
-                  pct = ratio * 100
-                  min_pct = min_ratio * 100
-                  return (
-                      f"INVALID RUN — {label} adapter coverage {pct:.1f}% "
-                      f"< required {min_pct:.0f}% "
-                      f"({adapter_errors}/{total} rows failed). "
-                      f"Results NOT published."
-                  )
-              return None  # OK
-
-          msgs = []
-          fission_msg = _check_coverage("Fission", fission_rows, FISSION_MIN_COVERAGE)
-          if fission_msg:
-              msgs.append(fission_msg)
-          backend_msg = _check_coverage("all-backend", all_rows, BACKEND_MIN_COVERAGE)
-          if backend_msg:
-              msgs.append(backend_msg)
-
-          if msgs:
-              for msg in msgs:
-                  print(f"::error::{msg}")
-              with open(os.environ["GITHUB_ENV"], "a") as f:
-                  f.write("FISSION_RUN_VALID=false\n")
-              with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
-                  for msg in msgs:
-                      f.write(f"\n## ⛔ {msg}\n")
-              sys.exit(1)
-
-          # All checks passed — compute summary line for the step summary.
-          fission_valid = sum(1 for r in fission_rows if not _is_adapter_error(r))
-          fission_total = len(fission_rows)
-          all_valid     = sum(1 for r in all_rows if not _is_adapter_error(r))
-          all_total     = len(all_rows)
-          msg = (
-              f"VALID — Fission {fission_valid}/{fission_total} "
-              f"({fission_valid/fission_total*100:.1f}%), "
-              f"all-backend {all_valid}/{all_total} "
-              f"({all_valid/all_total*100:.1f}%)"
-          )
-          print(msg)
-          with open(os.environ["GITHUB_ENV"], "a") as f:
-              f.write("FISSION_RUN_VALID=true\n")
-          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
-              f.write(f"\n## ✅ Fission Gate: {msg}\n")
-          EOF
+          python -m runner.run_validity results/dev_latest.json \
+            --github-env     "$GITHUB_ENV" \
+            --github-summary "$GITHUB_STEP_SUMMARY"
 
       - name: Run holdout benchmark
         timeout-minutes: 25

@@ -1,4 +1,15 @@
-"""Render benchmark report artifacts from a saved JSON result file."""
+"""Render benchmark report artifacts from a saved JSON result file.
+
+This script is NON-DESTRUCTIVE by default: it never modifies the input file.
+Use --write-normalized to write a normalised copy, or --update-latest to copy
+the normalised result to results/latest.json.
+
+Measured-at timestamp
+---------------------
+If the input is in envelope format (schema_version >= 2), the ``run.finished_at``
+field is extracted and shown in the report header as "Measured at".
+For legacy flat-list files the timestamp is shown as "unknown (legacy)".
+"""
 from __future__ import annotations
 
 import argparse
@@ -11,26 +22,36 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from report import generate_report
+from report import generate_report, generate_markdown, generate_html
 from output_diagnostics import analyze_output_diagnostics, invalid_output_reason
 from readability import summarize_readability_proxy_score
 from semantic import verify_semantic_correctness
 from test_wrappers import TEST_WRAPPERS
 from scoring import FunctionScore, assign_consensus_ranks, check_uses_intrinsics
+from run_validity import load_result_file
 
 
-def load_scores(path: Path) -> list[FunctionScore]:
-    data = json.loads(path.read_text(encoding="utf-8"))
+def _normalise_scores(data: list[dict]) -> list[FunctionScore]:
+    """Convert raw row dicts to FunctionScore objects with re-scoring."""
     score_fields = {field.name for field in fields(FunctionScore)}
-    scores = [FunctionScore(**{k: v for k, v in row.items() if k in score_fields}) for row in data]
-    code_counts = Counter(score.decompiled_code.strip() for score in scores if score.decompiled_code.strip())
+    scores = [
+        FunctionScore(**{k: v for k, v in row.items() if k in score_fields})
+        for row in data
+    ]
+    code_counts = Counter(
+        score.decompiled_code.strip()
+        for score in scores
+        if score.decompiled_code.strip()
+    )
     for score in scores:
         if not score.correctness_score and score.composite_score:
             score.correctness_score = score.composite_score
         if score.correctness_rank is None and score.consensus_rank is not None:
             score.correctness_rank = score.consensus_rank
         if score.readability_metrics and score.readability_proxy_score is None:
-            score.readability_proxy_score = summarize_readability_proxy_score(score.readability_metrics)
+            score.readability_proxy_score = summarize_readability_proxy_score(
+                score.readability_metrics
+            )
         if score.decompiled_code and not score.output_diagnostics:
             score.output_diagnostics = analyze_output_diagnostics(
                 score.function_name,
@@ -86,28 +107,70 @@ def load_scores(path: Path) -> list[FunctionScore]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Render benchmark dashboard from saved results")
+    parser = argparse.ArgumentParser(
+        description="Render benchmark dashboard from saved results (NON-DESTRUCTIVE by default)"
+    )
     parser.add_argument("--input", required=True, type=Path, help="Input JSON results file")
     parser.add_argument("--corpus", required=True, help="Corpus label to show in the report")
     parser.add_argument(
         "--update-latest",
         action="store_true",
-        help="Also copy the input JSON to results/latest.json",
+        help="Copy the normalised JSON to results/latest.json and regenerate latest.md / docs/index.html",
+    )
+    parser.add_argument(
+        "--write-normalized",
+        type=Path,
+        default=None,
+        help="Write the normalised (re-scored) rows to this path without touching --input",
     )
     args = parser.parse_args()
 
-    scores = load_scores(args.input)
-    generate_report(scores, corpus_split=args.corpus)
+    # ── Load without modifying the input file ─────────────────────────────────
+    rows, is_legacy = load_result_file(args.input)
 
+    # Extract provenance from envelope when available
+    measured_at: str | None = None
+    if not is_legacy:
+        raw = json.loads(args.input.read_text(encoding="utf-8"))
+        run_meta = raw.get("run", {})
+        measured_at = run_meta.get("finished_at") or run_meta.get("started_at")
+
+    if is_legacy:
+        measured_at_label = "unknown (legacy)"
+    else:
+        measured_at_label = measured_at or "not recorded"
+
+    # ── Normalise / re-score ───────────────────────────────────────────────────
+    scores = _normalise_scores(rows)
+
+    # ── Generate report artifacts ──────────────────────────────────────────────
+    # Pass measured_at and legacy flag so the banner is correct.
+    generate_report(
+        scores,
+        corpus_split=args.corpus,
+        measured_at=measured_at_label,
+        legacy=is_legacy,
+    )
+
+    # ── Write normalised JSON only if explicitly requested ─────────────────────
+    # NEVER write back to args.input.
     serialized = json.dumps([asdict(score) for score in scores], indent=2)
-    args.input.write_text(serialized, encoding="utf-8")
+
+    if args.write_normalized:
+        args.write_normalized.parent.mkdir(parents=True, exist_ok=True)
+        args.write_normalized.write_text(serialized, encoding="utf-8")
+        print(f"Normalised rows written to {args.write_normalized}")
 
     if args.update_latest:
         latest_path = Path("results/latest.json")
         latest_path.parent.mkdir(exist_ok=True)
         latest_path.write_text(serialized, encoding="utf-8")
+        print(f"results/latest.json updated ({len(scores)} rows)")
 
-    print(f"Rendered {len(scores)} rows from {args.input} as corpus {args.corpus!r}")
+    print(
+        f"Rendered {len(scores)} rows from {args.input} as corpus {args.corpus!r} "
+        f"(measured_at={measured_at_label!r}, legacy={is_legacy})"
+    )
 
 
 if __name__ == "__main__":

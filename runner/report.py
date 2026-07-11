@@ -9,6 +9,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from scoring import FunctionScore
+from run_validity import evaluate_run, is_output_failure
 
 RESULTS_DIR = Path(__file__).parent.parent / "results"
 DOCS_DIR = Path(__file__).parent.parent / "docs"
@@ -59,12 +60,41 @@ def _md_table(headers: list[str], rows: list[list[str]]) -> str:
     return "\n".join(lines)
 
 
-def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
-    ts = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
+def generate_markdown(
+    scores: list[FunctionScore],
+    corpus_split: str,
+    *,
+    measured_at: str | None = None,
+    legacy: bool = False,
+) -> str:
+    """Generate Markdown report.
+
+    Parameters
+    ----------
+    measured_at:
+        ISO timestamp when the benchmark was originally run.  Shown in the
+        header as "Measured at" when provided (used for historical renders).
+    legacy:
+        When True, marks the report as a legacy re-render.
+    """
+    rendered_at = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
+
     lines = [
         "# Fission Benchmark Report",
         "",
-        f"**Generated:** {ts}",
+    ]
+    if legacy:
+        lines += [
+            "> [!WARNING]",
+            "> **ARCHIVED LEGACY RESULT** — This file was originally measured before",
+            "> the provenance envelope was introduced.  Original run timing and toolchain",
+            "> version information are not available.  Official validity is **unverified**.",
+            "",
+        ]
+    if measured_at:
+        lines.append(f"**Measured at:** {measured_at}")
+    lines += [
+        f"**Rendered at:** {rendered_at}",
         f"**Corpus:** `{corpus_split}`",
         f"**Functions evaluated:** {len(set(s.function_name for s in scores))}",
         "",
@@ -72,36 +102,60 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
         "",
     ]
 
-    # ── Run validity banner ────────────────────────────────────────────────────
-    # A run is INVALID when every Fission row has an error (adapter failure).
-    fission_rows = [s for s in scores if s.decompiler == "fission"]
-    if not fission_rows:
-        lines += [
-            "## ⛔ INVALID RUN",
-            "",
-            "> **No Fission rows were found in this result set.**",
-            "> The benchmark did not run Fission — scores are not comparable.",
-            "",
-        ]
-        run_valid = False
-    elif all(s.error for s in fission_rows):
-        lines += [
-            "## ⛔ INVALID RUN — Fission Adapter Failure",
-            "",
-            "> **All Fission rows failed due to adapter errors.**",
-            f"> {len(fission_rows)}/{len(fission_rows)} Fission attempts errored.",
-            "> Results below show other decompilers only and should NOT be treated as",
-            "> an official benchmark comparison.",
-            "",
-        ]
-        run_valid = False
+    # ── Run validity banner (shared engine) ───────────────────────────────────
+    # Uses run_validity.evaluate_run() — the same function called by the CI
+    # workflow gate — so the banner and the gate always agree.
+    row_dicts = [
+        {"decompiler": s.decompiler, "error": s.error,
+         "fail_category": getattr(s, "fail_category", "") or ""}
+        for s in scores
+    ]
+    verdict = evaluate_run(row_dicts, legacy=legacy)
+
+    if not verdict.valid:
+        reasons_str = ", ".join(verdict.reasons)
+        if "no_fission_rows" in verdict.reasons:
+            lines += [
+                "## ⛔ INVALID RUN",
+                "",
+                "> **No Fission rows found in this result set.**",
+                "> The benchmark did not run Fission — scores are not comparable.",
+                "",
+            ]
+        elif legacy or "legacy_flat_list" in verdict.reasons:
+            lines += [
+                "## ⚠️ LEGACY / UNVERIFIED",
+                "",
+                f"> Fission {verdict.fission.clean}/{verdict.fission.attempted} rows clean "
+                f"({verdict.fission.ratio * 100:.1f}%), "
+                f"all-backend {verdict.overall.clean}/{verdict.overall.attempted} "
+                f"({verdict.overall.ratio * 100:.1f}%).",
+                "> Provenance incomplete — this result predates the envelope format.",
+                "> Do not use these numbers as an official comparison.",
+                "",
+            ]
+        else:
+            lines += [
+                f"## ⛔ INVALID RUN [{reasons_str}]",
+                "",
+                f"> Fission {verdict.fission.clean}/{verdict.fission.attempted} rows clean "
+                f"({verdict.fission.ratio * 100:.1f}%), "
+                f"all-backend {verdict.overall.clean}/{verdict.overall.attempted} "
+                f"({verdict.overall.ratio * 100:.1f}%).",
+                "> Results below are **not publishable** under current thresholds.",
+                "",
+            ]
     else:
-        valid_count = sum(1 for s in fission_rows if not s.error)
         lines += [
-            f"## ✅ VALID RUN — {valid_count}/{len(fission_rows)} Fission rows succeeded",
+            f"## ✅ VALID RUN",
+            "",
+            f"> Fission {verdict.fission.clean}/{verdict.fission.attempted} "
+            f"({verdict.fission.ratio * 100:.1f}%), "
+            f"all-backend {verdict.overall.clean}/{verdict.overall.attempted} "
+            f"({verdict.overall.ratio * 100:.1f}%)",
             "",
         ]
-        run_valid = True
+    run_valid = verdict.valid
 
     lines += [
         "## Summary — Correctness Score",
@@ -110,33 +164,57 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
         "",
     ]
 
-    # ── Per-decompiler coverage counts (all rows, including errors) ────────────
-    # Counting ALL attempted rows prevents survivorship bias: a decompiler that
-    # only rarely returns results should not appear to have a high average score
-    # just because the failures are excluded from the denominator.
-    by_decomp_attempted: dict[str, int] = defaultdict(int)
-    by_decomp_valid: dict[str, int] = defaultdict(int)
-    by_decomp_adapter_fail: dict[str, int] = defaultdict(int)
-    by_decomp_compile_fail: dict[str, int] = defaultdict(int)
-    by_decomp_correctness: dict[str, list[float]] = defaultdict(list)
-    by_decomp_sim: dict[str, list[float]] = defaultdict(list)
-    by_decomp_sem: dict[str, list[float]] = defaultdict(list)
+    # ── Per-decompiler coverage counts ───────────────────────────────────────
+    # Two independent layers:
+    #   Output layer: did the decompiler/adapter return parseable code?
+    #   Semantic layer: did that code compile and pass oracle tests?
+    #
+    # Columns:
+    #   Attempted     -- all rows sent to the decompiler
+    #   Output Valid  -- adapter returned non-empty code with no error
+    #   Output Fail   -- adapter/CLI error or missing result
+    #   Compile Fail  -- code returned but failed to compile (fail_category)
+    #   Runtime Fail  -- compiled but failed runtime oracle test
+    #   Timeout       -- oracle test timed out
+    #   No Wrapper    -- no semantic test wrapper exists (counted separately)
+    #   Semantic Pass -- % of Output Valid rows that passed semantic tests
+    by_decomp_attempted:    dict[str, int]         = defaultdict(int)
+    by_decomp_output_valid: dict[str, int]         = defaultdict(int)
+    by_decomp_output_fail:  dict[str, int]         = defaultdict(int)
+    by_decomp_compile_fail: dict[str, int]         = defaultdict(int)
+    by_decomp_runtime_fail: dict[str, int]         = defaultdict(int)
+    by_decomp_timeout:      dict[str, int]         = defaultdict(int)
+    by_decomp_no_wrapper:   dict[str, int]         = defaultdict(int)
+    by_decomp_correctness:  dict[str, list[float]] = defaultdict(list)
+    by_decomp_sim:          dict[str, list[float]] = defaultdict(list)
+    by_decomp_sem:          dict[str, list[float]] = defaultdict(list)
+
     for s in scores:
-        by_decomp_attempted[s.decompiler] += 1
+        d = s.decompiler
+        by_decomp_attempted[d] += 1
         fail_cat = getattr(s, "fail_category", "") or ""
-        if s.error is None:
-            by_decomp_valid[s.decompiler] += 1
-            by_decomp_correctness[s.decompiler].append(
+
+        # Output layer — independent of semantic results
+        if is_output_failure({"error": s.error, "fail_category": fail_cat}):
+            by_decomp_output_fail[d] += 1
+        else:
+            by_decomp_output_valid[d] += 1
+            by_decomp_correctness[d].append(
                 getattr(s, "correctness_score", getattr(s, "composite_score", 0.0))
             )
-            by_decomp_sim[s.decompiler].append(s.source_similarity)
-            by_decomp_sem[s.decompiler].append(s.semantic_score)
-        elif fail_cat == "adapter_error":
-            by_decomp_adapter_fail[s.decompiler] += 1
-        elif fail_cat == "compile_error":
-            by_decomp_compile_fail[s.decompiler] += 1
+            by_decomp_sim[d].append(s.source_similarity)
+            by_decomp_sem[d].append(s.semantic_score)
 
-    # Rank by avg correctness among valid rows; fall back to 0 if all errored.
+        # Semantic oracle layer — counted independently of output validity
+        if fail_cat == "compile_error":
+            by_decomp_compile_fail[d] += 1
+        elif fail_cat == "runtime_error":
+            by_decomp_runtime_fail[d] += 1
+        elif fail_cat == "timeout":
+            by_decomp_timeout[d] += 1
+        elif fail_cat == "no_wrapper":
+            by_decomp_no_wrapper[d] += 1
+
     def _avg_correctness(d: str) -> float:
         comps = by_decomp_correctness.get(d, [])
         return sum(comps) / len(comps) if comps else 0.0
@@ -147,30 +225,36 @@ def generate_markdown(scores: list[FunctionScore], corpus_split: str) -> str:
     )
     rows = []
     for d in all_decomps:
-        attempted = by_decomp_attempted[d]
-        valid     = by_decomp_valid[d]
-        adapter   = by_decomp_adapter_fail[d]
-        compile_f = by_decomp_compile_fail[d]
+        attempted   = by_decomp_attempted[d]
+        out_valid   = by_decomp_output_valid[d]
+        out_fail    = by_decomp_output_fail[d]
+        comp_fail   = by_decomp_compile_fail[d]
+        rt_fail     = by_decomp_runtime_fail[d]
+        to_fail     = by_decomp_timeout[d]
+        no_wrap     = by_decomp_no_wrapper[d]
         comps = by_decomp_correctness.get(d, [])
         sims  = by_decomp_sim.get(d, [])
         sems  = by_decomp_sem.get(d, [])
         avg_comp = sum(comps) / len(comps) if comps else 0.0
         avg_sim  = sum(sims)  / len(sims)  if sims  else 0.0
         avg_sem  = sum(sems)  / len(sems)  if sems  else 0.0
-        # Flag rows where all attempts failed
-        decomp_label = f"**{d}**" if valid > 0 else f"~~{d}~~ ⛔"
+        decomp_label = f"**{d}**" if out_valid > 0 else f"~~{d}~~ ⛔"
         rows.append([
             decomp_label,
             str(attempted),
-            str(valid),
-            str(adapter),
-            str(compile_f),
-            f"{avg_comp:.3f}" if valid > 0 else "—",
-            f"{avg_sim:.3f}" if valid > 0 else "—",
-            f"{avg_sem * 100:.1f}%" if valid > 0 else "—",
+            str(out_valid),
+            str(out_fail),
+            str(comp_fail) if comp_fail else "—",
+            str(rt_fail)   if rt_fail   else "—",
+            str(to_fail)   if to_fail   else "—",
+            str(no_wrap)   if no_wrap   else "—",
+            f"{avg_comp:.3f}" if out_valid > 0 else "—",
+            f"{avg_sim:.3f}"  if out_valid > 0 else "—",
+            f"{avg_sem * 100:.1f}%" if out_valid > 0 else "—",
         ])
     lines.append(_md_table(
-        ["Decompiler", "Attempted", "Valid", "Adapter Fail", "Compile Fail",
+        ["Decompiler", "Attempted", "Output Valid", "Output Fail",
+         "Compile Fail", "Runtime Fail", "Timeout", "No Wrapper",
          "Avg Correctness", "Avg Similarity", "Semantic Pass"],
         rows,
     ))
@@ -2153,12 +2237,18 @@ renderTable();
     return html
 
 
-def generate_report(scores: list[FunctionScore], corpus_split: str = "dev") -> None:
+def generate_report(
+    scores: list[FunctionScore],
+    corpus_split: str = "dev",
+    *,
+    measured_at: str | None = None,
+    legacy: bool = False,
+) -> None:
     RESULTS_DIR.mkdir(exist_ok=True)
     DOCS_DIR.mkdir(exist_ok=True)
 
     # Markdown
-    md = generate_markdown(scores, corpus_split)
+    md = generate_markdown(scores, corpus_split, measured_at=measured_at, legacy=legacy)
     (RESULTS_DIR / "latest.md").write_text(md)
 
     # HTML
