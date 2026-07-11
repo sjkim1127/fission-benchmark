@@ -159,6 +159,11 @@ def main() -> None:
     )
     parser.add_argument("--recompute-derived", action="store_true", help="Recompute derived metrics (readability, output diagnostics, ranks)")
     parser.add_argument("--rerun-semantic", action="store_true", help="Explicitly re-run semantic verification where applicable")
+    parser.add_argument(
+        "--update-summary",
+        action="store_true",
+        help="Write a compact results/latest-summary.json for the Next.js dashboard (no decompiled code, <100KB).",
+    )
     args = parser.parse_args()
 
     # ── Load without modifying the input file ─────────────────────────────────
@@ -257,6 +262,61 @@ def main() -> None:
             latest_path.parent.mkdir(exist_ok=True)
             latest_path.write_text(serialized, encoding="utf-8")
             print(f"results/latest.json updated ({len(scores)} rows)")
+
+    if args.update_summary:
+        STRIP_FIELDS = {
+            "decompiled_code", "decompiled_code_nir", "decompiled_code_hir",
+            "readability_metrics", "readability_metrics_hir",
+            "ast_similarity", "output_diagnostics",
+            "semantic_error",  # ~18MB in typical result files
+        }
+        summary_rows = []
+        for row in serialized_rows if 'serialized_rows' in dir() else [asdict(s) for s in scores]:
+            summary_rows.append({k: v for k, v in row.items() if k not in STRIP_FIELDS})
+
+        # Per-decompiler aggregates
+        from collections import defaultdict
+        agg: dict = defaultdict(lambda: {"attempted": 0, "clean": 0, "error": 0, "correctness_sum": 0.0, "similarity_sum": 0.0, "semantic_pass": 0})
+        for r in summary_rows:
+            d = r.get("decompiler", "unknown")
+            agg[d]["attempted"] += 1
+            if r.get("error"):
+                agg[d]["error"] += 1
+            else:
+                agg[d]["clean"] += 1
+                agg[d]["correctness_sum"] += r.get("correctness_score") or 0.0
+                agg[d]["similarity_sum"] += r.get("source_similarity") or 0.0
+                if (r.get("semantic_score") or 0.0) >= 1.0:
+                    agg[d]["semantic_pass"] += 1
+
+        agg_list = []
+        for dec, s in agg.items():
+            agg_list.append({
+                "decompiler": dec,
+                "attempted": s["attempted"],
+                "clean": s["clean"],
+                "error": s["error"],
+                "avg_correctness": round(s["correctness_sum"] / s["clean"], 4) if s["clean"] else 0.0,
+                "avg_similarity": round(s["similarity_sum"] / s["clean"], 4) if s["clean"] else 0.0,
+                "semantic_pass_pct": round(s["semantic_pass"] / s["clean"] * 100, 2) if s["clean"] else 0.0,
+            })
+
+        if loaded.envelope:
+            summary_envelope = {
+                "schema_version": 2,
+                "run": loaded.envelope.get("run", {}),
+                "validity": loaded.envelope.get("validity", {}),
+                "matrix": {k: v for k, v in (loaded.envelope.get("matrix") or {}).items() if k != "expected_cells"},
+                "summary": agg_list,
+                "rows": summary_rows,
+            }
+        else:
+            summary_envelope = {"schema_version": 2, "summary": agg_list, "rows": summary_rows}
+
+        summary_path = Path("results/latest-summary.json")
+        summary_path.parent.mkdir(exist_ok=True)
+        summary_path.write_text(json.dumps(summary_envelope, indent=2), encoding="utf-8")
+        print(f"results/latest-summary.json updated ({len(summary_rows)} rows, {summary_path.stat().st_size // 1024}KB)")
 
     print(
         f"Rendered {len(scores)} rows from {args.input} as corpus {args.corpus!r} "

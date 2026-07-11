@@ -30,3 +30,9 @@ corpus/*/binaries/
 # Vercel
 .vercel/
 .vercel
+
+# Next.js
+.next/
+out/
+node_modules/
+next-env.d.ts
