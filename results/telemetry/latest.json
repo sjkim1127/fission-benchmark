@@ -9,16 +9,13 @@
     "pcode_parity": 9
   },
   "by_status": {
-    "match": 31,
-    "mismatch": 17
+    "error": 9,
+    "fetch_error": 36,
+    "mismatch": 3
   },
   "by_mismatch_kind": {
-    "block_count": 3,
     "empty_cfg_blocks": 3,
-    "function_metadata": 1,
-    "function_set": 6,
-    "instruction_count": 4,
-    "none": 31
+    "none": 45
   },
   "by_variant": {
     "gcc -O0": 16,
