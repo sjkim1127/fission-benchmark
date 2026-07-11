@@ -47,7 +47,7 @@ def test_mermaid_generation_missing_block():
     ref_mermaid = generate_mermaid(cfg, other_cfg)
     assert "style B_0x1000 fill:#ffcccc,stroke:#ff0000" in ref_mermaid
 
-@patch("runner.run_parity.fetch_data")
+@patch("runner.run_parity.fetch_parity_data")
 @patch("runner.run_parity.Path.glob")
 def test_run_parity_writes_mismatch_json(mock_glob, mock_fetch, tmp_path):
     mock_manifest = tmp_path / "mock_manifest.json"
@@ -76,19 +76,23 @@ def test_run_parity_writes_mismatch_json(mock_glob, mock_fetch, tmp_path):
             m = mock_open(read_data=json.dumps(manifest_data))
             return m()
         return original_open(file, *args, **kwargs)
-        
+
+    from runner.run_parity import FetchResult
+
     def fetch_side_effect(decompiler, endpoint, binary, *args, **kwargs):
         if decompiler == "ghidra":
             if endpoint == "cfg":
-                return {"blocks": [{"addr": "0x1000", "size": 10, "instructions": ["nop"]}], "edges": []}
+                return FetchResult(status="ok", data={"blocks": [{"addr": "0x1000", "size": 10, "instructions": ["nop"]}], "edges": []})
             elif endpoint == "disasm":
-                return [{"address": "0x1000", "bytes": "90", "mnemonic": "nop"}]
+                return FetchResult(status="ok", data=[{"address": "0x1000", "bytes": "90", "mnemonic": "nop"}])
         elif decompiler == "fission":
             if endpoint == "cfg":
-                return {"blocks": [{"addr": "0x1000", "size": 12, "instructions": ["nop", "ret"]}], "edges": []}
+                return FetchResult(status="ok", data={"blocks": [{"addr": "0x1000", "size": 12, "instructions": ["nop", "ret"]}], "edges": []})
             elif endpoint == "disasm":
-                return [{"address": "0x1000", "bytes": "9090", "mnemonic": "nop"}]
-        return [] if endpoint != "cfg" else {"blocks": [], "edges": []}
+                return FetchResult(status="ok", data=[{"address": "0x1000", "bytes": "9090", "mnemonic": "nop"}])
+        if endpoint == "cfg":
+            return FetchResult(status="empty", data={"blocks": [], "edges": []})
+        return FetchResult(status="empty", data=[])
 
     mock_fetch.side_effect = fetch_side_effect
     

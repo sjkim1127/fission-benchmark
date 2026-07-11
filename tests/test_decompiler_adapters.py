@@ -25,6 +25,11 @@ def load_module(name: str, path: Path):
 def test_fission_uses_addresses_file_batch_cli() -> None:
     server = load_module("fission_server", ROOT / "docker/fission/server.py")
 
+    # Simulate a modern CLI that supports --layer (capability probe can't run
+    # in CI without a real fission binary — force the cache directly).
+    server._CAPABILITY_CACHE["--layer"] = True
+    server._CAPABILITY_PROBED = True
+
     command = server.decompile_batch_command("/tmp/target.bin", "/tmp/addrs.txt")
 
     assert command[:3] == ["/usr/local/bin/fission_cli", "decomp", "/tmp/target.bin"]

@@ -80,12 +80,17 @@ def test_html_and_markdown_share_verdict(tmp_path, monkeypatch):
 
 def test_runner_accepts_corpus_option():
     """runner.py --help must list --corpus as an option (not positional)."""
+    import os
+    env = {**os.environ, "NO_COLOR": "1", "TERM": "dumb"}
     result = subprocess.run(
         [sys.executable, str(RUNNER_DIR / "runner.py"), "--help"],
-        capture_output=True, text=True
+        capture_output=True, text=True, env=env,
     )
     assert result.returncode == 0
-    assert "--corpus" in result.stdout, "--corpus option not found in help"
+    # Strip any residual ANSI escape codes before searching
+    import re
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", result.stdout)
+    assert "--corpus" in plain, f"--corpus option not found in help. Got:\n{plain}"
 
 
 def test_render_cli_preserves_input_hash(tmp_path):
