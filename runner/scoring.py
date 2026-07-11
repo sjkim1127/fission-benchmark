@@ -213,9 +213,6 @@ def extract_function_source(source: str, function_name: str) -> str:
             elif c == '}':
                 depth -= 1
                 if depth == 0:
-                    # Return from original source (with comments) for accurate similarity.
-                    fn_text = source[match.start():].split(stripped[brace_start:idx + 1])[-1]
-                    # Simpler: just use the stripped slice
                     return stripped[match.start():idx + 1].strip()
         break  # matched open brace but not close — malformed
 

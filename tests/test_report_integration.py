@@ -4,11 +4,10 @@ import sys
 import subprocess
 from pathlib import Path
 import hashlib
-import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "runner"))
 import run_validity as rv
-from report import generate_report, generate_markdown, generate_html
+from report import generate_report
 from scoring import FunctionScore
 
 
@@ -91,8 +90,6 @@ def test_runner_accepts_corpus_option():
 
 def test_render_cli_preserves_input_hash(tmp_path):
     """render_report.py must not mutate the input JSON file."""
-    import run_validity as rv
-
     rows = [
         {"decompiler": "fission", "function_name": "foo", "compiler_variant": "gcc -O0",
          "error": None, "semantic_score": 1.0, "source_similarity": 0.8,
@@ -105,7 +102,7 @@ def test_render_cli_preserves_input_hash(tmp_path):
     before_hash = hashlib.sha256(in_file.read_bytes()).hexdigest()
 
     # render_report without --update-latest should not touch the input file
-    result = subprocess.run(
+    subprocess.run(
         [sys.executable, str(RUNNER_DIR / "render_report.py"),
          "--input", str(in_file), "--corpus", "dev"],
         capture_output=True, text=True, cwd=str(RUNNER_DIR.parent)

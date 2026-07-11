@@ -23,7 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from report import generate_report, generate_markdown, generate_html
+from report import generate_report
 from output_diagnostics import analyze_output_diagnostics, invalid_output_reason
 from readability import summarize_readability_proxy_score
 from semantic import verify_semantic_correctness

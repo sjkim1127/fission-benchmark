@@ -9,7 +9,7 @@ import time
 from datetime import datetime, timezone
 from dataclasses import asdict
 from pathlib import Path
-from typing import Optional, List
+from typing import List
 
 import httpx
 import typer

@@ -6,8 +6,6 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent / "runner"))
 import run_validity as rv
 
@@ -100,7 +98,6 @@ def test_overall_89_invalid():
     # Fission 100%, but a secondary backend is completely dead
     rows = _fission_rows(10, 10)
     rows += _other_rows("snowman", 100, 89)  # 89% overall (and pulls total below)
-    verdict = rv.evaluate_run(rows)
     # total = 110, clean = 10 + 89 = 99 => 90% exactly — need to make it fail
     # Let's use 10 fission + 90 snowman (9 clean) => 19/100 = 19%
     rows2 = _fission_rows(10, 10) + _other_rows("snowman", 90, 79)

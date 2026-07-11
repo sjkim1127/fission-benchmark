@@ -9,16 +9,14 @@ Outputs a comparison table and flags decompilers with ≥10pp drop as potential 
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from collections import defaultdict
 from pathlib import Path
 
+from run_validity import load_result_file
+
 # Threshold in percentage points: if holdout drops by more than this, flag overfitting
 OVERFITTING_THRESHOLD_PP = 10.0
-
-
-from run_validity import load_result_file
 
 def load_results(path: Path) -> list[dict]:
     return load_result_file(path).rows

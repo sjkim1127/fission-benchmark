@@ -9,7 +9,7 @@ import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 import requests
 
 from benchmark.assembly_parity.run import compare_assembly
@@ -234,7 +234,8 @@ def run_parity_benchmarks(
             if decompiler == "ghidra":
                 continue # ghidra is usually reference
             try:
-                funcs = fetch_data(decompiler, "functions", subj.binary, corpus=corpus, timeout=request_timeout)
+                funcs_result = fetch_parity_data(decompiler, "functions", subj.binary, corpus=corpus, timeout=request_timeout)
+                funcs = funcs_result.data if funcs_result.status == "ok" else []
                 expected = [{"address": subj.addr, "name": subj.function}]
                 actual = [{"address": f.get("address"), "name": f.get("name")} for f in funcs if f.get("address") == subj.addr]
                 res = compare_functions(subj, "manifest", decompiler, expected, actual)

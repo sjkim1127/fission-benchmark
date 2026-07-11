@@ -7,9 +7,13 @@ import json
 import time
 from collections import defaultdict
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from scoring import FunctionScore
-from run_validity import evaluate_run, is_output_failure
+from run_validity import is_output_failure
+
+if TYPE_CHECKING:
+    from run_validity import LoadedResult, RunValidity
 
 RESULTS_DIR = Path(__file__).parent.parent / "results"
 DOCS_DIR = Path(__file__).parent.parent / "docs"
@@ -151,7 +155,7 @@ def generate_markdown(
     elif not verdict.publishable:
         publish_reasons_str = ", ".join(verdict.publish_reasons)
         lines += [
-            f"## ✅ VALID SMOKE MEASUREMENT",
+            "## ✅ VALID SMOKE MEASUREMENT",
             "",
             f"> Fission {verdict.fission.clean}/{verdict.fission.attempted} "
             f"({verdict.fission.ratio * 100:.1f}%), "
@@ -162,7 +166,7 @@ def generate_markdown(
         ]
     else:
         lines += [
-            f"## ✅ VALID RUN",
+            "## ✅ VALID RUN",
             "",
             f"> Fission {verdict.fission.clean}/{verdict.fission.attempted} "
             f"({verdict.fission.ratio * 100:.1f}%), "
@@ -170,7 +174,6 @@ def generate_markdown(
             f"({verdict.overall.ratio * 100:.1f}%)",
             "",
         ]
-    run_valid = verdict.valid
 
     lines += [
         "## Summary — Correctness Score",
