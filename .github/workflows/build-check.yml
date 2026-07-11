@@ -245,11 +245,19 @@ jobs:
           # path and a real function address.  This ensures the contract test
           # catches CLI regressions (e.g. unknown --layer flag) that would
           # produce non-empty results[] but with row.error != null.
+          #
+          # Missing manifests or binaries are treated as infrastructure failures,
+          # not as skip conditions.  corpus-builder must have run successfully.
           manifest_dir = Path("corpus/dev/manifests")
           manifest_files = sorted(manifest_dir.glob("*.json")) if manifest_dir.exists() else []
 
           if not manifest_files:
-              print("⚠ No corpus manifests found; skipping /decompile_batch smoke test.")
+              errors.append(
+                  "No corpus manifests found after corpus-builder ran. "
+                  "This is an infrastructure failure, not a skip condition. "
+                  "Check that corpus-builder produced at least one .json file "
+                  "in corpus/dev/manifests/."
+              )
           else:
               # Pick the first manifest with at least one function/variant.
               target_binary = None
@@ -274,8 +282,17 @@ jobs:
                   if target_binary:
                       break
 
-              if not target_binary or not target_binary.exists():
-                  print(f"⚠ Manifest binary not found on disk; skipping /decompile_batch smoke test.")
+              if not target_binary:
+                  errors.append(
+                      "Manifests exist but contain no function variants with "
+                      "both 'binary' and 'addr' fields. Cannot run /decompile_batch "
+                      "contract test."
+                  )
+              elif not target_binary.exists():
+                  errors.append(
+                      f"Manifest target binary was not built: {target_binary}. "
+                      f"Check that corpus-builder compiled the binary correctly."
+                  )
               else:
                   binary_b64 = base64.b64encode(target_binary.read_bytes()).decode()
                   print(f"  Using binary={target_binary.name} addr={target_addr} fn={target_name}")

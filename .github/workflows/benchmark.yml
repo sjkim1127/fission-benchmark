@@ -262,14 +262,15 @@ jobs:
               sys.exit(1)
 
           def _is_adapter_error(row: dict) -> bool:
-              """Return True when the row failed due to an adapter/CLI error."""
-              cat = (row.get("fail_category") or "").strip()
-              if cat == "adapter_error":
-                  return True
-              err = str(row.get("error") or "").lower()
-              return bool(row.get("error")) and any(
-                  kw in err for kw in ("argument", "flag", "unknown option",
-                                       "connection refused", "adapter")
+              """Return True when the row is not a clean successful decompile.
+
+              Any non-null error field — whether from the adapter, CLI, HTTP
+              layer, or result post-processing — means the row did not produce
+              usable output and must not count toward valid coverage.
+              """
+              return (
+                  row.get("fail_category") == "adapter_error"
+                  or bool(row.get("error"))
               )
 
           fission_rows = [r for r in data if r.get("decompiler") == "fission"]
