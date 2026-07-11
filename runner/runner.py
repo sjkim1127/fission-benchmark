@@ -343,8 +343,8 @@ async def run_all(
 
 @app.command()
 def run(
-    corpus: str = typer.Argument(
-        "dev", help="Which corpus split to evaluate (e.g. dev, holdout)"
+    corpus: str = typer.Option(
+        "dev", "--corpus", help="Which corpus split to evaluate (e.g. dev, holdout)"
     ),
     limit: int | None = typer.Option(
         None, help="Limit number of functions evaluated (for testing)"
@@ -362,7 +362,8 @@ def run(
         None, help="Path to save JSON output (defaults to results/TIMESTAMP.json)"
     ),
     publish: bool = typer.Option(
-        True, help="Update latest.json and regenerate report"
+        False, "--publish/--no-publish",
+        help="Update latest.json and regenerate report (default: --no-publish)"
     ),
     run_mode: str = typer.Option(
         "smoke", help="Execution mode: smoke, local, or official"
@@ -407,22 +408,22 @@ def run(
 
     fn_list = selected_functions[:limit] if limit else selected_functions
     expected_functions = len(fn_list)
-    expected_variants = 0
-    
-    expected_functions_list = []
-    expected_variants_list = []
-    
+
+    # Build exact expected_cells list (per function x variant x decompiler)
+    # Avoids Cartesian product assumptions when functions have different variants.
+    expected_cells = []
     for fn in fn_list:
-        expected_functions_list.append(fn.name)
         variants = fn.compiler_variants[:variant_limit] if variant_limit else fn.compiler_variants
         for variant in variants:
-            expected_variants_list.append(f"{variant.compiler} {variant.opt}")
-        expected_variants += len(variants)
-    
-    # Ensure variants list only contains unique variants for the matrix cell permutations
-    expected_variants_list = list(dict.fromkeys(expected_variants_list))
-    
-    expected_rows = expected_variants * len(dec_map)
+            cv = f"{variant.compiler} {variant.opt}"
+            for dec in dec_map:
+                expected_cells.append({
+                    "decompiler": dec,
+                    "function_name": fn.name,
+                    "compiler_variant": cv,
+                })
+
+    expected_rows = len(expected_cells)
 
     # Run event loop
     scores = asyncio.run(run_all(selected_functions, dec_map, corpus, limit, variant_limit))
@@ -467,31 +468,28 @@ def run(
         matrix={
             "expected_decompilers": list(dec_map.keys()),
             "expected_functions": expected_functions,
-            "expected_variants_per_function": variant_limit if variant_limit else "all",
             "expected_rows": expected_rows,
-            "expected_functions_list": expected_functions_list,
-            "expected_variants_list": expected_variants_list,
+            "expected_cells": expected_cells,
             "observed_rows": len(serialized),
-            "missing_cells": []
         }
     )
 
     json_path.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
     if publish:
         latest_json.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
-        
+
         # Build loaded result manually since we already have the envelope
         from run_validity import LoadedResult, evaluate_run
         loaded = LoadedResult(rows=serialized, envelope=envelope, legacy=False)
         verdict = evaluate_run(loaded)
-        
+
         generate_report(scores, corpus_split=corpus, loaded_result=loaded, verdict=verdict)
 
     typer.echo(f"\n✅ Results saved to {json_path} ({elapsed:.1f}s)")
     if publish:
         typer.echo("📊 Report generated: results/latest.md, docs/index.html")
     else:
-        typer.echo("Focused result only; results/latest.* and docs/index.html were not updated.")
+        typer.echo("Candidate result saved; results/latest.* not updated (--no-publish).")
 
 
 if __name__ == "__main__":

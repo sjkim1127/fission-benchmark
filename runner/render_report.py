@@ -39,8 +39,16 @@ def _normalise_scores(data: list[dict], recompute_derived: bool = False, rerun_s
     migrated_data = []
     for row in data:
         migrated = dict(row)
-        if "correctness_score" not in migrated:
-            if "composite_score" in migrated:
+        stored_correctness = migrated.get("correctness_score")
+        # Detect corrupted 0.0: a row that has non-zero semantic or similarity but
+        # stores correctness_score=0.0 is a legacy corruption from the P0.6.1 bug.
+        corrupted_zero = (
+            stored_correctness == 0.0
+            and (migrated.get("semantic_score", 0.0) > 0 or migrated.get("source_similarity", 0.0) > 0)
+            and migrated.get("error") is None
+        )
+        if "correctness_score" not in migrated or corrupted_zero:
+            if "composite_score" in migrated and not corrupted_zero:
                 migrated["correctness_score"] = migrated["composite_score"]
             else:
                 migrated["correctness_score"] = compute_correctness_score(
@@ -216,6 +224,7 @@ def main() -> None:
             validity = evaluate_run(LoadedResult(rows=serialized_rows, envelope=out_envelope, legacy=False))
             out_envelope["validity"] = {
                 "valid": validity.valid,
+                "publishable": validity.publishable,
                 "fission_coverage": round(validity.fission.ratio, 4),
                 "fission_attempted": validity.fission.attempted,
                 "fission_clean": validity.fission.clean,
@@ -223,6 +232,7 @@ def main() -> None:
                 "backend_attempted": validity.overall.attempted,
                 "backend_clean": validity.overall.clean,
                 "reasons": list(validity.reasons),
+                "publish_reasons": list(validity.publish_reasons),
             }
         else:
             # Legacy promotion

@@ -104,6 +104,7 @@ jobs:
     if: ${{ needs.preflight.outputs.is_current == 'true' }}
     outputs:
       is_current: ${{ steps.current.outputs.is_current }}
+      should_publish: ${{ steps.publish-mode.outputs.should_publish }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -242,7 +243,7 @@ jobs:
           if [ -n "$BENCHMARK_VARIANT_LIMIT" ] && [ "$BENCHMARK_VARIANT_LIMIT" != "0" ]; then
             EXTRA_ARGS="$EXTRA_ARGS --variant-limit $BENCHMARK_VARIANT_LIMIT"
           fi
-          python runner/runner.py --corpus dev $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --run-mode "$RUN_MODE" --output results/dev_latest.json
+          python runner/runner.py --corpus dev $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --run-mode "$RUN_MODE" --no-publish --output results/dev_latest.json
 
       # -----------------------------------------------------------------------
       # Fission validity gate — abort the publish path when every Fission row
@@ -256,6 +257,16 @@ jobs:
           python -m runner.run_validity results/dev_latest.json \
             --github-env     "$GITHUB_ENV" \
             --github-summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Determine publish mode
+        id: publish-mode
+        run: |
+          # should_publish: measurement must be valid AND run_mode must be official
+          if [ "$MEASUREMENT_VALID" = "true" ] && [ "$RUN_PUBLISHABLE" = "true" ]; then
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Run holdout benchmark
         timeout-minutes: 25
@@ -300,8 +311,8 @@ jobs:
             echo "⚠️ Overfitting detected — check overfitting_report.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Restore published dashboard from dev results
-        # Only update latest.* when the Fission gate passed AND we are in official publish mode.
-        if: ${{ env.FISSION_RUN_VALID == 'true' && env.PUBLISH_RESULTS == 'true' }}
+        # Only update latest.* when measurement is valid AND run is publishable.
+        if: ${{ env.MEASUREMENT_VALID == 'true' && steps.publish-mode.outputs.should_publish == 'true' }}
         run: |
           python runner/render_report.py \
             --input results/dev_latest.json \
@@ -353,8 +364,8 @@ jobs:
           if-no-files-found: warn
 
       - name: Commit results
-        # Do not commit results from an invalid run (Fission gate failed) or smoke test.
-        if: ${{ env.PUBLISH_RESULTS == 'true' && env.FISSION_RUN_VALID == 'true' }}
+        # Do not commit results from an invalid run or non-publishable (smoke) run.
+        if: ${{ steps.publish-mode.outputs.should_publish == 'true' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -374,7 +385,9 @@ jobs:
   deploy-pages:
     name: Deploy GitHub Pages
     needs: run-benchmark
-    if: ${{ needs.run-benchmark.outputs.is_current == 'true' && env.PUBLISH_RESULTS == 'true' }}
+    if: >-
+      needs.run-benchmark.outputs.is_current == 'true' &&
+      needs.run-benchmark.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:

@@ -148,6 +148,18 @@ def generate_markdown(
                 "> Results below are **not publishable** under current thresholds.",
                 "",
             ]
+    elif not verdict.publishable:
+        publish_reasons_str = ", ".join(verdict.publish_reasons)
+        lines += [
+            f"## ✅ VALID SMOKE MEASUREMENT",
+            "",
+            f"> Fission {verdict.fission.clean}/{verdict.fission.attempted} "
+            f"({verdict.fission.ratio * 100:.1f}%), "
+            f"all-backend {verdict.overall.clean}/{verdict.overall.attempted} "
+            f"({verdict.overall.ratio * 100:.1f}%)",
+            f"> ⚪ NOT PUBLISHABLE — {publish_reasons_str}",
+            "",
+        ]
     else:
         lines += [
             f"## ✅ VALID RUN",
@@ -363,7 +375,14 @@ def generate_markdown(
 # ── HTML (GitHub Pages) ───────────────────────────────────────────────────────
 
 
-def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
+def generate_html(
+    scores: list[FunctionScore],
+    corpus_split: str,
+    *,
+    verdict: RunValidity | None = None,
+    measured_at: str | None = None,
+    legacy: bool = False,
+) -> str:
     ts = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
 
     by_decomp: dict[str, list[float]] = defaultdict(list)
@@ -445,23 +464,23 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
         })
     scores_json = json.dumps(serialized_scores, indent=2)
 
-    # Run validity — mirrors the logic in generate_markdown for consistency.
-    fission_rows = [s for s in scores if s.decompiler == "fission"]
-    if not fission_rows:
-        run_valid = False
-        fission_valid_count = 0
-        fission_total = 0
-    elif all(s.error for s in fission_rows):
-        run_valid = False
-        fission_valid_count = 0
-        fission_total = len(fission_rows)
-    else:
-        run_valid = True
-        fission_valid_count = sum(1 for s in fission_rows if not s.error)
-        fission_total = len(fission_rows)
+    # Run validity — use externally computed verdict when available.
+    # Fallback: compute from rows (backward compat for direct callers).
+    if verdict is None:
+        row_dicts = [
+            {"decompiler": s.decompiler, "error": s.error,
+             "fail_category": getattr(s, "fail_category", "") or ""}
+            for s in scores
+        ]
+        from run_validity import evaluate_run
+        verdict = evaluate_run(row_dicts, legacy=legacy)
+
+    fission_valid_count = verdict.fission.clean
+    fission_total = verdict.fission.attempted
 
     run_meta_json = json.dumps({
-        "valid": run_valid,
+        "valid": verdict.valid,
+        "publishable": verdict.publishable,
         "fission_valid": fission_valid_count,
         "fission_total": fission_total,
         "timestamp": ts,
@@ -2237,7 +2256,54 @@ renderTable();
 </html>
 """
 
-    # Inject variables into HTML
+    # Build validity banner HTML from the verdict
+    if legacy or "legacy_flat_list" in verdict.reasons or "legacy_source" in verdict.publish_reasons:
+        banner_html = (
+            '<div class="validity-banner legacy">'
+            '<div style="display:flex;align-items:center;gap:0.5rem;font-size:1.1rem;">'
+            '<span>⚠️</span><span>LEGACY / UNVERIFIED</span></div>'
+            '<div style="font-size:0.95rem;color:#a1a1aa;">'
+            'Provenance incomplete — this result predates the envelope format.<br>'
+            'Do not use these numbers as an official comparison.</div></div>'
+        )
+    elif not verdict.valid:
+        reasons_list = "".join(f"<li>{r}</li>" for r in verdict.reasons)
+        banner_html = (
+            '<div class="validity-banner invalid">'
+            '<div style="display:flex;align-items:center;gap:0.5rem;font-size:1.1rem;">'
+            '<span>⛔</span><span>INVALID MEASUREMENT</span></div>'
+            f'<div style="font-size:0.95rem;color:#a1a1aa;">'
+            f'Fission {verdict.fission.clean}/{verdict.fission.attempted} '
+            f'({verdict.fission.ratio*100:.1f}%), '
+            f'all-backend {verdict.overall.clean}/{verdict.overall.attempted} '
+            f'({verdict.overall.ratio*100:.1f}%).<br>'
+            'Results below are <strong>not publishable</strong>.</div>'
+            f'<ul class="validity-reason-list">{reasons_list}</ul></div>'
+        )
+    elif not verdict.publishable:
+        banner_html = (
+            '<div class="validity-banner legacy">'
+            '<div style="display:flex;align-items:center;gap:0.5rem;font-size:1.1rem;">'
+            '<span>✅</span><span>VALID SMOKE MEASUREMENT</span></div>'
+            '<div style="font-size:0.95rem;color:#a1a1aa;">'
+            f'Fission {verdict.fission.clean}/{verdict.fission.attempted} '
+            f'({verdict.fission.ratio*100:.1f}%), '
+            f'all-backend {verdict.overall.clean}/{verdict.overall.attempted} '
+            f'({verdict.overall.ratio*100:.1f}%).<br>'
+            f'⚪ NOT PUBLISHABLE — {", ".join(verdict.publish_reasons)}</div></div>'
+        )
+    else:
+        banner_html = (
+            '<div class="validity-banner valid">'
+            '<div style="display:flex;align-items:center;gap:0.5rem;font-size:1.1rem;">'
+            '<span>✅</span><span>VALID RUN</span></div>'
+            '<div style="font-size:0.95rem;color:#a1a1aa;">'
+            f'Fission {verdict.fission.clean}/{verdict.fission.attempted} '
+            f'({verdict.fission.ratio*100:.1f}%), '
+            f'all-backend {verdict.overall.clean}/{verdict.overall.attempted} '
+            f'({verdict.overall.ratio*100:.1f}%)</div></div>'
+        )
+
     html = html_template.replace("__TS__", ts)
     html = html.replace("__CORPUS_SPLIT__", corpus_split)
     html = html.replace("__FUNCTIONS_COUNT__", str(len(fn_names)))

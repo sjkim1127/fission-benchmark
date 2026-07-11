@@ -12,7 +12,12 @@ Public API
 ----------
 ``is_output_failure(row)``  -- True when a row failed at the adapter/output layer
 ``evaluate_run(result)``    -- returns a :class:`RunValidity` dataclass
-``RunValidity``             -- frozen dataclass with .valid, .fission, .overall, .reasons
+``RunValidity``             -- frozen dataclass:
+    .valid         -- True if measurement quality thresholds pass (matrix+coverage)
+    .publishable   -- True if valid AND official AND no provenance issues
+    .fission/.overall -- Coverage stats
+    .reasons       -- measurement failure codes
+    .publish_reasons -- publish-only failure codes (non_official_run, legacy_source)
 ``Coverage``                -- frozen dataclass with .attempted, .clean, .ratio
 ``LoadedResult``            -- dataclass containing rows, envelope, and legacy flag
 
@@ -22,7 +27,7 @@ CLI usage (from benchmark.yml)
         --github-env   "$GITHUB_ENV" \
         --github-summary "$GITHUB_STEP_SUMMARY"
 
-Exit code 0 = VALID, 1 = INVALID.
+Exit code 0 = measurement valid (or smoke), 1 = INVALID measurement.
 """
 from __future__ import annotations
 
@@ -72,10 +77,21 @@ class Coverage:
 
 @dataclass(frozen=True)
 class RunValidity:
-    """Result of :func:`evaluate_run`."""
+    """Result of :func:`evaluate_run`.
+
+    Two-tier verdict:
+    * ``valid``       -- measurement quality OK (matrix + coverage thresholds)
+    * ``publishable`` -- valid AND official run AND no provenance issues
+
+    A smoke run produces ``valid=True, publishable=False``.
+    An invalid measurement produces ``valid=False, publishable=False``.
+    """
 
     valid: bool
-    """True when all coverage thresholds are met and the run is publishable."""
+    """True when measurement quality thresholds pass (matrix + coverage)."""
+
+    publishable: bool
+    """True when valid AND official AND no provenance issues."""
 
     fission: Coverage
     """Fission-specific coverage."""
@@ -84,7 +100,7 @@ class RunValidity:
     """Coverage across all backends including Fission."""
 
     reasons: tuple
-    """Machine-readable failure codes when ``valid`` is False.
+    """Machine-readable measurement failure codes when ``valid`` is False.
 
     Possible values:
     * ``"no_fission_rows"``
@@ -97,26 +113,32 @@ class RunValidity:
     * ``"matrix_unexpected_cells"``
     * ``"matrix_duplicate_cells"``
     * ``"legacy_flat_list"``
-    * ``"legacy_source"``
-    * ``"non_official_run"``
+    """
+
+    publish_reasons: tuple = ()
+    """Publish-only failure codes (do not affect ``valid``).
+
+    Possible values:
+    * ``"non_official_run"``  -- run_mode != official
+    * ``"legacy_source"``     -- result predates envelope format
     """
 
     def summary_line(self) -> str:
         """One-line human-readable summary for GITHUB_STEP_SUMMARY / logs."""
-        if self.valid:
-            return (
-                f"VALID -- Fission {self.fission.clean}/{self.fission.attempted} "
-                f"({self.fission.ratio * 100:.1f}%), "
-                f"all-backend {self.overall.clean}/{self.overall.attempted} "
-                f"({self.overall.ratio * 100:.1f}%)"
-            )
-        return (
-            f"INVALID [{', '.join(self.reasons)}] -- "
+        cov = (
             f"Fission {self.fission.clean}/{self.fission.attempted} "
             f"({self.fission.ratio * 100:.1f}%), "
             f"all-backend {self.overall.clean}/{self.overall.attempted} "
             f"({self.overall.ratio * 100:.1f}%)"
         )
+        if not self.valid:
+            return f"INVALID MEASUREMENT [{', '.join(self.reasons)}] -- {cov}"
+        if not self.publishable:
+            return (
+                f"VALID SMOKE MEASUREMENT [{', '.join(self.publish_reasons)}] -- {cov} "
+                f"-- NOT PUBLISHABLE"
+            )
+        return f"VALID -- {cov}"
 
 
 # ---------------------------------------------------------------------------
@@ -169,35 +191,38 @@ def evaluate_run(
         reasons.append("legacy_flat_list")
         return RunValidity(
             valid=False,
+            publishable=False,
             fission=fission_cov,
             overall=overall_cov,
             reasons=tuple(reasons),
+            publish_reasons=("legacy_source",),
         )
 
+    publish_reasons: list[str] = []
     run_meta = envelope.get("run", {}) if envelope else {}
     if run_meta.get("legacy_source"):
-        reasons.append("legacy_source")
+        publish_reasons.append("legacy_source")
     if run_meta.get("official") is False:
-        reasons.append("non_official_run")
+        publish_reasons.append("non_official_run")
 
     matrix = envelope.get("matrix", {}) if envelope else {}
     expected_rows = matrix.get("expected_rows")
+    expected_cells_list: list[dict] | None = matrix.get("expected_cells")
+    # Legacy fallback: Cartesian product from lists (used in older envelopes)
     expected_decompilers = matrix.get("expected_decompilers")
-    expected_functions_list = matrix.get("expected_functions_list")
-    expected_variants_list = matrix.get("expected_variants_list")
 
     if expected_rows is not None and len(rows) != expected_rows:
         reasons.append("matrix_completeness_mismatch")
 
-    if expected_decompilers and expected_functions_list and expected_variants_list:
-        expected_cells = set()
-        for d in expected_decompilers:
-            for f in expected_functions_list:
-                for v in expected_variants_list:
-                    expected_cells.add((d, f, v))
-
-        observed_cells = set()
-        duplicates = set()
+    if expected_cells_list is not None:
+        # Exact-cell validation (P0.6.2+)
+        expected_cells = {
+            (c["decompiler"], c["function_name"], c["compiler_variant"])
+            for c in expected_cells_list
+            if c.get("decompiler") and c.get("function_name") and c.get("compiler_variant")
+        }
+        observed_cells: set = set()
+        duplicates: set = set()
         for r in rows:
             d = r.get("decompiler")
             f = r.get("function_name")
@@ -207,10 +232,8 @@ def evaluate_run(
                 if cell in observed_cells:
                     duplicates.add(cell)
                 observed_cells.add(cell)
-
         missing_cells = expected_cells - observed_cells
         unexpected_cells = observed_cells - expected_cells
-        
         if missing_cells:
             reasons.append("matrix_missing_cells")
         if unexpected_cells:
@@ -241,11 +264,14 @@ def evaluate_run(
         elif overall_cov.ratio < BACKEND_MIN_COVERAGE:
             reasons.append("backend_coverage_below_threshold")
 
+    measurement_valid = not reasons
     return RunValidity(
-        valid=not reasons,
+        valid=measurement_valid,
+        publishable=measurement_valid and not publish_reasons,
         fission=fission_cov,
         overall=overall_cov,
         reasons=tuple(reasons),
+        publish_reasons=tuple(publish_reasons),
     )
 
 
@@ -298,6 +324,7 @@ def build_envelope(
 
     temp_envelope["validity"] = {
         "valid": validity.valid,
+        "publishable": validity.publishable,
         "fission_coverage": round(validity.fission.ratio, 4),
         "fission_attempted": validity.fission.attempted,
         "fission_clean": validity.fission.clean,
@@ -305,6 +332,7 @@ def build_envelope(
         "backend_attempted": validity.overall.attempted,
         "backend_clean": validity.overall.clean,
         "reasons": list(validity.reasons),
+        "publish_reasons": list(validity.publish_reasons),
     }
     temp_envelope["rendered_at"] = _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime())
     
@@ -347,8 +375,9 @@ def main(argv=None):
         print(f"::error::Cannot read {args.result_json}: {exc}", file=sys.stderr)
         return 1
 
-    # Allow threshold overrides
-    import runner.run_validity as _self
+    # Allow threshold overrides (use sys.modules to avoid package path issues)
+    import sys as _sys
+    _self = _sys.modules[__name__]
     _self.FISSION_MIN_COVERAGE = args.fission_min_coverage
     _self.BACKEND_MIN_COVERAGE = args.backend_min_coverage
 
@@ -356,19 +385,29 @@ def main(argv=None):
     summary = verdict.summary_line()
     print(summary)
 
-    env_val = "true" if verdict.valid else "false"
-    _write_line(args.github_env, f"FISSION_RUN_VALID={env_val}")
+    measurement_val = "true" if verdict.valid else "false"
+    publishable_val = "true" if verdict.publishable else "false"
+    _write_line(args.github_env, f"MEASUREMENT_VALID={measurement_val}")
+    _write_line(args.github_env, f"RUN_PUBLISHABLE={publishable_val}")
+    # Legacy compat alias
+    _write_line(args.github_env, f"FISSION_RUN_VALID={measurement_val}")
 
-    if verdict.valid:
-        _write_line(args.github_summary, f"\n## VALID Fission Gate: {summary}\n")
-    else:
+    if not verdict.valid:
         for reason in verdict.reasons:
             _write_line(
                 args.github_summary,
-                f"\n## INVALID RUN [{reason}]\n\n{summary}\n",
+                f"\n## ⛔ INVALID MEASUREMENT [{reason}]\n\n{summary}\n",
             )
         return 1
 
+    if not verdict.publishable:
+        _write_line(
+            args.github_summary,
+            f"\n## ✅ VALID SMOKE [{', '.join(verdict.publish_reasons)}]\n\n{summary}\n",
+        )
+        return 0
+
+    _write_line(args.github_summary, f"\n## ✅ VALID Fission Gate: {summary}\n")
     return 0
 
 

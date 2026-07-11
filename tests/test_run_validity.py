@@ -245,40 +245,52 @@ def test_matrix_row_count_mismatch():
 # ---------------------------------------------------------------------------
 
 def test_official_false_invalid():
+    """official=False → valid=True but publishable=False (non_official_run in publish_reasons)."""
     rows = _fission_rows(10, 10)
     envelope = rv.build_envelope(rows, run_meta={"official": False})
     loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
     verdict = rv.evaluate_run(loaded)
-    assert not verdict.valid
-    assert "non_official_run" in verdict.reasons
+    # Measurement is valid; but not publishable
+    assert verdict.valid
+    assert not verdict.publishable
+    assert "non_official_run" in verdict.publish_reasons
+    assert "non_official_run" not in verdict.reasons
 
 # ---------------------------------------------------------------------------
 # Test 11: legacy_source=true -> INVALID
 # ---------------------------------------------------------------------------
 
 def test_legacy_source_invalid():
+    """legacy_source=True → valid=True but publishable=False (legacy_source in publish_reasons)."""
     rows = _fission_rows(10, 10)
     envelope = rv.build_envelope(rows, run_meta={"legacy_source": True})
     loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
     verdict = rv.evaluate_run(loaded)
-    assert not verdict.valid
-    assert "legacy_source" in verdict.reasons
+    # Measurement quality is fine; provenance is the blocker
+    assert verdict.valid
+    assert not verdict.publishable
+    assert "legacy_source" in verdict.publish_reasons
+    assert "legacy_source" not in verdict.reasons
 
 # ---------------------------------------------------------------------------
 # Test 12: Matrix mismatch with identical row counts
 # ---------------------------------------------------------------------------
 
 def test_matrix_missing_and_unexpected_cells():
+    """Exact expected_cells: duplicate row + missing cell detected."""
     rows = [
         {"decompiler": "fission", "function_name": "f1", "compiler_variant": "gcc -O1"},
-        {"decompiler": "fission", "function_name": "f1", "compiler_variant": "gcc -O1"}, # Duplicate
+        {"decompiler": "fission", "function_name": "f1", "compiler_variant": "gcc -O1"},  # Duplicate
     ]
     # Expected: f1(gcc -O1) and f2(gcc -O1)
+    expected_cells = [
+        {"decompiler": "fission", "function_name": "f1", "compiler_variant": "gcc -O1"},
+        {"decompiler": "fission", "function_name": "f2", "compiler_variant": "gcc -O1"},
+    ]
     matrix = {
         "expected_rows": 2,
         "expected_decompilers": ["fission"],
-        "expected_functions_list": ["f1", "f2"],
-        "expected_variants_list": ["gcc -O1"],
+        "expected_cells": expected_cells,
     }
     envelope = rv.build_envelope(rows, matrix=matrix)
     loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
@@ -307,3 +319,91 @@ def test_single_backend_under_90_fails():
     assert verdict.overall.ratio > 0.90
     assert not verdict.valid
     assert "backend_coverage_below_threshold" in verdict.reasons
+
+# ---------------------------------------------------------------------------
+# P0.6.2 Tests
+# ---------------------------------------------------------------------------
+
+def test_valid_smoke_is_not_publishable():
+    """Smoke run (official=False) → valid=True but publishable=False."""
+    rows = _fission_rows(10, 10) + _other_rows("ghidra", 10, 10)
+    envelope = rv.build_envelope(rows, run_meta={"official": False})
+    loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
+    verdict = rv.evaluate_run(loaded)
+    assert verdict.valid, "Measurement should be valid"
+    assert not verdict.publishable, "Smoke should not be publishable"
+    assert "non_official_run" in verdict.publish_reasons
+    assert "non_official_run" not in verdict.reasons  # not a measurement failure
+
+
+def test_official_run_is_publishable():
+    """Official run with passing coverage → valid=True and publishable=True."""
+    rows = _fission_rows(10, 10) + _other_rows("ghidra", 10, 10)
+    envelope = rv.build_envelope(rows, run_meta={"official": True})
+    loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
+    verdict = rv.evaluate_run(loaded)
+    assert verdict.valid
+    assert verdict.publishable
+    assert not verdict.publish_reasons
+
+
+def test_exact_heterogeneous_matrix_cells():
+    """Functions with different variant sets: exact cell check, no false positives."""
+    # fn1 has gcc-O0 and clang-O2; fn2 has only gcc-O0
+    expected_cells = [
+        {"decompiler": "fission", "function_name": "fn1", "compiler_variant": "gcc -O0"},
+        {"decompiler": "fission", "function_name": "fn1", "compiler_variant": "clang -O2"},
+        {"decompiler": "fission", "function_name": "fn2", "compiler_variant": "gcc -O0"},
+    ]
+    rows = [
+        {"decompiler": "fission", "function_name": "fn1", "compiler_variant": "gcc -O0", "error": None},
+        {"decompiler": "fission", "function_name": "fn1", "compiler_variant": "clang -O2", "error": None},
+        {"decompiler": "fission", "function_name": "fn2", "compiler_variant": "gcc -O0", "error": None},
+    ]
+    matrix = {"expected_cells": expected_cells, "expected_decompilers": ["fission"], "expected_rows": 3}
+    envelope = rv.build_envelope(rows, run_meta={"official": True}, matrix=matrix)
+    loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
+    verdict = rv.evaluate_run(loaded)
+    # No matrix errors expected
+    assert "matrix_missing_cells" not in verdict.reasons
+    assert "matrix_unexpected_cells" not in verdict.reasons
+    assert "matrix_duplicate_cells" not in verdict.reasons
+
+
+def test_exact_cells_missing_detected():
+    """Missing cell in exact list is flagged."""
+    expected_cells = [
+        {"decompiler": "fission", "function_name": "fn1", "compiler_variant": "gcc -O0"},
+        {"decompiler": "fission", "function_name": "fn2", "compiler_variant": "gcc -O0"},  # missing
+    ]
+    rows = [
+        {"decompiler": "fission", "function_name": "fn1", "compiler_variant": "gcc -O0", "error": None},
+    ]
+    matrix = {"expected_cells": expected_cells, "expected_decompilers": ["fission"], "expected_rows": 2}
+    envelope = rv.build_envelope(rows, run_meta={"official": True}, matrix=matrix)
+    loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
+    verdict = rv.evaluate_run(loaded)
+    assert "matrix_missing_cells" in verdict.reasons
+
+
+def test_smoke_cli_exits_zero(tmp_path):
+    """CLI returns exit code 0 for a valid smoke run (publishable=False)."""
+    rows = _fission_rows(10, 10) + _other_rows("ghidra", 10, 10)
+    envelope = rv.build_envelope(rows, run_meta={"official": False})
+    p = tmp_path / "smoke.json"
+    import json
+    p.write_text(json.dumps(envelope), encoding="utf-8")
+    ret = rv.main([str(p)])
+    assert ret == 0, "Smoke run should exit 0 (measurement valid)"
+
+
+def test_invalid_measurement_cli_exits_one(tmp_path):
+    """CLI returns exit code 1 when measurement quality fails."""
+    # Fission coverage below threshold
+    rows = _fission_rows(10, 5) + _other_rows("ghidra", 10, 10)  # 50% fission
+    envelope = rv.build_envelope(rows, run_meta={"official": True})
+    p = tmp_path / "bad.json"
+    import json
+    p.write_text(json.dumps(envelope), encoding="utf-8")
+    ret = rv.main([str(p)])
+    assert ret == 1, "Invalid measurement should exit 1"
