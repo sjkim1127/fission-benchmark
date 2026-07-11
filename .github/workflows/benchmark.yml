@@ -12,8 +12,10 @@ env:
   CORPUS_TARGET: windows-x86_64
   CORPUS_SPLIT: ${{ github.event.inputs.corpus || 'dev' }}
   BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,boomerang,radare2,angr,snowman,revng,reko' }}
-  BENCHMARK_LIMIT: ${{ github.event.inputs.benchmark_limit || '10' }}
-  BENCHMARK_VARIANT_LIMIT: ${{ github.event.inputs.benchmark_variant_limit || '1' }}
+  BENCHMARK_LIMIT: ${{ github.event.inputs.benchmark_limit || (github.event_name == 'push' && '10' || '0') }}
+  BENCHMARK_VARIANT_LIMIT: ${{ github.event.inputs.benchmark_variant_limit || (github.event_name == 'push' && '1' || '0') }}
+  RUN_MODE: ${{ github.event.inputs.run_mode || (github.event_name == 'push' && 'smoke' || 'official') }}
+  PUBLISH_RESULTS: ${{ github.event.inputs.publish_results || (github.event_name == 'push' && 'false' || 'true') }}
   PARITY_LIMIT: ${{ github.event.inputs.parity_limit || '3' }}
   PARITY_DECOMPILERS: fission,ghidra,radare2,reko
   PARITY_REQUEST_TIMEOUT: '2'
@@ -54,7 +56,12 @@ on:
       publish_results:
         description: "Commit results and deploy GitHub Pages"
         type: boolean
-        default: true
+        default: false
+      run_mode:
+        description: "Execution mode (smoke, local, official)"
+        type: choice
+        options: [smoke, local, official]
+        default: smoke
   repository_dispatch:
     types: [fission-release]
   schedule:
@@ -235,7 +242,7 @@ jobs:
           if [ -n "$BENCHMARK_VARIANT_LIMIT" ] && [ "$BENCHMARK_VARIANT_LIMIT" != "0" ]; then
             EXTRA_ARGS="$EXTRA_ARGS --variant-limit $BENCHMARK_VARIANT_LIMIT"
           fi
-          python runner/runner.py --corpus dev $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --output results/dev_latest.json
+          python runner/runner.py --corpus dev $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --run-mode "$RUN_MODE" --output results/dev_latest.json
 
       # -----------------------------------------------------------------------
       # Fission validity gate — abort the publish path when every Fission row
@@ -282,7 +289,7 @@ jobs:
           if [ -n "$BENCHMARK_VARIANT_LIMIT" ] && [ "$BENCHMARK_VARIANT_LIMIT" != "0" ]; then
             EXTRA_ARGS="$EXTRA_ARGS --variant-limit $BENCHMARK_VARIANT_LIMIT"
           fi
-          python runner/runner.py --corpus holdout $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --output results/holdout_latest.json
+          python runner/runner.py --corpus holdout $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --run-mode "$RUN_MODE" --output results/holdout_latest.json
 
       - name: Run overfitting check
         run: |
@@ -293,8 +300,8 @@ jobs:
             echo "⚠️ Overfitting detected — check overfitting_report.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Restore published dashboard from dev results
-        # Only update latest.* when the Fission gate passed.
-        if: ${{ env.FISSION_RUN_VALID == 'true' }}
+        # Only update latest.* when the Fission gate passed AND we are in official publish mode.
+        if: ${{ env.FISSION_RUN_VALID == 'true' && env.PUBLISH_RESULTS == 'true' }}
         run: |
           python runner/render_report.py \
             --input results/dev_latest.json \
@@ -346,8 +353,8 @@ jobs:
           if-no-files-found: warn
 
       - name: Commit results
-        # Do not commit results from an invalid run (Fission gate failed).
-        if: ${{ github.event.inputs.publish_results != 'false' && env.FISSION_RUN_VALID == 'true' }}
+        # Do not commit results from an invalid run (Fission gate failed) or smoke test.
+        if: ${{ env.PUBLISH_RESULTS == 'true' && env.FISSION_RUN_VALID == 'true' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -367,7 +374,7 @@ jobs:
   deploy-pages:
     name: Deploy GitHub Pages
     needs: run-benchmark
-    if: ${{ needs.run-benchmark.outputs.is_current == 'true' && github.event.inputs.publish_results != 'false' }}
+    if: ${{ needs.run-benchmark.outputs.is_current == 'true' && env.PUBLISH_RESULTS == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:

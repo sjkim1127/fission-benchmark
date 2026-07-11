@@ -28,24 +28,35 @@ from output_diagnostics import analyze_output_diagnostics, invalid_output_reason
 from readability import summarize_readability_proxy_score
 from semantic import verify_semantic_correctness
 from test_wrappers import TEST_WRAPPERS
-from scoring import FunctionScore, assign_consensus_ranks, check_uses_intrinsics
+from scoring import FunctionScore, assign_consensus_ranks, check_uses_intrinsics, compute_correctness_score
 from run_validity import load_result_file, build_envelope, evaluate_run, LoadedResult
 
 
 def _normalise_scores(data: list[dict], recompute_derived: bool = False, rerun_semantic: bool = False) -> list[FunctionScore]:
     """Convert raw row dicts to FunctionScore objects with optional re-scoring."""
+    
+    # 1. Pre-process dicts for migration before instantiating FunctionScore
+    migrated_data = []
+    for row in data:
+        migrated = dict(row)
+        if "correctness_score" not in migrated:
+            if "composite_score" in migrated:
+                migrated["correctness_score"] = migrated["composite_score"]
+            else:
+                migrated["correctness_score"] = compute_correctness_score(
+                    migrated.get("semantic_score", 0.0),
+                    migrated.get("source_similarity", 0.0),
+                    migrated.get("structural_penalty", 0.0),
+                )
+        if "correctness_rank" not in migrated and "consensus_rank" in migrated:
+            migrated["correctness_rank"] = migrated["consensus_rank"]
+        migrated_data.append(migrated)
+
     score_fields = {field.name for field in fields(FunctionScore)}
     scores = [
         FunctionScore(**{k: v for k, v in row.items() if k in score_fields})
-        for row in data
+        for row in migrated_data
     ]
-    
-    # Simple migrations (always apply)
-    for score in scores:
-        if not score.correctness_score and score.composite_score:
-            score.correctness_score = score.composite_score
-        if score.correctness_rank is None and score.consensus_rank is not None:
-            score.correctness_rank = score.consensus_rank
             
     if not (recompute_derived or rerun_semantic):
         return scores
@@ -164,11 +175,17 @@ def main() -> None:
 
     # ── Generate report artifacts ──────────────────────────────────────────────
     # Pass measured_at and legacy flag so the banner is correct.
+    # Pass loaded_result and verdict to avoid recalculating invalid truths
+    loaded = LoadedResult(rows=[asdict(s) for s in scores], envelope=envelope, legacy=is_legacy)
+    verdict = evaluate_run(loaded)
+    
     generate_report(
         scores,
         corpus_split=args.corpus,
         measured_at=measured_at_label,
         legacy=is_legacy,
+        loaded_result=loaded,
+        verdict=verdict,
     )
 
     # ── Write normalised JSON only if explicitly requested ─────────────────────

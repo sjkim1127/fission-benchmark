@@ -93,7 +93,12 @@ class RunValidity:
     * ``"backend_coverage_below_threshold"``
     * ``"backend_missing"``
     * ``"matrix_completeness_mismatch"``
+    * ``"matrix_missing_cells"``
+    * ``"matrix_unexpected_cells"``
+    * ``"matrix_duplicate_cells"``
     * ``"legacy_flat_list"``
+    * ``"legacy_source"``
+    * ``"non_official_run"``
     """
 
     def summary_line(self) -> str:
@@ -169,12 +174,49 @@ def evaluate_run(
             reasons=tuple(reasons),
         )
 
+    run_meta = envelope.get("run", {}) if envelope else {}
+    if run_meta.get("legacy_source"):
+        reasons.append("legacy_source")
+    if run_meta.get("official") is False:
+        reasons.append("non_official_run")
+
     matrix = envelope.get("matrix", {}) if envelope else {}
     expected_rows = matrix.get("expected_rows")
     expected_decompilers = matrix.get("expected_decompilers")
+    expected_functions_list = matrix.get("expected_functions_list")
+    expected_variants_list = matrix.get("expected_variants_list")
 
     if expected_rows is not None and len(rows) != expected_rows:
         reasons.append("matrix_completeness_mismatch")
+
+    if expected_decompilers and expected_functions_list and expected_variants_list:
+        expected_cells = set()
+        for d in expected_decompilers:
+            for f in expected_functions_list:
+                for v in expected_variants_list:
+                    expected_cells.add((d, f, v))
+
+        observed_cells = set()
+        duplicates = set()
+        for r in rows:
+            d = r.get("decompiler")
+            f = r.get("function_name")
+            v = r.get("compiler_variant")
+            if d and f and v:
+                cell = (d, f, v)
+                if cell in observed_cells:
+                    duplicates.add(cell)
+                observed_cells.add(cell)
+
+        missing_cells = expected_cells - observed_cells
+        unexpected_cells = observed_cells - expected_cells
+        
+        if missing_cells:
+            reasons.append("matrix_missing_cells")
+        if unexpected_cells:
+            reasons.append("matrix_unexpected_cells")
+        if duplicates:
+            reasons.append("matrix_duplicate_cells")
 
     if not fission_cov.attempted:
         reasons.append("no_fission_rows")
@@ -220,7 +262,11 @@ def load_result_file(path: Path) -> LoadedResult:
     raw = json.loads(path.read_text(encoding="utf-8"))
     if isinstance(raw, list):
         return LoadedResult(rows=raw, envelope=None, legacy=True)
-    if isinstance(raw, dict) and "rows" in raw:
+    if isinstance(raw, dict):
+        if raw.get("schema_version") != 2:
+            raise ValueError(f"Unsupported or missing schema_version in {path}")
+        if not isinstance(raw.get("rows"), list):
+            raise ValueError(f"Envelope rows must be a list in {path}")
         return LoadedResult(rows=raw["rows"], envelope=raw, legacy=False)
     raise ValueError(
         f"Unrecognised result format in {path}: "

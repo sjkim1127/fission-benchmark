@@ -239,3 +239,71 @@ def test_matrix_row_count_mismatch():
     envelope = rv.build_envelope(rows, matrix={"expected_rows": 20})
     assert envelope["validity"]["valid"] is False
     assert "matrix_completeness_mismatch" in envelope["validity"]["reasons"]
+
+# ---------------------------------------------------------------------------
+# Test 10: Official=false -> INVALID
+# ---------------------------------------------------------------------------
+
+def test_official_false_invalid():
+    rows = _fission_rows(10, 10)
+    envelope = rv.build_envelope(rows, run_meta={"official": False})
+    loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
+    verdict = rv.evaluate_run(loaded)
+    assert not verdict.valid
+    assert "non_official_run" in verdict.reasons
+
+# ---------------------------------------------------------------------------
+# Test 11: legacy_source=true -> INVALID
+# ---------------------------------------------------------------------------
+
+def test_legacy_source_invalid():
+    rows = _fission_rows(10, 10)
+    envelope = rv.build_envelope(rows, run_meta={"legacy_source": True})
+    loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
+    verdict = rv.evaluate_run(loaded)
+    assert not verdict.valid
+    assert "legacy_source" in verdict.reasons
+
+# ---------------------------------------------------------------------------
+# Test 12: Matrix mismatch with identical row counts
+# ---------------------------------------------------------------------------
+
+def test_matrix_missing_and_unexpected_cells():
+    rows = [
+        {"decompiler": "fission", "function_name": "f1", "compiler_variant": "gcc -O1"},
+        {"decompiler": "fission", "function_name": "f1", "compiler_variant": "gcc -O1"}, # Duplicate
+    ]
+    # Expected: f1(gcc -O1) and f2(gcc -O1)
+    matrix = {
+        "expected_rows": 2,
+        "expected_decompilers": ["fission"],
+        "expected_functions_list": ["f1", "f2"],
+        "expected_variants_list": ["gcc -O1"],
+    }
+    envelope = rv.build_envelope(rows, matrix=matrix)
+    loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
+    verdict = rv.evaluate_run(loaded)
+    assert not verdict.valid
+    assert "matrix_missing_cells" in verdict.reasons
+    assert "matrix_duplicate_cells" in verdict.reasons
+
+# ---------------------------------------------------------------------------
+# Test 13: Single backend at 80% coverage with an overall coverage > 90% -> INVALID
+# ---------------------------------------------------------------------------
+
+def test_single_backend_under_90_fails():
+    fission_rows = _fission_rows(100, 100)
+    # Total = 110. Clean = 108. Ratio = 98.1%
+    ghidra_rows = _other_rows("ghidra", 10, 8) # 80%
+    rows = fission_rows + ghidra_rows
+    
+    matrix = {
+        "expected_decompilers": ["fission", "ghidra"],
+    }
+    envelope = rv.build_envelope(rows, matrix=matrix)
+    loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
+    verdict = rv.evaluate_run(loaded)
+    
+    assert verdict.overall.ratio > 0.90
+    assert not verdict.valid
+    assert "backend_coverage_below_threshold" in verdict.reasons

@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timezone
 from dataclasses import asdict
 from pathlib import Path
 from typing import Optional, List
@@ -342,25 +343,35 @@ async def run_all(
 
 @app.command()
 def run(
-    corpus: str = typer.Option("dev", help="Corpus split name (dev, holdout, full)"),
-    limit: Optional[int] = typer.Option(None, help="Limit number of functions analyzed"),
-    variant_limit: Optional[int] = typer.Option(None, help="Limit compiler variants per function; 0 means all"),
-    decompilers: Optional[str] = typer.Option(None, help="Comma-separated decompiler list"),
-    function: Optional[str] = typer.Option(
-        None,
-        "--function",
-        help="Comma-separated function names for focused regression runs",
+    corpus: str = typer.Argument(
+        "dev", help="Which corpus split to evaluate (e.g. dev, holdout)"
     ),
-    output: Optional[str] = typer.Option(None, help="Override output JSON path"),
+    limit: int | None = typer.Option(
+        None, help="Limit number of functions evaluated (for testing)"
+    ),
+    variant_limit: int | None = typer.Option(
+        None, help="Limit compiler variants evaluated per function (for testing)"
+    ),
+    function: str | None = typer.Option(
+        None, help="Evaluate only a specific function by name"
+    ),
+    decompilers: str | None = typer.Option(
+        None, help="Comma-separated list of decompilers to run"
+    ),
+    output: str | None = typer.Option(
+        None, help="Path to save JSON output (defaults to results/TIMESTAMP.json)"
+    ),
     publish: bool = typer.Option(
-        True,
-        "--publish/--no-publish",
-        help="Update results/latest.*, Markdown, and GitHub Pages output",
+        True, help="Update latest.json and regenerate report"
     ),
-):
-    """Run decompiler benchmark and generate report."""
+    run_mode: str = typer.Option(
+        "smoke", help="Execution mode: smoke, local, or official"
+    ),
+) -> None:
+    """Run benchmark evaluation pipeline."""
+    started_at = datetime.now(timezone.utc)
+    start_monotonic = time.monotonic()
     _load_source_metrics()
-    start_time = time.monotonic()
 
     # Select decompilers
     all_dec = configured_decompilers()
@@ -397,15 +408,27 @@ def run(
     fn_list = selected_functions[:limit] if limit else selected_functions
     expected_functions = len(fn_list)
     expected_variants = 0
+    
+    expected_functions_list = []
+    expected_variants_list = []
+    
     for fn in fn_list:
+        expected_functions_list.append(fn.name)
         variants = fn.compiler_variants[:variant_limit] if variant_limit else fn.compiler_variants
+        for variant in variants:
+            expected_variants_list.append(f"{variant.compiler} {variant.opt}")
         expected_variants += len(variants)
+    
+    # Ensure variants list only contains unique variants for the matrix cell permutations
+    expected_variants_list = list(dict.fromkeys(expected_variants_list))
+    
     expected_rows = expected_variants * len(dec_map)
 
     # Run event loop
     scores = asyncio.run(run_all(selected_functions, dec_map, corpus, limit, variant_limit))
 
-    elapsed = time.monotonic() - start_time
+    elapsed = time.monotonic() - start_monotonic
+    finished_at = datetime.now(timezone.utc)
 
     # Save JSON and generate report
     timestamp = time.strftime("%Y%m%d_%H%M%S")
@@ -429,11 +452,12 @@ def run(
     envelope = build_envelope(
         serialized,
         run_meta={
-            "started_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(start_time)),
-            "finished_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time())),
+            "started_at": started_at.isoformat().replace("+00:00", "Z"),
+            "finished_at": finished_at.isoformat().replace("+00:00", "Z"),
+            "duration_ms": round(elapsed * 1000),
             "runner_commit": commit,
             "corpus": corpus,
-            "official": not bool(limit or variant_limit or function),
+            "official": run_mode == "official",
             "limits": {
                 "limit": limit,
                 "variant_limit": variant_limit,
@@ -445,6 +469,8 @@ def run(
             "expected_functions": expected_functions,
             "expected_variants_per_function": variant_limit if variant_limit else "all",
             "expected_rows": expected_rows,
+            "expected_functions_list": expected_functions_list,
+            "expected_variants_list": expected_variants_list,
             "observed_rows": len(serialized),
             "missing_cells": []
         }
@@ -453,7 +479,13 @@ def run(
     json_path.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
     if publish:
         latest_json.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
-        generate_report(scores, corpus_split=corpus)
+        
+        # Build loaded result manually since we already have the envelope
+        from run_validity import LoadedResult, evaluate_run
+        loaded = LoadedResult(rows=serialized, envelope=envelope, legacy=False)
+        verdict = evaluate_run(loaded)
+        
+        generate_report(scores, corpus_split=corpus, loaded_result=loaded, verdict=verdict)
 
     typer.echo(f"\n✅ Results saved to {json_path} ({elapsed:.1f}s)")
     if publish:

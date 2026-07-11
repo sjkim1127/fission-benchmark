@@ -64,6 +64,7 @@ def generate_markdown(
     scores: list[FunctionScore],
     corpus_split: str,
     *,
+    verdict: RunValidity | None = None,
     measured_at: str | None = None,
     legacy: bool = False,
 ) -> str:
@@ -103,14 +104,16 @@ def generate_markdown(
     ]
 
     # ── Run validity banner (shared engine) ───────────────────────────────────
-    # Uses run_validity.evaluate_run() — the same function called by the CI
-    # workflow gate — so the banner and the gate always agree.
-    row_dicts = [
-        {"decompiler": s.decompiler, "error": s.error,
-         "fail_category": getattr(s, "fail_category", "") or ""}
-        for s in scores
-    ]
-    verdict = evaluate_run(row_dicts, legacy=legacy)
+    # We now strictly use the pre-evaluated verdict to ensure matrix constraints
+    # evaluated in the caller context are faithfully represented here.
+    if verdict is None:
+        row_dicts = [
+            {"decompiler": s.decompiler, "error": s.error,
+             "fail_category": getattr(s, "fail_category", "") or ""}
+            for s in scores
+        ]
+        from run_validity import evaluate_run
+        verdict = evaluate_run(row_dicts, legacy=legacy)
 
     if not verdict.valid:
         reasons_str = ", ".join(verdict.reasons)
@@ -1034,6 +1037,38 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
   .tab-btn { background: #1f2937; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.15s; }
   .tab-btn:hover { background: #374151; color: var(--text); }
   .tab-btn.active { background: var(--accent-indigo); border-color: var(--accent-indigo); color: white; }
+
+  .validity-banner {
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .validity-banner.valid {
+    background-color: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+  }
+  .validity-banner.invalid {
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #f87171;
+  }
+  .validity-banner.legacy {
+    background-color: rgba(234, 179, 8, 0.1);
+    border: 1px solid rgba(234, 179, 8, 0.2);
+    color: #facc15;
+  }
+  
+  .validity-reason-list {
+    margin: 0;
+    padding-left: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
 </style>
 </head>
 <body>
@@ -1049,6 +1084,8 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
     <div class="meta-badge">Updated: <strong id="genTime">__TS__</strong></div>
   </div>
 </header>
+
+<div id="validityContainer">__VALIDITY_BANNER__</div>
 
 <div class="notice">
   Readability values shown below are unvalidated proxy metrics. They are recorded as raw evidence only;
@@ -1182,30 +1219,6 @@ def generate_html(scores: list[FunctionScore], corpus_split: str) -> str:
 const SCORES = __SCORES_JSON__;
 const DECOMPILER_COLORS = __DECOMPILER_COLORS__;
 const RUN_META = __RUN_META_JSON__;
-
-// ── Run validity banner ───────────────────────────────────────────────────────
-(function renderRunBanner() {
-  const banner = document.createElement('div');
-  const valid = RUN_META.valid;
-  const fv = RUN_META.fission_valid;
-  const ft = RUN_META.fission_total;
-  banner.style.cssText = [
-    'position:sticky','top:0','z-index:999','padding:0.6rem 1.5rem',
-    'font-weight:600','font-size:0.9rem','letter-spacing:0.02em',
-    'display:flex','align-items:center','gap:0.6rem',
-    valid
-      ? 'background:#064e3b;color:#6ee7b7;border-bottom:1px solid #065f46;'
-      : 'background:#7f1d1d;color:#fca5a5;border-bottom:1px solid #991b1b;',
-  ].join(';');
-  if (valid) {
-    banner.innerHTML = `✅ <span>VALID RUN</span> <span style="font-weight:400;color:#a7f3d0">${fv}/${ft} Fission rows succeeded &mdash; ${RUN_META.timestamp}</span>`;
-  } else if (ft === 0) {
-    banner.innerHTML = `⛔ <span>INVALID RUN</span> <span style="font-weight:400">No Fission rows in results &mdash; scores are not comparable</span>`;
-  } else {
-    banner.innerHTML = `⛔ <span>INVALID RUN</span> <span style="font-weight:400">All ${ft} Fission rows failed (adapter error) &mdash; results below exclude Fission</span>`;
-  }
-  document.body.prepend(banner);
-})();
 
 // Helper to group scores
 const scoresByGroup = {};
@@ -1990,8 +2003,6 @@ document.querySelectorAll('#resultsTable th').forEach(th => {
   });
 });
 
-// Initial Render
-
 // Modal logic
 function openModal(decompiler, funcName, variant, errorMsg) {
   document.getElementById('modalTitle').textContent = `Verification Error: ${decompiler} - ${funcName} (${variant})`;
@@ -2233,14 +2244,16 @@ renderTable();
     html = html.replace("__SCORES_JSON__", scores_json)
     html = html.replace("__DECOMPILER_COLORS__", json.dumps(DECOMPILER_COLORS))
     html = html.replace("__RUN_META_JSON__", run_meta_json)
+    html = html.replace("__VALIDITY_BANNER__", banner_html)
 
     return html
-
 
 def generate_report(
     scores: list[FunctionScore],
     corpus_split: str = "dev",
     *,
+    loaded_result: LoadedResult | None = None,
+    verdict: RunValidity | None = None,
     measured_at: str | None = None,
     legacy: bool = False,
 ) -> None:
@@ -2248,9 +2261,9 @@ def generate_report(
     DOCS_DIR.mkdir(exist_ok=True)
 
     # Markdown
-    md = generate_markdown(scores, corpus_split, measured_at=measured_at, legacy=legacy)
-    (RESULTS_DIR / "latest.md").write_text(md)
+    md = generate_markdown(scores, corpus_split, verdict=verdict, measured_at=measured_at, legacy=legacy)
+    (RESULTS_DIR / "latest.md").write_text(md, encoding="utf-8")
 
     # HTML
-    html = generate_html(scores, corpus_split)
-    (DOCS_DIR / "index.html").write_text(html)
+    html = generate_html(scores, corpus_split, verdict=verdict, measured_at=measured_at, legacy=legacy)
+    (DOCS_DIR / "index.html").write_text(html, encoding="utf-8")
