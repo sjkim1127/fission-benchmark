@@ -418,3 +418,15 @@ jobs:
         run: |
           url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
           echo "Deployed to: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Revalidate dashboard ISR cache
+        env:
+          REVALIDATE_URL: ${{ secrets.DASHBOARD_REVALIDATE_URL }}
+          REVALIDATE_SECRET: ${{ secrets.DASHBOARD_REVALIDATE_SECRET }}
+        run: |
+          curl --fail-with-body \
+            --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $REVALIDATE_SECRET" \
+            "$REVALIDATE_URL/api/revalidate"
+          echo "Dashboard cache revalidated" >> "$GITHUB_STEP_SUMMARY"
