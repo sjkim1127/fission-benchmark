@@ -69,6 +69,7 @@ def health():
     release_version = os.environ.get("FISSION_RELEASE_VERSION", "unknown")
     source = os.environ.get("FISSION_SOURCE") or _read_text_file(SOURCE_FILE, "release")
     git_sha = os.environ.get("FISSION_GIT_SHA") or _read_text_file(GIT_SHA_FILE, "")
+    source_fingerprint = os.environ.get("FISSION_SOURCE_FINGERPRINT", "")
     try:
         r = subprocess.run(
             [str(FISSION_BIN), "--version"],
@@ -90,6 +91,8 @@ def health():
     }
     if git_sha:
         payload["git_sha"] = git_sha
+    if source_fingerprint:
+        payload["source_fingerprint"] = source_fingerprint
     return payload
 
 def run_fission_cli(args: List[str]):

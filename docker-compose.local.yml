@@ -5,7 +5,7 @@
 # Usage:
 #   scripts/prepare_local_fission.sh
 #   docker compose -f docker-compose.yml -f docker-compose.local.yml \
-#     --profile local up -d --build fission
+#     --profile local up -d --build --wait fission
 #   curl -s http://localhost:${FISSION_HOST_PORT:-8007}/health | jq .
 #
 # Requires a Linux ELF fission_cli matching the container platform
@@ -24,6 +24,7 @@ services:
       FISSION_SOURCE: local
       FISSION_LOCAL_ROOT: /opt/fission-local
       FISSION_GIT_SHA: ${FISSION_GIT_SHA:-unknown}
+      FISSION_SOURCE_FINGERPRINT: ${FISSION_SOURCE_FINGERPRINT:-unknown}
       FISSION_RELEASE_VERSION: local-${FISSION_GIT_SHA:-dev}
       FISSION_SLEIGH_SPEC_DIR: /sleigh-specs
       FISSION_RESOURCE_ROOT: /opt/fission-utils/utils
