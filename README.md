@@ -4,12 +4,12 @@
 
 **Multi-decompiler comparison benchmark for [Fission](https://github.com/sjkim1127/Fission)**
 
-Fission · Ghidra · Boomerang · Radare2+r2ghidra · angr · Snowman · rev.ng · Reko
+Fission · Ghidra · Radare2+r2ghidra · angr · Snowman · rev.ng · RetDec · Reko
 
 [![Benchmark](https://github.com/sjkim1127/fission-benchmark/actions/workflows/benchmark.yml/badge.svg)](https://github.com/sjkim1127/fission-benchmark/actions/workflows/benchmark.yml)
 [![Docker Build](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml/badge.svg)](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml)
 
-📊 **[Live Dashboard →](https://sjkim1127.github.io/fission-benchmark/)**
+📊 **[Live Dashboard →](https://fission-benchmark.vercel.app)**
 
 </div>
 
@@ -25,14 +25,35 @@ Binary + Source (ground truth)
         ↓
 ┌──────────────────────────────────────────────────────────────┐
 │  runner.py  (parallel httpx requests)                        │
-│  Fission :8000 · Ghidra :8001 · Boomerang :8002 · Radare2    │
+│  Fission :8000 · Ghidra :8001 · RetDec :8002 · Radare2 :8003 │
 │  angr :8004 · Snowman :8005 · rev.ng :8006 · Reko :8008      │
 └──────────────────────────────┬───────────────────────────────┘
                                │
                      ↓
-              scoring.py (source similarity + consensus)
+              scoring.py  (correctness score + consensus)
                      ↓
-              report.py → results/latest.md + docs/index.html
+              render_report.py → results/latest.md + docs/index.html
+                     ↓
+              Vercel (official runs only) → fission-benchmark.vercel.app
+```
+
+## Run Validity
+
+Every result file is evaluated by a two-tier verdict:
+
+| Tier | Meaning | CLI exit |
+|---|---|---|
+| `valid` | Measurement quality OK — matrix complete, Fission ≥ 90%, all-backend ≥ 90% | — |
+| `publishable` | `valid` AND `--run-mode official` AND no provenance issues | required for Vercel deploy |
+
+A **smoke run** (`--run-mode smoke`, default on push) produces `valid=True, publishable=False` — workflow is green but nothing is published. An **official run** (`--run-mode official`, weekly schedule or manual dispatch) must also pass the publishability gate before deploying.
+
+```bash
+# Evaluate a result file directly
+python -m runner.run_validity results/dev_latest.json \
+  --github-env "$GITHUB_ENV" \
+  --github-summary "$GITHUB_STEP_SUMMARY"
+# Emits: MEASUREMENT_VALID=true/false, RUN_PUBLISHABLE=true/false
 ```
 
 ## Overfitting Prevention (3-Layer)
@@ -66,7 +87,6 @@ docker compose build
 python scripts/build_corpus.py --split dev
 
 # On macOS/Apple Silicon, build Windows x86-64 PE corpus binaries instead.
-# Benchmark runs use the latest Fission release and this cross-built corpus path by default.
 docker compose --profile tools run --rm corpus-builder
 
 # Start containers
@@ -74,11 +94,13 @@ docker compose up -d
 
 # Wait for health checks
 curl http://localhost:8001/health  # Ghidra
-curl http://localhost:8002/health  # Boomerang
 curl http://localhost:8003/health  # Radare2
 
-# Run benchmark (dev corpus)
+# Run benchmark (smoke, candidate JSON only — does not overwrite latest.*)
 python runner/runner.py --corpus dev
+
+# Run and publish to latest.* (local use only)
+python runner/runner.py --corpus dev --publish
 
 # Results
 cat results/latest.md
@@ -95,7 +117,8 @@ python runner/runner.py --corpus dev --limit 1
 python runner/runner.py --corpus dev --decompilers fission,ghidra
 
 # Full core decompiler set
-python runner/runner.py --corpus dev --decompilers fission,ghidra,boomerang,radare2,angr,snowman,revng,reko
+python runner/runner.py --corpus dev \
+  --decompilers fission,ghidra,retdec,radare2,angr,snowman,revng,reko
 
 # Skip a specific decompiler via environment variable
 FISSION_ENDPOINT=skip python runner/runner.py --corpus dev
@@ -106,7 +129,7 @@ GHIDRA_ENDPOINT=http://localhost:9001 python runner/runner.py --corpus dev
 FISSION_ENDPOINT=http://localhost:9000 python runner/runner.py --corpus dev
 
 # Any {NAME}_ENDPOINT variable is supported:
-# BOOMERANG_ENDPOINT, RADARE2_ENDPOINT, ANGR_ENDPOINT,
+# RETDEC_ENDPOINT, RADARE2_ENDPOINT, ANGR_ENDPOINT,
 # SNOWMAN_ENDPOINT, REVNG_ENDPOINT, REKO_ENDPOINT
 
 # Holdout evaluation (release only — never during development)
@@ -114,18 +137,30 @@ python runner/runner.py --corpus holdout
 
 # Full corpus (dev + holdout combined)
 python runner/runner.py --corpus full
+
+# Explicit run mode
+python runner/runner.py --corpus dev --run-mode official  # marks as publishable candidate
+python runner/runner.py --corpus dev --run-mode smoke     # default, no publish gate
+python runner/runner.py --corpus dev --run-mode local     # local dev, non-official
+
+# Save to a custom path (never overwrites latest.*)
+python runner/runner.py --corpus dev \
+  --output results/dev_latest.json --no-publish
+
+# Render report from a saved result file
+python runner/render_report.py \
+  --input results/dev_latest.json \
+  --corpus dev \
+  --update-latest   # promotes to latest.json + latest.md + docs/index.html
 ```
 
 ### Local Fission build (quality loop only)
 
-CI and GitHub Pages always use a **GitHub Release** Fission bake
-(`FISSION_SOURCE=release`). For day-to-day decompiler work you can mount a
-**current Linux `fission_cli` + `utils/`** into the same adapter:
+CI always uses a **GitHub Release** Fission bake (`FISSION_SOURCE=release`).
+For day-to-day decompiler work you can mount a **current Linux `fission_cli` + `utils/`** into the same adapter:
 
 ```bash
 # 1) Build / collect a Linux ELF CLI + utils (not macOS Mach-O).
-#    Prefer CD-equivalent target: x86_64-unknown-linux-gnu
-#    Order: FISSION_LINUX_CLI → existing target/… → cargo zigbuild → Docker
 scripts/prepare_local_fission.sh
 #    optional: FISSION_ROOT=/path/to/Fission
 #    optional: FISSION_LINUX_CLI=/path/to/linux/fission_cli
@@ -143,26 +178,22 @@ curl -s "http://localhost:${FISSION_HOST_PORT:-8007}/health"
 
 # 4) Measure into a non-latest path (do not overwrite official latest)
 python runner/runner.py --corpus dev --decompilers fission \
-  --output "results/local_${FISSION_GIT_SHA}.json"
+  --output "results/local_${FISSION_GIT_SHA}.json" --no-publish
 ```
 
 **Rules**
 
 | Path | Fission binary | Results |
 |---|---|---|
-| CI / Pages / `results/latest.*` | Release tag only | Official timeline |
+| CI official run → Vercel | Release tag only | Official timeline |
 | Local quality loop | Current build (Linux ELF) | `results/local_<sha>.json` only |
-
-Local mode requires a **Linux ELF** matching the compose platform
-(`linux/amd64` by default). Host macOS arm64 binaries will not run in the
-container; `prepare_local_fission.sh` cross-builds via Docker when needed.
 
 ## Repository Layout
 
 ```
 fission-benchmark/
 ├── benchmark/
-│   ├── KNOWN_ISSUES.md  Infrastructure freeze policy and remaining trust gaps
+│   ├── KNOWN_ISSUES.md   Infrastructure freeze policy and remaining trust gaps
 │   ├── decode_parity/    Instruction decoder parity runner
 │   ├── assembly_parity/  Instruction listing parity runner
 │   ├── pcode_parity/     Raw p-code parity runner
@@ -184,21 +215,28 @@ fission-benchmark/
 │   ├── revng/       rev.ng + FastAPI
 │   └── reko/        Reko + FastAPI
 ├── runner/
-│   ├── runner.py    Main orchestrator
-│   ├── corpus.py    Corpus management + holdout split
-│   ├── scoring.py   Source similarity + structural scoring
-│   ├── readability.py  AST-based readability proxy metrics
-│   └── report.py    Markdown + HTML report generation
+│   ├── runner.py         Main orchestrator (--corpus, --run-mode, --no-publish)
+│   ├── corpus.py         Corpus management + holdout split
+│   ├── scoring.py        Correctness score + structural metrics
+│   ├── run_validity.py   Shared validity engine (measurement_valid / publishable)
+│   ├── render_report.py  Non-destructive report renderer (--update-latest)
+│   ├── readability.py    AST-based readability proxy metrics
+│   └── report.py         Markdown + HTML report generation
 ├── scripts/
-│   └── build_corpus.py  Compile corpus binaries + update function addresses
+│   └── build_corpus.py   Compile corpus binaries + update function addresses
 ├── corpus/
 │   ├── dev/         80% — development corpus (source + manifests)
 │   └── holdout/     20% — holdout corpus (release evaluation only)
-├── docs/            GitHub Pages dashboard (auto-generated)
-├── results/         Benchmark results (auto-committed by CI)
+├── docs/            Dashboard static files (committed by CI, served via Vercel)
+├── results/         Benchmark results (auto-committed by official CI runs)
+├── tests/           Unit and integration tests
+│   ├── test_run_validity.py      Validity engine tests (28 cases)
+│   ├── test_render_report.py     Legacy correctness migration tests
+│   └── test_report_integration.py  Report generation integration tests
+├── vercel.json      Vercel static site config (serves docs/)
 └── .github/
     └── workflows/
-        ├── benchmark.yml     Weekly run + Pages deploy
+        ├── benchmark.yml     Smoke (push) + official (schedule/dispatch) runs
         └── build-check.yml   Docker build validation
 ```
 
@@ -219,6 +257,17 @@ gh api repos/sjkim1127/fission-benchmark/dispatches \
 
 Manual workflow runs can override `fission_version` with a specific tag for
 reproducibility.
+
+## CI Workflow
+
+| Trigger | Run mode | Publishes? |
+|---|---|---|
+| `push` to `main` | `smoke` | No — candidate JSON only |
+| Weekly schedule (`cron`) | `official` | Yes — if measurement valid |
+| Manual dispatch | `official` | Yes — if measurement valid |
+| `fission-release` dispatch | `official` | Yes — if measurement valid |
+
+Official runs that pass the validity gate commit `results/` + `docs/` and deploy to **https://fission-benchmark.vercel.app** via Vercel CLI.
 
 ## API Contract
 
@@ -253,10 +302,13 @@ debugging with `*_ENDPOINT=skip` or by passing a narrower `--decompilers` list.
 
 | Backend | Port | Notes |
 |---|---:|---|
-| `angr` | 8004 | Python API, function-address oriented, useful independent baseline |
-| `snowman` | 8005 | Uses `nocode`; legacy baseline, x86-64 image is amd64-only |
-| `revng` | 8006 | Uses `decompile-to-single-file`; output is whole-program oriented |
-| `reko` | 8008 | Reko decompiler baseline |
+| `ghidra` | 8001 | Ghidra 12.x headless, primary reference baseline |
+| `retdec` | 8002 | RetDec 5.x |
+| `radare2` | 8003 | Radare2 + r2ghidra |
+| `angr` | 8004 | Python API, function-address oriented |
+| `snowman` | 8005 | Uses `nocode`; legacy baseline, amd64-only |
+| `revng` | 8006 | Uses `decompile-to-single-file`; whole-program oriented |
+| `reko` | 8008 | Reko decompiler |
 
 Hosted CI runs the full core set by default and pulls prebuilt GHCR images when
 available before falling back to local builds.
@@ -283,8 +335,7 @@ run first when diagnosing Fission regressions:
 
 Benchmark infrastructure is currently in reliability-maintenance mode. Before
 adding new axes, default decompilers, or composite rankings, check
-`benchmark/KNOWN_ISSUES.md`; the preferred next step is to turn confirmed
-benchmark failures into Fission-side fixes and golden repros.
+`benchmark/KNOWN_ISSUES.md`.
 
 Parity runners accept command templates. Templates can use corpus subject fields
 such as `{binary}`, `{addr}`, `{function}`, `{compiler}`, and `{opt}` and must
@@ -337,10 +388,47 @@ matching source function, not the whole source file.
 
 | Metric | Description |
 |---|---|
-| **Source Similarity** | `difflib.SequenceMatcher` ratio vs normalized original C source (primary) |
-| **Goto Count** | Fewer is better — indicates better control-flow recovery |
-| **Nesting Depth** | Max `{` depth — high values indicate poor structuring |
-| **Consensus Rank** | Rank among all decompilers by similarity for the same function |
+| **Correctness Score** | `0.9 × semantic_score + 0.1 × source_similarity` — primary ranking metric |
+| **Semantic Score** | Functional equivalence via test-case execution |
+| **Source Similarity** | `difflib.SequenceMatcher` ratio vs normalized original C source |
+| **Structural Penalty** | Penalty for goto count and nesting depth |
+| **Consensus Rank** | Rank among all decompilers by correctness score for the same function |
+
+## Result Envelope Format
+
+All result files use a versioned envelope (`schema_version: 2`):
+
+```json
+{
+  "schema_version": 2,
+  "run": {
+    "started_at": "2026-07-11T00:00:00Z",
+    "finished_at": "2026-07-11T00:05:00Z",
+    "duration_ms": 300000,
+    "runner_commit": "abc1234",
+    "corpus": "dev",
+    "official": true
+  },
+  "matrix": {
+    "expected_decompilers": ["fission", "ghidra"],
+    "expected_cells": [
+      { "decompiler": "fission", "function_name": "foo", "compiler_variant": "gcc -O0" }
+    ],
+    "expected_rows": 2,
+    "observed_rows": 2
+  },
+  "validity": {
+    "valid": true,
+    "publishable": true,
+    "fission_coverage": 1.0,
+    "reasons": [],
+    "publish_reasons": []
+  },
+  "rows": [ ... ]
+}
+```
+
+Legacy flat-list files are supported for rendering but are always marked `publishable: false`.
 
 ## License
 
