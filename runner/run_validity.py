@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import json
 import sys
+from functools import lru_cache
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Optional
@@ -46,6 +47,38 @@ FISSION_MIN_COVERAGE: float = 0.90
 
 #: Minimum fraction of ALL rows (across all backends) with no output error.
 BACKEND_MIN_COVERAGE: float = 0.90
+SCHEMA_PATH = Path(__file__).parent.parent / "schemas" / "benchmark-envelope-v2.schema.json"
+
+
+@lru_cache(maxsize=1)
+def _envelope_validator():
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(schema)
+    return Draft202012Validator(schema)
+
+
+def validate_envelope_schema(envelope: Mapping[str, Any]) -> None:
+    """Validate an envelope against the canonical repository schema."""
+    errors = sorted(_envelope_validator().iter_errors(envelope), key=lambda error: list(error.path))
+    if errors:
+        error = errors[0]
+        location = ".".join(str(part) for part in error.absolute_path) or "<root>"
+        raise ValueError(f"Benchmark envelope schema error at {location}: {error.message}")
+
+
+def oracle_evidence_valid(envelope: Mapping[str, Any] | None) -> bool:
+    oracle = envelope.get("oracle", {}) if envelope else {}
+    required = (
+        "target_abi", "compiler", "compiler_version", "runner",
+        "wrapper_sha256", "reference_binary_sha256",
+    )
+    return (
+        oracle.get("valid") is True
+        and oracle.get("mode") == "differential"
+        and all(isinstance(oracle.get(field), str) and oracle[field] for field in required)
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -261,18 +294,32 @@ def evaluate_run(
     # Legacy fallback: Cartesian product from lists (used in older envelopes)
     expected_decompilers = matrix.get("expected_decompilers")
 
+    official_requested = run_meta.get("official") is True
+    if official_requested and not expected_cells_list:
+        reasons.append("official_matrix_missing")
+
     if expected_rows is not None and len(rows) != expected_rows:
         reasons.append("matrix_completeness_mismatch")
 
     if expected_cells_list is not None:
-        # Exact-cell validation (P0.6.2+)
-        expected_cells = {
-            (c["decompiler"], c["function_name"], c["compiler_variant"])
+        expected_identities = [
+            (c.get("decompiler"), c.get("function_name"), c.get("compiler_variant"))
             for c in expected_cells_list
-            if c.get("decompiler") and c.get("function_name") and c.get("compiler_variant")
-        }
+        ]
+        malformed_expected = [identity for identity in expected_identities if not all(identity)]
+        expected_cells = {identity for identity in expected_identities if all(identity)}
+        if malformed_expected:
+            reasons.append("matrix_malformed_expected_cell")
+        if len(expected_cells) != len(expected_identities):
+            reasons.append("matrix_duplicate_expected_cells")
+        if expected_rows != len(expected_cells_list):
+            reasons.append("matrix_expected_rows_mismatch")
+        if matrix.get("observed_rows") != len(rows):
+            reasons.append("matrix_observed_rows_mismatch")
+
         observed_cells: set = set()
         duplicates: set = set()
+        malformed_observed = False
         for r in rows:
             d = r.get("decompiler")
             f = r.get("function_name")
@@ -282,6 +329,8 @@ def evaluate_run(
                 if cell in observed_cells:
                     duplicates.add(cell)
                 observed_cells.add(cell)
+            else:
+                malformed_observed = True
         missing_cells = expected_cells - observed_cells
         unexpected_cells = observed_cells - expected_cells
         if missing_cells:
@@ -290,6 +339,8 @@ def evaluate_run(
             reasons.append("matrix_unexpected_cells")
         if duplicates:
             reasons.append("matrix_duplicate_cells")
+        if malformed_observed:
+            reasons.append("matrix_malformed_observed_cell")
 
     if not fission_cov.attempted:
         reasons.append("no_fission_rows")
@@ -317,6 +368,9 @@ def evaluate_run(
     matrix_failure_codes = {
         "matrix_completeness_mismatch", "matrix_missing_cells",
         "matrix_unexpected_cells", "matrix_duplicate_cells", "backend_missing",
+        "official_matrix_missing", "matrix_malformed_expected_cell",
+        "matrix_duplicate_expected_cells", "matrix_expected_rows_mismatch",
+        "matrix_observed_rows_mismatch", "matrix_malformed_observed_cell",
     }
     matrix_valid = not any(reason in matrix_failure_codes for reason in reasons)
     adapter_output_valid = not any(
@@ -350,7 +404,7 @@ def evaluate_run(
     if not semantic_result_valid:
         publish_reasons.append("semantic_result_malformed")
 
-    semantic_harness_valid = run_meta.get("oracle_abi_valid") is True
+    semantic_harness_valid = oracle_evidence_valid(envelope)
     if not semantic_harness_valid:
         publish_reasons.append("oracle_abi_unverified")
 
@@ -363,9 +417,8 @@ def evaluate_run(
     if not official_profile_valid:
         publish_reasons.append("official_profile_invalid")
 
-    holdout_valid = run_meta.get("holdout_valid") is True
-    if not holdout_valid:
-        publish_reasons.append("holdout_unverified")
+    holdout_valid = False
+    publish_reasons.append("final_publication_gate_required")
 
     required_run_fields = ("run_id", "started_at", "finished_at", "runner_commit", "corpus", "official")
     toolchain = envelope.get("toolchain", {}) if envelope else {}
@@ -425,26 +478,7 @@ def load_result_file(path: Path) -> LoadedResult:
     if isinstance(raw, list):
         return LoadedResult(rows=raw, envelope=None, legacy=True)
     if isinstance(raw, dict):
-        if raw.get("schema_version") != 2:
-            raise ValueError(f"Unsupported or missing schema_version in {path}")
-        if not isinstance(raw.get("rows"), list):
-            raise ValueError(f"Envelope rows must be a list in {path}")
-        for index, row in enumerate(raw["rows"]):
-            if not isinstance(row, dict):
-                raise ValueError(f"Envelope row {index} must be an object in {path}")
-            for field in ("semantic_score", "source_similarity", "structural_penalty", "correctness_score"):
-                value = row.get(field)
-                if value is not None and (not isinstance(value, (int, float)) or not 0.0 <= float(value) <= 1.0):
-                    raise ValueError(f"Envelope row {index} has invalid {field}: {value!r}")
-            if int(row.get("time_ms", 0)) < 0:
-                raise ValueError(f"Envelope row {index} has negative time_ms")
-            if int(row.get("cases_passed", 0)) > int(row.get("cases_total", 0)):
-                raise ValueError(f"Envelope row {index} has cases_passed > cases_total")
-        if raw.get("run", {}).get("official") is True:
-            required = ("run_id", "started_at", "finished_at", "runner_commit", "corpus", "profile")
-            missing = [field for field in required if not raw.get("run", {}).get(field)]
-            if missing:
-                raise ValueError(f"Official envelope is missing run fields: {', '.join(missing)}")
+        validate_envelope_schema(raw)
         return LoadedResult(rows=raw["rows"], envelope=raw, legacy=False)
     raise ValueError(
         f"Unrecognised result format in {path}: "
@@ -458,6 +492,7 @@ def build_envelope(
     run_meta=None,
     toolchain=None,
     matrix=None,
+    oracle=None,
 ):
     """Wrap flat rows in the v2 envelope format."""
     import time as _time
@@ -468,6 +503,7 @@ def build_envelope(
         "run": run_meta or {},
         "toolchain": toolchain or {},
         "matrix": matrix or {},
+        "oracle": oracle or {"mode": "example_cases", "valid": False},
         "rows": rows,
     }
     

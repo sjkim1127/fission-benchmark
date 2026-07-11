@@ -6,6 +6,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "runner"))
 import run_validity as rv
 
@@ -18,8 +20,18 @@ import run_validity as rv
 def _make_row(decompiler="fission", error=None, fail_category=None):
     return {
         "decompiler": decompiler,
+        "function_name": "fixture",
+        "compiler_variant": "gcc -O0",
         "error": error,
         "fail_category": fail_category,
+        "source_similarity": 0.0,
+        "semantic_score": None,
+        "correctness_score": None,
+        "correctness_rank": None,
+        "structural_penalty": 0.0,
+        "time_ms": 0,
+        "cases_passed": 0,
+        "cases_total": 0,
     }
 
 
@@ -200,6 +212,15 @@ def test_render_report_does_not_modify_input(tmp_path):
     )
 
 
+def test_canonical_schema_rejects_missing_row_identity(tmp_path):
+    envelope = rv.build_envelope([_make_row("fission")], run_meta={"official": False})
+    del envelope["rows"][0]["function_name"]
+    path = tmp_path / "malformed.json"
+    path.write_text(json.dumps(envelope), encoding="utf-8")
+    with pytest.raises(ValueError, match="function_name"):
+        rv.load_result_file(path)
+
+
 # ---------------------------------------------------------------------------
 # Bonus: envelope round-trip preserves row count and validity field
 # ---------------------------------------------------------------------------
@@ -333,8 +354,7 @@ def test_valid_smoke_is_not_publishable():
     assert "non_official_run" not in verdict.reasons  # not a measurement failure
 
 
-def test_official_run_is_publishable():
-    """Only a fully evidenced official profile is publishable."""
+def test_official_without_matrix_is_not_publishable():
     rows = _fission_rows(10, 10) + _other_rows("ghidra", 10, 10)
     for row in rows:
         row.update(semantic_score=1.0, cases_passed=1, cases_total=1)
@@ -348,17 +368,53 @@ def test_official_run_is_publishable():
             "corpus": "locked-holdout",
             "official": True,
             "profile": "realistic",
-            "oracle_abi_valid": True,
-            "holdout_valid": True,
             "limits": {"limit": None, "variant_limit": None, "function": None},
         },
         toolchain={"runner_commit": "abc123"},
     )
     loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
     verdict = rv.evaluate_run(loaded)
+    assert not verdict.valid
+    assert not verdict.publishable
+    assert "official_matrix_missing" in verdict.reasons
+
+
+def test_official_exact_matrix_is_candidate_valid_but_needs_final_gate():
+    row = _make_row("fission")
+    row.update(semantic_score=1.0, correctness_score=1.0, cases_passed=1, cases_total=1)
+    cell = {key: row[key] for key in ("decompiler", "function_name", "compiler_variant")}
+    envelope = rv.build_envelope(
+        [row],
+        run_meta={
+            "run_id": "official-test",
+            "started_at": "2026-01-01T00:00:00Z",
+            "finished_at": "2026-01-01T00:01:00Z",
+            "runner_commit": "abc123",
+            "corpus": "dev",
+            "official": True,
+            "profile": "realistic",
+            "limits": {"limit": None, "variant_limit": None, "function": None},
+        },
+        toolchain={"runner_commit": "abc123"},
+        matrix={
+            "expected_decompilers": ["fission"],
+            "expected_rows": 1,
+            "observed_rows": 1,
+            "expected_cells": [cell],
+        },
+        oracle={
+            "mode": "differential", "valid": True,
+            "target_abi": "windows-x86_64", "compiler": "mingw",
+            "compiler_version": "1", "runner": "wine",
+            "wrapper_sha256": "a" * 64, "reference_binary_sha256": "b" * 64,
+        },
+    )
+    verdict = rv.evaluate_run(rv.LoadedResult(rows=[row], envelope=envelope, legacy=False))
     assert verdict.valid
-    assert verdict.publishable
-    assert not verdict.publish_reasons
+    assert verdict.matrix_valid
+    assert verdict.semantic_harness_valid
+    assert not verdict.publishable
+    assert "final_publication_gate_required" in verdict.publish_reasons
 
 
 def test_missing_official_flag_is_not_publishable():
@@ -407,6 +463,49 @@ def test_exact_cells_missing_detected():
     loaded = rv.LoadedResult(rows=envelope["rows"], envelope=envelope, legacy=False)
     verdict = rv.evaluate_run(loaded)
     assert "matrix_missing_cells" in verdict.reasons
+
+
+def test_official_with_empty_expected_cells_is_not_publishable():
+    row = _make_row("fission")
+    envelope = rv.build_envelope(
+        [row],
+        run_meta={"official": True},
+        matrix={"expected_rows": 0, "observed_rows": 1, "expected_cells": []},
+    )
+    verdict = rv.evaluate_run(rv.LoadedResult(rows=[row], envelope=envelope, legacy=False))
+    assert "official_matrix_missing" in verdict.reasons
+
+
+def test_expected_matrix_duplicate_is_rejected():
+    row = _make_row("fission")
+    cell = {key: row[key] for key in ("decompiler", "function_name", "compiler_variant")}
+    envelope = rv.build_envelope(
+        [row],
+        run_meta={"official": True},
+        matrix={"expected_rows": 2, "observed_rows": 1, "expected_cells": [cell, cell]},
+    )
+    verdict = rv.evaluate_run(rv.LoadedResult(rows=[row], envelope=envelope, legacy=False))
+    assert "matrix_duplicate_expected_cells" in verdict.reasons
+
+
+def test_malformed_observed_identity_is_rejected():
+    row = _make_row("fission")
+    row["compiler_variant"] = ""
+    envelope = rv.build_envelope(
+        [row],
+        run_meta={"official": True},
+        matrix={
+            "expected_rows": 1,
+            "observed_rows": 1,
+            "expected_cells": [{
+                "decompiler": "fission",
+                "function_name": "fixture",
+                "compiler_variant": "gcc -O0",
+            }],
+        },
+    )
+    verdict = rv.evaluate_run(rv.LoadedResult(rows=[row], envelope=envelope, legacy=False))
+    assert "matrix_malformed_observed_cell" in verdict.reasons
 
 
 def test_smoke_cli_exits_zero(tmp_path):

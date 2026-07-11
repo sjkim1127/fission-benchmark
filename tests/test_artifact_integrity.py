@@ -13,7 +13,11 @@ def _write_artifacts(root: Path) -> None:
     (root / "docs").mkdir(parents=True)
     marker = "run_id=run-1 source_envelope_sha256=abc123"
     (root / "results/latest.json").write_text(
-        json.dumps({"run": {"run_id": "run-1"}}), encoding="utf-8"
+        json.dumps({
+            "run": {"run_id": "run-1"},
+            "artifact": {"run_id": "run-1", "source_envelope_sha256": "abc123"},
+        }),
+        encoding="utf-8",
     )
     (root / "results/latest.md").write_text(f"<!-- {marker} -->", encoding="utf-8")
     (root / "results/latest-summary.json").write_text(

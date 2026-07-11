@@ -55,23 +55,47 @@ typedef struct Pair {
 """
 
 
-def extract_function_declaration(
+def build_single_translation_unit(
     func_name: str,
     decompiled_code: str,
-) -> str | None:
-    """Extract the target definition's signature as an extern declaration."""
-    names = [f"_{func_name}", func_name]
-    for name in names:
-        pattern = re.compile(
-            rf"(?m)^[ \t]*(?P<signature>[^;{{}}\n]*\b{re.escape(name)}\s*\([^;{{}}]*\))\s*\{{"
+    cases: list[str],
+) -> str:
+    """Combine the decompilation and every semantic case into one C program."""
+    alias = ""
+    if f" _{func_name}" in decompiled_code or f" *_{func_name}" in decompiled_code:
+        alias = f"#define {func_name} _{func_name}\n"
+
+    case_functions = []
+    dispatch = []
+    for index, case in enumerate(cases):
+        renamed, replacements = re.subn(
+            r"\bint\s+main\s*\(\s*(?:void)?\s*\)",
+            f"static int semantic_case_{index}(void)",
+            case,
+            count=1,
         )
-        match = pattern.search(decompiled_code)
-        if match:
-            signature = " ".join(match.group("signature").split())
-            if signature.startswith("static "):
-                return None
-            return f"extern {signature};\n"
-    return None
+        if replacements != 1:
+            raise ValueError(f"semantic case {index} does not define one int main()")
+        case_functions.append(renamed)
+        dispatch.append(
+            f'  rc = semantic_case_{index}(); printf("CASE {index} %d\\n", rc); failures += rc != 0;'
+        )
+
+    dispatcher = "\n".join([
+        "int main(void) {",
+        "  int failures = 0;",
+        "  int rc = 0;",
+        *dispatch,
+        "  return failures == 0 ? 0 : 1;",
+        "}",
+    ])
+    return "\n".join([
+        STANDARD_HEADER,
+        decompiled_code,
+        alias,
+        *case_functions,
+        dispatcher,
+    ])
 
 
 def verify_semantic_correctness(
@@ -110,20 +134,15 @@ def verify_semantic_correctness(
     last_error = None
     last_category = ""
 
-    # If the decompiler prefixed the function name with an underscore (common in 32-bit PE symbols),
-    # define an alias so the test wrapper compiles successfully.
-    alias = ""
-    if f" _{func_name}" in decompiled_code or f" *_{func_name}" in decompiled_code:
-        alias = f"#define {func_name} _{func_name}\n"
-
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
-        declaration = extract_function_declaration(func_name, decompiled_code)
-        if declaration is None:
-            return 0.0, "Target function declaration not found", "compile_error", 0, cases_total
-        function_file = tmpdir_path / "decompiled_function.c"
-        function_object = tmpdir_path / "decompiled_function.o"
-        function_file.write_text(STANDARD_HEADER + "\n" + decompiled_code, encoding="utf-8")
+        source_file = tmpdir_path / "semantic_harness.c"
+        binary_file = tmpdir_path / "semantic_harness"
+        try:
+            source = build_single_translation_unit(func_name, decompiled_code, cases)
+        except ValueError as exc:
+            return 0.0, str(exc), "fixture_error", 0, cases_total
+        source_file.write_text(source, encoding="utf-8")
 
         try:
             result = subprocess.run(
@@ -131,10 +150,9 @@ def verify_semantic_correctness(
                     "gcc",
                     "-w",
                     "-O0",
-                    "-c",
-                    str(function_file),
+                    str(source_file),
                     "-o",
-                    str(function_object),
+                    str(binary_file),
                 ],
                 capture_output=True,
                 text=True,
@@ -148,60 +166,31 @@ def verify_semantic_correctness(
         except Exception as e:
             return 0.0, f"Compiler execution failed: {e}", "compile_error", 0, cases_total
 
-        for i, case_main in enumerate(cases):
-            wrapper_file = tmpdir_path / f"wrapper_{i}.c"
-            bin_file = tmpdir_path / f"semantic_case_{i}"
-            wrapper_file.write_text(
-                STANDARD_HEADER + "\n" + alias + declaration + case_main,
-                encoding="utf-8",
+        try:
+            run_res = subprocess.run(
+                [str(binary_file)],
+                capture_output=True,
+                text=True,
+                timeout=5.0,
             )
-            try:
-                result = subprocess.run(
-                    [
-                        "gcc",
-                        "-w",
-                        "-O0",
-                        str(wrapper_file),
-                        str(function_object),
-                        "-o",
-                        str(bin_file),
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=5.0,
-                )
-                if result.returncode != 0:
-                    last_error = f"Case {i}: Compilation failed:\n{result.stderr[:300]}"
-                    last_category = "compile_error"
-                    continue
-            except subprocess.TimeoutExpired:
-                last_error = f"Case {i}: Compilation timed out (5s)"
-                last_category = "timeout"
-                continue
-            except Exception as e:
-                last_error = f"Case {i}: Compiler execution failed: {e}"
-                last_category = "compile_error"
-                continue
+        except subprocess.TimeoutExpired:
+            return 0.0, "Semantic harness execution timed out (5s)", "timeout", 0, cases_total
+        except Exception as exc:
+            return 0.0, f"Semantic harness execution failed: {exc}", "runtime_error", 0, cases_total
 
-            # Run
-            try:
-                run_res = subprocess.run(
-                    [str(bin_file)],
-                    capture_output=True,
-                    text=True,
-                    timeout=2.0,
-                )
-                if run_res.returncode == 0:
-                    cases_passed += 1
-                else:
-                    last_error = f"Case {i}: Runtime failed (exit code {run_res.returncode})"
-                    last_category = "runtime_error"
-            except subprocess.TimeoutExpired:
-                last_error = f"Case {i}: Runtime timed out (2s) — potential infinite loop"
-                last_category = "timeout"
-            except Exception as e:
-                last_error = f"Case {i}: Runtime execution failed: {e}"
-                last_category = "runtime_error"
+        observed: dict[int, int] = {}
+        for line in run_res.stdout.splitlines():
+            match = re.fullmatch(r"CASE (\d+) (-?\d+)", line.strip())
+            if match:
+                observed[int(match.group(1))] = int(match.group(2))
+        cases_passed = sum(observed.get(index) == 0 for index in range(cases_total))
+        if len(observed) != cases_total:
+            last_error = f"Semantic harness emitted {len(observed)}/{cases_total} case results"
+            last_category = "runtime_error"
+        elif cases_passed != cases_total:
+            failed = [str(index) for index in range(cases_total) if observed[index] != 0]
+            last_error = f"Semantic cases failed: {', '.join(failed)}"
+            last_category = "assertion_fail"
 
     score = cases_passed / cases_total if cases_total > 0 else 0.0
 

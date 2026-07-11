@@ -99,12 +99,8 @@ curl http://localhost:8003/health  # Radare2
 # Run benchmark (smoke, candidate JSON only — does not overwrite latest.*)
 python runner/runner.py --corpus dev
 
-# Run and publish to latest.* (local use only)
-python runner/runner.py --corpus dev --publish
-
-# Results
-cat results/latest.md
-open docs/index.html
+# Publication is intentionally unavailable until dev, locked holdout,
+# differential ABI oracle, and overfitting evidence all pass.
 ```
 
 ### Options
@@ -145,12 +141,20 @@ python runner/runner.py --corpus dev --run-mode local     # local dev, non-offic
 
 # Save to a custom path (never overwrites latest.*)
 python runner/runner.py --corpus dev \
-  --output results/dev_latest.json --no-publish
+  --output results/dev_latest.json
 
-# Render report from a saved result file
+# Final publication gate (requires independently valid evidence)
+python -m runner.publication_gate \
+  --dev results/dev_latest.json \
+  --holdout results/holdout_latest.json \
+  --overfitting results/overfitting_report.json \
+  --output results/publication-verdict.json
+
+# Promote only with the linked final verdict
 python runner/render_report.py \
   --input results/dev_latest.json \
   --corpus dev \
+  --publication-verdict results/publication-verdict.json \
   --update-latest   # promotes to latest.json + latest.md + docs/index.html
 ```
 
@@ -178,7 +182,7 @@ curl -s "http://localhost:${FISSION_HOST_PORT:-8007}/health"
 
 # 4) Measure into a non-latest path (do not overwrite official latest)
 python runner/runner.py --corpus dev --decompilers fission \
-  --output "results/local_${FISSION_GIT_SHA}.json" --no-publish
+  --output "results/local_${FISSION_GIT_SHA}.json"
 ```
 
 **Rules**
@@ -215,10 +219,11 @@ fission-benchmark/
 │   ├── revng/       rev.ng + FastAPI
 │   └── reko/        Reko + FastAPI
 ├── runner/
-│   ├── runner.py         Main orchestrator (--corpus, --run-mode, --no-publish)
+│   ├── runner.py         Candidate-run orchestrator (--corpus, --run-mode)
 │   ├── corpus.py         Corpus management + holdout split
 │   ├── scoring.py        Correctness score + structural metrics
 │   ├── run_validity.py   Shared validity engine (measurement_valid / publishable)
+│   ├── publication_gate.py Final dev + holdout + oracle evidence gate
 │   ├── render_report.py  Non-destructive report renderer (--update-latest)
 │   ├── readability.py    AST-based readability proxy metrics
 │   └── report.py         Markdown + HTML report generation

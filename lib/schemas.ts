@@ -34,7 +34,9 @@ export const RunMetaSchema = z.object({
   duration_ms: z.number().optional(),
   runner_commit: z.string().optional(),
   corpus: z.string().optional(),
-  official: z.boolean().optional(),
+  profile: z.enum(["diagnostic", "realistic"]).optional(),
+  limits: z.record(z.string(), z.unknown()).optional(),
+  official: z.boolean(),
   run_id: z.string().optional(),
   fission_version: z.string().optional(),
   fission_source: z.string().optional(),
@@ -42,22 +44,37 @@ export const RunMetaSchema = z.object({
 });
 
 export const MatrixSchema = z.object({
-  expected_decompilers: z.array(z.string()).optional(),
-  expected_cells: z.array(z.record(z.string(), z.unknown())).optional(),
-  expected_rows: z.number().optional(),
-  observed_rows: z.number().optional(),
+  expected_decompilers: z.array(z.string()),
+  expected_cells: z.array(z.object({
+    decompiler: z.string().min(1),
+    function_name: z.string().min(1),
+    compiler_variant: z.string().min(1),
+  })),
+  expected_rows: z.number().int().nonnegative(),
+  observed_rows: z.number().int().nonnegative(),
+});
+
+export const OracleSchema = z.object({
+  mode: z.enum(["example_cases", "differential"]),
+  valid: z.boolean(),
+  target_abi: z.string().optional(),
+  compiler: z.string().optional(),
+  compiler_version: z.string().optional(),
+  runner: z.string().optional(),
+  wrapper_sha256: z.string().regex(/^[0-9a-f]{64}$/).optional(),
+  reference_binary_sha256: z.string().regex(/^[0-9a-f]{64}$/).optional(),
 });
 
 export const RowSchema = z.object({
   decompiler: z.string(),
   function_name: z.string(),
-  compiler_variant: z.string().optional().default(""),
+  compiler_variant: z.string().min(1),
   binary: z.string().optional(),
   addr: z.string().optional(),
   source_similarity: z.number().default(0),
   semantic_score: z.number().nullable().default(null),  // null = no_wrapper (untestable)
   correctness_score: z.number().nullable().default(null),  // null = no_wrapper
-  correctness_rank: z.number().int().nullable().optional(),
+  correctness_rank: z.number().int().positive().nullable(),
   goto_count: z.number().default(0),
   nesting_depth: z.number().default(0),
   time_ms: z.number().default(0),
@@ -79,12 +96,39 @@ export const ToolchainSchema = z.object({
 });
 
 export const BenchmarkEnvelopeSchema = z.object({
-  schema_version: z.number().optional(),
-  run: RunMetaSchema.optional(),
-  toolchain: ToolchainSchema.optional(),
-  matrix: MatrixSchema.optional(),
-  validity: ValiditySchema.optional(),
+  schema_version: z.literal(2),
+  run: RunMetaSchema,
+  toolchain: ToolchainSchema,
+  matrix: MatrixSchema,
+  oracle: OracleSchema,
+  validity: ValiditySchema,
   rows: z.array(RowSchema),
+}).superRefine((envelope, context) => {
+  if (!envelope.run.official) return;
+  const requiredRunFields = [
+    envelope.run.run_id,
+    envelope.run.started_at,
+    envelope.run.finished_at,
+    envelope.run.runner_commit,
+    envelope.run.corpus,
+    envelope.run.profile,
+    envelope.run.limits,
+  ];
+  if (requiredRunFields.some((value) => value === undefined || value === "")) {
+    context.addIssue({ code: "custom", message: "Official run provenance is incomplete", path: ["run"] });
+  }
+  if (envelope.matrix.expected_cells.length === 0) {
+    context.addIssue({ code: "custom", message: "Official matrix is empty", path: ["matrix", "expected_cells"] });
+  }
+  if (
+    envelope.matrix.expected_rows !== envelope.matrix.expected_cells.length
+    || envelope.matrix.observed_rows !== envelope.rows.length
+  ) {
+    context.addIssue({ code: "custom", message: "Official matrix row counts do not match", path: ["matrix"] });
+  }
+  if (envelope.oracle.mode !== "differential" || envelope.oracle.valid !== true) {
+    context.addIssue({ code: "custom", message: "Official differential oracle evidence is invalid", path: ["oracle"] });
+  }
 });
 
 export type BenchmarkEnvelope = z.infer<typeof BenchmarkEnvelopeSchema>;

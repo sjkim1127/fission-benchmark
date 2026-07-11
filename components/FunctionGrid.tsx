@@ -109,9 +109,13 @@ function CodeModal({ fnName, rows, onClose }: ModalProps) {
 function FunctionCard({ fnName, rows, onClick }: { fnName: string; rows: Row[]; onClick: () => void }) {
   const decompilers = [...new Set(rows.map((r) => r.decompiler))];
   const fissionRow = rows.find((r) => r.decompiler === "fission" && !r.error);
-  const fissionScore = fissionRow ? (fissionRow.correctness_score ?? 0) : null;
+  const fissionScore = fissionRow?.correctness_score ?? null;
   const allFail = rows.every((r) => !!r.error);
-  const universallyLow = !allFail && rows.filter((r) => !r.error).every((r) => (r.correctness_score ?? 0) < 0.3);
+  const correctnessRows = rows.filter(
+    (r) => !r.error && r.correctness_score !== null && r.correctness_score !== undefined,
+  );
+  const universallyLow = !allFail && correctnessRows.length > 0
+    && correctnessRows.every((r) => r.correctness_score! < 0.3);
 
   return (
     <button className={styles.card} onClick={onClick}>
@@ -123,13 +127,19 @@ function FunctionCard({ fnName, rows, onClick }: { fnName: string; rows: Row[]; 
       <div className={styles.cardScores}>
         {decompilers.map((d) => {
           const r = rows.find((row) => row.decompiler === d);
-          const score = r?.correctness_score ?? 0;
           const color = DECOMPILER_COLORS[d] ?? "#94a3b8";
+          const scoreLabel = !r
+            ? "N/A"
+            : r.error
+              ? "err"
+              : r.correctness_score === null || r.correctness_score === undefined
+                ? "N/A"
+                : r.correctness_score.toFixed(2);
           return (
             <div key={d} className={styles.scoreItem}>
               <span className={styles.scoreDec} style={{ color }}>{d[0].toUpperCase()}</span>
               {r ? <StatusIcon row={r} /> : <span className={styles.statusMissing}>–</span>}
-              <span className={styles.scoreVal}>{r?.error ? "err" : (r?.correctness_score ?? 0).toFixed(2)}</span>
+              <span className={styles.scoreVal}>{scoreLabel}</span>
             </div>
           );
         })}
@@ -166,11 +176,18 @@ export function FunctionGrid({ functionNames, rows }: Props) {
       if (!fn.toLowerCase().includes(search.toLowerCase())) return false;
       const fnRows = rowsByFn.get(fn) ?? [];
       const fissionRow = fnRows.find((r) => r.decompiler === "fission");
-      if (filter === "pass" && (!fissionRow || fissionRow.error || (fissionRow.semantic_score ?? 0) < 1.0)) return false;
-      if (filter === "fail" && (!fissionRow || (!fissionRow.error && (fissionRow.semantic_score ?? 0) >= 1.0))) return false;
+      const semanticMeasured = fissionRow?.semantic_score !== null && fissionRow?.semantic_score !== undefined;
+      if (filter === "pass" && (!fissionRow || fissionRow.error || !semanticMeasured || fissionRow.semantic_score! < 1.0)) return false;
+      if (filter === "fail" && (!fissionRow || (!fissionRow.error && (!semanticMeasured || fissionRow.semantic_score! >= 1.0)))) return false;
       if (filter === "gap") {
-        const fissionLow = !fissionRow || fissionRow.error || (fissionRow.correctness_score ?? 0) < 0.3;
-        const othersOk = fnRows.filter((r) => r.decompiler !== "fission" && !r.error).some((r) => (r.correctness_score ?? 0) >= 0.3);
+        const fissionLow = !!fissionRow?.error || (
+          fissionRow?.correctness_score !== null
+          && fissionRow?.correctness_score !== undefined
+          && fissionRow.correctness_score < 0.3
+        );
+        const othersOk = fnRows
+          .filter((r) => r.decompiler !== "fission" && !r.error)
+          .some((r) => r.correctness_score !== null && r.correctness_score !== undefined && r.correctness_score >= 0.3);
         if (!fissionLow || !othersOk) return false;
       }
       return true;

@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import pytest
 
 from runner.runner import (
+    build_expected_cells,
     filter_functions,
     fission_toolchain_metadata,
     format_semantic_score,
@@ -63,3 +64,27 @@ def test_fission_toolchain_metadata_uses_local_bundle_provenance(monkeypatch) ->
         "fission_source": "local",
         "fission_source_fingerprint": "fingerprint",
     }
+
+
+def test_expected_cells_use_limited_execution_function_set() -> None:
+    @dataclass
+    class VariantStub:
+        compiler: str
+        opt: str
+
+    @dataclass
+    class PlannedFunctionStub:
+        name: str
+        compiler_variants: list[VariantStub]
+
+    variant = VariantStub("gcc", "-O0")
+    functions = [
+        PlannedFunctionStub("first", [variant]),
+        PlannedFunctionStub("second", [variant]),
+    ]
+    cells = build_expected_cells(functions[:1], ["fission", "ghidra"], 1)
+
+    assert cells == [
+        {"decompiler": "fission", "function_name": "first", "compiler_variant": "gcc -O0"},
+        {"decompiler": "ghidra", "function_name": "first", "compiler_variant": "gcc -O0"},
+    ]

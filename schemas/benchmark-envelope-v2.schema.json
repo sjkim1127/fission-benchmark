@@ -3,7 +3,7 @@
   "$id": "https://fission.dev/schemas/benchmark-envelope-v2.schema.json",
   "title": "Fission Benchmark Envelope v2",
   "type": "object",
-  "required": ["schema_version", "run", "toolchain", "matrix", "validity", "rows"],
+  "required": ["schema_version", "run", "toolchain", "matrix", "oracle", "validity", "rows"],
   "properties": {
     "schema_version": {"const": 2},
     "run": {
@@ -16,33 +16,94 @@
         "runner_commit": {"type": "string", "minLength": 1},
         "corpus": {"type": "string", "minLength": 1},
         "profile": {"enum": ["diagnostic", "realistic"]},
-        "official": {"type": "boolean"}
+        "official": {"type": "boolean"},
+        "limits": {"type": "object"}
       },
       "additionalProperties": true
     },
     "toolchain": {"type": "object"},
-    "matrix": {"type": "object"},
-    "validity": {"type": "object", "required": ["valid", "publishable"]},
+    "matrix": {
+      "type": "object",
+      "properties": {
+        "expected_decompilers": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "expected_rows": {"type": "integer", "minimum": 0},
+        "observed_rows": {"type": "integer", "minimum": 0},
+        "expected_cells": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/cell"}
+        }
+      },
+      "additionalProperties": true
+    },
+    "oracle": {
+      "type": "object",
+      "required": ["mode", "valid"],
+      "properties": {
+        "mode": {"enum": ["example_cases", "differential"]},
+        "valid": {"type": "boolean"},
+        "target_abi": {"type": "string", "minLength": 1},
+        "compiler": {"type": "string", "minLength": 1},
+        "compiler_version": {"type": "string", "minLength": 1},
+        "runner": {"type": "string", "minLength": 1},
+        "wrapper_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "reference_binary_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": true
+    },
+    "validity": {
+      "type": "object",
+      "required": ["valid", "publishable"],
+      "properties": {
+        "valid": {"type": "boolean"},
+        "publishable": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
     "rows": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["decompiler", "function_name", "compiler_variant", "time_ms"],
+      "items": {"$ref": "#/$defs/row"}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"run": {"properties": {"official": {"const": true}}}}},
+      "then": {
         "properties": {
-          "decompiler": {"type": "string", "minLength": 1},
-          "function_name": {"type": "string", "minLength": 1},
-          "compiler_variant": {"type": "string", "minLength": 1},
-          "semantic_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-          "source_similarity": {"type": "number", "minimum": 0, "maximum": 1},
-          "structural_penalty": {"type": "number", "minimum": 0, "maximum": 1},
-          "correctness_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-          "correctness_rank": {"type": ["integer", "null"], "minimum": 1},
-          "time_ms": {"type": "integer", "minimum": 0},
-          "cases_passed": {"type": "integer", "minimum": 0},
-          "cases_total": {"type": "integer", "minimum": 0}
-        },
-        "additionalProperties": true
+          "run": {"required": ["run_id", "started_at", "finished_at", "runner_commit", "corpus", "profile", "limits"]},
+          "matrix": {"required": ["expected_decompilers", "expected_rows", "observed_rows", "expected_cells"]},
+          "oracle": {"required": ["target_abi", "compiler", "compiler_version", "runner", "wrapper_sha256", "reference_binary_sha256"]}
+        }
       }
+    }
+  ],
+  "$defs": {
+    "cell": {
+      "type": "object",
+      "required": ["decompiler", "function_name", "compiler_variant"],
+      "properties": {
+        "decompiler": {"type": "string", "minLength": 1},
+        "function_name": {"type": "string", "minLength": 1},
+        "compiler_variant": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "row": {
+      "type": "object",
+      "required": ["decompiler", "function_name", "compiler_variant", "source_similarity", "semantic_score", "correctness_score", "correctness_rank", "structural_penalty", "time_ms", "cases_passed", "cases_total"],
+      "properties": {
+        "decompiler": {"type": "string", "minLength": 1},
+        "function_name": {"type": "string", "minLength": 1},
+        "compiler_variant": {"type": "string", "minLength": 1},
+        "semantic_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "source_similarity": {"type": "number", "minimum": 0, "maximum": 1},
+        "structural_penalty": {"type": "number", "minimum": 0, "maximum": 1},
+        "correctness_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "correctness_rank": {"type": ["integer", "null"], "minimum": 1},
+        "time_ms": {"type": "integer", "minimum": 0},
+        "cases_passed": {"type": "integer", "minimum": 0},
+        "cases_total": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": true

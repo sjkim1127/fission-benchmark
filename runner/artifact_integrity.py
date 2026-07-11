@@ -66,6 +66,10 @@ def verify_artifact_manifest(output_root: Path) -> dict[str, Any]:
     summary = json.loads((output_root / "results/latest-summary.json").read_text(encoding="utf-8"))
     if latest.get("run", {}).get("run_id") != run_id:
         raise ValueError("latest.json run_id does not match artifact manifest")
+    if latest.get("artifact", {}).get("run_id") != run_id:
+        raise ValueError("latest.json artifact run_id does not match artifact manifest")
+    if latest.get("artifact", {}).get("source_envelope_sha256") != source_hash:
+        raise ValueError("latest.json source hash does not match artifact manifest")
     if summary.get("run", {}).get("run_id") != run_id:
         raise ValueError("latest-summary.json run_id does not match artifact manifest")
     if summary.get("artifact", {}).get("source_envelope_sha256") != source_hash:

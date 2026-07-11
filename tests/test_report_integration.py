@@ -50,7 +50,13 @@ def test_generate_report_writes_markdown_and_html(tmp_path, monkeypatch):
 
     scores = [_make_score()]
     verdict = _make_verdict()
-    generate_report(scores, corpus_split="dev", verdict=verdict)
+    generate_report(
+        scores,
+        corpus_split="dev",
+        verdict=verdict,
+        results_dir=tmp_path / "results",
+        docs_dir=tmp_path / "docs",
+    )
 
     assert (tmp_path / "results" / "latest.md").exists(), "latest.md not written"
     assert (tmp_path / "docs" / "index.html").exists(), "index.html not written"
@@ -66,7 +72,13 @@ def test_html_and_markdown_share_verdict(tmp_path, monkeypatch):
 
     scores = [_make_score()]
     verdict = _make_verdict(valid=True, publishable=False)
-    generate_report(scores, corpus_split="dev", verdict=verdict)
+    generate_report(
+        scores,
+        corpus_split="dev",
+        verdict=verdict,
+        results_dir=tmp_path / "results",
+        docs_dir=tmp_path / "docs",
+    )
 
     md = (tmp_path / "results" / "latest.md").read_text()
     html = (tmp_path / "docs" / "index.html").read_text()
@@ -98,7 +110,9 @@ def test_render_cli_preserves_input_hash(tmp_path):
     rows = [
         {"decompiler": "fission", "function_name": "foo", "compiler_variant": "gcc -O0",
          "error": None, "semantic_score": 1.0, "source_similarity": 0.8,
-         "correctness_score": 0.92, "goto_count": 0, "nesting_depth": 0, "time_ms": 100}
+         "correctness_score": 0.92, "correctness_rank": None,
+         "structural_penalty": 0.0, "cases_passed": 1, "cases_total": 1,
+         "goto_count": 0, "nesting_depth": 0, "time_ms": 100}
     ]
     envelope = rv.build_envelope(rows, run_meta={"official": False})
     in_file = tmp_path / "input.json"
@@ -138,3 +152,38 @@ def test_report_renders_no_wrapper_as_unmeasured(tmp_path):
     markdown = (tmp_path / "results/latest.md").read_text(encoding="utf-8")
     assert "n/a" in markdown
     assert "no_test" in markdown
+
+
+def test_linked_publication_verdict_marks_isolated_artifact_publishable(tmp_path):
+    rows = [{
+        "decompiler": "fission", "function_name": "foo", "compiler_variant": "gcc -O0",
+        "error": None, "semantic_score": 1.0, "source_similarity": 0.8,
+        "correctness_score": 1.0, "correctness_rank": 1,
+        "structural_penalty": 0.0, "cases_passed": 1, "cases_total": 1,
+        "goto_count": 0, "nesting_depth": 0, "time_ms": 1,
+    }]
+    envelope = rv.build_envelope(rows, run_meta={"official": False})
+    input_path = tmp_path / "candidate.json"
+    input_path.write_text(json.dumps(envelope), encoding="utf-8")
+    source_hash = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    verdict_path = tmp_path / "publication.json"
+    verdict_path.write_text(json.dumps({
+        "publishable": True,
+        "dev": {"envelope_sha256": source_hash},
+    }), encoding="utf-8")
+    output_dir = tmp_path / "published"
+
+    result = subprocess.run(
+        [
+            sys.executable, str(RUNNER_DIR / "render_report.py"),
+            "--input", str(input_path), "--corpus", "dev",
+            "--output-dir", str(output_dir),
+            "--publication-verdict", str(verdict_path),
+        ],
+        capture_output=True, text=True, cwd=str(RUNNER_DIR.parent),
+    )
+
+    assert result.returncode == 0, result.stderr
+    latest = json.loads((output_dir / "results/latest.json").read_text(encoding="utf-8"))
+    assert latest["validity"]["publishable"] is True
+    assert latest["publication"]["dev"]["envelope_sha256"] == source_hash

@@ -79,6 +79,8 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: ruff check benchmark/ runner/ docker/ scripts/ tests/
       - run: pytest -q
+      - name: Verify tests do not generate publication artifacts
+        run: git diff --exit-code -- docs/index.html results/latest.json results/latest.md results/latest-summary.json results/artifact-manifest.json
 
   # ---------------------------------------------------------------------------
   # Contract tests — start each image and run a smoke sequence to verify that
@@ -347,4 +349,3 @@ jobs:
       - name: Stop containers
         if: always()
         run: docker compose down --volumes --remove-orphans
-

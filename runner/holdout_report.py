@@ -9,11 +9,16 @@ Outputs a comparison table and flags decompilers with ≥10pp drop as potential 
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import sys
 from collections import defaultdict
 from pathlib import Path
 
-from run_validity import load_result_file
+try:
+    from .run_validity import load_result_file
+except ImportError:
+    from run_validity import load_result_file
 
 # Threshold in percentage points: if holdout drops by more than this, flag overfitting
 OVERFITTING_THRESHOLD_PP = 10.0
@@ -31,14 +36,16 @@ def aggregate_by_decompiler(results: list[dict]) -> dict[str, dict]:
 
     agg = {}
     for d, rs in by_d.items():
-        correctness = [r.get("correctness_score", r.get("composite_score", 0.0)) for r in rs]
+        correctness = [r["correctness_score"] for r in rs if r.get("correctness_score") is not None]
         sims = [r.get("source_similarity", 0.0) for r in rs]
-        sems = [r.get("semantic_score", 0.0) for r in rs]
+        sems = [r["semantic_score"] for r in rs if r.get("semantic_score") is not None]
         agg[d] = {
             "count": len(rs),
-            "avg_correctness": sum(correctness) / len(correctness),
+            "correctness_tested": len(correctness),
+            "semantic_tested": len(sems),
+            "avg_correctness": sum(correctness) / len(correctness) if correctness else None,
             "avg_similarity": sum(sims) / len(sims),
-            "avg_semantic": sum(sems) / len(sems),
+            "avg_semantic": sum(sems) / len(sems) if sems else None,
         }
     return agg
 
@@ -53,8 +60,9 @@ def compute_per_function_comparison(
             if not r.get("error"):
                 key = (r["decompiler"], r["function_name"])
                 scores = idx.setdefault(key, [])
-                scores.append(r.get("correctness_score", r.get("composite_score", 0.0)))
-        return {k: sum(v) / len(v) for k, v in idx.items()}
+                if r.get("correctness_score") is not None:
+                    scores.append(r["correctness_score"])
+        return {k: sum(v) / len(v) for k, v in idx.items() if v}
 
     dev_idx = build_index(dev)
     holdout_idx = build_index(holdout)
@@ -77,7 +85,12 @@ def compute_per_function_comparison(
     return sorted(rows, key=lambda r: r["drop_pp"], reverse=True)
 
 
-def generate_report(dev_path: Path, holdout_path: Path, output_path: Path | None = None) -> None:
+def generate_report(
+    dev_path: Path,
+    holdout_path: Path,
+    output_path: Path | None = None,
+    json_output_path: Path | None = None,
+) -> dict:
     dev_results = load_results(dev_path)
     holdout_results = load_results(holdout_path)
 
@@ -159,9 +172,20 @@ def generate_report(dev_path: Path, holdout_path: Path, output_path: Path | None
         output_path.write_text("\n".join(lines), encoding="utf-8")
         print(f"\n📝 Report saved to {output_path}")
 
-    # Exit with non-zero if any overfitting detected (for CI gate)
-    if overfit_flags:
-        sys.exit(1)
+    report = {
+        "schema_version": 1,
+        "passed": not overfit_flags,
+        "threshold_pp": OVERFITTING_THRESHOLD_PP,
+        "dev_envelope_sha256": hashlib.sha256(dev_path.read_bytes()).hexdigest(),
+        "holdout_envelope_sha256": hashlib.sha256(holdout_path.read_bytes()).hexdigest(),
+        "flagged_decompilers": overfit_flags,
+        "dev": dev_agg,
+        "holdout": holdout_agg,
+    }
+    if json_output_path:
+        json_output_path.parent.mkdir(parents=True, exist_ok=True)
+        json_output_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    return report
 
 
 def main():
@@ -169,13 +193,17 @@ def main():
     parser.add_argument("--dev", required=True, help="Path to dev corpus benchmark JSON")
     parser.add_argument("--holdout", required=True, help="Path to holdout corpus benchmark JSON")
     parser.add_argument("--output", default=None, help="Optional output Markdown path")
+    parser.add_argument("--json-output", default=None, help="Machine-readable gate evidence")
     args = parser.parse_args()
 
-    generate_report(
+    report = generate_report(
         dev_path=Path(args.dev),
         holdout_path=Path(args.holdout),
         output_path=Path(args.output) if args.output else None,
+        json_output_path=Path(args.json_output) if args.json_output else None,
     )
+    if not report["passed"]:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

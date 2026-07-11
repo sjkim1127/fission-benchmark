@@ -20,6 +20,7 @@ import sys
 from collections import Counter
 from dataclasses import asdict
 from dataclasses import fields
+from dataclasses import replace
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -159,6 +160,11 @@ def main() -> None:
         help="Isolated output root containing results/ and docs/ (required unless --update-latest)",
     )
     parser.add_argument(
+        "--publication-verdict",
+        type=Path,
+        help="Final evidence verdict required when promoting --update-latest",
+    )
+    parser.add_argument(
         "--write-normalized",
         type=Path,
         default=None,
@@ -177,6 +183,8 @@ def main() -> None:
         parser.error("--output-dir and --update-latest are mutually exclusive")
     if not args.update_latest and args.output_dir is None:
         parser.error("--output-dir is required unless --update-latest is used")
+    if args.update_latest and args.publication_verdict is None:
+        parser.error("--publication-verdict is required with --update-latest")
     output_root = Path(__file__).parent.parent if args.update_latest else args.output_dir.resolve()
     results_dir = output_root / "results"
     docs_dir = output_root / "docs"
@@ -186,6 +194,13 @@ def main() -> None:
     # ── Load without modifying the input file ─────────────────────────────────
     loaded = load_result_file(args.input)
     source_envelope_sha256 = hashlib.sha256(args.input.read_bytes()).hexdigest()
+    publication_verdict = None
+    if args.publication_verdict:
+        publication_verdict = json.loads(args.publication_verdict.read_text(encoding="utf-8"))
+        if publication_verdict.get("publishable") is not True:
+            parser.error("publication verdict is not publishable")
+        if publication_verdict.get("dev", {}).get("envelope_sha256") != source_envelope_sha256:
+            parser.error("publication verdict does not link to --input")
     rows = loaded.rows
     is_legacy = loaded.legacy
     envelope = loaded.envelope
@@ -239,13 +254,26 @@ def main() -> None:
 
     loaded = LoadedResult(rows=serialized_rows, envelope=out_envelope, legacy=False)
     verdict = evaluate_run(loaded)
-    out_envelope["validity"] = validity_dict(verdict)
+    final_validity = validity_dict(verdict)
+    if publication_verdict is not None:
+        final_validity["publishable"] = True
+        final_validity["holdout_valid"] = True
+        final_validity["publish_reasons"] = []
+        verdict = replace(
+            verdict,
+            publishable=True,
+            holdout_valid=True,
+            publish_reasons=(),
+        )
+    out_envelope["validity"] = final_validity
     artifact = {
         "run_id": out_envelope.get("run", {}).get("run_id"),
         "source_envelope_sha256": source_envelope_sha256,
         "generated_from": str(args.input),
     }
     out_envelope["artifact"] = artifact
+    if publication_verdict is not None:
+        out_envelope["publication"] = publication_verdict
     serialized = json.dumps(out_envelope, indent=2) + "\n"
 
     if args.write_normalized:

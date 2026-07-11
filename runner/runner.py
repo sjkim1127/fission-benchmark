@@ -2,6 +2,7 @@
 import asyncio
 import base64
 from collections import Counter
+import hashlib
 import json
 import os
 import sys
@@ -26,10 +27,10 @@ from scoring import (
     structural_score,
 )
 from semantic import verify_semantic_correctness_async
-from report import generate_report
 from readability import analyze_readability, ast_structure_similarity, summarize_readability_proxy_score
 from output_diagnostics import analyze_output_diagnostics, invalid_output_reason
 from run_validity import build_envelope
+from test_wrappers import TEST_WRAPPERS
 import subprocess
 
 app = typer.Typer(help="Fission decompiler benchmark runner.")
@@ -58,6 +59,25 @@ def filter_functions(functions: list, requested: str | None) -> list:
 def format_semantic_score(score: float | None) -> str:
     """Format semantic evidence without treating an untestable row as failure."""
     return "n/a" if score is None else f"{score:.2f}"
+
+
+def build_expected_cells(
+    functions: list,
+    decompiler_names: list[str],
+    variant_limit: int | None,
+) -> list[dict[str, str]]:
+    """Build the exact matrix from the same function list passed to run_all."""
+    cells = []
+    for function in functions:
+        variants = function.compiler_variants[:variant_limit] if variant_limit else function.compiler_variants
+        for variant in variants:
+            for decompiler in decompiler_names:
+                cells.append({
+                    "decompiler": decompiler,
+                    "function_name": function.name,
+                    "compiler_variant": f"{variant.compiler} {variant.opt}",
+                })
+    return cells
 
 
 def fission_toolchain_metadata() -> dict[str, str]:
@@ -399,10 +419,6 @@ def run(
     output: str | None = typer.Option(
         None, help="Path to save JSON output (defaults to results/TIMESTAMP.json)"
     ),
-    publish: bool = typer.Option(
-        False, "--publish/--no-publish",
-        help="Update latest.json and regenerate report (default: --no-publish)"
-    ),
     run_mode: str = typer.Option(
         "smoke", help="Execution mode: smoke, local, or official"
     ),
@@ -454,22 +470,12 @@ def run(
 
     # Build exact expected_cells list (per function x variant x decompiler)
     # Avoids Cartesian product assumptions when functions have different variants.
-    expected_cells = []
-    for fn in fn_list:
-        variants = fn.compiler_variants[:variant_limit] if variant_limit else fn.compiler_variants
-        for variant in variants:
-            cv = f"{variant.compiler} {variant.opt}"
-            for dec in dec_map:
-                expected_cells.append({
-                    "decompiler": dec,
-                    "function_name": fn.name,
-                    "compiler_variant": cv,
-                })
+    expected_cells = build_expected_cells(fn_list, list(dec_map), variant_limit)
 
     expected_rows = len(expected_cells)
 
     # Run event loop
-    scores = asyncio.run(run_all(selected_functions, dec_map, corpus, limit, variant_limit))
+    scores = asyncio.run(run_all(fn_list, dec_map, corpus, limit, variant_limit))
 
     elapsed = time.monotonic() - start_monotonic
     finished_at = datetime.now(timezone.utc)
@@ -484,14 +490,30 @@ def run(
         json_path = Path(output)
     else:
         json_path = results_dir / f"{timestamp}.json"
-    latest_json = results_dir / "latest.json"
-
     serialized = [asdict(s) for s in scores]
     
     try:
         commit = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
     except Exception:
         commit = "unknown"
+
+    wrapper_sha256 = hashlib.sha256(
+        json.dumps(TEST_WRAPPERS, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    binary_hash = hashlib.sha256()
+    for cell in sorted(expected_cells, key=lambda item: tuple(item.values())):
+        binary_hash.update(json.dumps(cell, sort_keys=True).encode("utf-8"))
+    try:
+        compiler_version = subprocess.check_output(
+            ["gcc", "--version"], text=True
+        ).splitlines()[0]
+    except Exception:
+        compiler_version = "unavailable"
+    manifest_hash = hashlib.sha256()
+    manifest_paths = sorted((CORPUS_ROOT / corpus / "manifests").glob("*.json"))
+    for manifest_path in manifest_paths:
+        manifest_hash.update(manifest_path.name.encode("utf-8"))
+        manifest_hash.update(manifest_path.read_bytes())
 
     envelope = build_envelope(
         serialized,
@@ -502,12 +524,10 @@ def run(
             "duration_ms": round(elapsed * 1000),
             "runner_commit": commit,
             "corpus": corpus,
+            "corpus_manifest_sha256": manifest_hash.hexdigest(),
             "official": run_mode == "official",
             "requested_run_mode": run_mode,
             "profile": "diagnostic",
-            "oracle_profile": "host-gcc-example-cases",
-            "oracle_abi_valid": False,
-            "holdout_valid": False,
             "limits": {
                 "limit": limit,
                 "variant_limit": variant_limit,
@@ -529,28 +549,23 @@ def run(
             "expected_rows": expected_rows,
             "expected_cells": expected_cells,
             "observed_rows": len(serialized),
-        }
+        },
+        oracle={
+            "mode": "example_cases",
+            "valid": False,
+            "target_abi": "host",
+            "compiler": "gcc",
+            "compiler_version": compiler_version,
+            "runner": sys.platform,
+            "wrapper_sha256": wrapper_sha256,
+            "reference_binary_sha256": binary_hash.hexdigest(),
+        },
     )
 
     json_path.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
-    if publish:
-        from run_validity import LoadedResult, evaluate_run
-        loaded = LoadedResult(rows=serialized, envelope=envelope, legacy=False)
-        verdict = evaluate_run(loaded)
-        if not verdict.publishable:
-            raise typer.BadParameter(
-                "refusing to publish an ineligible run: "
-                + ", ".join(verdict.publish_reasons)
-            )
-        latest_json.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
-
-        generate_report(scores, corpus_split=corpus, loaded_result=loaded, verdict=verdict)
 
     typer.echo(f"\n✅ Results saved to {json_path} ({elapsed:.1f}s)")
-    if publish:
-        typer.echo("📊 Report generated: results/latest.md, docs/index.html")
-    else:
-        typer.echo("Candidate result saved; results/latest.* not updated (--no-publish).")
+    typer.echo("Candidate result saved; publication requires runner/publication_gate.py.")
 
 
 if __name__ == "__main__":

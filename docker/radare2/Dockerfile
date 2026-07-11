@@ -9,8 +9,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN r2pm -U && r2pm -ci r2ghidra
 
 WORKDIR /app
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:${PATH}"
 COPY requirements.txt .
-RUN python3 -m pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY server.py .
 

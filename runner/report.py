@@ -2331,11 +2331,9 @@ def generate_report(
     verdict: RunValidity | None = None,
     measured_at: str | None = None,
     legacy: bool = False,
-    results_dir: Path | None = None,
-    docs_dir: Path | None = None,
+    results_dir: Path,
+    docs_dir: Path,
 ) -> None:
-    results_dir = results_dir or RESULTS_DIR
-    docs_dir = docs_dir or DOCS_DIR
     results_dir.mkdir(parents=True, exist_ok=True)
     docs_dir.mkdir(parents=True, exist_ok=True)
 

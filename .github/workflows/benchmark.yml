@@ -241,7 +241,7 @@ jobs:
           if [ -n "$BENCHMARK_VARIANT_LIMIT" ] && [ "$BENCHMARK_VARIANT_LIMIT" != "0" ]; then
             EXTRA_ARGS="$EXTRA_ARGS --variant-limit $BENCHMARK_VARIANT_LIMIT"
           fi
-          python runner/runner.py --corpus dev $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --run-mode "$RUN_MODE" --no-publish --output results/dev_latest.json
+          python runner/runner.py --corpus dev $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --run-mode "$RUN_MODE" --output results/dev_latest.json
 
       # -----------------------------------------------------------------------
       # Fission validity gate — abort the publish path when every Fission row
@@ -302,7 +302,18 @@ jobs:
           python runner/holdout_report.py \
             --dev results/dev_latest.json \
             --holdout results/holdout_latest.json \
-            --output results/overfitting_report.md
+            --output results/overfitting_report.md \
+            --json-output results/overfitting_report.json
+
+      - name: Evaluate final publication evidence
+        if: ${{ steps.fission-gate.outcome == 'success' && env.PUBLISH_RESULTS == 'true' }}
+        run: |
+          python -m runner.publication_gate \
+            --dev results/dev_latest.json \
+            --holdout results/holdout_latest.json \
+            --overfitting results/overfitting_report.json \
+            --output results/publication-verdict.json \
+            --github-env "$GITHUB_ENV"
 
       - name: Determine publish mode
         id: publish-mode
@@ -321,6 +332,7 @@ jobs:
           python runner/render_report.py \
             --input results/dev_latest.json \
             --corpus dev \
+            --publication-verdict results/publication-verdict.json \
             --update-latest
           python -c 'from pathlib import Path; from runner.artifact_integrity import verify_artifact_manifest; verify_artifact_manifest(Path("."))'
 
