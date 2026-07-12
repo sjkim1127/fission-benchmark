@@ -71,6 +71,7 @@ def generate_markdown(
     verdict: RunValidity | None = None,
     measured_at: str | None = None,
     legacy: bool = False,
+    standard_summary: dict | None = None,
 ) -> str:
     """Generate Markdown report.
 
@@ -81,8 +82,34 @@ def generate_markdown(
         header as "Measured at" when provided (used for historical renders).
     legacy:
         When True, marks the report as a legacy re-render.
+    standard_summary:
+        Optional ``summary`` block (``standard-set-v1``). When omitted it is
+        rebuilt from scores so MD matches the envelope contract.
     """
     rendered_at = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
+    try:
+        from standard_summary import build_standard_summary, annotate_rows_with_taxonomy
+    except ImportError:
+        from runner.standard_summary import build_standard_summary, annotate_rows_with_taxonomy
+
+    row_dicts = [
+        {
+            "decompiler": s.decompiler,
+            "function_name": s.function_name,
+            "compiler_variant": s.compiler_variant,
+            "error": s.error,
+            "fail_category": getattr(s, "fail_category", "") or "",
+            "fail_taxonomy": getattr(s, "fail_taxonomy", "") or "",
+            "semantic_score": s.semantic_score,
+            "correctness_score": s.correctness_score,
+            "time_ms": s.time_ms,
+            "output_diagnostics": getattr(s, "output_diagnostics", None) or {},
+            "oracle_evidence": getattr(s, "oracle_evidence", None) or {},
+        }
+        for s in scores
+    ]
+    summary = standard_summary or build_standard_summary(annotate_rows_with_taxonomy(row_dicts))
+
 
     lines = [
         "# Fission Benchmark Report",
@@ -176,108 +203,116 @@ def generate_markdown(
         ]
 
     lines += [
-        "## Summary — Correctness Score",
+        "## MVP Summary — Standard set",
         "",
-        "> Readability metrics are recorded as unvalidated raw proxies. They are not combined into a final readability score until the human validation study is complete.",
+        "> **Primary ranking axis:** semantic pass rate (original-binary oracle when available).",
+        "> **Also first-class:** coverage (attempted / adapter clean / boundary invalid / tested), "
+        "fail taxonomy, runtime.",
+        "> **Secondary:** CFG match (attached when cfg_parity JSONL present).",
+        "> **Diagnostics only (non-ranking):** source similarity, AST similarity, readability proxies.",
+        "> Readability proxies are not a final score until the human validation study completes.",
         "",
     ]
 
-    # ── Per-decompiler coverage counts ───────────────────────────────────────
-    # Two independent layers:
-    #   Output layer: did the decompiler/adapter return parseable code?
-    #   Semantic layer: did that code compile and pass oracle tests?
-    #
-    # Columns:
-    #   Attempted     -- all rows sent to the decompiler
-    #   Output Valid  -- adapter returned non-empty code with no error
-    #   Output Fail   -- adapter/CLI error or missing result
-    #   Compile Fail  -- code returned but failed to compile (fail_category)
-    #   Runtime Fail  -- compiled but failed runtime oracle test
-    #   Timeout       -- oracle test timed out
-    #   No Wrapper    -- no semantic test wrapper exists (counted separately)
-    #   Semantic Pass -- % of Output Valid rows that passed semantic tests
-    by_decomp_attempted:    dict[str, int]         = defaultdict(int)
-    by_decomp_output_valid: dict[str, int]         = defaultdict(int)
-    by_decomp_output_fail:  dict[str, int]         = defaultdict(int)
-    by_decomp_compile_fail: dict[str, int]         = defaultdict(int)
-    by_decomp_runtime_fail: dict[str, int]         = defaultdict(int)
-    by_decomp_timeout:      dict[str, int]         = defaultdict(int)
-    by_decomp_no_wrapper:   dict[str, int]         = defaultdict(int)
-    by_decomp_correctness:  dict[str, list[float]] = defaultdict(list)
-    by_decomp_sim:          dict[str, list[float]] = defaultdict(list)
-    by_decomp_sem:          dict[str, list[float]] = defaultdict(list)
+    # ── MVP table from standard_summary (single source of truth) ─────────────
+    by_tool = (summary.get("mvp") or {}).get("by_decompiler") or {}
 
-    for s in scores:
-        d = s.decompiler
-        by_decomp_attempted[d] += 1
-        fail_cat = getattr(s, "fail_category", "") or ""
+    def _sem_key(name: str) -> float:
+        mean = (by_tool.get(name) or {}).get("semantic", {}).get("mean_pass_rate")
+        return float(mean) if mean is not None else -1.0
 
-        # Output layer — independent of semantic results
-        if is_output_failure({"error": s.error, "fail_category": fail_cat}):
-            by_decomp_output_fail[d] += 1
-        else:
-            by_decomp_output_valid[d] += 1
-            correctness = getattr(s, "correctness_score", None)
-            if correctness is not None:
-                by_decomp_correctness[d].append(correctness)
-            by_decomp_sim[d].append(s.source_similarity)
-            if s.semantic_score is not None:
-                by_decomp_sem[d].append(s.semantic_score)
+    all_decomps = sorted(by_tool.keys(), key=lambda d: (-_sem_key(d), d))
+    # Fission first for readability when present.
+    if "fission" in all_decomps:
+        all_decomps = ["fission"] + [d for d in all_decomps if d != "fission"]
 
-        # Semantic oracle layer — counted independently of output validity
-        if fail_cat == "compile_error":
-            by_decomp_compile_fail[d] += 1
-        elif fail_cat == "runtime_error":
-            by_decomp_runtime_fail[d] += 1
-        elif fail_cat == "timeout":
-            by_decomp_timeout[d] += 1
-        elif fail_cat == "no_wrapper":
-            by_decomp_no_wrapper[d] += 1
-
-    def _avg_correctness(d: str) -> float:
-        comps = by_decomp_correctness.get(d, [])
-        return sum(comps) / len(comps) if comps else 0.0
-
-    all_decomps = sorted(
-        by_decomp_attempted.keys(),
-        key=lambda d: -_avg_correctness(d),
-    )
-    rows = []
+    mvp_rows = []
     for d in all_decomps:
-        attempted   = by_decomp_attempted[d]
-        out_valid   = by_decomp_output_valid[d]
-        out_fail    = by_decomp_output_fail[d]
-        comp_fail   = by_decomp_compile_fail[d]
-        rt_fail     = by_decomp_runtime_fail[d]
-        to_fail     = by_decomp_timeout[d]
-        no_wrap     = by_decomp_no_wrapper[d]
-        comps = by_decomp_correctness.get(d, [])
-        sims  = by_decomp_sim.get(d, [])
-        sems  = by_decomp_sem.get(d, [])
-        avg_comp = sum(comps) / len(comps) if comps else 0.0
-        avg_sim  = sum(sims)  / len(sims)  if sims  else 0.0
-        avg_sem  = sum(sems)  / len(sems)  if sems  else 0.0
-        decomp_label = f"**{d}**" if out_valid > 0 else f"~~{d}~~ ⛔"
-        rows.append([
+        stats = by_tool[d]
+        cov = stats.get("coverage") or {}
+        sem = stats.get("semantic") or {}
+        tax = stats.get("fail_taxonomy") or {}
+        rt = stats.get("runtime") or {}
+        attempted = int(cov.get("attempted") or 0)
+        adapter_clean = int(cov.get("adapter_clean") or 0)
+        decomp_label = f"**{d}**" if adapter_clean > 0 else f"~~{d}~~ ⛔"
+        mean_sem = sem.get("mean_pass_rate")
+        mean_ms = rt.get("mean_ms")
+        top_tax = sorted(
+            ((k, n) for k, n in tax.items() if k != "ok" and n),
+            key=lambda item: -item[1],
+        )[:3]
+        tax_str = " · ".join(f"{k}:{n}" for k, n in top_tax) if top_tax else "—"
+        mvp_rows.append([
             decomp_label,
             str(attempted),
-            str(out_valid),
-            str(out_fail),
-            str(comp_fail) if comp_fail else "—",
-            str(rt_fail)   if rt_fail   else "—",
-            str(to_fail)   if to_fail   else "—",
-            str(no_wrap)   if no_wrap   else "—",
-            f"{avg_comp:.3f}" if out_valid > 0 else "—",
-            f"{avg_sim:.3f}"  if out_valid > 0 else "—",
-            f"{avg_sem * 100:.1f}%" if out_valid > 0 else "—",
+            str(adapter_clean),
+            str(cov.get("invalid_boundary") or 0) or "—",
+            str(cov.get("semantic_tested") or 0),
+            f"{mean_sem * 100:.1f}%" if mean_sem is not None else "—",
+            str(sem.get("perfect_rows") or 0) if mean_sem is not None else "—",
+            str(cov.get("no_wrapper") or 0) or "—",
+            tax_str,
+            f"{mean_ms:.0f}ms" if mean_ms is not None else "—",
         ])
     lines.append(_md_table(
-        ["Decompiler", "Attempted", "Output Valid", "Output Fail",
-         "Compile Fail", "Runtime Fail", "Timeout", "No Wrapper",
-         "Avg Correctness", "Avg Similarity", "Semantic Pass"],
-        rows,
+        [
+            "Decompiler", "Attempted", "Adapter clean", "Boundary invalid",
+            "Semantic tested", "Semantic mean", "Perfect", "No wrapper",
+            "Fail taxonomy (top)", "Mean time",
+        ],
+        mvp_rows,
     ))
-    lines += ["", "---", "", "## Per-Function Results", ""]
+
+    # Cross-variant extension (compact)
+    cross = ((summary.get("extensions") or {}).get("cross_variant") or {}).get(
+        "by_decompiler_variant"
+    ) or {}
+    if cross:
+        lines += ["", "### Extension — Cross-compiler / opt", ""]
+        xv_rows = []
+        for d, entries in sorted(cross.items(), key=lambda kv: (kv[0] != "fission", kv[0])):
+            for e in entries:
+                rate = e.get("mean_pass_rate")
+                xv_rows.append([
+                    d,
+                    e.get("compiler_variant", ""),
+                    e.get("compiler", ""),
+                    e.get("opt") or "—",
+                    str(e.get("tested_rows") or 0),
+                    f"{rate * 100:.1f}%" if rate is not None else "—",
+                ])
+        lines.append(_md_table(
+            ["Decompiler", "Variant", "Compiler", "Opt", "Tested", "Semantic mean"],
+            xv_rows,
+        ))
+
+    cfg = (summary.get("secondary") or {}).get("cfg") or {}
+    if cfg.get("status") == "present" and cfg.get("by_decompiler"):
+        lines += ["", "### Secondary — CFG match", ""]
+        cfg_rows = []
+        for d, c in sorted(cfg["by_decompiler"].items()):
+            rate = c.get("match_rate")
+            cfg_rows.append([
+                d,
+                str(c.get("match") or 0),
+                str(c.get("mismatch") or 0),
+                f"{rate * 100:.1f}%" if rate is not None else "—",
+            ])
+        lines.append(_md_table(["Decompiler", "Match", "Mismatch", "Match rate"], cfg_rows))
+
+    lines += [
+        "",
+        "### Diagnostics note",
+        "",
+        "> Source similarity is **not** listed in the MVP table. It remains on "
+        "per-function rows for triage only.",
+        "",
+        "---",
+        "",
+        "## Per-Function Results",
+        "",
+    ]
 
     # Per function
     by_fn: dict[str, list[FunctionScore]] = defaultdict(list)
@@ -445,6 +480,7 @@ def generate_html(
             "semantic_score": s.semantic_score,
             "semantic_error": s.semantic_error,
             "fail_category": getattr(s, "fail_category", "") or "",
+            "fail_taxonomy": getattr(s, "fail_taxonomy", "") or "",
             "cases_passed": getattr(s, "cases_passed", 0),
             "cases_total": getattr(s, "cases_total", 0),
             "correctness_score": getattr(s, "correctness_score", getattr(s, "composite_score", 0.0)),
@@ -2337,8 +2373,19 @@ def generate_report(
     results_dir.mkdir(parents=True, exist_ok=True)
     docs_dir.mkdir(parents=True, exist_ok=True)
 
+    standard_summary = None
+    if loaded_result and loaded_result.envelope:
+        standard_summary = loaded_result.envelope.get("summary")
+
     # Markdown
-    md = generate_markdown(scores, corpus_split, verdict=verdict, measured_at=measured_at, legacy=legacy)
+    md = generate_markdown(
+        scores,
+        corpus_split,
+        verdict=verdict,
+        measured_at=measured_at,
+        legacy=legacy,
+        standard_summary=standard_summary,
+    )
     (results_dir / "latest.md").write_text(md, encoding="utf-8")
 
     # HTML

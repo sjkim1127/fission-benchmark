@@ -1,14 +1,15 @@
-"""Assembly parity runner."""
+"""Assembly parity runner — default reference: Ghidra HTTP, candidate: Fission HTTP."""
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Optional
 
 import typer
 
-from benchmark.common.io import write_jsonl
-from benchmark.common.providers import canonicalize, run_json_provider
+from benchmark.common.compare_guards import empty_pair_result
+from benchmark.common.parity_cli import run_pair_stage
+from benchmark.common.providers import canonicalize_assembly_list
 from benchmark.common.schema import BenchmarkResult, BenchmarkSubject
-from benchmark.common.subjects import load_subjects
 
 app = typer.Typer(pretty_exceptions_enable=False)
 
@@ -20,8 +21,13 @@ def compare_assembly(
     expected: object,
     actual: object,
 ) -> BenchmarkResult:
-    expected_norm = canonicalize(expected)
-    actual_norm = canonicalize(actual)
+    guarded = empty_pair_result(
+        subject, "assembly_parity", reference_name, candidate_name, expected, actual
+    )
+    if guarded is not None:
+        return guarded
+    expected_norm = canonicalize_assembly_list(expected)
+    actual_norm = canonicalize_assembly_list(actual)
     if expected_norm == actual_norm:
         return BenchmarkResult(
             subject=subject,
@@ -38,6 +44,19 @@ def compare_assembly(
     if isinstance(expected_norm, list) and isinstance(actual_norm, list):
         if len(expected_norm) != len(actual_norm):
             mismatch_kind = "instruction_count"
+        else:
+            for exp, act in zip(expected_norm, actual_norm):
+                if not isinstance(exp, dict) or not isinstance(act, dict):
+                    continue
+                if exp.get("bytes") != act.get("bytes"):
+                    mismatch_kind = "instruction_bytes"
+                    break
+                if exp.get("mnemonic") != act.get("mnemonic"):
+                    mismatch_kind = "mnemonic"
+                    break
+                if exp.get("address") != act.get("address"):
+                    mismatch_kind = "address"
+                    break
 
     return BenchmarkResult(
         subject=subject,
@@ -57,39 +76,44 @@ def compare_assembly(
 
 @app.command()
 def main(
-    reference_command: str = typer.Option(..., help="Command template producing reference JSON"),
-    candidate_command: str = typer.Option(..., help="Command template producing candidate JSON"),
-    reference_name: str = typer.Option("reference"),
-    candidate_name: str = typer.Option("candidate"),
+    reference_http: Optional[str] = typer.Option(
+        "ghidra", "--reference-http", help="Reference decompiler HTTP adapter (default: ghidra)"
+    ),
+    candidate_http: Optional[str] = typer.Option(
+        "fission", "--candidate-http", help="Candidate decompiler HTTP adapter (default: fission)"
+    ),
+    reference_command: Optional[str] = typer.Option(
+        None, help="Optional command template producing reference JSON (overrides --reference-http)"
+    ),
+    candidate_command: Optional[str] = typer.Option(
+        None, help="Optional command template producing candidate JSON (overrides --candidate-http)"
+    ),
+    reference_name: str = typer.Option("ghidra"),
+    candidate_name: str = typer.Option("fission"),
     corpus: str = typer.Option("dev"),
     output: Path = typer.Option(Path("results/assembly_parity/latest.jsonl")),
-    limit: int | None = typer.Option(None),
-    timeout: float = typer.Option(30.0),
+    limit: Optional[int] = typer.Option(None),
+    timeout: float = typer.Option(60.0),
 ):
-    rows: list[BenchmarkResult] = []
-    subjects = load_subjects(corpus)
-    if limit is not None:
-        subjects = subjects[:limit]
-
-    for subject in subjects:
-        try:
-            expected = run_json_provider(reference_command, subject, timeout)
-            actual = run_json_provider(candidate_command, subject, timeout)
-            rows.append(compare_assembly(subject, reference_name, candidate_name, expected, actual))
-        except Exception as exc:
-            rows.append(
-                BenchmarkResult(
-                    subject=subject,
-                    stage="assembly_parity",
-                    status="error",
-                    reference=reference_name,
-                    candidate=candidate_name,
-                    error=str(exc),
-                )
-            )
-
-    write_jsonl(output, rows)
-    typer.echo(f"Wrote {len(rows)} assembly parity rows to {output}")
+    """Compare instruction listings. Defaults: Ghidra vs Fission over Docker HTTP APIs."""
+    if reference_command:
+        reference_http = None
+    if candidate_command:
+        candidate_http = None
+    run_pair_stage(
+        stage="assembly_parity",
+        compare=compare_assembly,
+        reference_http=reference_http,
+        candidate_http=candidate_http,
+        reference_command=reference_command,
+        candidate_command=candidate_command,
+        reference_name=reference_name,
+        candidate_name=candidate_name,
+        corpus=corpus,
+        output=output,
+        limit=limit,
+        timeout=timeout,
+    )
 
 
 if __name__ == "__main__":

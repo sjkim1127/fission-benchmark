@@ -29,5 +29,9 @@ COPY server.py .
 COPY DecompileFunction.java /opt/ghidra_scripts/
 COPY ExportParity.java /opt/ghidra_scripts/
 
+# Persistent analyzed programs for parity (mounted from compose volume in production).
+RUN mkdir -p /var/cache/ghidra-projects
+ENV GHIDRA_PROJECT_CACHE=/var/cache/ghidra-projects
+
 EXPOSE 8000
 CMD ["python3", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -284,6 +284,7 @@ async def decompile_batch_and_score(
 
         oracle_evidence = {}
         if not error and oracle_endpoint and fn.name in TEST_WRAPPERS:
+            binary_bytes = binary_path.read_bytes()
             differential = await verify_with_oracle(
                 client,
                 oracle_endpoint,
@@ -292,7 +293,10 @@ async def decompile_batch_and_score(
                 candidate_code=semantic_code,
                 cases=TEST_WRAPPERS[fn.name],
                 compiler_variant=variant_label,
-                reference_binary_sha256=hashlib.sha256(binary_path.read_bytes()).hexdigest(),
+                reference_binary_sha256=hashlib.sha256(binary_bytes).hexdigest(),
+                # Always bind official oracle evidence to the corpus PE under test.
+                reference_binary_b64=base64.b64encode(binary_bytes).decode("ascii"),
+                function_addr=variant.addr,
             )
             sem_score = differential.score
             sem_err = differential.error
@@ -543,7 +547,8 @@ def run(
             "corpus_manifest_sha256": manifest_hash.hexdigest(),
             "official": run_mode == "official",
             "requested_run_mode": run_mode,
-            "profile": "diagnostic",
+            # Official publication requires profile=realistic with no focus limits.
+            "profile": "realistic" if run_mode == "official" else "diagnostic",
             "limits": {
                 "limit": limit,
                 "variant_limit": variant_limit,

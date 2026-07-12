@@ -83,11 +83,30 @@ export const RowSchema = z.object({
   time_ms: z.number().default(0),
   error: z.string().nullable().optional(),
   fail_category: z.string().nullable().optional(),
+  fail_taxonomy: z.string().optional(),
   decompiled_code: z.string().optional(),
   semantic_error: z.string().nullable().optional(),
   uses_intrinsics: z.boolean().optional(),
   oracle_evidence: z.record(z.string(), z.unknown()).optional(),
+  output_diagnostics: z.record(z.string(), z.unknown()).optional(),
 });
+
+/** Optional standard-set summary block (schema standard-set-v1). */
+export const StandardSummarySchema = z
+  .object({
+    schema: z.literal("standard-set-v1").optional(),
+    mvp: z
+      .object({
+        by_decompiler: z.record(z.string(), z.unknown()).optional(),
+      })
+      .passthrough()
+      .optional(),
+    secondary: z.record(z.string(), z.unknown()).optional(),
+    extensions: z.record(z.string(), z.unknown()).optional(),
+    diagnostics: z.record(z.string(), z.unknown()).optional(),
+  })
+  .passthrough()
+  .optional();
 
 export const ToolchainSchema = z.object({
   fission_version: z.string().optional(),
@@ -106,6 +125,7 @@ export const BenchmarkEnvelopeSchema = z.object({
   matrix: MatrixSchema,
   oracle: OracleSchema,
   validity: ValiditySchema,
+  summary: StandardSummarySchema,
   rows: z.array(RowSchema),
 }).superRefine((envelope, context) => {
   if (!envelope.run.official) return;

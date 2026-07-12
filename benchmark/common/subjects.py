@@ -3,15 +3,26 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import sys
+# Prefer package import so we never put runner/ on sys.path (that shadows
+# the `runner` package name and breaks `import runner.*` elsewhere).
+try:
+    from runner.corpus import CORPUS_ROOT, Corpus
+except ImportError:  # pragma: no cover
+    import sys
 
-ROOT = Path(__file__).resolve().parents[2]
-RUNNER_DIR = ROOT / "runner"
-if str(RUNNER_DIR) not in sys.path:
-    sys.path.insert(0, str(RUNNER_DIR))
+    ROOT = Path(__file__).resolve().parents[2]
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from runner.corpus import CORPUS_ROOT, Corpus
 
-from corpus import CORPUS_ROOT, Corpus  # noqa: E402
-from benchmark.common.schema import BenchmarkSubject  # noqa: E402
+from benchmark.common.schema import BenchmarkSubject
+
+
+def _infer_arch(compiler: str, binary: str) -> str:
+    name = f"{compiler} {binary}".lower()
+    if "m32" in name or "i686" in name or "x86_32" in name:
+        return "x86"
+    return "x86_64"
 
 
 def load_subjects(split: str) -> list[BenchmarkSubject]:
@@ -24,7 +35,7 @@ def load_subjects(split: str) -> list[BenchmarkSubject]:
                     binary=str(CORPUS_ROOT / split / variant.binary),
                     function=fn.name,
                     addr=variant.addr,
-                    arch="unknown",
+                    arch=_infer_arch(variant.compiler, variant.binary),
                     compiler=variant.compiler,
                     opt=variant.opt,
                     corpus_split=split,

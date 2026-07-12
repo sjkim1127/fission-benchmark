@@ -3,13 +3,37 @@ from __future__ import annotations
 
 import hashlib
 import re
+import struct
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 try:
     from .semantic import STANDARD_HEADER
 except ImportError:
     from semantic import STANDARD_HEADER
+
+ORACLE_SUBJECT_SOURCE_RECOMPILE = "source_recompile"
+ORACLE_SUBJECT_ORIGINAL_BINARY = "original_binary"
+
+_PE_LOADER_SNIPPET: str | None = None
+
+
+def pe_loader_snippet() -> str:
+    """Return the MinGW/Wine PE mapper snippet embedded into original-binary TUs."""
+    global _PE_LOADER_SNIPPET
+    if _PE_LOADER_SNIPPET is None:
+        candidates = [
+            Path(__file__).resolve().parent.parent / "docker" / "oracle" / "pe_loader_snippet.c",
+            Path("/app/pe_loader_snippet.c"),
+        ]
+        for path in candidates:
+            if path.is_file():
+                _PE_LOADER_SNIPPET = path.read_text(encoding="utf-8")
+                break
+        else:
+            raise FileNotFoundError("pe_loader_snippet.c not found for original_binary oracle")
+    return _PE_LOADER_SNIPPET
 
 
 @dataclass(frozen=True)
@@ -22,6 +46,15 @@ class DifferentialResult:
     evidence: dict[str, Any] | None = None
 
 
+@dataclass(frozen=True)
+class FunctionSignature:
+    return_type: str
+    function_name: str
+    params: str
+    param_names: str
+    is_void: bool
+
+
 def _rename_function(code: str, function_name: str, replacement: str) -> str:
     pattern = re.compile(rf"\b_?{re.escape(function_name)}\b")
     renamed, count = pattern.subn(replacement, code)
@@ -30,18 +63,97 @@ def _rename_function(code: str, function_name: str, replacement: str) -> str:
     return renamed
 
 
-def build_differential_translation_unit(
-    function_name: str,
-    reference_code: str,
-    candidate_code: str,
-    cases: list[str],
-) -> str:
-    """Build one program that executes reference and candidate under one ABI."""
-    reference_name = f"oracle_reference_{function_name}"
-    candidate_name = f"oracle_candidate_{function_name}"
-    reference = _rename_function(reference_code, function_name, reference_name)
-    candidate = _rename_function(candidate_code, function_name, candidate_name)
+def extract_function_signature(reference_code: str, function_name: str) -> FunctionSignature:
+    """Parse a C function definition signature from extracted reference source."""
+    stripped = re.sub(r"/\*.*?\*/", "", reference_code, flags=re.DOTALL)
+    stripped = re.sub(r"//[^\n]*", "", stripped)
+    pattern = re.compile(
+        rf"(?P<ret>[\w\s\*]+?)\b{re.escape(function_name)}\s*\((?P<params>[^;{{]*)\)\s*\{{",
+        re.DOTALL,
+    )
+    match = pattern.search(stripped)
+    if not match:
+        raise ValueError(f"cannot parse signature for {function_name!r}")
+    return_type = " ".join(match.group("ret").split())
+    # Drop storage-class noise from return type.
+    for prefix in ("static ", "inline ", "extern "):
+        if return_type.startswith(prefix):
+            return_type = return_type[len(prefix) :].strip()
+    params = " ".join(match.group("params").split()).strip()
+    if not params or params == "void":
+        param_names = ""
+    else:
+        names: list[str] = []
+        depth = 0
+        current: list[str] = []
+        for ch in params:
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+            if ch == "," and depth == 0:
+                part = "".join(current).strip()
+                if part:
+                    names.append(_param_name(part))
+                current = []
+            else:
+                current.append(ch)
+        tail = "".join(current).strip()
+        if tail:
+            names.append(_param_name(tail))
+        if any(not name for name in names):
+            raise ValueError(f"cannot extract parameter names for {function_name!r}")
+        param_names = ", ".join(names)
+    is_void = return_type == "void"
+    return FunctionSignature(return_type, function_name, params or "void", param_names, is_void)
 
+
+def _param_name(decl: str) -> str:
+    cleaned = decl.strip()
+    if not cleaned or cleaned == "void":
+        return ""
+    # Strip trailing array declarators: name[10]
+    cleaned = re.sub(r"\[.*?\]", "", cleaned).strip()
+    # Function pointer: type (*name)(...)
+    fp = re.search(r"\(\s*\*\s*([A-Za-z_]\w*)\s*\)", cleaned)
+    if fp:
+        return fp.group(1)
+    tokens = re.findall(r"[A-Za-z_]\w*", cleaned)
+    if not tokens:
+        return ""
+    return tokens[-1]
+
+
+def pe_image_base(pe_bytes: bytes) -> int:
+    """Return PE Preferred ImageBase from a PE image."""
+    if len(pe_bytes) < 0x40 or pe_bytes[:2] != b"MZ":
+        raise ValueError("not a PE image")
+    e_lfanew = struct.unpack_from("<I", pe_bytes, 0x3C)[0]
+    if pe_bytes[e_lfanew : e_lfanew + 4] != b"PE\x00\x00":
+        raise ValueError("missing PE signature")
+    magic = struct.unpack_from("<H", pe_bytes, e_lfanew + 24)[0]
+    if magic == 0x20B:  # PE32+
+        return struct.unpack_from("<Q", pe_bytes, e_lfanew + 24 + 24)[0]
+    if magic == 0x10B:  # PE32
+        return struct.unpack_from("<I", pe_bytes, e_lfanew + 24 + 28)[0]
+    raise ValueError(f"unsupported optional-header magic {magic:#x}")
+
+
+def function_addr_to_rva(pe_bytes: bytes, addr: str) -> int:
+    """Convert a manifest VA/RVA address string to an image RVA."""
+    value = int(addr, 16) if addr.lower().startswith("0x") else int(addr)
+    image_base = pe_image_base(pe_bytes)
+    if value >= image_base:
+        return value - image_base
+    return value
+
+
+def _build_case_functions(
+    function_name: str,
+    reference_name: str,
+    candidate_name: str,
+    cases: list[str],
+) -> tuple[list[str], list[str]]:
     case_functions = []
     dispatch = []
     for index, case in enumerate(cases):
@@ -60,7 +172,23 @@ def build_differential_translation_unit(
             "  ref_rc = oracle_case_reference_{0}(); cand_rc = oracle_case_candidate_{0}(); "
             'printf("CASE {0} %d %d\\n", ref_rc, cand_rc);'.format(index)
         )
+    return case_functions, dispatch
 
+
+def build_differential_translation_unit(
+    function_name: str,
+    reference_code: str,
+    candidate_code: str,
+    cases: list[str],
+) -> str:
+    """Build one program that executes source-recompiled reference and candidate."""
+    reference_name = f"oracle_reference_{function_name}"
+    candidate_name = f"oracle_candidate_{function_name}"
+    reference = _rename_function(reference_code, function_name, reference_name)
+    candidate = _rename_function(candidate_code, function_name, candidate_name)
+    case_functions, dispatch = _build_case_functions(
+        function_name, reference_name, candidate_name, cases
+    )
     dispatcher = "\n".join([
         "int main(void) {",
         "  int ref_rc = 0;",
@@ -72,6 +200,80 @@ def build_differential_translation_unit(
     return "\n".join([
         STANDARD_HEADER,
         reference,
+        candidate,
+        *case_functions,
+        dispatcher,
+    ])
+
+
+def build_original_binary_translation_unit(
+    function_name: str,
+    reference_code: str,
+    candidate_code: str,
+    cases: list[str],
+    *,
+    function_addr: str,
+    pe_bytes: bytes,
+    pe_path: str = "reference.exe",
+) -> str:
+    """Build a differential TU whose reference side calls into the original PE.
+
+    The original PE is loaded under Wine via a minimal mapper. Test wrappers still
+    exercise C-level calling convention; the candidate is recompiled decompilation.
+    """
+    sig = extract_function_signature(reference_code, function_name)
+    rva = function_addr_to_rva(pe_bytes, function_addr)
+    reference_name = f"oracle_reference_{function_name}"
+    candidate_name = f"oracle_candidate_{function_name}"
+    candidate = _rename_function(candidate_code, function_name, candidate_name)
+
+    args = sig.param_names
+    call = f"oracle_pe_fn({args})" if args else "oracle_pe_fn()"
+    if sig.is_void:
+        reference_stub = "\n".join([
+            f"typedef void (*oracle_pe_fn_t)({sig.params});",
+            "static oracle_pe_fn_t oracle_pe_fn;",
+            f"static void {reference_name}({sig.params}) {{",
+            f"  {call};",
+            "}",
+        ])
+    else:
+        reference_stub = "\n".join([
+            f"typedef {sig.return_type} (*oracle_pe_fn_t)({sig.params});",
+            "static oracle_pe_fn_t oracle_pe_fn;",
+            f"static {sig.return_type} {reference_name}({sig.params}) {{",
+            f"  return {call};",
+            "}",
+        ])
+
+    case_functions, dispatch = _build_case_functions(
+        function_name, reference_name, candidate_name, cases
+    )
+    dispatcher = "\n".join([
+        "int main(void) {",
+        "  int ref_rc = 0;",
+        "  int cand_rc = 0;",
+        "  OraclePeImage image = {0};",
+        f'  if (oracle_pe_load("{pe_path}", &image) != 0) {{',
+        '    fprintf(stderr, "oracle pe load failed\\n");',
+        "    return 90;",
+        "  }",
+        f"  DWORD rva = {rva}u;",
+        "  if (!rva) {",
+        '    fprintf(stderr, "oracle pe rva invalid\\n");',
+        "    oracle_pe_free(&image);",
+        "    return 91;",
+        "  }",
+        "  oracle_pe_fn = (oracle_pe_fn_t)(image.base + rva);",
+        *dispatch,
+        "  oracle_pe_free(&image);",
+        "  return 0;",
+        "}",
+    ])
+    return "\n".join([
+        STANDARD_HEADER,
+        pe_loader_snippet(),
+        reference_stub,
         candidate,
         *case_functions,
         dispatcher,
@@ -181,19 +383,30 @@ async def verify_with_oracle(
     cases: list[str],
     compiler_variant: str,
     reference_binary_sha256: str,
+    reference_binary_b64: str | None = None,
+    function_addr: str | None = None,
 ) -> DifferentialResult:
-    """Execute a differential harness through the target-ABI oracle service."""
+    """Execute a differential harness through the target-ABI oracle service.
+
+    When ``reference_binary_b64`` and ``function_addr`` are provided the oracle
+    uses ``oracle_subject=original_binary`` (PE-anchored reference). Otherwise it
+    falls back to source recompilation evidence.
+    """
+    payload = {
+        "function_name": function_name,
+        "reference_code": reference_code,
+        "candidate_code": candidate_code,
+        "cases": cases,
+        "compiler_variant": compiler_variant,
+        "reference_binary_sha256": reference_binary_sha256,
+    }
+    if reference_binary_b64 and function_addr:
+        payload["reference_binary_b64"] = reference_binary_b64
+        payload["function_addr"] = function_addr
     try:
         response = await client.post(
             f"{endpoint.rstrip('/')}/verify",
-            json={
-                "function_name": function_name,
-                "reference_code": reference_code,
-                "candidate_code": candidate_code,
-                "cases": cases,
-                "compiler_variant": compiler_variant,
-                "reference_binary_sha256": reference_binary_sha256,
-            },
+            json=payload,
             timeout=120.0,
         )
         response.raise_for_status()

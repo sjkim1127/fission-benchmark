@@ -1,23 +1,34 @@
 # P-code Parity
 
-Compares two raw p-code providers for the same binary/function address.
+Compares raw p-code op sequences for one function address.
 
-Providers are command templates that must print JSON to stdout. The initial
-schema expects a list of p-code op objects:
+**Default:** Ghidra (`/pcode`) vs Fission (`/pcode`) over Docker HTTP.
+
+## Schema
 
 ```json
 [
   {
     "seq": 0,
-    "op": "INT_ADD",
+    "op": "COPY",
     "output": {"space": "unique", "offset": "0x100", "size": 8},
-    "inputs": [
-      {"space": "register", "offset": "0x20", "size": 8},
-      {"space": "const", "offset": "0x8", "size": 8}
-    ]
+    "inputs": [{"space": "register", "offset": "0x0", "size": 8}]
   }
 ]
 ```
 
-Use this stage as an admission gate before interpreting decompiler-similarity
-numbers.
+Ops are compared primarily by opcode sequence after normalization:
+
+- **Opcode names:** Ghidra `INT_SUB` and Fission `IntSub` both become `INTSUB`
+  (underscore / CamelCase insensitive).
+- **LOAD/STORE space id:** first input is an address-space selector whose const
+  encoding differs across tools; it is stubbed out so pointer/value varnodes
+  still compare.
+
+Mismatch kinds: `op_kind` / `op_count` / `varnode` / `op_sequence`.
+
+## Run
+
+```bash
+python -m benchmark.pcode_parity.run --limit 5
+```

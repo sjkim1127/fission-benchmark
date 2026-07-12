@@ -28,6 +28,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY runner /app/runner
 COPY docker/oracle/server.py /app/server.py
+COPY docker/oracle/pe_loader_snippet.c /app/pe_loader_snippet.c
 
 EXPOSE 8000
 CMD ["python3", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

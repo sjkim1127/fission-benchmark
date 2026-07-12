@@ -4,7 +4,7 @@
 
 **Multi-decompiler comparison benchmark for [Fission](https://github.com/sjkim1127/Fission)**
 
-Fission · Ghidra · Radare2+r2ghidra · angr · Snowman · rev.ng · RetDec · Reko
+Fission · Ghidra · Radare2+r2ghidra · angr · Snowman · rev.ng · Boomerang · Reko
 
 [![Benchmark](https://github.com/sjkim1127/fission-benchmark/actions/workflows/benchmark.yml/badge.svg)](https://github.com/sjkim1127/fission-benchmark/actions/workflows/benchmark.yml)
 [![Docker Build](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml/badge.svg)](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml)
@@ -20,13 +20,15 @@ Fission · Ghidra · Radare2+r2ghidra · angr · Snowman · rev.ng · RetDec · 
 Each decompiler runs in an isolated Docker container exposing a uniform HTTP API.
 A Python runner sends decompile requests in parallel, scores results against original C source, and generates a comparative report.
 
+**Benchmark-first:** this repo’s primary job is measurement honesty, not shipping Fission features. See [docs/BENCHMARK_OPERATING.md](docs/BENCHMARK_OPERATING.md) for the operating guide and standard-set contract.
+
 ```
 Binary + Source (ground truth)
         ↓
 ┌──────────────────────────────────────────────────────────────┐
 │  runner.py  (parallel httpx requests)                        │
-│  Fission :8000 · Ghidra :8001 · RetDec :8002 · Radare2 :8003 │
-│  angr :8004 · Snowman :8005 · rev.ng :8006 · Reko :8008      │
+│  Fission :8000 · Ghidra :8001 · Boomerang :8002 · Radare2 :8003 │
+│  angr :8004 · Snowman :8005 · rev.ng :8006 · Reko :8008         │
 └──────────────────────────────┬───────────────────────────────┘
                                │
                      ↓
@@ -64,9 +66,11 @@ python -m runner.run_validity results/dev_latest.json \
 | **Cross-compiler** | Same source compiled with gcc -O0 and gcc -O2 — evaluated independently |
 | **Multi-decompiler consensus** | If all decompilers score low → `⚪ Universally low (harness)`. Only Fission low → quality gap. |
 
-> **Current status**: holdout manifests are present but empty.
-> The overfitting report will show `No holdout data` for all decompilers until holdout binaries are built.
-> `--corpus holdout` works correctly once manifests are populated.
+> **Holdout split**: function-level 80/20 with fixed seed (`HOLDOUT_SEED=42`).
+> Populate or re-lock with `python scripts/populate_holdout.py`, then rebuild
+> binaries (`python scripts/build_corpus.py --split holdout` or the
+> `corpus-builder` Docker profile). Official publication requires a non-empty
+> holdout run linked through `publication_gate`.
 
 ## Quick Start
 
@@ -100,8 +104,19 @@ curl http://localhost:8010/health  # MinGW/Wine semantic oracle
 # Run benchmark (smoke, candidate JSON only — does not overwrite latest.*)
 ORACLE_ENDPOINT=http://localhost:8010 python runner/runner.py --corpus dev
 
-# Publication is intentionally unavailable until dev, locked holdout,
-# differential ABI oracle, and overfitting evidence all pass.
+# Official publishable path (requires containers + full matrix, no limits):
+#   ORACLE_ENDPOINT=http://localhost:8010 python runner/runner.py \
+#     --corpus dev --run-mode official --output results/dev_latest.json
+#   ORACLE_ENDPOINT=http://localhost:8010 python runner/runner.py \
+#     --corpus holdout --run-mode official --output results/holdout_latest.json
+#   python runner/holdout_report.py \
+#     --dev results/dev_latest.json --holdout results/holdout_latest.json \
+#     --json-output results/overfitting_report.json
+#   python -m runner.publication_gate \
+#     --dev results/dev_latest.json \
+#     --holdout results/holdout_latest.json \
+#     --overfitting results/overfitting_report.json \
+#     --output results/publication-verdict.json
 ```
 
 ### Options
@@ -115,7 +130,7 @@ python runner/runner.py --corpus dev --decompilers fission,ghidra
 
 # Full core decompiler set
 python runner/runner.py --corpus dev \
-  --decompilers fission,ghidra,retdec,radare2,angr,snowman,revng,reko
+  --decompilers fission,ghidra,boomerang,radare2,angr,snowman,revng,reko
 
 # Skip a specific decompiler via environment variable
 FISSION_ENDPOINT=skip python runner/runner.py --corpus dev
@@ -126,7 +141,7 @@ GHIDRA_ENDPOINT=http://localhost:9001 python runner/runner.py --corpus dev
 FISSION_ENDPOINT=http://localhost:9000 python runner/runner.py --corpus dev
 
 # Any {NAME}_ENDPOINT variable is supported:
-# RETDEC_ENDPOINT, RADARE2_ENDPOINT, ANGR_ENDPOINT,
+# BOOMERANG_ENDPOINT, RADARE2_ENDPOINT, ANGR_ENDPOINT,
 # SNOWMAN_ENDPOINT, REVNG_ENDPOINT, REKO_ENDPOINT
 
 # Holdout evaluation (release only — never during development)
@@ -212,7 +227,7 @@ fission-benchmark/
 │   └── common/           Shared schemas, providers, JSONL helpers
 ├── docker/
 │   ├── ghidra/      Ghidra 12.x headless + FastAPI
-│   ├── retdec/      RetDec 5.x + FastAPI
+│   ├── boomerang/   Boomerang + FastAPI
 │   ├── radare2/     Radare2 + r2ghidra + FastAPI
 │   ├── fission/     Fission CLI + FastAPI (release bake; local mount overlay)
 │   ├── angr/        angr decompiler + FastAPI
@@ -229,7 +244,9 @@ fission-benchmark/
 │   ├── readability.py    AST-based readability proxy metrics
 │   └── report.py         Markdown + HTML report generation
 ├── scripts/
-│   └── build_corpus.py   Compile corpus binaries + update function addresses
+│   ├── build_corpus.py      Compile corpus binaries + update function addresses
+│   ├── populate_holdout.py  Deterministic 80/20 holdout lock from dev manifests
+│   └── migrate_legacy_results.py  Wrap legacy flat-list JSON as envelope v2
 ├── corpus/
 │   ├── dev/         80% — development corpus (source + manifests)
 │   └── holdout/     20% — holdout corpus (release evaluation only)
@@ -309,7 +326,7 @@ debugging with `*_ENDPOINT=skip` or by passing a narrower `--decompilers` list.
 | Backend | Port | Notes |
 |---|---:|---|
 | `ghidra` | 8001 | Ghidra 12.x headless, primary reference baseline |
-| `retdec` | 8002 | RetDec 5.x |
+| `boomerang` | 8002 | Boomerang CLI, function-entry oriented |
 | `radare2` | 8003 | Radare2 + r2ghidra |
 | `angr` | 8004 | Python API, function-address oriented |
 | `snowman` | 8005 | Uses `nocode`; legacy baseline, amd64-only |
@@ -343,39 +360,26 @@ Benchmark infrastructure is currently in reliability-maintenance mode. Before
 adding new axes, default decompilers, or composite rankings, check
 `benchmark/KNOWN_ISSUES.md`.
 
-Parity runners accept command templates. Templates can use corpus subject fields
-such as `{binary}`, `{addr}`, `{function}`, `{compiler}`, and `{opt}` and must
-print JSON to stdout.
+Parity stages default to **Ghidra vs Fission over Docker HTTP** (see
+`benchmark/README.md`). Command templates remain optional for custom tools.
 
 ```bash
-python -m benchmark.assembly_parity.run \
-  --reference-command 'python tools/ref_asm.py {binary} {addr}' \
-  --candidate-command 'python tools/fission_asm.py {binary} {addr}'
+# Prerequisites: docker compose up -d ghidra fission
+export FISSION_HOST_PORT=8007   # if local overlay maps fission to 8007
 
-python -m benchmark.decode_parity.run \
-  --reference-command 'python tools/ref_decode.py {binary} {addr}' \
-  --candidate-command 'python tools/fission_decode.py {binary} {addr}'
+# Single stages (HTTP defaults)
+python -m benchmark.assembly_parity.run --limit 5
+python -m benchmark.decode_parity.run --limit 5
+python -m benchmark.pcode_parity.run --limit 5
+python -m benchmark.cfg_parity.run --limit 5
+python -m benchmark.function_discovery.run --limit 5
 
-python -m benchmark.pcode_parity.run \
-  --reference-command 'python tools/ghidra_pcode.py {binary} {addr}' \
-  --candidate-command 'python tools/fission_pcode.py {binary} {addr}'
-
-python -m benchmark.cfg_parity.run \
-  --reference-command 'python tools/ref_cfg.py {binary} {addr}' \
-  --candidate-command 'python tools/fission_cfg.py {binary} {addr}'
-
-python -m benchmark.function_discovery.run \
-  --reference-command 'python tools/ref_functions.py {binary}' \
-  --candidate-command 'python tools/fission_functions.py {binary}'
-
-python -m benchmark.ir_invariants.run \
-  --candidate-command 'python tools/fission_ir_invariants.py {binary} {addr}'
-
-python -m benchmark.golden_repros.run benchmark/golden_repros/manifest.json
+# Unified runner → results/*_parity/latest.jsonl + telemetry
+python -m runner.run_parity --corpus dev --limit 5 --decompilers fission,ghidra
 
 python -m benchmark.telemetry.aggregate \
-  results/decode_parity/latest.jsonl \
   results/assembly_parity/latest.jsonl \
+  results/cfg_parity/latest.jsonl \
   results/pcode_parity/latest.jsonl
 ```
 
@@ -390,25 +394,51 @@ The build script compiles ignored local binaries under `corpus/dev/binaries/`
 and refreshes each variant `addr` using `nm`. The runner scores against the
 matching source function, not the whole source file.
 
-## Scoring Metrics
+## Standard metric set
+
+Public reporting follows a fixed architecture (`summary.schema = standard-set-v1`):
+
+### MVP (primary surfaces)
+
+| # | Metric | Description |
+|---|---|---|
+| 1 | **Semantic pass rate** | Oracle test pass rate under `original_binary` when PE+addr are supplied; sole ranking axis (`correctness_score`) |
+| 2 | **Coverage** | attempted / adapter clean / invalid boundary / semantic tested / no_wrapper |
+| 3 | **Fail taxonomy** | Exclusive buckets (`adapter_error`, `whole_program_output`, `compile_error`, …) |
+| 4 | **CFG match** | Optional secondary from `benchmark/cfg_parity` (not ranking) |
+| 5 | **Runtime** | Mean `time_ms` |
+
+### Extensions
+
+| # | Metric | Description |
+|---|---|---|
+| 6 | **Holdout + overfit** | Locked 80/20 split + `holdout_report` / `publication_gate` |
+| 7 | **Cross-compiler / opt** | Semantic pivot by `compiler_variant` |
+| 8 | **Human readability** | Study plan + `benchmark/readability/study_pack/` (no final score yet) |
+| 9 | **Real-world strip** | Reserved `corpus/realworld/` track |
+
+### Diagnostics only (non-ranking)
 
 | Metric | Description |
 |---|---|
-| **Correctness Score** | Finite semantic test-case pass rate only; untested rows are `null` and unranked |
-| **Semantic Score** | Test-case pass rate under the configured oracle profile |
-| **Source Similarity** | `difflib.SequenceMatcher` ratio vs normalized original C source |
-| **Structural Penalty** | Penalty for goto count and nesting depth |
-| **Correctness Rank** | Rank among tested rows by semantic correctness for the same function |
+| **Source Similarity** | `difflib.SequenceMatcher` on normalized text — **not** semantic accuracy |
+| **Structural Penalty** | Relative goto / nesting vs source |
+| **Readability proxies** | Unvalidated until human study |
 
-Source similarity, structural complexity, and unvalidated readability proxies
-are diagnostic axes. They do not contribute to correctness or its rank.
+Builder: `runner/standard_summary.py`. Dashboard primary table omits similarity.
 
-The local oracle service recompiles the reference source and candidate under
-the matching Windows x86/x86-64 MinGW ABI, then executes both with Wine. Its
-evidence is marked `oracle_subject: source_recompile`. This is useful for ABI
-diagnostics but is not accepted as official original-binary evidence. The
-publication gate requires `oracle_subject: original_binary`, so this
-intermediate mode cannot make a run publishable.
+The oracle service supports two subjects under the matching Windows
+x86/x86-64 MinGW ABI + Wine:
+
+| `oracle_subject` | Reference side | When used |
+|---|---|---|
+| `original_binary` | Calls the function at `function_addr` inside the provided corpus PE (manual PE map + relocations/imports) | Runner always supplies `reference_binary_b64` + `function_addr` — **required for publishable runs** |
+| `source_recompile` | Recompiles extracted C source as the reference | Fallback when PE bytes/address are omitted (diagnostics only) |
+
+Publication validity (`oracle_evidence_valid`) accepts only aggregate evidence with
+`oracle_subject: original_binary`. Official runs also require `profile: realistic`,
+full matrix (no `--limit` / `--function`), non-empty holdout, linked overfitting
+report, and `publication_gate` success.
 
 ## Result Envelope Format
 

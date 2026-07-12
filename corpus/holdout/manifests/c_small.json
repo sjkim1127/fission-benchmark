@@ -1,0 +1,125 @@
+{
+  "_comment": "Holdout locked with seed=42 ratio=0.2. Do not use holdout functions during development.",
+  "functions": [
+    {
+      "name": "fibonacci_iter",
+      "source": "source/math.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x14000156e"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc-m32_O0.exe",
+          "addr": "0x4015e7"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x140001580"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc-m32_O2.exe",
+          "addr": "0x4015f0"
+        }
+      ]
+    },
+    {
+      "name": "max",
+      "source": "source/math.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x1400015c7"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc-m32_O0.exe",
+          "addr": "0x401637"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x1400015c0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc-m32_O2.exe",
+          "addr": "0x401630"
+        }
+      ]
+    },
+    {
+      "name": "binary_search",
+      "source": "source/math.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x140001724"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc-m32_O0.exe",
+          "addr": "0x401745"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x140001660"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc-m32_O2.exe",
+          "addr": "0x4016d0"
+        }
+      ]
+    },
+    {
+      "name": "gcd",
+      "source": "source/math.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc_O0.exe",
+          "addr": "0x1400017fd"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/math_gcc-m32_O0.exe",
+          "addr": "0x401817"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc_O2.exe",
+          "addr": "0x1400016e0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/math_gcc-m32_O2.exe",
+          "addr": "0x4017a0"
+        }
+      ]
+    }
+  ]
+}

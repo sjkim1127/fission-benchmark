@@ -506,9 +506,20 @@ def build_envelope(
     toolchain=None,
     matrix=None,
     oracle=None,
+    cfg_jsonl=None,
+    holdout_status=None,
 ):
-    """Wrap flat rows in the v2 envelope format."""
+    """Wrap flat rows in the v2 envelope format.
+
+    Attaches the standard-set ``summary`` block (MVP semantic/coverage/taxonomy/
+    runtime + optional CFG secondary + cross-variant extension).
+    """
     import time as _time
+
+    try:
+        from .standard_summary import attach_summary_to_envelope
+    except ImportError:
+        from standard_summary import attach_summary_to_envelope
 
     # Temporarily construct an envelope dict so evaluate_run can check matrix
     temp_envelope = {
@@ -517,15 +528,22 @@ def build_envelope(
         "toolchain": toolchain or {},
         "matrix": matrix or {},
         "oracle": oracle or {"mode": "example_cases", "valid": False},
-        "rows": rows,
+        "rows": list(rows),
     }
-    
-    loaded = LoadedResult(rows=rows, envelope=temp_envelope, legacy=False)
+
+    # Annotate taxonomy + summary before validity so rows are self-describing.
+    attach_summary_to_envelope(
+        temp_envelope,
+        cfg_jsonl=cfg_jsonl,
+        holdout_status=holdout_status,
+    )
+
+    loaded = LoadedResult(rows=temp_envelope["rows"], envelope=temp_envelope, legacy=False)
     validity = evaluate_run(loaded)
 
     temp_envelope["validity"] = validity_dict(validity)
     temp_envelope["rendered_at"] = _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime())
-    
+
     return temp_envelope
 
 

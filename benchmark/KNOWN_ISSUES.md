@@ -1,9 +1,10 @@
 # Benchmark Infrastructure Known Issues
 
-Status: **P0 fixes in progress** — Fission adapter compatibility and invalid-run
-gate are being repaired. The "infrastructure freeze / mature measuring instrument"
-declaration from an earlier revision was premature given the issues documented
-below. New benchmark axes remain deferred until P0 problems are resolved.
+Status: **Standard-set architecture** — public contract is MVP
+(semantic / coverage / fail taxonomy / runtime + optional CFG secondary) with
+extension tracks (holdout, cross-variant, human study, realworld-strip).
+P0 reliability (original-binary oracle residual cases, official holdout
+evidence, adapter boundary fidelity) still blocks publishable releases.
 
 This benchmark tracks decompiler quality work. Infrastructure reliability fixes
 take priority over new axes, composite rankings, or readability formula changes.
@@ -31,18 +32,40 @@ Deferred changes:
 - Using source similarity, AST similarity, or readability proxies as a
   substitute for semantic correctness.
 
+## Standard metric set
+
+| Tier | Metric | Ranking? |
+|------|--------|----------|
+| MVP-1 | Semantic pass rate (`original_binary` when available) | **Yes — only** |
+| MVP-2 | Coverage (attempted / adapter clean / boundary invalid / tested / no_wrapper) | Denominator |
+| MVP-3 | Fail taxonomy (stable exclusive buckets) | Analysis |
+| MVP-4 | CFG match (optional secondary from cfg_parity) | No |
+| MVP-5 | Runtime (`time_ms`) | No |
+| EXT-6 | Holdout + overfitting report | Release gate |
+| EXT-7 | Cross-compiler / opt pivot | Analysis |
+| EXT-8 | Human readability study | After validation |
+| EXT-9 | Real-world strip suite (`corpus/realworld/`) | Separate track |
+
+Envelope field: `summary.schema = "standard-set-v1"` from `runner/standard_summary.py`.
+
 ## Current Trust Boundaries
 
-- Correctness is based on semantic compile-and-run checks plus a small
-  similarity and structural component.
+- Correctness rank uses **semantic evidence only** (test-case pass rate). Source
+  similarity, structural penalty, AST similarity, and readability proxies are
+  diagnostic axes and do not affect correctness or rank.
 - Readability proxy evidence is reported separately and is not a validated
   readability score.
 - AST parse coverage means the readability parser accepted the decompiler
   output; proxy evidence coverage only means the row contains proxy fields.
 - Function boundary diagnostics must be checked before interpreting a
-  decompiler-quality row.
+  decompiler-quality row. Whole-program / boundary-mismatch rows are treated as
+  adapter-level failures via `invalid_output_reason`.
 - Lower-level parity stages should be used before diagnosing Fission
   decompiler-output quality.
+- Publication requires envelope v2 + official run mode + non-empty holdout +
+  overfitting linkage + `oracle_subject: original_binary`. The runner now always
+  sends corpus PE bytes + function address to the oracle so evidence is labeled
+  `original_binary` when the PE map succeeds.
 
 ## Known Issues
 
@@ -78,11 +101,14 @@ Priority actions:
 Semantic correctness is only meaningful for functions with executable wrappers.
 Missing wrappers should be handled as benchmark debt, not as decompiler failure.
 
+**Current status**: All 28 corpus functions (dev + holdout) have ≥5 semantic
+wrappers in `runner/test_wrappers.py`, including string and memory-layout cases.
+
 Priority actions:
 
-- Keep `no_wrapper` visible as a separate category.
-- Add wrappers for existing corpus functions before adding new corpus breadth.
+- Keep `no_wrapper` visible as a separate category for future corpus additions.
 - Prefer focused wrapper tests over larger corpus expansion.
+- Add wrappers in the same PR that introduces new corpus functions.
 
 ### Fission Release Tracking
 
@@ -133,11 +159,28 @@ Priority actions:
 
 ## Next Engineering Focus
 
-The next useful work should happen in Fission itself, not by broadening the
-benchmark. Use this repository to identify and preserve regressions, then move
-the fixes into Fission 0.1.2 work.
+### Benchmark-side (remaining P0)
 
-Suggested Fission-side priorities:
+1. **Original-binary oracle (implemented)** — Oracle maps the corpus PE under
+   Wine and calls the function RVA as the reference side of the differential.
+   Rebuild the oracle image after pull (`docker compose build oracle`).
+   Residual risk: PE import/relocation edge cases on exotic binaries; keep
+   fixture failures visible as `fixture_error`, not silent passes.
+2. **Envelope-only official artifacts** — Migrate stale flat-list files with
+   `scripts/migrate_legacy_results.py` for tooling; re-run the benchmark for
+   real envelope v2 candidates. Never promote legacy migrations to Vercel.
+3. **Holdout official run** — Holdout manifests are locked; CI executes holdout
+   when manifests exist. Confirm a green official workflow produces
+   `publication-verdict.json` with `publishable: true` before relying on Vercel.
+4. **Adapter boundary fidelity** — Keep snowman / rev.ng / boomerang whole-program
+   leakage marked invalid; prefer extraction fixes over silent normalization.
+
+### Fission-side quality work
+
+Use this repository to identify and preserve regressions, then move the fixes
+into Fission releases.
+
+Suggested priorities:
 
 - `checksum`, `crc32`, and `rc4_*` compile/runtime failures.
 - `count_bits` parity mismatches and intrinsic-dependent codegen.
@@ -171,15 +214,17 @@ with `status` in `{"ok", "empty", "fetch_error"}`. Comparators are gated on
 both sides being `status == "ok"`. Double-empty responses are recorded as
 `both_empty_invalid`.
 
-### Holdout Corpus Empty
+### Holdout Corpus Lock
 
-The `corpus/holdout/manifests/` directory exists but contains no manifests.
-The overfitting report shows `No holdout data` for all decompilers. The README
-previously described holdout functionality as active when it was not.
+**Resolved (lock)**: `scripts/populate_holdout.py` applies a deterministic
+80/20 function-level lock (`HOLDOUT_SEED=42`) and copies required sources and
+binaries into `corpus/holdout/`. Dev manifests no longer contain locked
+functions.
 
-**Current status**: Holdout evaluation will work once manifests are populated
-(e.g., by running `split_corpus_to_holdout` on existing dev manifests). The
-README has been updated to accurately reflect the current state.
+**Still open (evidence)**: Official publication still needs a real holdout
+benchmark run (`results/holdout_latest.json` as envelope v2) plus a linked
+overfitting report. Empty or legacy holdout results keep
+`publication_gate` at `holdout_empty` / non-publishable.
 
 ### Summary Table Survivorship Bias
 

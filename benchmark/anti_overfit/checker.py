@@ -2,6 +2,12 @@
 """
 Anti-overfitting oracle for fission-benchmark.
 
+**LEGACY / DIAGNOSTIC:** Gates below still emphasize source similarity and goto
+counts from an earlier design. Official publication uses
+``runner/holdout_report.py`` (semantic correctness drop ≥10pp) and
+``runner/publication_gate.py``. Do not treat this checker as the release gate
+until it is rewritten to semantic-first thresholds.
+
 Usage:
   python benchmark/anti_overfit/checker.py \
       --baseline results/baseline.json \
@@ -11,7 +17,7 @@ Exit codes:
   0  All gates pass — candidate may be merged.
   1  One or more gates failed — candidate is rejected (overfitting or regression).
 
-Gates:
+Gates (legacy similarity-era):
   1. Δavg_sim ≥ 0            No average similarity regression.
   2. Δtotal_goto ≤ 0         No increase in total goto count.
   3. regression_count == 0   No individual variant worsens beyond tolerance.

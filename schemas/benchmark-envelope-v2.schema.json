@@ -62,11 +62,24 @@
       },
       "additionalProperties": true
     },
+    "summary": {
+      "type": "object",
+      "description": "Standard-set MVP + extension aggregates (optional, additive)",
+      "properties": {
+        "schema": {"const": "standard-set-v1"},
+        "mvp": {"type": "object"},
+        "secondary": {"type": "object"},
+        "extensions": {"type": "object"},
+        "diagnostics": {"type": "object"}
+      },
+      "additionalProperties": true
+    },
     "rows": {
       "type": "array",
       "items": {"$ref": "#/$defs/row"}
     }
   },
+
   "allOf": [
     {
       "if": {"properties": {"run": {"properties": {"official": {"const": true}}}}},
@@ -105,7 +118,25 @@
         "time_ms": {"type": "integer", "minimum": 0},
         "cases_passed": {"type": "integer", "minimum": 0},
         "cases_total": {"type": "integer", "minimum": 0},
-        "oracle_evidence": {"type": "object"}
+        "oracle_evidence": {"type": "object"},
+        "fail_taxonomy": {
+          "type": "string",
+          "enum": [
+            "adapter_error",
+            "boundary_mismatch",
+            "whole_program_output",
+            "compile_error",
+            "runtime_error",
+            "timeout",
+            "assertion_fail",
+            "fixture_error",
+            "oracle_error",
+            "no_wrapper",
+            "ok",
+            "other",
+            ""
+          ]
+        }
       },
       "additionalProperties": true
     }

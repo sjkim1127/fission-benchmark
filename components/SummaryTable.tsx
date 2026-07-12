@@ -1,20 +1,10 @@
 "use client";
 
 import styles from "./SummaryTable.module.css";
-
-interface DecompilerStat {
-  decompiler: string;
-  attempted: number;
-  clean: number;
-  error: number;
-  avgCorrectness: number | null;
-  avgSimilarity: number;
-  semanticPassPct: number | null;
-  avgTimeMs: number;
-}
+import type { MvpDecompilerStats } from "@/lib/benchmark";
 
 interface Props {
-  stats: DecompilerStat[];
+  stats: MvpDecompilerStats[];
 }
 
 const DECOMPILER_COLORS: Record<string, string> = {
@@ -22,7 +12,7 @@ const DECOMPILER_COLORS: Record<string, string> = {
   ghidra: "#10b981",
   angr: "#f59e0b",
   radare2: "#ec4899",
-  retdec: "#14b8a6",
+  boomerang: "#14b8a6",
   snowman: "#8b5cf6",
   revng: "#f97316",
   reko: "#06b6d4",
@@ -35,25 +25,42 @@ function ScoreBar({ value, color }: { value: number; color: string }) {
         className={styles.bar}
         style={{ width: `${Math.min(value * 100, 100)}%`, background: color }}
       />
-      <span className={styles.barLabel}>{value.toFixed(3)}</span>
+      <span className={styles.barLabel}>{(value * 100).toFixed(1)}%</span>
     </div>
   );
+}
+
+function topTaxonomy(tax: Record<string, number>): string {
+  const entries = Object.entries(tax).filter(([k, n]) => k !== "ok" && n > 0);
+  if (entries.length === 0) return "—";
+  entries.sort((a, b) => b[1] - a[1]);
+  return entries
+    .slice(0, 3)
+    .map(([k, n]) => `${k}:${n}`)
+    .join(" · ");
 }
 
 export function SummaryTable({ stats }: Props) {
   return (
     <div className={styles.wrap}>
+      <p className={styles.hint}>
+        MVP standard set — <strong>Semantic</strong> is the only ranking axis.
+        Coverage and fail taxonomy are denominators; runtime is practicality.
+        Source similarity is not shown here (diagnostics only).
+      </p>
       <table className={styles.table}>
         <thead>
           <tr>
             <th>Decompiler</th>
             <th className={styles.num}>Attempted</th>
-            <th className={styles.num}>Clean</th>
-            <th className={styles.num}>Error</th>
-            <th>Avg Correctness</th>
-            <th>Avg Similarity</th>
-            <th className={styles.num}>Semantic Pass</th>
-            <th className={styles.num}>Avg Time</th>
+            <th className={styles.num}>Adapter clean</th>
+            <th className={styles.num}>Boundary invalid</th>
+            <th className={styles.num}>Semantic tested</th>
+            <th>Semantic mean</th>
+            <th className={styles.num}>Perfect</th>
+            <th className={styles.num}>No wrapper</th>
+            <th>Fail taxonomy (top)</th>
+            <th className={styles.num}>Mean time</th>
           </tr>
         </thead>
         <tbody>
@@ -69,12 +76,30 @@ export function SummaryTable({ stats }: Props) {
                   </strong>
                 </td>
                 <td className={styles.num}>{s.attempted}</td>
-                <td className={styles.num}>{s.clean}</td>
-                <td className={`${styles.num} ${s.error > 0 ? styles.errorCell : ""}`}>{s.error || "—"}</td>
-                <td>{s.avgCorrectness === null ? "N/A" : <ScoreBar value={s.avgCorrectness} color={color} />}</td>
-                <td><ScoreBar value={s.avgSimilarity} color={color} /></td>
-                <td className={styles.num}>{s.semanticPassPct === null ? "N/A" : `${s.semanticPassPct.toFixed(1)}%`}</td>
-                <td className={styles.num}>{s.avgTimeMs > 0 ? `${Math.round(s.avgTimeMs)}ms` : "—"}</td>
+                <td className={styles.num}>{s.adapterClean}</td>
+                <td
+                  className={`${styles.num} ${s.invalidBoundary > 0 ? styles.errorCell : ""}`}
+                >
+                  {s.invalidBoundary || "—"}
+                </td>
+                <td className={styles.num}>{s.semanticTested}</td>
+                <td>
+                  {s.meanSemantic === null ? (
+                    "N/A"
+                  ) : (
+                    <ScoreBar value={s.meanSemantic} color={color} />
+                  )}
+                </td>
+                <td className={styles.num}>
+                  {s.semanticTested > 0 ? s.perfectRows : "—"}
+                </td>
+                <td className={styles.num}>{s.noWrapper || "—"}</td>
+                <td className={styles.tax}>{topTaxonomy(s.taxonomy)}</td>
+                <td className={styles.num}>
+                  {s.meanTimeMs != null && s.meanTimeMs > 0
+                    ? `${Math.round(s.meanTimeMs)}ms`
+                    : "—"}
+                </td>
               </tr>
             );
           })}

@@ -16,9 +16,13 @@ env:
   BENCHMARK_VARIANT_LIMIT: ${{ github.event.inputs.benchmark_variant_limit || (github.event_name == 'push' && '1' || '0') }}
   RUN_MODE: ${{ github.event.inputs.run_mode || (github.event_name == 'push' && 'smoke' || 'official') }}
   PUBLISH_RESULTS: ${{ github.event.inputs.publish_results || (github.event_name == 'push' && 'false' || 'true') }}
+  # Smoke default: 3 subjects × ghidra reference + fission candidate.
+  # Timeout must allow Ghidra headless cold-start; 2s was infra-fail only.
   PARITY_LIMIT: ${{ github.event.inputs.parity_limit || '3' }}
-  PARITY_DECOMPILERS: fission,ghidra,radare2,reko
-  PARITY_REQUEST_TIMEOUT: '2'
+  PARITY_DECOMPILERS: ${{ github.event.inputs.parity_decompilers || 'fission,ghidra' }}
+  PARITY_REQUEST_TIMEOUT: ${{ github.event.inputs.parity_timeout || '90' }}
+  # Publishable scores: strict canonicalize (no LOOSE space-id stubs / dropped operands).
+  PARITY_CANONICALIZE_MODE: strict
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/fission-benchmark
   PYTHONPATH: .
@@ -257,6 +261,8 @@ jobs:
           python -m runner.run_validity results/dev_latest.json \
             --github-env     "$GITHUB_ENV" \
             --github-summary "$GITHUB_STEP_SUMMARY"
+          # Standard-set contract (summary + taxonomy denominators + semantic-only correctness)
+          python scripts/check_benchmark_path.py results/dev_latest.json
 
       - name: Run holdout benchmark
         # Skip if validity gate failed — holdout on an invalid run wastes CI time.
@@ -340,20 +346,29 @@ jobs:
             --update-latest
           python -c 'from pathlib import Path; from runner.artifact_integrity import verify_artifact_manifest; verify_artifact_manifest(Path("."))'
 
-      - name: Run parity benchmarks
+      - name: Run parity benchmarks (Ghidra reference)
+        id: parity
+        # Always attempt when containers are up — layered workspace gate independent of quality publish.
         if: steps.fission-gate.outcome == 'success'
         run: |
-          if [ -n "$PARITY_LIMIT" ] && [ "$PARITY_LIMIT" != "0" ]; then
-            python runner/run_parity.py \
-              --corpus "$CORPUS_SPLIT" \
-              --limit "$PARITY_LIMIT" \
-              --decompilers "$PARITY_DECOMPILERS" \
-              --request-timeout "$PARITY_REQUEST_TIMEOUT"
-          else
-            python runner/run_parity.py \
-              --corpus "$CORPUS_SPLIT" \
-              --decompilers "$PARITY_DECOMPILERS" \
-              --request-timeout "$PARITY_REQUEST_TIMEOUT"
+          set -euo pipefail
+          EXTRA=()
+          if [ -n "${PARITY_LIMIT:-}" ] && [ "$PARITY_LIMIT" != "0" ]; then
+            EXTRA+=(--limit "$PARITY_LIMIT")
+          fi
+          python -m runner.run_parity \
+            --corpus "${CORPUS_SPLIT:-dev}" \
+            --decompilers "$PARITY_DECOMPILERS" \
+            --request-timeout "$PARITY_REQUEST_TIMEOUT" \
+            "${EXTRA[@]}"
+          python -m benchmark.telemetry.aggregate \
+            --output results/telemetry/latest.json \
+            --dashboard-copy public/parity-telemetry.json
+          python scripts/check_parity_smoke.py results/telemetry/latest.json
+          # Golden canaries hard-fail: known-gap locks + regression locks must hold.
+          if [ -f benchmark/golden_repros/manifest.json ]; then
+            python -m benchmark.golden_repros.run benchmark/golden_repros/manifest.json \
+              --timeout "$PARITY_REQUEST_TIMEOUT"
           fi
 
       - name: Write benchmark summary

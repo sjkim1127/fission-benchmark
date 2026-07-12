@@ -16,7 +16,16 @@ BenchmarkStage = Literal[
     "decompiler_quality",
 ]
 
-BenchmarkStatus = Literal["match", "mismatch", "error", "skipped"]
+BenchmarkStatus = Literal[
+    "match",
+    "mismatch",
+    "error",
+    "skipped",
+    "both_empty_invalid",
+    "reference_empty",
+    "candidate_empty",
+    "fetch_error",
+]
 
 
 @dataclass(frozen=True)

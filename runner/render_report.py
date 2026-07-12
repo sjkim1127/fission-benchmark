@@ -32,6 +32,7 @@ from semantic import verify_semantic_correctness
 from test_wrappers import TEST_WRAPPERS
 from scoring import FunctionScore, assign_consensus_ranks, check_uses_intrinsics, compute_correctness_score
 from run_validity import load_result_file, build_envelope, evaluate_run, LoadedResult, validity_dict
+from standard_summary import attach_summary_to_envelope
 from artifact_integrity import write_artifact_manifest, verify_artifact_manifest
 
 
@@ -251,6 +252,11 @@ def main() -> None:
                 "corpus": args.corpus,
             },
         )
+
+    # Always rebuild standard-set summary from the (possibly re-scored) rows so
+    # MD/dashboard denominators match the envelope contract.
+    attach_summary_to_envelope(out_envelope)
+    serialized_rows = out_envelope["rows"]
 
     loaded = LoadedResult(rows=serialized_rows, envelope=out_envelope, legacy=False)
     verdict = evaluate_run(loaded)

@@ -1,15 +1,15 @@
-"""Instruction decode parity runner."""
+"""Instruction decode parity runner — default: Ghidra vs Fission over HTTP."""
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Optional
 
 import typer
 
-from benchmark.common.io import write_jsonl
-from benchmark.common.providers import canonicalize, run_json_provider
-from benchmark.common.result import error_result
+from benchmark.common.compare_guards import empty_pair_result, guard_decode_stub
+from benchmark.common.parity_cli import run_pair_stage
+from benchmark.common.providers import canonicalize, canonicalize_assembly_list
 from benchmark.common.schema import BenchmarkResult, BenchmarkSubject
-from benchmark.common.subjects import load_subjects
 
 app = typer.Typer(pretty_exceptions_enable=False)
 
@@ -43,8 +43,18 @@ def compare_decode(
     expected: object,
     actual: object,
 ) -> BenchmarkResult:
-    expected_norm = canonicalize(expected)
-    actual_norm = canonicalize(actual)
+    guarded = empty_pair_result(
+        subject, "decode_parity", reference_name, candidate_name, expected, actual
+    )
+    if guarded is not None:
+        return guarded
+    # Both adapters currently stub decode from disasm — do not score as quality.
+    stub = guard_decode_stub(subject, reference_name, candidate_name, expected, actual)
+    if stub is not None:
+        return stub
+    # Reuse assembly byte/mnemonic normalization then full field compare.
+    expected_norm = canonicalize(canonicalize_assembly_list(expected))
+    actual_norm = canonicalize(canonicalize_assembly_list(actual))
     if expected_norm == actual_norm:
         return BenchmarkResult(
             subject=subject,
@@ -75,30 +85,35 @@ def compare_decode(
 
 @app.command()
 def main(
-    reference_command: str = typer.Option(..., help="Command template producing reference JSON"),
-    candidate_command: str = typer.Option(..., help="Command template producing candidate JSON"),
-    reference_name: str = typer.Option("reference"),
+    reference_http: Optional[str] = typer.Option("ghidra", "--reference-http"),
+    candidate_http: Optional[str] = typer.Option("fission", "--candidate-http"),
+    reference_command: Optional[str] = typer.Option(None),
+    candidate_command: Optional[str] = typer.Option(None),
+    reference_name: str = typer.Option("ghidra"),
     candidate_name: str = typer.Option("fission"),
     corpus: str = typer.Option("dev"),
     output: Path = typer.Option(Path("results/decode_parity/latest.jsonl")),
-    limit: int | None = typer.Option(None),
-    timeout: float = typer.Option(30.0),
+    limit: Optional[int] = typer.Option(None),
+    timeout: float = typer.Option(60.0),
 ):
-    rows: list[BenchmarkResult] = []
-    subjects = load_subjects(corpus)
-    if limit is not None:
-        subjects = subjects[:limit]
-
-    for subject in subjects:
-        try:
-            expected = run_json_provider(reference_command, subject, timeout)
-            actual = run_json_provider(candidate_command, subject, timeout)
-            rows.append(compare_decode(subject, reference_name, candidate_name, expected, actual))
-        except Exception as exc:
-            rows.append(error_result(subject, "decode_parity", reference_name, candidate_name, str(exc)))
-
-    write_jsonl(output, rows)
-    typer.echo(f"Wrote {len(rows)} decode parity rows to {output}")
+    if reference_command:
+        reference_http = None
+    if candidate_command:
+        candidate_http = None
+    run_pair_stage(
+        stage="decode_parity",
+        compare=compare_decode,
+        reference_http=reference_http,
+        candidate_http=candidate_http,
+        reference_command=reference_command,
+        candidate_command=candidate_command,
+        reference_name=reference_name,
+        candidate_name=candidate_name,
+        corpus=corpus,
+        output=output,
+        limit=limit,
+        timeout=timeout,
+    )
 
 
 if __name__ == "__main__":

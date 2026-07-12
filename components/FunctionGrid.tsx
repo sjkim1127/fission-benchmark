@@ -14,7 +14,7 @@ const DECOMPILER_COLORS: Record<string, string> = {
   ghidra: "#10b981",
   angr: "#f59e0b",
   radare2: "#ec4899",
-  retdec: "#14b8a6",
+  boomerang: "#14b8a6",
   snowman: "#8b5cf6",
   revng: "#f97316",
   reko: "#06b6d4",
@@ -86,10 +86,24 @@ function CodeModal({ fnName, rows, onClose }: ModalProps) {
           <div className={styles.modalBody}>
             <div className={styles.modalMeta}>
               <span style={{ color }}>●</span>
-              <span>Correctness: <strong>{((activeRow.correctness_score ?? 0)).toFixed(3)}</strong></span>
-              <span>Similarity: <strong>{activeRow.source_similarity.toFixed(3)}</strong></span>
-              <span>Semantic: <strong>{activeRow.semantic_score == null ? '—' : (activeRow.semantic_score >= 1.0 ? '✓ pass' : activeRow.semantic_score.toFixed(2))}</strong></span>
+              <span>
+                Semantic:{" "}
+                <strong>
+                  {activeRow.semantic_score == null
+                    ? "—"
+                    : activeRow.semantic_score >= 1.0
+                      ? "✓ pass"
+                      : activeRow.semantic_score.toFixed(2)}
+                </strong>
+              </span>
+              <span>
+                Taxonomy:{" "}
+                <strong>{activeRow.fail_taxonomy || activeRow.fail_category || "—"}</strong>
+              </span>
               <span>{activeRow.time_ms}ms</span>
+              <span className={styles.diagMuted}>
+                Similarity (diagnostic): {activeRow.source_similarity.toFixed(3)}
+              </span>
             </div>
 
             {activeRow.error ? (

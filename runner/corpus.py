@@ -61,17 +61,18 @@ class Corpus:
     def load_all(cls, split: str = "dev") -> "Corpus":
         """Load all manifests from corpus/{split}/manifests/.
 
-        ``split`` must be one of ``"dev"``, ``"holdout"``, or ``"full"``.
+        ``split`` must be one of ``"dev"``, ``"holdout"``, ``"full"``, or
+        ``"realworld"`` (reserved track; empty until populated).
         ``"full"`` loads both dev and holdout (used for release evaluation).
         """
         if split == "full":
             dev = cls.load_all("dev")
             holdout = cls.load_all("holdout")
             return cls(functions=dev.functions + holdout.functions)
-        if split not in ("dev", "holdout"):
+        if split not in ("dev", "holdout", "realworld"):
             raise ValueError(
                 f"Invalid corpus split: {split!r}. "
-                f"Must be one of 'dev', 'holdout', or 'full'."
+                f"Must be one of 'dev', 'holdout', 'realworld', or 'full'."
             )
         manifest_dir = CORPUS_ROOT / split / "manifests"
         all_functions: list[FunctionEntry] = []

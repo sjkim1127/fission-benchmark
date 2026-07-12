@@ -44,6 +44,25 @@ typedef struct Pair {
     int value;
 } Pair;
 
+// Bitfield / union layout used by memory_layouts.c
+struct Flags {
+    uint32_t is_active : 1;
+    uint32_t is_admin : 1;
+    uint32_t privilege_level : 4;
+    uint32_t reserved : 26;
+};
+
+union DataValue {
+    int32_t int_val;
+    float float_val;
+    char char_vals[4];
+};
+
+struct ConfigNode {
+    struct Flags flags;
+    union DataValue val;
+};
+
 // SLEIGH/Fission intrinsics — type-generic computation-based implementations
 #define __carry(a, b)   (__builtin_add_overflow((a), (b), &(__typeof__(a)){0}))
 #define __borrow(a, b)  ((a) < (b))

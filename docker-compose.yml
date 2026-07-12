@@ -51,6 +51,8 @@ services:
       - FISSION_SLEIGH_SPEC_DIR=/sleigh-specs
       - FISSION_RESOURCE_ROOT=/opt/fission-utils/utils
       - FISSION_GHIDRA_DATA_DIR=/opt/fission-utils/utils/ghidra-data
+      # Cap concurrent fission_cli children for multi_bundle thrashing control.
+      - FISSION_CLI_WORKERS=${FISSION_CLI_WORKERS:-8}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
@@ -63,6 +65,12 @@ services:
     ports: ["8001:8000"]
     volumes:
       - ./corpus:/corpus:ro
+      # Persist analyzed programs so parity reuses imports across requests.
+      - ghidra-project-cache:/var/cache/ghidra-projects
+    environment:
+      - GHIDRA_PROJECT_CACHE=/var/cache/ghidra-projects
+      # Concurrent multi_bundle across distinct PEs (memory tradeoff).
+      - GHIDRA_HEADLESS_WORKERS=${GHIDRA_HEADLESS_WORKERS:-3}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 15s
@@ -139,3 +147,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+volumes:
+  ghidra-project-cache:

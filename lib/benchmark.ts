@@ -1,8 +1,35 @@
-import { BenchmarkEnvelopeSchema, type BenchmarkEnvelope } from "./schemas";
+import {
+  BenchmarkEnvelopeSchema,
+  type BenchmarkEnvelope,
+} from "./schemas";
 
 const LATEST_URL =
   process.env.BENCHMARK_LATEST_URL ??
   "https://raw.githubusercontent.com/sjkim1127/fission-benchmark/main/results/latest.json";
+
+export type MvpDecompilerStats = {
+  decompiler: string;
+  attempted: number;
+  adapterClean: number;
+  invalidBoundary: number;
+  semanticTested: number;
+  noWrapper: number;
+  meanSemantic: number | null;
+  perfectRows: number;
+  meanTimeMs: number | null;
+  taxonomy: Record<string, number>;
+  oracleSubject: string | null;
+};
+
+export type CrossVariantRow = {
+  decompiler: string;
+  compiler_variant: string;
+  compiler: string;
+  opt: string;
+  tested_rows: number;
+  mean_pass_rate: number | null;
+  perfect_rows: number;
+};
 
 export async function getLatestBenchmark(): Promise<BenchmarkEnvelope> {
   // Intentionally NOT using Next.js data cache (next.tags) here because the raw
@@ -23,59 +50,206 @@ export async function getLatestBenchmark(): Promise<BenchmarkEnvelope> {
   return envelope;
 }
 
-/** Group rows by decompiler for summary statistics */
-export function groupByDecompiler(rows: BenchmarkEnvelope["rows"]) {
-  const map = new Map<string, {
-    attempted: number;
-    clean: number;
-    error: number;
-    totalCorrectness: number;
-    correctnessTested: number;
-    totalSimilarity: number;
-    semanticPass: number;
-    semanticTested: number;
-    totalTime: number;
-  }>();
+function isAdapterFailure(row: BenchmarkEnvelope["rows"][number]): boolean {
+  return Boolean(row.error) || row.fail_category === "adapter_error";
+}
 
-  for (const row of rows) {
+/** Prefer envelope.summary.mvp when present; otherwise aggregate from rows. */
+export function groupByDecompiler(data: BenchmarkEnvelope): MvpDecompilerStats[] {
+  const fromSummary = data.summary?.mvp?.by_decompiler as
+    | Record<
+        string,
+        {
+          semantic?: {
+            mean_pass_rate?: number | null;
+            perfect_rows?: number;
+            tested_rows?: number;
+            oracle_subject?: string | null;
+          };
+          coverage?: {
+            attempted?: number;
+            adapter_clean?: number;
+            invalid_boundary?: number;
+            semantic_tested?: number;
+            no_wrapper?: number;
+          };
+          fail_taxonomy?: Record<string, number>;
+          runtime?: { mean_ms?: number | null };
+        }
+      >
+    | undefined;
+
+  if (fromSummary && Object.keys(fromSummary).length > 0) {
+    return Object.entries(fromSummary)
+      .map(([decompiler, s]) => ({
+        decompiler,
+        attempted: s.coverage?.attempted ?? 0,
+        adapterClean: s.coverage?.adapter_clean ?? 0,
+        invalidBoundary: s.coverage?.invalid_boundary ?? 0,
+        semanticTested: s.coverage?.semantic_tested ?? s.semantic?.tested_rows ?? 0,
+        noWrapper: s.coverage?.no_wrapper ?? 0,
+        meanSemantic:
+          s.semantic?.mean_pass_rate === undefined || s.semantic?.mean_pass_rate === null
+            ? null
+            : Number(s.semantic.mean_pass_rate),
+        perfectRows: s.semantic?.perfect_rows ?? 0,
+        meanTimeMs:
+          s.runtime?.mean_ms === undefined || s.runtime?.mean_ms === null
+            ? null
+            : Number(s.runtime.mean_ms),
+        taxonomy: s.fail_taxonomy ?? {},
+        oracleSubject: s.semantic?.oracle_subject ?? null,
+      }))
+      .sort((a, b) => {
+        if (a.decompiler === "fission") return -1;
+        if (b.decompiler === "fission") return 1;
+        return (b.meanSemantic ?? -1) - (a.meanSemantic ?? -1);
+      });
+  }
+
+  // Fallback for legacy envelopes without summary.
+  const map = new Map<
+    string,
+    {
+      attempted: number;
+      adapterClean: number;
+      invalidBoundary: number;
+      semanticScores: number[];
+      noWrapper: number;
+      times: number[];
+      taxonomy: Record<string, number>;
+    }
+  >();
+
+  for (const row of data.rows) {
     const d = row.decompiler;
     if (!map.has(d)) {
-      map.set(d, { attempted: 0, clean: 0, error: 0, totalCorrectness: 0, correctnessTested: 0, totalSimilarity: 0, semanticPass: 0, semanticTested: 0, totalTime: 0 });
+      map.set(d, {
+        attempted: 0,
+        adapterClean: 0,
+        invalidBoundary: 0,
+        semanticScores: [],
+        noWrapper: 0,
+        times: [],
+        taxonomy: {},
+      });
     }
     const s = map.get(d)!;
     s.attempted++;
-    if (row.error) {
-      s.error++;
-    } else {
-      s.clean++;
-      if (row.correctness_score !== null && row.correctness_score !== undefined) {
-        s.totalCorrectness += row.correctness_score;
-        s.correctnessTested++;
-      }
-      s.totalSimilarity += row.source_similarity;
-      if (row.semantic_score !== null && row.semantic_score !== undefined) {
-        s.semanticTested++;
-        if (row.semantic_score >= 1.0) s.semanticPass++;
-      }
-      s.totalTime += row.time_ms;
+    const tax = row.fail_taxonomy || (isAdapterFailure(row) ? "adapter_error" : "other");
+    s.taxonomy[tax] = (s.taxonomy[tax] ?? 0) + 1;
+    if (tax === "boundary_mismatch" || tax === "whole_program_output") {
+      s.invalidBoundary++;
     }
+    if (!isAdapterFailure(row) && tax !== "boundary_mismatch" && tax !== "whole_program_output") {
+      s.adapterClean++;
+    }
+    if (row.fail_category === "no_wrapper" || tax === "no_wrapper") {
+      s.noWrapper++;
+    } else if (
+      row.semantic_score !== null &&
+      row.semantic_score !== undefined &&
+      !isAdapterFailure(row)
+    ) {
+      s.semanticScores.push(row.semantic_score);
+    }
+    if (row.time_ms > 0) s.times.push(row.time_ms);
   }
 
-  return Array.from(map.entries()).map(([decompiler, s]) => ({
-    decompiler,
-    attempted: s.attempted,
-    clean: s.clean,
-    error: s.error,
-    avgCorrectness: s.correctnessTested > 0 ? s.totalCorrectness / s.correctnessTested : null,
-    avgSimilarity: s.clean > 0 ? s.totalSimilarity / s.clean : 0,
-    semanticPassPct: s.semanticTested > 0 ? (s.semanticPass / s.semanticTested) * 100 : null,
-    avgTimeMs: s.clean > 0 ? s.totalTime / s.clean : 0,
-  })).sort((a, b) => {
-    // Fission first, then sort by correctness desc
-    if (a.decompiler === "fission") return -1;
-    if (b.decompiler === "fission") return 1;
-    return (b.avgCorrectness ?? -1) - (a.avgCorrectness ?? -1);
+  return Array.from(map.entries())
+    .map(([decompiler, s]) => ({
+      decompiler,
+      attempted: s.attempted,
+      adapterClean: s.adapterClean,
+      invalidBoundary: s.invalidBoundary,
+      semanticTested: s.semanticScores.length,
+      noWrapper: s.noWrapper,
+      meanSemantic:
+        s.semanticScores.length > 0
+          ? s.semanticScores.reduce((a, b) => a + b, 0) / s.semanticScores.length
+          : null,
+      perfectRows: s.semanticScores.filter((v) => v >= 1).length,
+      meanTimeMs:
+        s.times.length > 0 ? s.times.reduce((a, b) => a + b, 0) / s.times.length : null,
+      taxonomy: s.taxonomy,
+      oracleSubject: null,
+    }))
+    .sort((a, b) => {
+      if (a.decompiler === "fission") return -1;
+      if (b.decompiler === "fission") return 1;
+      return (b.meanSemantic ?? -1) - (a.meanSemantic ?? -1);
+    });
+}
+
+/** @deprecated Use groupByDecompiler(envelope) — kept for call sites that only have rows. */
+export function groupByDecompilerRows(rows: BenchmarkEnvelope["rows"]): MvpDecompilerStats[] {
+  const stub = {
+    schema_version: 2 as const,
+    run: { official: false },
+    toolchain: {},
+    matrix: {
+      expected_decompilers: [] as string[],
+      expected_cells: [] as { decompiler: string; function_name: string; compiler_variant: string }[],
+      expected_rows: 0,
+      observed_rows: 0,
+    },
+    oracle: { mode: "example_cases" as const, valid: false },
+    validity: { valid: false, publishable: false, reasons: [] as string[], publish_reasons: [] as string[] },
+    rows,
+  };
+  return groupByDecompiler(stub as unknown as BenchmarkEnvelope);
+}
+
+export function getCrossVariantRows(data: BenchmarkEnvelope): CrossVariantRow[] {
+  const raw = data.summary?.extensions?.cross_variant as
+    | {
+        by_decompiler_variant?: Record<
+          string,
+          Array<{
+            compiler_variant: string;
+            compiler: string;
+            opt: string;
+            tested_rows: number;
+            mean_pass_rate: number | null;
+            perfect_rows: number;
+          }>
+        >;
+      }
+    | undefined;
+  if (!raw?.by_decompiler_variant) return [];
+  const out: CrossVariantRow[] = [];
+  for (const [decompiler, entries] of Object.entries(raw.by_decompiler_variant)) {
+    for (const e of entries) {
+      out.push({ decompiler, ...e });
+    }
+  }
+  return out.sort((a, b) => {
+    if (a.decompiler !== b.decompiler) {
+      if (a.decompiler === "fission") return -1;
+      if (b.decompiler === "fission") return 1;
+      return a.decompiler.localeCompare(b.decompiler);
+    }
+    return a.compiler_variant.localeCompare(b.compiler_variant);
   });
+}
+
+export function getCfgSecondary(data: BenchmarkEnvelope): {
+  status: string;
+  byDecompiler: Record<string, { match?: number; mismatch?: number; match_rate?: number | null }>;
+} {
+  const cfg = data.summary?.secondary?.cfg as
+    | {
+        status?: string;
+        by_decompiler?: Record<
+          string,
+          { match?: number; mismatch?: number; match_rate?: number | null }
+        >;
+      }
+    | undefined;
+  return {
+    status: cfg?.status ?? "absent",
+    byDecompiler: cfg?.by_decompiler ?? {},
+  };
 }
 
 /** Get unique function names in the result */

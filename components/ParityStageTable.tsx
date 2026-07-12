@@ -1,0 +1,130 @@
+"use client";
+
+import styles from "./SummaryTable.module.css";
+import type { ParityTelemetry } from "@/lib/parity";
+
+interface Props {
+  telemetry: ParityTelemetry | null;
+}
+
+const STAGE_LABELS: Record<string, string> = {
+  assembly_parity: "Assembly",
+  decode_parity: "Decode",
+  pcode_parity: "P-code",
+  cfg_parity: "CFG",
+  function_discovery: "Functions",
+  ir_invariants: "IR invariants",
+  golden_repros: "Golden repros",
+};
+
+/** Decode is derived-from-disasm stub until adapters emit real decode fields. */
+const EXCLUDED_PRIMARY = new Set(["decode_parity"]);
+
+function pct(rate: number | null | undefined): string {
+  if (rate === null || rate === undefined) return "—";
+  return `${(rate * 100).toFixed(1)}%`;
+}
+
+export function ParityStageTable({ telemetry }: Props) {
+  if (!telemetry || !telemetry.stages || Object.keys(telemetry.stages).length === 0) {
+    return (
+      <p className={styles.hint}>
+        No parity telemetry yet. Run{" "}
+        <code>python -m runner.run_parity --corpus dev</code> then{" "}
+        <code>python -m benchmark.telemetry.aggregate</code>.
+      </p>
+    );
+  }
+
+  const allStages = Object.entries(telemetry.stages);
+  const primary = allStages.filter(([stage]) => !EXCLUDED_PRIMARY.has(stage));
+  const excluded = allStages.filter(([stage]) => EXCLUDED_PRIMARY.has(stage));
+  const mode = telemetry.canonicalize_mode ?? "loose";
+  const pub = telemetry.publishable;
+
+  return (
+    <div className={styles.wrap}>
+      <p className={styles.hint}>
+        Layered parity vs reference (typically <strong>Ghidra</strong>). Match
+        rate is among comparable rows (match+mismatch); errors are listed
+        separately. Canonicalize mode: <code>{mode}</code>
+        {mode === "strict" ? " (publishable)" : " (triage / local)"}. Decode is
+        excluded from the primary table until a real decode surface exists.
+      </p>
+      {pub && (
+        <p className={styles.hint}>
+          Publishable rollup: match_rate=
+          {pct(pub.match_rate_comparable)} · coverage=
+          {pct(pub.usable_coverage)} · rows={pub.total_rows}
+        </p>
+      )}
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>Stage</th>
+            <th className={styles.num}>Total</th>
+            <th className={styles.num}>Match</th>
+            <th className={styles.num}>Mismatch</th>
+            <th className={styles.num}>Error/other</th>
+            <th className={styles.num}>Match rate</th>
+            <th className={styles.num}>Coverage</th>
+            <th className={styles.num}>Mismatch rate</th>
+            <th>Top mismatch kinds</th>
+          </tr>
+        </thead>
+        <tbody>
+          {primary.map(([stage, s]) => {
+            const kinds = Object.entries(s.by_mismatch_kind || {})
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 3)
+              .map(([k, n]) => `${k}:${n}`)
+              .join(" · ");
+            return (
+              <tr key={stage}>
+                <td>
+                  <strong>{STAGE_LABELS[stage] ?? stage}</strong>
+                  <div className={styles.tax}>{stage}</div>
+                </td>
+                <td className={styles.num}>{s.total}</td>
+                <td className={styles.num}>{s.match}</td>
+                <td className={styles.num}>{s.mismatch}</td>
+                <td className={styles.num}>{s.error_or_other}</td>
+                <td className={styles.num}>{pct(s.match_rate)}</td>
+                <td className={styles.num}>{pct(s.usable_coverage ?? null)}</td>
+                <td
+                  className={`${styles.num} ${
+                    (s.mismatch_rate ?? 0) > 0.5 ? styles.errorCell : ""
+                  }`}
+                >
+                  {pct(s.mismatch_rate)}
+                </td>
+                <td className={styles.tax}>{kinds || "—"}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {excluded.length > 0 && (
+        <p className={styles.hint}>
+          Excluded from primary (not scored for ranking):{" "}
+          {excluded
+            .map(([stage, s]) => {
+              const skip = s.by_status?.skipped ?? 0;
+              return `${STAGE_LABELS[stage] ?? stage} (total=${s.total}, skipped=${skip})`;
+            })
+            .join("; ")}
+          . Implement real modrm/sib/disp/imm before promoting decode.
+        </p>
+      )}
+      <p className={styles.hint}>
+        Rows: {telemetry.total_rows}
+        {telemetry.by_pair
+          ? ` · pairs: ${Object.keys(telemetry.by_pair).join(", ")}`
+          : ""}
+        {telemetry.reliability
+          ? ` · fetch_error_rate=${pct(telemetry.reliability.fetch_error_rate ?? null)}`
+          : ""}
+      </p>
+    </div>
+  );
+}

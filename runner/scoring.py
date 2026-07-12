@@ -55,6 +55,9 @@ class FunctionScore:
     ast_similarity: dict[str, Any] = field(default_factory=dict)
     output_diagnostics: dict[str, Any] = field(default_factory=dict)
     oracle_evidence: dict[str, Any] = field(default_factory=dict)
+    # Stable exclusive fail bucket for standard-set reporting (see standard_summary).
+    fail_taxonomy: str = ""
+
 
 
 # ── Correctness Score ─────────────────────────────────────────────────────────

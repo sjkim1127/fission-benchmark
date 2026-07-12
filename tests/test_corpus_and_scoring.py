@@ -74,6 +74,28 @@ def test_crypto_functions_have_semantic_wrappers() -> None:
         assert len(TEST_WRAPPERS[name]) >= 4
 
 
+def test_all_corpus_functions_have_semantic_wrappers() -> None:
+    """Every locked corpus function must be oracle-testable (no silent no_wrapper debt)."""
+    from runner.corpus import Corpus
+
+    names = {fn.name for fn in Corpus.load_all("full").functions}
+    assert names, "expected non-empty corpus"
+    missing = sorted(names - set(TEST_WRAPPERS))
+    assert missing == [], f"functions without wrappers: {missing}"
+    for name in names:
+        assert len(TEST_WRAPPERS[name]) >= 5, f"{name} needs ≥5 cases"
+
+
+def test_holdout_split_is_non_empty_and_disjoint() -> None:
+    from runner.corpus import Corpus
+
+    dev = {fn.name for fn in Corpus.load_all("dev").functions}
+    holdout = {fn.name for fn in Corpus.load_all("holdout").functions}
+    assert holdout, "holdout corpus must be populated (run scripts/populate_holdout.py)"
+    assert dev, "dev corpus must remain non-empty after holdout lock"
+    assert dev.isdisjoint(holdout), f"overlap: {sorted(dev & holdout)}"
+
+
 def test_assign_consensus_ranks_handles_ties_correctly() -> None:
     scores = [
         FunctionScore(

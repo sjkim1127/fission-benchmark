@@ -1,25 +1,45 @@
 # Golden Repros
 
-Runs fixed regression canaries outside the broad corpus. Use this for narrow
-bugs that must never regress, such as shared-token displacement cursoring or
-COPY-before-STORE p-code materialization.
+Fixed canaries for the integrated benchmark workspace. Two modes:
 
-Manifest format:
+1. **Known-gap locks** — HTTP Ghidra vs Fission where we *expect* a mismatch
+   kind (CFG/pcode gaps). Fails CI if the gap *changes unexpectedly* or infra
+   breaks.
+2. **Exact payload locks** — `command` + `expected` JSON for narrow bugs that
+   must not regress once fixed.
+
+## Manifest
+
+Generated/updated from parity JSONL:
+
+```bash
+python scripts/extract_golden_repros.py \
+  --inputs results/cfg_parity/latest.jsonl results/pcode_parity/latest.jsonl \
+  --output benchmark/golden_repros/manifest.json \
+  --limit-per-stage 5
+```
+
+Example case:
 
 ```json
 {
-  "cases": [
-    {
-      "name": "sib_stack_disp8_copy_store",
-      "binary": "corpus/dev/binaries/example",
-      "function": "example",
-      "addr": "0x401000",
-      "arch": "x86_64",
-      "compiler": "gcc",
-      "opt": "-O2",
-      "command": "python tools/fission_pcode.py {binary} {addr}",
-      "expected": [{"op": "INT_ADD"}, {"op": "COPY"}, {"op": "STORE"}]
-    }
-  ]
+  "name": "cfg_parity__count_bits__gcc-O0",
+  "stage": "cfg_parity",
+  "binary": "corpus/dev/binaries/control_flow_gcc_O0.exe",
+  "function": "count_bits",
+  "addr": "0x140001530",
+  "reference_http": "ghidra",
+  "candidate_http": "fission",
+  "expect_status": "mismatch",
+  "expect_mismatch_kind": "edge_set"
 }
 ```
+
+## Run
+
+```bash
+export FISSION_HOST_PORT=8007
+python -m benchmark.golden_repros.run benchmark/golden_repros/manifest.json
+```
+
+Exit code 1 if any case does not meet its expectation (for CI canaries).

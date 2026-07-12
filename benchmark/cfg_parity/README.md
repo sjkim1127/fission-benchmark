@@ -2,7 +2,9 @@
 
 Compares basic-block and edge recovery for one function address.
 
-Providers must print JSON to stdout:
+**Default:** Ghidra (`/cfg`) vs Fission (`/cfg`) over Docker HTTP.
+
+## Schema
 
 ```json
 {
@@ -11,5 +13,10 @@ Providers must print JSON to stdout:
 }
 ```
 
-This gate separates decode/lift correctness from control-flow recovery and
-structuring failures.
+Mismatch kinds: `block_count`, `edge_count`, `block_set`, `edge_set`, `cfg_shape`.
+
+## Run
+
+```bash
+python -m benchmark.cfg_parity.run --limit 5
+```

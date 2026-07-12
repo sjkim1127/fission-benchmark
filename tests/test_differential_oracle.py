@@ -2,9 +2,14 @@ import subprocess
 from pathlib import Path
 
 from runner.differential_oracle import (
+    ORACLE_SUBJECT_ORIGINAL_BINARY,
     aggregate_oracle_evidence,
     build_differential_translation_unit,
+    build_original_binary_translation_unit,
+    extract_function_signature,
+    function_addr_to_rva,
     parse_differential_output,
+    pe_image_base,
 )
 from runner.test_wrappers import TEST_WRAPPERS
 
@@ -72,3 +77,76 @@ def test_oracle_evidence_rejects_missing_row_proof() -> None:
     }])
 
     assert aggregate == {"mode": "differential", "valid": False, "tested_rows": 1}
+
+
+def test_extract_function_signature_handles_pointers_and_void() -> None:
+    clamp = extract_function_signature(
+        "int clamp(int value, int lo, int hi) { return value; }",
+        "clamp",
+    )
+    assert clamp.return_type == "int"
+    assert clamp.param_names == "value, lo, hi"
+    assert clamp.is_void is False
+
+    rev = extract_function_signature(
+        "void reverse_string(char *str, size_t length) { (void)str; (void)length; }",
+        "reverse_string",
+    )
+    assert rev.is_void is True
+    assert rev.param_names == "str, length"
+
+
+def test_function_addr_to_rva_uses_pe_image_base() -> None:
+    pe_path = Path("corpus/dev/binaries/control_flow_gcc_O0.exe")
+    if not pe_path.is_file():
+        pe_path = Path("corpus/holdout/binaries/control_flow_gcc_O0.exe")
+    pe = pe_path.read_bytes()
+    image_base = pe_image_base(pe)
+    assert image_base == 0x140000000
+    assert function_addr_to_rva(pe, "0x140001530") == 0x1530
+    assert function_addr_to_rva(pe, "0x1530") == 0x1530
+
+
+def test_original_binary_translation_unit_embeds_pe_loader_and_rva() -> None:
+    pe_path = Path("corpus/dev/binaries/control_flow_gcc_O0.exe")
+    if not pe_path.is_file():
+        pe_path = Path("corpus/holdout/binaries/control_flow_gcc_O0.exe")
+    pe = pe_path.read_bytes()
+    source = build_original_binary_translation_unit(
+        "clamp",
+        "int clamp(int value, int lo, int hi) { return value < lo ? lo : value > hi ? hi : value; }",
+        "int clamp(int value, int lo, int hi) { return value; }",
+        TEST_WRAPPERS["clamp"],
+        function_addr="0x14000155f",
+        pe_bytes=pe,
+    )
+    assert "oracle_pe_load" in source
+    assert "oracle_pe_fn" in source
+    assert "DWORD rva =" in source
+    assert "oracle_candidate_clamp" in source
+    assert ORACLE_SUBJECT_ORIGINAL_BINARY  # constant import sanity
+
+
+def test_original_binary_aggregate_subject_is_exact() -> None:
+    evidence = {
+        "mode": "differential",
+        "valid": True,
+        "oracle_subject": ORACLE_SUBJECT_ORIGINAL_BINARY,
+        "target_abi": "windows-x86_64",
+        "compiler": "x86_64-w64-mingw32-gcc",
+        "compiler_version": "gcc 13",
+        "runner": "wine",
+        "wrapper_sha256": "a" * 64,
+        "reference_binary_sha256": "b" * 64,
+    }
+    aggregate = aggregate_oracle_evidence([{
+        "decompiler": "fission",
+        "function_name": "clamp",
+        "compiler_variant": "gcc -O0",
+        "error": None,
+        "semantic_score": 1.0,
+        "fail_category": "",
+        "oracle_evidence": evidence,
+    }])
+    assert aggregate["valid"] is True
+    assert aggregate["oracle_subject"] == ORACLE_SUBJECT_ORIGINAL_BINARY
