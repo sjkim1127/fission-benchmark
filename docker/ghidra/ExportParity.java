@@ -23,6 +23,9 @@ import ghidra.program.model.block.CodeBlockReference;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.TypeDef;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -395,6 +398,10 @@ public class ExportParity extends GhidraScript {
         StringBuilder params = new StringBuilder();
         params.append("[");
         Parameter[] arr = func.getParameters();
+        Set<String> seenStructs = new LinkedHashSet<String>();
+        StringBuilder structs = new StringBuilder();
+        structs.append("[");
+        boolean firstStruct = true;
         for (int i = 0; i < arr.length; i++) {
             if (i > 0) params.append(",");
             DataType dt = arr[i].getDataType();
@@ -406,18 +413,96 @@ public class ExportParity extends GhidraScript {
                 jsonEscape(ty),
                 arr[i].getLength()
             ));
+            String structJson = structureFieldsJson(dt, seenStructs);
+            if (structJson != null) {
+                if (!firstStruct) structs.append(",");
+                firstStruct = false;
+                structs.append(structJson);
+            }
         }
         params.append("]");
         DataType retDt = func.getReturnType();
         String retName = retDt != null ? retDt.getName() : "undefined";
         int retSize = retDt != null ? retDt.getLength() : 0;
+        String retStruct = structureFieldsJson(retDt, seenStructs);
+        if (retStruct != null) {
+            if (!firstStruct) structs.append(",");
+            firstStruct = false;
+            structs.append(retStruct);
+        }
+        // Also collect local variable struct types
+        for (var local : func.getLocalVariables()) {
+            String sj = structureFieldsJson(local.getDataType(), seenStructs);
+            if (sj != null) {
+                if (!firstStruct) structs.append(",");
+                firstStruct = false;
+                structs.append(sj);
+            }
+        }
+        structs.append("]");
         return String.format(
-            "{\"status\": \"ok\", \"address\": \"0x%s\", \"name\": \"%s\", \"return_type\": \"%s\", \"return_size\": %d, \"parameters\": %s}",
+            "{\"status\": \"ok\", \"address\": \"0x%s\", \"name\": \"%s\", \"return_type\": \"%s\", \"return_size\": %d, \"parameters\": %s, \"structs\": %s, \"layout_surface\": \"field_iou\"}",
             func.getEntryPoint().toString(),
             jsonEscape(func.getName()),
             jsonEscape(retName),
             retSize,
-            params.toString()
+            params.toString(),
+            structs.toString()
+        );
+    }
+
+    /** Emit one struct layout as fields[{name,offset,size,type}] or null if not a struct. */
+    private String structureFieldsJson(DataType dt, Set<String> seen) {
+        if (dt == null) return null;
+        DataType base = dt;
+        // unwrap pointer / typedef
+        try {
+            while (base instanceof TypeDef) {
+                base = ((TypeDef) base).getDataType();
+            }
+            if (base instanceof ghidra.program.model.data.Pointer) {
+                base = ((ghidra.program.model.data.Pointer) base).getDataType();
+                while (base instanceof TypeDef) {
+                    base = ((TypeDef) base).getDataType();
+                }
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        if (!(base instanceof Structure)) {
+            return null;
+        }
+        Structure st = (Structure) base;
+        String key = st.getName() + ":" + st.getLength();
+        if (seen.contains(key)) {
+            return null;
+        }
+        seen.add(key);
+        StringBuilder fields = new StringBuilder();
+        fields.append("[");
+        boolean first = true;
+        DataTypeComponent[] comps = st.getDefinedComponents();
+        for (int i = 0; i < comps.length; i++) {
+            DataTypeComponent c = comps[i];
+            if (!first) fields.append(",");
+            first = false;
+            String fname = c.getFieldName() != null ? c.getFieldName() : ("field_" + i);
+            DataType fdt = c.getDataType();
+            String fty = fdt != null ? fdt.getName() : "undefined";
+            fields.append(String.format(
+                "{\"name\": \"%s\", \"offset\": %d, \"size\": %d, \"type\": \"%s\"}",
+                jsonEscape(fname),
+                c.getOffset(),
+                c.getLength(),
+                jsonEscape(fty)
+            ));
+        }
+        fields.append("]");
+        return String.format(
+            "{\"name\": \"%s\", \"size\": %d, \"fields\": %s}",
+            jsonEscape(st.getName()),
+            st.getLength(),
+            fields.toString()
         );
     }
 
@@ -552,13 +637,10 @@ public class ExportParity extends GhidraScript {
     }
 
     private String exportSehJson(Function func) throws Exception {
-        // Best-effort: surface calling convention + whether function is thunk / has no-return.
-        // Full RUNTIME_FUNCTION parsing is PE-loader specific; export structural flags.
         boolean isThunk = func.isThunk();
         boolean noReturn = func.hasNoReturn();
         String conv = func.getCallingConventionName();
         if (conv == null) conv = "unknown";
-        // Count external exception-style symbols in program (coarse PE signal).
         int ehCount = 0;
         try {
             var syms = currentProgram.getSymbolTable().getSymbolIterator(true);
@@ -571,13 +653,56 @@ public class ExportParity extends GhidraScript {
             }
         } catch (Exception ignored) {
         }
+        // Map PE exception blocks if the program exposes them via memory blocks named .pdata
+        long imageBase = currentProgram.getImageBase().getOffset();
+        long entry = func.getEntryPoint().getOffset();
+        long rva = entry - imageBase;
+        boolean hasUnwind = false;
+        long beginRva = -1, endRva = -1, unwindRva = -1;
+        try {
+            var block = currentProgram.getMemory().getBlock(".pdata");
+            if (block != null) {
+                Address start = block.getStart();
+                long size = block.getSize();
+                // Each RUNTIME_FUNCTION is 12 bytes: begin, end, unwind (RVA dwords)
+                for (long off = 0; off + 12 <= size; off += 12) {
+                    Address a = start.add(off);
+                    // Read little-endian dwords from memory
+                    byte[] buf = new byte[12];
+                    currentProgram.getMemory().getBytes(a, buf);
+                    int b0 = (buf[0] & 0xff) | ((buf[1] & 0xff) << 8) | ((buf[2] & 0xff) << 16) | ((buf[3] & 0xff) << 24);
+                    int e0 = (buf[4] & 0xff) | ((buf[5] & 0xff) << 8) | ((buf[6] & 0xff) << 16) | ((buf[7] & 0xff) << 24);
+                    int u0 = (buf[8] & 0xff) | ((buf[9] & 0xff) << 8) | ((buf[10] & 0xff) << 16) | ((buf[11] & 0xff) << 24);
+                    long br = b0 & 0xffffffffL;
+                    long er = e0 & 0xffffffffL;
+                    if (br <= rva && rva < er) {
+                        hasUnwind = true;
+                        beginRva = br;
+                        endRva = er;
+                        unwindRva = u0 & 0xffffffffL;
+                        break;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        String covering = "null";
+        if (hasUnwind) {
+            covering = String.format(
+                "{\"begin_rva\": %d, \"end_rva\": %d, \"unwind_info_rva\": %d, \"begin_va\": \"0x%x\", \"end_va\": \"0x%x\"}",
+                beginRva, endRva, unwindRva, imageBase + beginRva, imageBase + endRva
+            );
+        }
         return String.format(
-            "{\"status\": \"ok\", \"address\": \"0x%s\", \"is_thunk\": %s, \"no_return\": %s, \"convention\": \"%s\", \"program_eh_symbol_count\": %d, \"seh_surface\": \"flags_only\"}",
+            "{\"status\": \"ok\", \"address\": \"0x%s\", \"is_thunk\": %s, \"no_return\": %s, \"convention\": \"%s\", \"program_eh_symbol_count\": %d, \"has_unwind\": %s, \"rva\": %d, \"covering\": %s, \"seh_surface\": \"runtime_function\"}",
             func.getEntryPoint().toString(),
             isThunk ? "true" : "false",
             noReturn ? "true" : "false",
             jsonEscape(conv),
-            ehCount
+            ehCount,
+            hasUnwind ? "true" : "false",
+            rva,
+            covering
         );
     }
 }

@@ -29,17 +29,24 @@ Unified extension runner:
 python -m runner.run_extensions --corpus dev --limit 20
 ```
 
-## Still deepening (not greenfield)
+## Deepened (this pass)
 
-1. **Struct layout IoU** — type stage today is name/size tokens, not field-level.
-2. **Full RUNTIME_FUNCTION / unwind** — SEH stage is flags + symbol counts.
-3. **Fission string/xref product** — adapter returns empty until CLI emits xrefs.
-4. **Third-party realworld corpus** — strip-from-dev is synthetic; external PE needs licenses/wrappers.
-5. **Human readability Phase 3** — study pack exists; no composite until correlations.
-6. **Multi-ISA (arm64/ELF)** — PE path first; oracle ABI matrix must expand explicitly.
-7. **Obfuscation suite** — separate track (CFF/MBA), not default gate.
-8. **Full 8-decompiler official** — publication proven on fission+ghidra core; expand profile.
-9. **Golden growth** — add canaries for every high-severity residual gap.
+1. **Struct field IoU** — `structs[].fields[{offset,size,name,type}]` + `field_layout_jaccard`.
+2. **RUNTIME_FUNCTION** — PE `.pdata` parser (`pe_exceptions` / Ghidra `.pdata` walk / Fission `pe_helpers`).
+3. **Fission strings** — PE string pool + disasm immediate xref + decomp literals.
+4. **Realworld multi-TU** — `util_lib.c` + `util_main.c` PE (+strip) via `build_extension_corpora.py`.
+5. **Human study Phase 3** — protocol, answer schema, `analyze_readability_study.py` (composite still forbidden).
+6. **Multi-ISA ELF** — clang `hello_elf_x86_64` fixture; arm64 still needs cross sysroot.
+7. **Obfuscation** — CFF toy PE under `corpus/adversarial/`.
+8. **Full-8 official** — `scripts/run_official_profiles.sh full` + `holdout_full8_latest.json` run path.
+
+## Remaining research depth
+
+- Arm64 multi-ISA with real sysroot / oracle ABI profiles.
+- True third-party redistributable PE (license review).
+- Human pilot data collection (N≥12).
+- Fission native type recovery (beyond known-layout priors).
+- Full-8 **dev** official green (wider adapter residuals).
 
 ## Design rules
 

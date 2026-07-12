@@ -1,16 +1,13 @@
-# Multi-ISA track (scaffold)
+# Multi-ISA track
 
-**Status:** reserved — not active until Windows PE official path is the default
-gate for the org’s releases.
+**Status:** partial — ELF x86_64 fixture built; arm64 needs cross sysroot.
 
-Planned:
-
-- `arm64` / ELF subjects with explicit oracle ABI profiles
-- Separate manifests under `corpus/multi_isa/manifests/`
-- Do not mix PE and ELF in one official matrix without `target_abi` tagging
-
-Activation (future):
+| Fixture | Arch/Format | Notes |
+|---------|-------------|-------|
+| `hello_elf_x86_64` | x86_64 ELF | structural stages; no PE oracle |
 
 ```bash
-# python runner/runner.py --corpus multi_isa --run-mode local
+python scripts/build_extension_corpora.py
 ```
+
+Do not mix PE and ELF in one official matrix without `target_abi` tagging.

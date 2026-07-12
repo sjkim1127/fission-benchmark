@@ -1,34 +1,19 @@
-# Real-world strip suite (extension track)
+# Real-world / multi-TU track
 
-**Status:** scaffold only — not part of the MVP public ranking.
+**Status:** active extension (not MVP ranking).
 
-This track is reserved for stripped third-party / multi-TU binaries evaluated
-**separately** from the synthetic `dev` / `holdout` function suite.
+## Contents
 
-## Policy
-
-- Does **not** feed `correctness` ranking for the synthetic standard set until
-  explicitly promoted.
-- Prefer PE/ELF targets matching the oracle ABI in use.
-- Prefer publicly redistributable binaries with clear licenses.
-- Strip symbols (`strip`) is the default evaluation mode for this track.
-- Semantic wrappers may be incomplete; report `no_wrapper` honestly.
-
-## Layout
-
-```
-corpus/realworld/
-  manifests/   # one JSON per subject family (empty until cases land)
-  source/      # optional ground-truth sources when available
-  binaries/    # built or vendored binaries (gitignored if large)
-```
-
-## Activation
+| Fixture | Path | Notes |
+|---------|------|-------|
+| Strip-from-dev | `scripts/build_strip_corpus.py` | controlled Δ vs unstripped dev |
+| Multi-TU util app | `source/util_*.c` → `binaries/util_app_*` | multi-object PE + strip twin |
+| Manifests | `manifests/util_multi_tu.json`, `strip_from_dev.json` | |
 
 ```bash
-# Reserved: will work once manifests are populated
-python runner/runner.py --corpus realworld --run-mode local
+python scripts/build_extension_corpora.py
+python scripts/build_strip_corpus.py
+python -m benchmark.strip_track.run
 ```
 
-Populate cases only after MVP surfaces (semantic/coverage/taxonomy/runtime) and
-P0 original-binary + holdout publication paths are green.
+Policy: does not feed headline correctness until promoted. Prefer redistributable fixtures.

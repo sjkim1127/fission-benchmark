@@ -56,7 +56,7 @@ COPY requirements.txt .
 RUN python3 -m venv /opt/fission-server-venv \
     && /opt/fission-server-venv/bin/pip install --no-cache-dir -r requirements.txt
 
-COPY server.py entrypoint.sh ./
+COPY server.py pe_helpers.py entrypoint.sh ./
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8000

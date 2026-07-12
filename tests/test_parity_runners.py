@@ -236,13 +236,63 @@ def test_type_and_callgraph_and_string_extension_compares() -> None:
         "status": "ok",
         "return_type": "int",
         "parameters": [{"index": 0, "type": "int"}],
+        "structs": [],
     }
     act_t = {
         "status": "ok",
         "return_type": "int",
         "parameters": [{"index": 0, "type": "int"}],
+        "structs": [],
     }
     assert compare_types(subject(), "ghidra", "fission", exp_t, act_t).status == "match"
+
+    # Field layout IoU: same offsets/sizes match
+    exp_layout = {
+        "status": "ok",
+        "return_type": "int",
+        "parameters": [],
+        "structs": [
+            {
+                "name": "ConfigNode",
+                "size": 8,
+                "fields": [
+                    {"name": "flags", "offset": 0, "size": 4, "type": "Flags"},
+                    {"name": "val", "offset": 4, "size": 4, "type": "DataValue"},
+                ],
+            }
+        ],
+    }
+    act_layout = {
+        "status": "ok",
+        "return_type": "int",
+        "parameters": [],
+        "structs": [
+            {
+                "name": "ConfigNode",
+                "size": 8,
+                "fields": [
+                    {"name": "flags", "offset": 0, "size": 4, "type": "Flags"},
+                    {"name": "val", "offset": 4, "size": 4, "type": "int"},
+                ],
+            }
+        ],
+    }
+    assert compare_types(subject(), "ghidra", "fission", exp_layout, act_layout).status == "match"
+    act_bad = {
+        "status": "ok",
+        "return_type": "int",
+        "parameters": [],
+        "structs": [
+            {
+                "name": "ConfigNode",
+                "size": 8,
+                "fields": [{"name": "flags", "offset": 0, "size": 8, "type": "Flags"}],
+            }
+        ],
+    }
+    bad = compare_types(subject(), "ghidra", "fission", exp_layout, act_bad)
+    assert bad.status == "mismatch"
+    assert bad.mismatch_kind == "field_layout"
 
     exp_c = {"status": "ok", "callees": ["0x140001000", "0x140001100"]}
     act_c = {"status": "ok", "callees": ["0x140001100", "0x140001000"]}
@@ -251,6 +301,20 @@ def test_type_and_callgraph_and_string_extension_compares() -> None:
     exp_s = {"status": "ok", "strings": ["hello", "world"]}
     act_s = {"status": "ok", "strings": []}
     assert compare_strings(subject(), "ghidra", "fission", exp_s, act_s).status == "mismatch"
+
+
+def test_pe_runtime_function_and_string_scan() -> None:
+    from pathlib import Path
+
+    from benchmark.common.pe_exceptions import parse_pe_runtime_functions
+    from benchmark.common.string_scan import extract_ascii_strings
+
+    pe = Path("corpus/dev/binaries/control_flow_gcc_O0.exe")
+    if pe.is_file():
+        table = parse_pe_runtime_functions(pe)
+        assert table["status"] == "ok"
+        assert table["function_count"] >= 1
+    assert ("hello",) or extract_ascii_strings(b"xxxxhello worldxxxx")
 
 
 def test_opt_cliff_bucket() -> None:
