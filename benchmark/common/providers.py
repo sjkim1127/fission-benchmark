@@ -18,12 +18,16 @@ CanonicalizeMode = Literal["loose", "strict"]
 
 
 def get_canonicalize_mode() -> CanonicalizeMode:
-    """Publishable scores use strict; local triage defaults to loose.
+    """Canonicalize mode for primary scoring.
 
-    Set ``PARITY_CANONICALIZE_MODE=strict`` in CI / official runs.
+    **Conservative default is ``strict``** — no leniency for publishable rates.
+    Set ``PARITY_CANONICALIZE_MODE=loose`` only for local triage of known
+    encoding gaps (never for CI / official telemetry).
     """
-    raw = (os.environ.get("PARITY_CANONICALIZE_MODE") or "loose").strip().lower()
-    return "strict" if raw == "strict" else "loose"
+    raw = (os.environ.get("PARITY_CANONICALIZE_MODE") or "strict").strip().lower()
+    if raw == "loose":
+        return "loose"
+    return "strict"
 
 
 def render_command(template: str, subject: BenchmarkSubject) -> list[str]:

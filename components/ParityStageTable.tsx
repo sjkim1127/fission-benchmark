@@ -62,7 +62,10 @@ export function ParityStageTable({ telemetry }: Props) {
         inventory (Ghidra vs candidate).
         Match rate is among comparable rows; coverage shows infra health.
         Mode: <code>{mode}</code>
-        {mode === "strict" ? " (CI/publish default)" : " (local triage)"}.
+        {mode === "strict"
+          ? " (conservative / no leniency)"
+          : " (local triage only — not for CI)"}
+        .
       </p>
       {pub && (
         <p className={styles.hint}>

@@ -1016,6 +1016,14 @@ def main():
     )
     args = parser.parse_args()
 
+    # Conservative default: strict canonicalize unless operator opts into loose triage.
+    if "PARITY_CANONICALIZE_MODE" not in os.environ:
+        os.environ["PARITY_CANONICALIZE_MODE"] = "strict"
+    print(
+        f"Canonicalize mode: {os.environ.get('PARITY_CANONICALIZE_MODE')} "
+        f"(set PARITY_CANONICALIZE_MODE=loose only for local triage)"
+    )
+
     decompilers = [name.strip() for name in args.decompilers.split(",") if name.strip()]
     # Ensure local fission port matches running compose (8007 overlay common).
     if "FISSION_HOST_PORT" not in os.environ:

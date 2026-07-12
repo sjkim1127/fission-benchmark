@@ -90,7 +90,7 @@ def test_normalize_pcode_op_collapses_naming_styles() -> None:
 
 
 def test_pcode_compare_matches_ghidra_vs_fission_spelling() -> None:
-    """Ghidra SNAKE_CASE and Fission CamelCase with different STORE space ids."""
+    """Opcode names normalize; STORE space-id still differs under strict (no leniency)."""
     expected = [
         {
             "seq": 0,
@@ -133,8 +133,19 @@ def test_pcode_compare_matches_ghidra_vs_fission_spelling() -> None:
             ],
         },
     ]
-    assert canonicalize_pcode(expected) == canonicalize_pcode(actual)
-    assert compare_pcode(subject(), "ghidra", "fission", expected, actual).status == "match"
+    # Loose (triage) stubs space ids → full match; strict keeps them → varnode mismatch.
+    assert canonicalize_pcode(expected, mode="loose") == canonicalize_pcode(
+        actual, mode="loose"
+    )
+    assert canonicalize_pcode(expected, mode="strict") != canonicalize_pcode(
+        actual, mode="strict"
+    )
+    result = compare_pcode(subject(), "ghidra", "fission", expected, actual)
+    assert result.status == "mismatch"
+    assert result.mismatch_kind == "varnode"
+    assert result.metrics.get("opcode_sequence_match") == 1
+    assert result.metrics.get("loose_full_match") == 1
+    assert result.metrics.get("strict_full_match") == 0
 
 
 def test_pcode_compare_still_flags_real_varnode_diffs() -> None:

@@ -206,6 +206,7 @@
       "Primary pcode match_rate is 0% under strict mode; loose_full_match_rate =0.6667 is the triage signal."
     ]
   },
+  "reliability_policy": "conservative",
   "schema": "parity-telemetry-v2",
   "sources": [
     "results/assembly_parity/latest.jsonl",

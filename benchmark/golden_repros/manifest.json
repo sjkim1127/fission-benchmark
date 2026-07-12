@@ -94,9 +94,10 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "match",
-      "notes": "Opcode-normalization regression lock (loose): INT_SUB vs IntSub must match. Strict publishable runs may still report varnode on LOAD/STORE space ids.",
-      "canonicalize_mode": "loose"
+      "expect_status": "mismatch",
+      "notes": "Conservative known-gap lock: strict pcode full equality fails on LOAD/STORE address-space id encoding (Ghidra vs Fission). Opcode-name normalization is covered by unit tests, not a free match.",
+      "canonicalize_mode": "strict",
+      "expect_mismatch_kind": "varnode"
     },
     {
       "name": "pcode_parity__clamp__gcc-O0",
@@ -110,9 +111,10 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "match",
-      "notes": "Opcode-normalization regression lock (loose): INT_SUB vs IntSub must match. Strict publishable runs may still report varnode on LOAD/STORE space ids.",
-      "canonicalize_mode": "loose"
+      "expect_status": "mismatch",
+      "notes": "Conservative known-gap lock: strict pcode full equality fails on LOAD/STORE address-space id encoding (Ghidra vs Fission). Opcode-name normalization is covered by unit tests, not a free match.",
+      "canonicalize_mode": "strict",
+      "expect_mismatch_kind": "varnode"
     },
     {
       "name": "pcode_parity__signum__gcc-O0",
@@ -126,9 +128,10 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "match",
-      "notes": "Opcode-normalization regression lock (loose): INT_SUB vs IntSub must match. Strict publishable runs may still report varnode on LOAD/STORE space ids.",
-      "canonicalize_mode": "loose"
+      "expect_status": "mismatch",
+      "notes": "Conservative known-gap lock: strict pcode full equality fails on LOAD/STORE address-space id encoding (Ghidra vs Fission). Opcode-name normalization is covered by unit tests, not a free match.",
+      "canonicalize_mode": "strict",
+      "expect_mismatch_kind": "varnode"
     },
     {
       "name": "pcode_parity__checksum__gcc-O0",
@@ -142,9 +145,10 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "match",
-      "notes": "Opcode-normalization regression lock (loose): INT_SUB vs IntSub must match. Strict publishable runs may still report varnode on LOAD/STORE space ids.",
-      "canonicalize_mode": "loose"
+      "expect_status": "mismatch",
+      "notes": "Conservative known-gap lock: strict pcode full equality fails on LOAD/STORE address-space id encoding (Ghidra vs Fission). Opcode-name normalization is covered by unit tests, not a free match.",
+      "canonicalize_mode": "strict",
+      "expect_mismatch_kind": "varnode"
     },
     {
       "name": "pcode_parity__saturating_add__gcc-O0",
@@ -158,9 +162,10 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "match",
-      "notes": "Opcode-normalization regression lock (loose): INT_SUB vs IntSub must match. Strict publishable runs may still report varnode on LOAD/STORE space ids.",
-      "canonicalize_mode": "loose"
+      "expect_status": "mismatch",
+      "notes": "Conservative known-gap lock: strict pcode full equality fails on LOAD/STORE address-space id encoding (Ghidra vs Fission). Opcode-name normalization is covered by unit tests, not a free match.",
+      "canonicalize_mode": "strict",
+      "expect_mismatch_kind": "varnode"
     }
   ]
 }

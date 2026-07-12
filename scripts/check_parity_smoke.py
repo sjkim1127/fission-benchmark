@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""CI gate for layered parity smoke telemetry.
+"""Conservative CI gate for layered parity smoke/full telemetry.
 
 Fails on infrastructure / reliability failures that would make published
 rates untrustworthy. Legitimate Ghidra↔Fission *mismatches* are quality
 signals and do not fail this gate.
+
+Defaults are intentionally strict (no leniency).
 
 Usage:
   python scripts/check_parity_smoke.py results/telemetry/latest.json
@@ -15,18 +17,12 @@ import json
 import sys
 from pathlib import Path
 
-# Stages that must produce usable quality signal (match|mismatch) when not skipped.
+# Stages that must produce usable quality signal (match|mismatch).
 REQUIRED_STAGES = (
     "assembly_parity",
     "cfg_parity",
     "pcode_parity",
-)
-
-# Decode may be entirely skipped when adapters only stub disasm→decode.
-OPTIONAL_STAGES = (
-    "decode_parity",
     "function_discovery",
-    "ir_invariants",
 )
 
 
@@ -41,23 +37,26 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--min-comparable",
         type=int,
-        default=1,
+        default=5,
         help="Minimum match+mismatch rows required per required stage",
     )
     parser.add_argument(
         "--min-usable-coverage",
         type=float,
-        default=0.5,
-        help=(
-            "Minimum (match+mismatch)/total per required stage. "
-            "Protects against inflate-by-dropping-fetch-errors."
-        ),
+        default=0.90,
+        help="Minimum (match+mismatch)/total per required stage",
     )
     parser.add_argument(
         "--max-fetch-error-rate",
         type=float,
-        default=0.35,
-        help="Maximum fetch_error/total per required stage (infra health)",
+        default=0.10,
+        help="Maximum fetch_error/total per required stage",
+    )
+    parser.add_argument(
+        "--require-strict",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Require canonicalize_mode=strict (default true)",
     )
     args = parser.parse_args(argv)
 
@@ -71,6 +70,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if int(data.get("total_rows") or 0) < 1:
         errors.append("total_rows == 0")
+
+    mode = data.get("canonicalize_mode")
+    if args.require_strict and mode != "strict":
+        errors.append(f"canonicalize_mode={mode!r}; require strict")
 
     for stage in REQUIRED_STAGES:
         detail = stages.get(stage)
@@ -108,11 +111,16 @@ def main(argv: list[str] | None = None) -> int:
     if usable < 1:
         errors.append("no match/mismatch rows at all — adapters likely unreachable")
 
-    # Reliability rollup if present (telemetry v2)
+    # Decode must not contribute false quality matches
+    dec = stages.get("decode_parity") or {}
+    if int(dec.get("match") or 0) > 0:
+        errors.append("decode_parity match rows forbidden under stub policy")
+
+    # Reliability rollup if present
     rel = data.get("reliability") or {}
-    if rel.get("usable_coverage") is not None and float(rel["usable_coverage"]) < 0.3:
+    if rel.get("usable_coverage") is not None and float(rel["usable_coverage"]) < 0.5:
         errors.append(
-            f"run usable_coverage {rel['usable_coverage']} < 0.3 — overall not trustworthy"
+            f"run usable_coverage {rel['usable_coverage']} < 0.5 — overall not trustworthy"
         )
 
     if errors:
@@ -121,8 +129,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(
-        f"OK parity smoke: total={data.get('total_rows')} "
-        f"usable={usable} stages={list(stages.keys())}"
+        f"OK parity smoke (conservative): total={data.get('total_rows')} "
+        f"usable={usable} mode={mode} stages={list(stages.keys())}"
     )
     if rel:
         print(
@@ -137,15 +145,6 @@ def main(argv: list[str] | None = None) -> int:
             f"usable_coverage={detail.get('usable_coverage')} "
             f"total={detail.get('total')}"
         )
-    # Warn (non-fatal) if decode is still a scored twin of assembly
-    dec = stages.get("decode_parity") or {}
-    if int(dec.get("match") or 0) + int(dec.get("mismatch") or 0) > 0:
-        if int(dec.get("skipped") or 0) == 0:
-            print(
-                "WARN decode_parity is still scored (expected stub skip). "
-                "Adapters may have grown a real decode surface — verify intentionally.",
-                file=sys.stderr,
-            )
     return 0
 
 

@@ -212,10 +212,10 @@ def aggregate_rows(rows: list[dict]) -> dict:
     pub_total = sum(int(v.get("total") or 0) for v in publishable_stages.values())
     pub_comparable = pub_match + pub_mismatch
     canonicalize_mode = (
-        (os.environ.get("PARITY_CANONICALIZE_MODE") or "loose").strip().lower()
+        (os.environ.get("PARITY_CANONICALIZE_MODE") or "strict").strip().lower()
     )
     if canonicalize_mode not in {"loose", "strict"}:
-        canonicalize_mode = "loose"
+        canonicalize_mode = "strict"
 
     reliability_critique = {
         "schema": "parity-reliability-critique-v1",
@@ -276,6 +276,7 @@ def aggregate_rows(rows: list[dict]) -> dict:
         "stages": stages_detail,
         "reliability": reliability,
         "reliability_critique": reliability_critique,
+        "reliability_policy": "conservative",
         "canonicalize_mode": canonicalize_mode,
         "non_publishable_stages": sorted(NON_PUBLISHABLE_STAGES),
         "primary_quality_stages": sorted(PRIMARY_QUALITY_STAGES),
