@@ -383,17 +383,9 @@ def cfg(binary: str, addr: str):
 
 @app.get("/abi")
 def abi(binary: str, addr: str):
-    """Calling-convention surface — not yet implemented (scaffold)."""
+    """Calling-convention / parameter storage export via ExportParity."""
     validate_address(addr)
-    _ = _resolve_binary(binary)
-    return {
-        "status": "not_implemented",
-        "address": addr,
-        "convention": None,
-        "parameters": [],
-        "return": None,
-        "note": "ABI export pending; abi_parity stage must skip, not match",
-    }
+    return run_export_parity(binary, "abi", addr)
 
 
 @app.get("/parity_bundle")

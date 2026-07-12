@@ -76,7 +76,14 @@ def test_oracle_evidence_rejects_missing_row_proof() -> None:
         "oracle_evidence": {},
     }])
 
-    assert aggregate == {"mode": "differential", "valid": False, "tested_rows": 1}
+    # Invalid aggregate still carries full identity keys so official envelopes
+    # satisfy schema; validity remains false without row-level proof.
+    assert aggregate["mode"] == "differential"
+    assert aggregate["valid"] is False
+    assert aggregate["tested_rows"] == 1
+    assert aggregate["oracle_subject"] == "original_binary"
+    assert len(aggregate["wrapper_sha256"]) == 64
+    assert len(aggregate["row_evidence_sha256"]) == 64
 
 
 def test_extract_function_signature_handles_pointers_and_void() -> None:

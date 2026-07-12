@@ -336,9 +336,27 @@ def aggregate_oracle_evidence(rows: list[dict[str, Any]]) -> dict[str, Any]:
         for item in valid_items
         for field in required
     )
-    if not valid:
-        return {"mode": "differential", "valid": False, "tested_rows": len(tested_rows)}
-
+    # Always emit full identity fields so official envelopes satisfy schema even
+    # when valid=false (partial/incomplete row evidence). Publication still
+    # requires valid=true via oracle_evidence_valid.
+    complete_items = [
+        item
+        for item in valid_items
+        if isinstance(item.get("oracle_subject"), str)
+        and item.get("oracle_subject")
+        and isinstance(item.get("target_abi"), str)
+        and item.get("target_abi")
+        and isinstance(item.get("compiler"), str)
+        and item.get("compiler")
+        and isinstance(item.get("compiler_version"), str)
+        and item.get("compiler_version")
+        and isinstance(item.get("runner"), str)
+        and item.get("runner")
+        and isinstance(item.get("wrapper_sha256"), str)
+        and item.get("wrapper_sha256")
+        and isinstance(item.get("reference_binary_sha256"), str)
+        and item.get("reference_binary_sha256")
+    ]
     identity_evidence = []
     for row, item in zip(tested_rows, valid_items, strict=True):
         identity_evidence.append({
@@ -348,20 +366,44 @@ def aggregate_oracle_evidence(rows: list[dict[str, Any]]) -> dict[str, Any]:
             "evidence": item,
         })
     evidence_json = json_dumps_canonical(identity_evidence)
+    empty = "0" * 64
+    if complete_items:
+        subjects = sorted({item["oracle_subject"] for item in complete_items})
+        # Schema enum is a single subject; prefer original_binary when present.
+        subject = (
+            "original_binary"
+            if "original_binary" in subjects
+            else subjects[0]
+        )
+        return {
+            "mode": "differential",
+            "valid": valid,
+            "oracle_subject": subject,
+            "target_abi": ",".join(sorted({item["target_abi"] for item in complete_items})),
+            "compiler": ",".join(sorted({item["compiler"] for item in complete_items})),
+            "compiler_version": " | ".join(
+                sorted({item["compiler_version"] for item in complete_items})
+            ),
+            "runner": ",".join(sorted({item["runner"] for item in complete_items})),
+            "wrapper_sha256": _aggregate_hash(
+                [item["wrapper_sha256"] for item in complete_items]
+            ),
+            "reference_binary_sha256": _aggregate_hash(
+                [item["reference_binary_sha256"] for item in complete_items]
+            ),
+            "row_evidence_sha256": hashlib.sha256(evidence_json.encode("utf-8")).hexdigest(),
+            "tested_rows": len(tested_rows),
+        }
     return {
         "mode": "differential",
-        "valid": True,
-        "oracle_subject": ",".join(
-            sorted({item["oracle_subject"] for item in valid_items})
-        ),
-        "target_abi": ",".join(sorted({item["target_abi"] for item in valid_items})),
-        "compiler": ",".join(sorted({item["compiler"] for item in valid_items})),
-        "compiler_version": " | ".join(sorted({item["compiler_version"] for item in valid_items})),
-        "runner": ",".join(sorted({item["runner"] for item in valid_items})),
-        "wrapper_sha256": _aggregate_hash([item["wrapper_sha256"] for item in valid_items]),
-        "reference_binary_sha256": _aggregate_hash(
-            [item["reference_binary_sha256"] for item in valid_items]
-        ),
+        "valid": False,
+        "oracle_subject": "original_binary",
+        "target_abi": "unknown",
+        "compiler": "unknown",
+        "compiler_version": "unknown",
+        "runner": "unknown",
+        "wrapper_sha256": empty,
+        "reference_binary_sha256": empty,
         "row_evidence_sha256": hashlib.sha256(evidence_json.encode("utf-8")).hexdigest(),
         "tested_rows": len(tested_rows),
     }
@@ -404,10 +446,12 @@ async def verify_with_oracle(
         payload["reference_binary_b64"] = reference_binary_b64
         payload["function_addr"] = function_addr
     try:
+        # Wine is process-serialized per ABI inside the oracle; under concurrent
+        # official matrix load a request may wait several minutes in queue.
         response = await client.post(
             f"{endpoint.rstrip('/')}/verify",
             json=payload,
-            timeout=120.0,
+            timeout=300.0,
         )
         response.raise_for_status()
         payload = response.json()

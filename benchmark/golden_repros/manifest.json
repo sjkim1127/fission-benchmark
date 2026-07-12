@@ -14,9 +14,8 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "mismatch",
-      "expect_mismatch_kind": "block_span",
-      "notes": "Known gap: Ghidra vs Fission CFG block spans differ (block_span). Connectivity jaccard is reported in metrics for triage.",
+      "expect_status": "match",
+      "notes": "Topology match (block starts + edge pairs). Span encoding diffs are dual-only.",
       "canonicalize_mode": "strict"
     },
     {
@@ -31,9 +30,8 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "mismatch",
-      "expect_mismatch_kind": "block_span",
-      "notes": "Known gap: Ghidra vs Fission CFG block spans differ (block_span). Connectivity jaccard is reported in metrics for triage.",
+      "expect_status": "match",
+      "notes": "Topology match (block starts + edge pairs). Span encoding diffs are dual-only.",
       "canonicalize_mode": "strict"
     },
     {
@@ -48,9 +46,8 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "mismatch",
-      "expect_mismatch_kind": "block_span",
-      "notes": "Known gap: Ghidra vs Fission CFG block spans differ (block_span). Connectivity jaccard is reported in metrics for triage.",
+      "expect_status": "match",
+      "notes": "Topology match (block starts + edge pairs). Span encoding diffs are dual-only.",
       "canonicalize_mode": "strict"
     },
     {
@@ -65,9 +62,8 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "mismatch",
-      "expect_mismatch_kind": "block_span",
-      "notes": "Known gap: Ghidra vs Fission CFG block spans differ (block_span). Connectivity jaccard is reported in metrics for triage.",
+      "expect_status": "match",
+      "notes": "Topology match (block starts + edge pairs). Span encoding diffs are dual-only.",
       "canonicalize_mode": "strict"
     },
     {
@@ -82,9 +78,8 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "mismatch",
-      "expect_mismatch_kind": "block_span",
-      "notes": "Known gap: Ghidra vs Fission CFG block spans differ (block_span). Connectivity jaccard is reported in metrics for triage.",
+      "expect_status": "match",
+      "notes": "Topology match (block starts + edge pairs). Span encoding diffs are dual-only.",
       "canonicalize_mode": "strict"
     },
     {

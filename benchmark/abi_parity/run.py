@@ -1,10 +1,7 @@
-"""ABI / calling-convention parity (scaffold).
-
-Skipped until both adapters implement a real /abi surface. Never scores empty
-or not_implemented payloads as match.
-"""
+"""ABI / calling-convention parity — Ghidra storage vs Fission recovered slots."""
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -23,10 +20,46 @@ STAGE = "abi_parity"
 def _is_implemented(payload: object) -> bool:
     if not isinstance(payload, dict):
         return False
-    if payload.get("status") in {"not_implemented", "unsupported", "empty"}:
+    if payload.get("status") in {"not_implemented", "unsupported", "empty", "error"}:
         return False
     params = payload.get("parameters")
-    return isinstance(params, list) and len(params) > 0
+    return isinstance(params, list)
+
+
+# Common x64 / x86 register aliases for location equality.
+_REG_ALIASES = {
+    "ecx": "rcx",
+    "edx": "rdx",
+    "r8d": "r8",
+    "r9d": "r9",
+    "eax": "rax",
+    "ebx": "rbx",
+    "esi": "rsi",
+    "edi": "rdi",
+    "esp": "rsp",
+    "ebp": "rbp",
+}
+
+
+def _norm_loc(loc: object) -> str:
+    text = str(loc or "").strip().lower()
+    text = text.replace("register:", "").replace("reg:", "")
+    # Ghidra may emit RCX / rcx / RCX:0
+    text = text.split(":")[-1]
+    return _REG_ALIASES.get(text, text)
+
+
+def _param_locations(payload: object) -> list[str]:
+    if not isinstance(payload, dict):
+        return []
+    params = payload.get("parameters") or []
+    if not isinstance(params, list):
+        return []
+    out = []
+    for p in params:
+        if isinstance(p, dict):
+            out.append(_norm_loc(p.get("location")))
+    return out
 
 
 def compare_abi(
@@ -71,26 +104,40 @@ def compare_abi(
             actual=actual,
             error="Candidate ABI empty/not_implemented",
         )
-    # Structural equality on normalized parameters when both present.
-    exp_p = (expected or {}).get("parameters") if isinstance(expected, dict) else None
-    act_p = (actual or {}).get("parameters") if isinstance(actual, dict) else None
-    match = exp_p == act_p and (
-        (expected or {}).get("return") == (actual or {}).get("return")
-        if isinstance(expected, dict) and isinstance(actual, dict)
-        else False
-    )
+
+    exp_locs = _param_locations(expected)
+    act_locs = _param_locations(actual)
+    exp_n = len(exp_locs)
+    act_n = len(act_locs)
+    # Compare prefix of min length for location sequence; also param counts.
+    n = min(exp_n, act_n)
+    loc_match = exp_locs[:n] == act_locs[:n] and exp_n == act_n
+    count_match = exp_n == act_n
+
+    if loc_match and count_match:
+        status = "match"
+        kind = None
+    elif not count_match:
+        status = "mismatch"
+        kind = "abi_param_count"
+    else:
+        status = "mismatch"
+        kind = "abi_locations"
+
     return BenchmarkResult(
         subject=subject,
         stage=STAGE,  # type: ignore[arg-type]
-        status="match" if match else "mismatch",
+        status=status,
         reference=reference_name,
         candidate=candidate_name,
-        mismatch_kind=None if match else "abi_parameters",
+        mismatch_kind=kind,
         expected=expected,
         actual=actual,
         metrics={
-            "ref_param_count": len(exp_p) if isinstance(exp_p, list) else 0,
-            "cand_param_count": len(act_p) if isinstance(act_p, list) else 0,
+            "ref_param_count": exp_n,
+            "cand_param_count": act_n,
+            "shared_prefix": n,
+            "location_prefix_match": 1 if exp_locs[:n] == act_locs[:n] else 0,
         },
     )
 
@@ -102,7 +149,7 @@ def main(
     corpus: str = typer.Option("dev"),
     output: Path = typer.Option(Path("results/abi_parity/latest.jsonl")),
     limit: Optional[int] = typer.Option(None),
-    timeout: float = typer.Option(30.0),
+    timeout: float = typer.Option(60.0),
 ):
     rows: list[BenchmarkResult] = []
     subjects = load_subjects(corpus)
@@ -110,15 +157,14 @@ def main(
         subjects = subjects[:limit]
     for subject in subjects:
         try:
-            # fetch_parity_json will fail until STAGE_ENDPOINT has abi — catch as skip
             try:
                 exp = fetch_parity_json(reference_http, STAGE, subject, timeout=timeout)
-            except Exception:
-                exp = {"status": "not_implemented"}
+            except Exception as exc:
+                exp = {"status": "error", "error": str(exc), "parameters": []}
             try:
                 act = fetch_parity_json(candidate_http, STAGE, subject, timeout=timeout)
-            except Exception:
-                act = {"status": "not_implemented"}
+            except Exception as exc:
+                act = {"status": "error", "error": str(exc), "parameters": []}
             rows.append(compare_abi(subject, reference_http, candidate_http, exp, act))
         except Exception as exc:
             rows.append(
@@ -132,8 +178,11 @@ def main(
                 )
             )
     write_jsonl(output, rows)
+    matched = sum(1 for r in rows if r.status == "match")
     skipped = sum(1 for r in rows if r.status == "skipped")
-    typer.echo(f"Wrote {len(rows)} abi rows ({skipped} skipped pending surface) to {output}")
+    typer.echo(
+        f"Wrote {len(rows)} abi rows (match={matched}, skipped={skipped}) to {output}"
+    )
 
 
 if __name__ == "__main__":

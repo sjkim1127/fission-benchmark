@@ -62,6 +62,10 @@ struct ConfigNode {
     struct Flags flags;
     union DataValue val;
 };
+// Ghidra often emits bare ConfigNode* without the struct keyword.
+typedef struct ConfigNode ConfigNode;
+typedef struct Flags Flags;
+typedef union DataValue DataValue;
 
 // SLEIGH/Fission intrinsics — type-generic computation-based implementations
 #define __carry(a, b)   (__builtin_add_overflow((a), (b), &(__typeof__(a)){0}))

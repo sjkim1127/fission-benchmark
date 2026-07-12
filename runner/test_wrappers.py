@@ -206,12 +206,13 @@ TEST_WRAPPERS: dict[str, list[str]] = {
         "\nint main() { if (find_substring(\"abcdef\", \"def\") != 3) return 1; return 0; }\n",  # suffix
         "\nint main() { if (find_substring(\"\", \"a\") != -1) return 1; return 0; }\n",  # empty haystack
     ],
+    # Return value is privilege_level + (is_admin ? 100 : 0), not the raw val.
     "manipulate_bitfields": [
-        "\nint main() { struct ConfigNode n = {0}; if (manipulate_bitfields(&n, 42) != 42) return 1; if (n.flags.is_active != 1) return 2; if (n.val.int_val != 42) return 3; return 0; }\n",
-        "\nint main() { struct ConfigNode n = {0}; if (manipulate_bitfields(&n, 101) != 201) return 1; if (n.flags.is_admin != 1) return 2; return 0; }\n",  # admin path
+        "\nint main() { struct ConfigNode n = {0}; if (manipulate_bitfields(&n, 42) != 10) return 1; if (n.flags.is_active != 1) return 2; if (n.val.int_val != 42) return 3; return 0; }\n",
+        "\nint main() { struct ConfigNode n = {0}; if (manipulate_bitfields(&n, 101) != 105) return 1; if (n.flags.is_admin != 1) return 2; return 0; }\n",  # admin path
         "\nint main() { struct ConfigNode n = {0}; if (manipulate_bitfields(&n, 0) != 0) return 1; if (n.flags.is_admin != 0) return 2; return 0; }\n",  # zero
         "\nint main() { struct ConfigNode n = {0}; if (manipulate_bitfields(&n, 15) != 15) return 1; if (n.flags.privilege_level != 15) return 2; return 0; }\n",  # max nibble
-        "\nint main() { struct ConfigNode n = {0}; if (manipulate_bitfields(&n, 100) != 100) return 1; if (n.flags.is_admin != 0) return 2; return 0; }\n",  # boundary not admin
+        "\nint main() { struct ConfigNode n = {0}; if (manipulate_bitfields(&n, 100) != 4) return 1; if (n.flags.is_admin != 0) return 2; return 0; }\n",  # boundary not admin
     ],
     "matrix_multiply": [
         "\nint main() { float a[]={1,2,3,4}; float b[]={1,0,0,1}; float c[4]={0}; matrix_multiply(a,b,c,2); if (c[0]!=1||c[1]!=2||c[2]!=3||c[3]!=4) return 1; return 0; }\n",  # identity

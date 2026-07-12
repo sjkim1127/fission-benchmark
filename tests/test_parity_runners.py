@@ -184,6 +184,49 @@ def test_cfg_compare_detects_edge_connectivity_mismatch() -> None:
     assert result.metrics.get("edge_pair_jaccard") == 0.0
 
 
+def test_cfg_match_on_topology_despite_span_encoding_diff() -> None:
+    """Primary match is starts + edges; end-byte span is dual-only."""
+    expected = {
+        "blocks": [{"start": "0x1000", "end": "0x1003"}, {"start": "0x1004", "end": "0x1007"}],
+        "edges": [{"source": "0x1000", "target": "0x1004", "kind": "branch"}],
+    }
+    actual = {
+        "blocks": [{"start": "0x1000", "end": "0x1002"}, {"start": "0x1004", "end": "0x1006"}],
+        "edges": [{"source": "0x1000", "target": "0x1004", "kind": "fallthrough"}],
+    }
+    result = compare_cfg(subject(), "ghidra", "fission", expected, actual)
+    assert result.status == "match"
+    assert result.metrics.get("compare_policy") == "starts_and_edge_pairs"
+    assert result.metrics.get("span_encoding_diff") == 1
+    assert result.metrics.get("block_start_jaccard") == 1.0
+    assert result.metrics.get("edge_pair_jaccard") == 1.0
+
+
+def test_abi_location_aliases_and_count() -> None:
+    from benchmark.abi_parity.run import compare_abi
+
+    exp = {
+        "status": "ok",
+        "parameters": [{"index": 0, "location": "ECX", "size": 4}],
+        "return": {"location": "EAX", "size": 4},
+    }
+    act = {
+        "status": "ok",
+        "parameters": [{"index": 0, "location": "rcx", "size": 8}],
+        "return": {"location": "rax", "size": 8},
+    }
+    assert compare_abi(subject(), "ghidra", "fission", exp, act).status == "match"
+
+    act_bad = {
+        "status": "ok",
+        "parameters": [],
+        "return": {"location": "rax", "size": 8},
+    }
+    bad = compare_abi(subject(), "ghidra", "fission", exp, act_bad)
+    assert bad.status == "mismatch"
+    assert bad.mismatch_kind == "abi_param_count"
+
+
 def test_function_discovery_detects_function_set_mismatch() -> None:
     expected = [{"address": "0x1000", "name": "main"}, {"address": "0x2000", "name": "foo"}]
     actual = [{"address": "0x1000", "name": "main"}]

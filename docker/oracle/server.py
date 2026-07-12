@@ -99,6 +99,50 @@ def select_subject(req: VerifyRequest, pe_bytes: bytes | None) -> str:
     return ORACLE_SUBJECT_SOURCE_RECOMPILE
 
 
+def probe_fixture(
+    req: VerifyRequest,
+    *,
+    subject: str,
+    pe_bytes: bytes | None,
+    compiler: str,
+    target_abi: str,
+    wine_arch: str,
+    root: Path,
+) -> bool:
+    """Reference self-check: known-good candidate must score 1.0 under the same ABI.
+
+    Used so candidate compile/runtime/timeout failures still produce *valid*
+    harness identity evidence when the PE/wrapper fixture itself is sound.
+    """
+    try:
+        if subject == ORACLE_SUBJECT_ORIGINAL_BINARY:
+            # PE-anchored reference cannot be recompiled as C; probe via
+            # source_recompile of the reference body as both sides.
+            probe_source = build_source(
+                req,
+                subject=ORACLE_SUBJECT_SOURCE_RECOMPILE,
+                pe_bytes=None,
+                candidate_code=req.reference_code,
+            )
+        else:
+            probe_source = build_source(
+                req,
+                subject=subject,
+                pe_bytes=pe_bytes,
+                candidate_code=req.reference_code,
+            )
+        probe_compile, probe_binary = compile_program(compiler, probe_source, root)
+        if probe_compile.returncode != 0:
+            return False
+        probe_execution = execute_program(probe_binary, target_abi, wine_arch)
+        if probe_execution.returncode != 0:
+            return False
+        probe_result = parse_differential_output(probe_execution.stdout, len(req.cases))
+        return probe_result.score == 1.0
+    except Exception:
+        return False
+
+
 def build_source(
     req: VerifyRequest,
     *,
@@ -212,63 +256,21 @@ def verify(req: VerifyRequest) -> dict:
         if pe_bytes is not None and subject == ORACLE_SUBJECT_ORIGINAL_BINARY:
             (root / "reference.exe").write_bytes(pe_bytes)
 
-        try:
-            compile_result, binary_path = compile_program(compiler, source, root)
-        except subprocess.TimeoutExpired:
-            return {
-                "score": 0.0,
-                "category": "timeout",
-                "error": "oracle compile timed out",
-                "cases_passed": 0,
-                "cases_total": len(req.cases),
-                "evidence": {"valid": False},
-            }
-        if compile_result.returncode != 0:
-            error = (compile_result.stderr or compile_result.stdout)[-4000:]
-            # Fixture probe: reference side must be self-consistent.
-            try:
-                probe_source = build_source(
+        def _fail(category: str, error: str) -> dict:
+            # Probe in a sibling dir so candidate debris cannot poison the fixture.
+            with tempfile.TemporaryDirectory(prefix="fission-oracle-probe-") as probe_dir:
+                fixture_valid = probe_fixture(
                     req,
                     subject=subject,
                     pe_bytes=pe_bytes,
-                    candidate_code=req.reference_code
-                    if subject == ORACLE_SUBJECT_SOURCE_RECOMPILE
-                    else req.candidate_code,
+                    compiler=compiler,
+                    target_abi=target_abi,
+                    wine_arch=wine_arch,
+                    root=Path(probe_dir),
                 )
-                if subject == ORACLE_SUBJECT_ORIGINAL_BINARY:
-                    # Candidate == reference PE stub path is not available as C;
-                    # re-run with identical PE reference by using a known-good
-                    # candidate that simply mirrors the PE call: recompile probe
-                    # using the reference_code as a pure C candidate for compile
-                    # diagnostics only, then require PE+reference cases to pass.
-                    probe_source = build_source(
-                        req,
-                        subject=ORACLE_SUBJECT_SOURCE_RECOMPILE,
-                        pe_bytes=None,
-                        candidate_code=req.reference_code,
-                    )
-                probe_compile, probe_binary = compile_program(compiler, probe_source, root)
-                probe_execution = (
-                    execute_program(probe_binary, target_abi, wine_arch)
-                    if probe_compile.returncode == 0
-                    else None
-                )
-            except Exception:
-                probe_compile, probe_execution = None, None
-            probe_result = (
-                parse_differential_output(probe_execution.stdout, len(req.cases))
-                if probe_execution is not None and probe_execution.returncode == 0
-                else None
-            )
-            fixture_valid = bool(
-                probe_compile is not None
-                and probe_compile.returncode == 0
-                and probe_result is not None
-                and probe_result.score == 1.0
-            )
             return {
                 "score": 0.0,
-                "category": "compile_error" if fixture_valid else "fixture_error",
+                "category": category if fixture_valid else "fixture_error",
                 "error": error,
                 "cases_passed": 0,
                 "cases_total": len(req.cases),
@@ -284,36 +286,33 @@ def verify(req: VerifyRequest) -> dict:
             }
 
         try:
+            compile_result, binary_path = compile_program(compiler, source, root)
+        except subprocess.TimeoutExpired:
+            return _fail("timeout", "oracle compile timed out")
+        if compile_result.returncode != 0:
+            error = (compile_result.stderr or compile_result.stdout)[-4000:]
+            return _fail("compile_error", error)
+
+        try:
             execution = execute_program(binary_path, target_abi, wine_arch)
         except subprocess.TimeoutExpired:
-            return {
-                "score": 0.0,
-                "category": "timeout",
-                "error": "oracle execution timed out",
-                "cases_passed": 0,
-                "cases_total": len(req.cases),
-                "evidence": {"valid": False},
-            }
+            return _fail("timeout", "oracle execution timed out")
         if execution.returncode != 0:
             error = (execution.stderr or execution.stdout)[-4000:]
-            return {
-                "score": 0.0,
-                "category": "runtime_error",
-                "error": error,
-                "cases_passed": 0,
-                "cases_total": len(req.cases),
-                "evidence": {"valid": False},
-            }
+            return _fail("runtime_error", error)
 
         result = parse_differential_output(execution.stdout, len(req.cases))
-        evidence_valid = result.category not in {"fixture_error", "runtime_error"}
+        # Candidate crashes / empty CASE streams are decompiler failures when the
+        # PE fixture self-check still scores 1.0 — keep harness identity valid.
+        if result.category in {"fixture_error", "runtime_error"}:
+            return _fail(result.category, result.error or result.category)
         evidence = build_evidence(
             req,
             source=source,
             target_abi=target_abi,
             compiler=compiler,
             subject=subject,
-            valid=evidence_valid,
+            valid=True,
             function_rva=function_rva,
         )
         return {

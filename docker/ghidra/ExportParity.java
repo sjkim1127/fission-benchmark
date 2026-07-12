@@ -9,6 +9,9 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.block.SimpleBlockModel;
@@ -79,6 +82,8 @@ public class ExportParity extends GhidraScript {
             emit(exportPcodeJson(func));
         } else if (mode.equals("cfg")) {
             emit(exportCfgJson(func));
+        } else if (mode.equals("abi")) {
+            emit(exportAbiJson(func));
         } else if (mode.equals("bundle")) {
             emit(exportBundleObject(func));
         } else {
@@ -267,6 +272,8 @@ public class ExportParity extends GhidraScript {
             if (!firstBlock) blocksJson.append(",");
             firstBlock = false;
 
+            // Inclusive last byte of last instruction (Fission adapter promotes
+            // terminal_address + insn length to the same encoding).
             blocksJson.append(String.format(
                 "{\"start\": \"0x%s\", \"end\": \"0x%s\"}",
                 block.getMinAddress().toString(),
@@ -289,5 +296,82 @@ public class ExportParity extends GhidraScript {
         edgesJson.append("]");
 
         return "{\"blocks\": " + blocksJson.toString() + ", \"edges\": " + edgesJson.toString() + "}";
+    }
+
+    private String exportAbiJson(Function func) throws Exception {
+        String conv = func.getCallingConventionName();
+        if (conv == null || conv.isEmpty()) {
+            conv = "unknown";
+        }
+        StringBuilder params = new StringBuilder();
+        params.append("[");
+        Parameter[] arr = func.getParameters();
+        for (int i = 0; i < arr.length; i++) {
+            if (i > 0) params.append(",");
+            params.append(parameterToJson(arr[i], i));
+        }
+        params.append("]");
+
+        String retJson = "null";
+        Parameter ret = func.getReturn();
+        if (ret != null) {
+            retJson = parameterToJson(ret, -1);
+        }
+
+        return String.format(
+            "{\"status\": \"ok\", \"address\": \"0x%s\", \"name\": \"%s\", \"convention\": \"%s\", \"parameters\": %s, \"return\": %s}",
+            func.getEntryPoint().toString(),
+            jsonEscape(func.getName()),
+            jsonEscape(conv),
+            params.toString(),
+            retJson
+        );
+    }
+
+    private String parameterToJson(Parameter p, int index) {
+        String loc = "unknown";
+        int size = 0;
+        try {
+            size = p.getLength();
+            // Prefer Register name (RCX/RAX) over raw register-space offsets ("00000008").
+            Register reg = p.getRegister();
+            VariableStorage storage = p.getVariableStorage();
+            if (reg == null && storage != null && storage.isValid()) {
+                reg = storage.getRegister();
+            }
+            if (reg != null) {
+                loc = reg.getName().toLowerCase();
+            } else if (storage != null && storage.isValid() && storage.isStackStorage()) {
+                loc = String.format("stack+0x%x", storage.getStackOffset());
+            } else if (storage != null && storage.isValid() && storage.getFirstVarnode() != null) {
+                Varnode vn = storage.getFirstVarnode();
+                Register r2 = currentProgram.getRegister(vn.getAddress(), vn.getSize());
+                if (r2 == null) {
+                    r2 = currentProgram.getRegister(vn.getAddress());
+                }
+                if (r2 != null) {
+                    loc = r2.getName().toLowerCase();
+                } else {
+                    String space = vn.getAddress().getAddressSpace().getName();
+                    if ("register".equalsIgnoreCase(space)) {
+                        loc = String.format("reg+0x%x", vn.getOffset());
+                    } else if ("stack".equalsIgnoreCase(space)) {
+                        loc = String.format("stack+0x%x", vn.getAddress().getOffset());
+                    } else {
+                        loc = space.toLowerCase() + "+0x" + Long.toHexString(vn.getAddress().getOffset());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            loc = "unknown";
+        }
+        String name = p.getName() != null ? p.getName() : ("param_" + index);
+        return String.format(
+            "{\"index\": %d, \"name\": \"%s\", \"location\": \"%s\", \"size\": %d}",
+            index,
+            jsonEscape(name),
+            jsonEscape(loc.toLowerCase()),
+            size
+        );
     }
 }

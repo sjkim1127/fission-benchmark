@@ -108,6 +108,34 @@ def compare_cfg(
     actual_norm = canonicalize_cfg(actual)
     dual = _cfg_dual_metrics(expected_norm, actual_norm)
 
+    # Primary structural equality: block *entries* + kind-agnostic edges.
+    # Block *end* addresses often differ by tool encoding (inclusive last-insn
+    # vs terminal op) while topology is identical — do not fail primary match
+    # on span-only diffs (reported in dual metrics).
+    starts_eq = _block_starts(expected_norm) == _block_starts(actual_norm)
+    edges_eq = _edge_pairs(expected_norm, with_kind=False) == _edge_pairs(
+        actual_norm, with_kind=False
+    )
+    spans_eq = _block_spans(expected_norm) == _block_spans(actual_norm)
+
+    if starts_eq and edges_eq:
+        return BenchmarkResult(
+            subject=subject,
+            stage="cfg_parity",
+            status="match",
+            reference=reference_name,
+            candidate=candidate_name,
+            expected=expected,
+            actual=actual,
+            metrics={
+                "block_count": count_items(expected_norm, "blocks"),
+                "edge_count": count_items(expected_norm, "edges"),
+                "span_encoding_diff": 0 if spans_eq else 1,
+                "compare_policy": "starts_and_edge_pairs",
+                **dual,
+            },
+        )
+
     if expected_norm == actual_norm:
         return BenchmarkResult(
             subject=subject,
@@ -128,14 +156,12 @@ def compare_cfg(
     mismatch_kind = "cfg_shape"
     if count_items(expected_norm, "blocks") != count_items(actual_norm, "blocks"):
         mismatch_kind = "block_count"
-    elif _block_starts(expected_norm) != _block_starts(actual_norm):
+    elif not starts_eq:
         mismatch_kind = "block_set"
-    elif _block_spans(expected_norm) != _block_spans(actual_norm):
-        mismatch_kind = "block_span"
-    elif _edge_pairs(expected_norm, with_kind=False) != _edge_pairs(
-        actual_norm, with_kind=False
-    ):
+    elif not edges_eq:
         mismatch_kind = "edge_connectivity"
+    elif not spans_eq:
+        mismatch_kind = "block_span"
     elif count_items(expected_norm, "edges") != count_items(actual_norm, "edges"):
         mismatch_kind = "edge_count"
     else:

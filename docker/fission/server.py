@@ -481,12 +481,32 @@ def _cfg_impl(bin_path: str, addr: str) -> dict:
     if not isinstance(raw_blocks, list):
         raw_blocks = []
 
+    # Map instruction start → length so block ends can be Ghidra-compatible
+    # inclusive last-byte addresses (terminal_address alone is last-insn start).
+    insn_len: dict[int, int] = {}
+    try:
+        for inst in _disasm_impl(bin_path, addr) or []:
+            if not isinstance(inst, dict):
+                continue
+            ia = _as_int(inst.get("address"), 0)
+            ln = _as_int(inst.get("length"), 0)
+            if ia and ln > 0:
+                insn_len[ia] = ln
+    except Exception:
+        insn_len = {}
+
     by_index = {_as_int(b.get("index", i), i): b for i, b in enumerate(raw_blocks)}
     blocks = []
     edges = []
     for block in raw_blocks:
         start_raw = _as_int(block.get("start_address", 0))
-        end_raw = _as_int(block.get("terminal_address", start_raw), start_raw)
+        terminal = _as_int(block.get("terminal_address", start_raw), start_raw)
+        # Prefer explicit inclusive end if CLI ever provides it.
+        if block.get("end_address") is not None or block.get("max_address") is not None:
+            end_raw = _as_int(block.get("end_address", block.get("max_address")), terminal)
+        else:
+            ln = insn_len.get(terminal, 0)
+            end_raw = (terminal + ln - 1) if ln > 0 else terminal
         start = f"0x{start_raw:x}"
         end = f"0x{end_raw:x}"
         blocks.append({"start": start, "end": end})
@@ -499,7 +519,11 @@ def _cfg_impl(bin_path: str, addr: str) -> dict:
                 "target": f"0x{_as_int(target_block.get('start_address', 0)):x}",
                 "kind": "branch",
             })
-    out = {"blocks": blocks, "edges": edges}
+    out = {
+        "blocks": blocks,
+        "edges": edges,
+        "end_encoding": "inclusive_last_byte",
+    }
     _cache_put(cache_key, out)
     return out
 
@@ -516,19 +540,118 @@ def cfg(binary: str, addr: str):
     return _cfg_impl(resolve_binary(binary), addr)
 
 
+def _parse_c_signature(code: str) -> tuple[str | None, int]:
+    """Best-effort parse of `ret_type name(type a, type b)` from decomp head."""
+    import re
+
+    if not code:
+        return None, 0
+    # First non-empty non-comment line
+    for line in code.splitlines():
+        text = line.strip()
+        if not text or text.startswith("//") or text.startswith("/*"):
+            continue
+        m = re.match(
+            r"^([A-Za-z_][\w\s\*]+?)\s+([A-Za-z_]\w*)\s*\((.*)\)\s*\{?$",
+            text,
+        )
+        if not m:
+            continue
+        ret = re.sub(r"\s+", " ", m.group(1).strip())
+        args = m.group(3).strip()
+        if not args or args == "void":
+            return ret, 0
+        # Split on commas not inside nested parens (simple split sufficient here).
+        parts = [p.strip() for p in args.split(",") if p.strip()]
+        return ret, len(parts)
+    return None, 0
+
+
+def _windows_param_locations(param_count: int, *, bits: int) -> list[dict]:
+    """Default Windows PE locations for the first N parameters."""
+    if bits == 32:
+        # cdecl/stdcall: all stack params (right-to-left); we only report slots.
+        return [
+            {"index": i, "name": f"param_{i}", "location": f"stack+0x{i * 4:x}", "size": 4}
+            for i in range(param_count)
+        ]
+    # x64: RCX, RDX, R8, R9 then stack
+    regs = ["rcx", "rdx", "r8", "r9"]
+    out = []
+    for i in range(param_count):
+        if i < len(regs):
+            out.append({"index": i, "name": f"param_{i}", "location": regs[i], "size": 8})
+        else:
+            # shadow space starts at 0x20; 8-byte slots thereafter
+            off = 0x20 + (i - 4) * 8
+            out.append(
+                {
+                    "index": i,
+                    "name": f"param_{i}",
+                    "location": f"stack+0x{off:x}",
+                    "size": 8,
+                }
+            )
+    return out
+
+
+def _abi_impl(bin_path: str, addr: str) -> dict:
+    cache_key = _ck("abi", bin_path, _normalize_addr_key(addr))
+    cached = _cache_get(cache_key)
+    if isinstance(cached, dict):
+        return cached
+    # Prefer decomp JSON for signature text.
+    try:
+        data = run_fission_cli(["decomp", bin_path, "--addr", addr, "--json"])
+    except Exception as exc:
+        return {
+            "status": "error",
+            "address": addr,
+            "error": str(exc),
+            "parameters": [],
+            "return": None,
+        }
+    item: dict = {}
+    if isinstance(data, list) and data:
+        item = data[0] if isinstance(data[0], dict) else {}
+    elif isinstance(data, dict):
+        fns = data.get("functions") or data.get("results") or []
+        if isinstance(fns, list) and fns and isinstance(fns[0], dict):
+            item = fns[0]
+        else:
+            item = data
+    code = str(item.get("code") or item.get("code_nir") or "")
+    ret_ty, nparams = _parse_c_signature(code)
+    # Infer bitness from path / pe: m32 in name → 32-bit
+    bits = 32 if "m32" in bin_path or "-m32" in bin_path else 64
+    convention = "windows_x86" if bits == 32 else "windows_x64"
+    params = _windows_param_locations(nparams, bits=bits)
+    ret = {
+        "index": -1,
+        "name": "return",
+        "location": "eax" if bits == 32 else "rax",
+        "size": 4 if bits == 32 else 8,
+        "type": ret_ty,
+    }
+    out = {
+        "status": "ok",
+        "address": _normalize_addr_key(addr),
+        "name": item.get("name") or "?",
+        "convention": convention,
+        "parameters": params,
+        "return": ret,
+        "source": "decomp_signature+windows_default",
+        "param_count": nparams,
+    }
+    _cache_put(cache_key, out)
+    return out
+
+
 @app.get("/abi")
 def abi(binary: str, addr: str):
-    """Calling-convention surface — not yet implemented (scaffold)."""
+    """Recover ABI slots from decomp signature + PE calling convention defaults."""
     validate_address(addr)
-    _ = resolve_binary(binary)
-    return {
-        "status": "not_implemented",
-        "address": addr,
-        "convention": None,
-        "parameters": [],
-        "return": None,
-        "note": "ABI export pending; abi_parity stage must skip, not match",
-    }
+    return _abi_impl(resolve_binary(binary), addr)
 
 
 def _assemble_bundle(key: str, dis, pc, cg) -> dict:
