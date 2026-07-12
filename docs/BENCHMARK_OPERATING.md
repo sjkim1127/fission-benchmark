@@ -162,12 +162,45 @@ python -m benchmark.golden_repros.run
 
 Dashboard panel: **Layered parity · Ghidra reference** (reads `/parity-telemetry.json`).
 
+### Function discovery (function *finding*)
+
+Primary layered stage: **whole-binary function inventory** (`GET /functions`).
+
+| Axis | Definition |
+|------|------------|
+| Unit | Binary variant (compiler × opt) |
+| Primary | Address-set equality vs reference |
+| Dual | recall / precision / F1 / Jaccard + optional manifest_recall |
+| Refs | Ghidra inventory (default), PE symbols, corpus manifests |
+
+```bash
+export FISSION_HOST_PORT=8007
+# Core pair
+python -m benchmark.function_discovery.run --corpus dev --limit 5
+
+# Multi-tool discovery matrix + summary
+python -m benchmark.function_discovery.run \
+  --corpus holdout \
+  --candidates fission,radare2,snowman,boomerang \
+  --limit 10
+
+# Standalone report from JSONL
+python -m runner.function_discovery_report \
+  results/function_discovery/latest.jsonl --print
+```
+
+Do **not** confuse with **MVP-0 same-function matrix** (decompile request
+`(binary, addr)` boundary). Discovery asks “which functions exist?”; same-function
+asks “did we decompile *this* entry?”
+
 Ideas for the next axes: `docs/NEXT_BENCHMARK_IDEAS.md`.
 
 ## Related files
 
 - `runner/standard_summary.py` — MVP aggregation (includes `mvp.same_function`)
 - `runner/same_function_matrix.py` — same-function matrix builder + CLI
+- `runner/function_discovery_report.py` — function-finding report + CLI
+- `benchmark/function_discovery/` — inventory parity runner + PE oracle
 - `runner/output_diagnostics.py` — `direct_function` / boundary statuses
 - `runner/run_parity.py` / `benchmark/*_parity` — layered stages
 - `runner/run_validity.py` / `publication_gate.py` — quality gates

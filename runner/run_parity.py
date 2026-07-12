@@ -665,35 +665,15 @@ def run_parity_benchmarks(
                         funcs_result.data if isinstance(funcs_result.data, list) else []
                     )
                     row = compare_functions(
-                        inv_subj, "ghidra", decompiler, ref_list, cand_list
+                        inv_subj,
+                        "ghidra",
+                        decompiler,
+                        ref_list,
+                        cand_list,
+                        manifest_addrs=manifest_addrs,
+                        scored_as="ghidra_inventory",
                     )
-                    # Extra reliability metrics: corpus-manifest subject coverage.
-                    cand_addrs = function_addresses(cand_list)
-                    metrics = dict(row.metrics or {})
-                    metrics["scored_as"] = "ghidra_inventory"
-                    metrics["manifest_subject_count"] = len(manifest_addrs)
-                    metrics["manifest_found_count"] = len(manifest_addrs & cand_addrs)
-                    metrics["manifest_recall"] = (
-                        1.0
-                        if not manifest_addrs
-                        else round(
-                            len(manifest_addrs & cand_addrs) / len(manifest_addrs), 4
-                        )
-                    )
-                    results.append(
-                        BenchmarkResult(
-                            subject=row.subject,
-                            stage=row.stage,
-                            status=row.status,
-                            reference=row.reference,
-                            candidate=row.candidate,
-                            mismatch_kind=row.mismatch_kind,
-                            expected=row.expected,
-                            actual=row.actual,
-                            metrics=metrics,
-                            error=row.error,
-                        )
-                    )
+                    results.append(row)
                     print(
                         f"  function_discovery ghidra→{decompiler}: "
                         f"{row.status} ({row.mismatch_kind or 'ok'}) "

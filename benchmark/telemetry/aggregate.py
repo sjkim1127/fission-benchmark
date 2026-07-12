@@ -125,8 +125,13 @@ def aggregate_rows(rows: list[dict]) -> dict:
         if stage == "function_discovery":
             fd_n += 1
             scored = str(metrics.get("scored_as") or "")
-            # Only modern inventory rows set scored_as=ghidra_inventory.
-            if scored != "ghidra_inventory":
+            # Modern inventory rows always set scored_as + dual presence metrics.
+            modern_tags = {
+                "ghidra_inventory",
+                "pe_symbol_inventory",
+                "manifest_inventory",
+            }
+            if scored not in modern_tags:
                 fd_presence_only += 1
             if status in {"match", "mismatch"} and metrics:
                 fd_metric_n += 1
@@ -218,8 +223,9 @@ def aggregate_rows(rows: list[dict]) -> dict:
                         fd_manifest_recall_sum / fd_metric_n, 4
                     ),
                     "note": (
-                        "presence_recall = |G∩C|/|G|; manifest_recall = corpus "
-                        "subject addresses found by candidate."
+                        "presence_recall = |R∩C|/|R|; presence_precision = |R∩C|/|C|; "
+                        "manifest_recall = corpus subject addresses found by candidate. "
+                        "See runner/function_discovery_report.py for full matrix."
                     ),
                 }
             if fd_presence_only:

@@ -348,7 +348,8 @@ run first when diagnosing Fission regressions:
 3. `benchmark/pcode_parity` compares raw p-code op sequences from two providers,
    typically Ghidra raw p-code vs Fission SLEIGH runtime output.
 4. `benchmark/cfg_parity` compares basic blocks and control-flow edges.
-5. `benchmark/function_discovery` compares binary-level function discovery.
+5. `benchmark/function_discovery` is the **function-finding** benchmark
+   (inventory parity: address-set + dual recall/precision; Ghidra / PE / manifest refs).
 6. `benchmark/ir_invariants` checks Fission internal IR/NIR/HIR invariants
    without an external reference provider.
 7. `benchmark/golden_repros` runs fixed regression canaries.
@@ -373,6 +374,9 @@ python -m benchmark.decode_parity.run --limit 5
 python -m benchmark.pcode_parity.run --limit 5
 python -m benchmark.cfg_parity.run --limit 5
 python -m benchmark.function_discovery.run --limit 5
+# Multi-tool + summary:
+# python -m benchmark.function_discovery.run --candidates fission,radare2 --limit 5
+# python -m runner.function_discovery_report results/function_discovery/latest.jsonl --print
 
 # Unified runner → results/*_parity/latest.jsonl + telemetry
 python -m runner.run_parity --corpus dev --limit 5 --decompilers fission,ghidra
