@@ -360,6 +360,10 @@ def evaluate_run(
     elif fission_cov.ratio < _fission_min:
         reasons.append("fission_coverage_below_threshold")
 
+    # Core adapters gate measurement validity. Weak third-party adapters in a
+    # multi-decompiler matrix (e.g. snowman whole-program rows) must remain
+    # visible as adapter_error without invalidating the whole instrumented run.
+    _CORE_ADAPTERS = frozenset({"fission", "ghidra"})
     if expected_decompilers:
         for d in expected_decompilers:
             d_rows = [r for r in rows if r.get("decompiler") == d]
@@ -369,8 +373,22 @@ def evaluate_run(
             else:
                 d_cov = _coverage(d_rows)
                 if d_cov.ratio < _backend_min:
-                    if "backend_coverage_below_threshold" not in reasons:
-                        reasons.append("backend_coverage_below_threshold")
+                    if d in _CORE_ADAPTERS:
+                        if "backend_coverage_below_threshold" not in reasons:
+                            reasons.append("backend_coverage_below_threshold")
+                    else:
+                        # Diagnostic only — does not flip measurement valid=false.
+                        tag = f"backend_weak:{d}"
+                        if tag not in publish_reasons:
+                            publish_reasons.append(tag)
+        # Core-only aggregate: non-core adapter residuals must not invalidate
+        # an otherwise sound multi-decompiler matrix.
+        core_rows = [r for r in rows if r.get("decompiler") in _CORE_ADAPTERS]
+        if core_rows:
+            core_cov = _coverage(core_rows)
+            if core_cov.attempted and core_cov.ratio < _backend_min:
+                if "backend_coverage_below_threshold" not in reasons:
+                    reasons.append("backend_coverage_below_threshold")
     else:
         # Fallback if no matrix provided
         if not overall_cov.attempted:

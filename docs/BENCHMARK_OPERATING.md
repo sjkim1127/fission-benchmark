@@ -5,11 +5,27 @@ quality. Fission product work is secondary to measurement honesty here.
 
 ## Priority order
 
-1. **Semantic evidence** (`original_binary` oracle) is the only ranking axis.
-2. **Coverage + fail taxonomy** make denominators honest.
-3. **Holdout + publication gate** protect against overfitting and bad publishes.
-4. **CFG / runtime / cross-variant** are secondary or extension analysis.
-5. Similarity / readability proxies are diagnostics only.
+1. **Infrastructure reliability** of the measuring instrument (adapters, oracle
+   harness identity, matrix completeness, evidence linkage).
+2. **Semantic evidence** (`original_binary` oracle) is the only ranking axis.
+3. **Coverage + fail taxonomy** make denominators honest.
+4. **Holdout + publication gate** protect against overfitting and bad publishes.
+5. **CFG / runtime / extension tracks** are secondary analysis.
+6. Similarity / readability proxies are diagnostics only.
+
+### Infra non-negotiables
+
+- Oracle rows that reach the harness must carry **`oracle_evidence.valid=true`**
+  with `oracle_subject=original_binary` when the PE fixture is sound — even if
+  the candidate renames poorly or fails to compile (those are quality buckets:
+  `compile_error` / `boundary_mismatch`, not `oracle_error`).
+- Synthetic decompiler names (`proc_0x…`, `FUN_…`) are renamed onto the harness
+  symbol so multi-decompiler matrices do not collapse evidence validity.
+- **Core adapters** (fission, ghidra) enforce per-backend clean-rate thresholds.
+  Other backends may be marked `backend_weak:*` without invalidating the whole
+  multi-decompiler run; systemic collapse still fails via overall coverage.
+- Full multi-decompiler official is a **matrix width** goal; core fission+ghidra
+  remains the publication-proven profile until non-core adapter residuals drop.
 
 ## Standard set contract
 

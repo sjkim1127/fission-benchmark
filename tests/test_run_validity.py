@@ -3,14 +3,12 @@
 Run with: pytest tests/test_run_validity.py -v
 """
 import json
-import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "runner"))
-from differential_oracle import aggregate_oracle_evidence
-import run_validity as rv
+from runner import run_validity as rv
+from runner.differential_oracle import aggregate_oracle_evidence
 
 
 # ---------------------------------------------------------------------------

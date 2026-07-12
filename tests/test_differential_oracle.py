@@ -86,6 +86,15 @@ def test_oracle_evidence_rejects_missing_row_proof() -> None:
     assert len(aggregate["row_evidence_sha256"]) == 64
 
 
+def test_rename_accepts_synthetic_proc_names() -> None:
+    from runner.differential_oracle import _rename_function
+
+    code = "/** address: 0x160b */\nvoid proc_0x0000160b()\n{\n    return;\n}\n"
+    out = _rename_function(code, "classify_range", "oracle_candidate_classify_range")
+    assert "oracle_candidate_classify_range" in out
+    assert "proc_0x0000160b" not in out
+
+
 def test_extract_function_signature_handles_pointers_and_void() -> None:
     clamp = extract_function_signature(
         "int clamp(int value, int lo, int hi) { return value; }",

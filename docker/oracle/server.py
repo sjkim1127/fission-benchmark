@@ -234,6 +234,7 @@ def verify(req: VerifyRequest) -> dict:
 
     subject = select_subject(req, pe_bytes)
     function_rva = None
+    source = ""
     try:
         if subject == ORACLE_SUBJECT_ORIGINAL_BINARY:
             from runner.differential_oracle import function_addr_to_rva
@@ -241,49 +242,56 @@ def verify(req: VerifyRequest) -> dict:
             assert pe_bytes is not None and req.function_addr
             function_rva = function_addr_to_rva(pe_bytes, req.function_addr)
         source = build_source(req, subject=subject, pe_bytes=pe_bytes)
+        build_error: str | None = None
     except Exception as exc:
+        # Candidate rename / TU assembly can fail on synthetic names. That is a
+        # *quality/boundary* issue once the PE fixture itself is sound — not a
+        # missing harness identity.
+        source = f"/* build_source failed: {exc} */\n"
+        build_error = str(exc)
+
+    def _fail(category: str, error: str, *, source_text: str = "") -> dict:
+        # Probe in a sibling dir so candidate debris cannot poison the fixture.
+        with tempfile.TemporaryDirectory(prefix="fission-oracle-probe-") as probe_dir:
+            fixture_valid = probe_fixture(
+                req,
+                subject=subject,
+                pe_bytes=pe_bytes,
+                compiler=compiler,
+                target_abi=target_abi,
+                wine_arch=wine_arch,
+                root=Path(probe_dir),
+            )
+        # Prefer boundary_mismatch for rename failures when fixture is sound.
+        cat = category
+        if fixture_valid and "not found" in (error or "").lower():
+            cat = "boundary_mismatch"
+        elif not fixture_valid:
+            cat = "fixture_error"
         return {
             "score": 0.0,
-            "category": "fixture_error",
-            "error": str(exc),
+            "category": cat if fixture_valid else "fixture_error",
+            "error": error,
             "cases_passed": 0,
             "cases_total": len(req.cases),
-            "evidence": {"valid": False},
+            "evidence": build_evidence(
+                req,
+                source=source_text or source or "/* empty */\n",
+                target_abi=target_abi,
+                compiler=compiler,
+                subject=subject,
+                valid=fixture_valid,
+                function_rva=function_rva,
+            ),
         }
+
+    if build_error is not None:
+        return _fail("boundary_mismatch", build_error, source_text=source)
 
     with tempfile.TemporaryDirectory(prefix="fission-oracle-") as directory:
         root = Path(directory)
         if pe_bytes is not None and subject == ORACLE_SUBJECT_ORIGINAL_BINARY:
             (root / "reference.exe").write_bytes(pe_bytes)
-
-        def _fail(category: str, error: str) -> dict:
-            # Probe in a sibling dir so candidate debris cannot poison the fixture.
-            with tempfile.TemporaryDirectory(prefix="fission-oracle-probe-") as probe_dir:
-                fixture_valid = probe_fixture(
-                    req,
-                    subject=subject,
-                    pe_bytes=pe_bytes,
-                    compiler=compiler,
-                    target_abi=target_abi,
-                    wine_arch=wine_arch,
-                    root=Path(probe_dir),
-                )
-            return {
-                "score": 0.0,
-                "category": category if fixture_valid else "fixture_error",
-                "error": error,
-                "cases_passed": 0,
-                "cases_total": len(req.cases),
-                "evidence": build_evidence(
-                    req,
-                    source=source,
-                    target_abi=target_abi,
-                    compiler=compiler,
-                    subject=subject,
-                    valid=fixture_valid,
-                    function_rva=function_rva,
-                ),
-            }
 
         try:
             compile_result, binary_path = compile_program(compiler, source, root)
