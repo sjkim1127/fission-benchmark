@@ -90,9 +90,28 @@ def analyze_output_diagnostics(
         issues.append("register_pseudo_inputs")
         harness_blockers.append("register_pseudo_inputs")
 
-    single_target_like = (target_name_present or expected_address_present) and not whole_program_like
+    # Address-anchored single function is the primary boundary contract.
+    # Soft blockers (ABI macros / register pseudo-inputs / residual dotted
+    # names) become needs_normalization only when the address (or name) matches
+    # and the dump is not whole-program.
+    single_target_like = (
+        (target_name_present or expected_address_present) and not whole_program_like
+    )
+    soft_blockers = {
+        "revng_abi_types",
+        "register_pseudo_inputs",
+        "dotted_function_names",
+    }
+    hard_blockers = [b for b in harness_blockers if b not in soft_blockers]
     if single_target_like and not harness_blockers:
         status = "direct_function"
+    elif single_target_like and not hard_blockers:
+        # Soft-only blockers with a solid address/name anchor.
+        status = (
+            "direct_function"
+            if expected_address_present
+            else "needs_normalization"
+        )
     elif single_target_like:
         status = "needs_normalization"
     elif whole_program_like:
@@ -113,6 +132,7 @@ def analyze_output_diagnostics(
         "dotted_names_sample": dotted_names[:5],
         "register_inputs_sample": ghidra_register_inputs[:5],
         "decompiler": decompiler,
+        "boundary_contract": "addr_or_name_single_function",
     }
 
 

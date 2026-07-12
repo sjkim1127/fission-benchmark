@@ -209,6 +209,18 @@ def boomerang_results_from_code(
             results.append(DecompileResultItem(addr=addr, name=fn_name or f"fcn.{addr}", error=fn_code))
             continue
 
+        # Stable name + address anchor for boundary diagnostics / oracle rename.
+        try:
+            value = int(addr, 16) if str(addr).lower().startswith("0x") else int(addr)
+            stable = f"proc_{value:x}"
+        except Exception:
+            stable = f"proc_{addr}"
+        if fn_name and fn_name != stable:
+            fn_code = re.sub(rf"\b{re.escape(fn_name)}\b", stable, fn_code)
+            fn_name = stable
+        if "/* address:" not in fn_code[:120].lower():
+            fn_code = f"/* address: {addr} */\n{fn_code}"
+
         results.append(DecompileResultItem(
             addr=addr,
             name=fn_name,

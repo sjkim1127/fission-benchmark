@@ -36,3 +36,4 @@ corpus/*/binaries/
 out/
 node_modules/
 next-env.d.ts
+vendor/

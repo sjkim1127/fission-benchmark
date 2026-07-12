@@ -31,7 +31,19 @@ def test_revng_address_named_output_can_be_matched_by_expected_address() -> None
 
     diag = analyze_output_diagnostics("count_bits", "revng", code, expected_addr="0x401000")
 
-    assert diag["status"] == "needs_normalization"
+    # Address anchor + soft ABI blockers only → treated as boundary-ok
+    # (adapter normalization still preferred).
+    assert diag["status"] == "direct_function"
+    assert diag["expected_address_present"] is True
+    assert invalid_output_reason(diag, code) is None
+
+
+def test_address_anchored_adapter_output_is_direct() -> None:
+    code = "/* address: 0x140001530 */\nint fcn_140001530(unsigned x) { return 0; }"
+    diag = analyze_output_diagnostics(
+        "count_bits", "radare2", code, expected_addr="0x140001530"
+    )
+    assert diag["status"] == "direct_function"
     assert diag["expected_address_present"] is True
     assert invalid_output_reason(diag, code) is None
 

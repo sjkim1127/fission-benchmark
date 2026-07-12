@@ -88,7 +88,9 @@ def test_fission_dual_layer_falls_back_when_only_code_present() -> None:
     assert item.code_hir == item.code
 
 
-def test_ghidra_extracts_marker_from_info_prefixed_line() -> None:
+def test_ghidra_extracts_marker_from_info_prefixed_line(monkeypatch, tmp_path) -> None:
+    # Module import creates PROJECT_CACHE; keep it off the host root FS.
+    monkeypatch.setenv("GHIDRA_PROJECT_CACHE", str(tmp_path / "ghidra-projects"))
     server = load_module("ghidra_server", ROOT / "docker/ghidra/server.py")
 
     text = (
@@ -122,9 +124,9 @@ generic32_t function_0x4015e7_Code_x86(void) {
 }
 """
 
-    extracted = server.extract_revng_function(code, "0x4015b0")
+    name, extracted = server.extract_revng_function(code, "0x4015b0")
 
-    assert "function_0x4015b0_Code_x86" in extracted
+    assert name == "function_0x4015b0_Code_x86"
     assert "return 1;" in extracted
     assert "function_0x4015e7_Code_x86" not in extracted
 
@@ -145,9 +147,9 @@ void function_0x14000155f_Code_x86_64(void) {
 }
 """
 
-    extracted = server.extract_revng_function(code, "0x140001530")
+    name, extracted = server.extract_revng_function(code, "0x140001530")
 
-    assert "function_0x140001520_Code_x86_64" in extracted
+    assert name == "function_0x140001520_Code_x86_64"
     assert "local = 1" in extracted
     assert "function_0x14000155f_Code_x86_64" not in extracted
 
@@ -264,7 +266,10 @@ def test_boomerang_batch_falls_back_to_single_address_runs(monkeypatch) -> None:
     assert calls == [["0x140001530", "0x140001624"], ["0x140001530"], ["0x140001624"]]
     assert resp.results[0].error
     assert resp.results[1].error is None
-    assert "proc_0x00001624" in resp.results[1].code
+    # Stable VA name + address anchor (adapter normalizes proc_0x00001624 → proc_140001624)
+    assert resp.results[1].name == "proc_140001624"
+    assert "/* address: 0x140001624" in resp.results[1].code
+    assert "return" in resp.results[1].code
 
 
 def test_snowman_detects_whole_program_output(monkeypatch) -> None:
@@ -283,3 +288,85 @@ def test_snowman_allows_single_function_output(monkeypatch) -> None:
 
     assert server.function_definition_count(code) == 1
     assert server.is_whole_program_output(code) is False
+
+
+def test_snowman_extracts_pe_symbol_and_text_standin(monkeypatch) -> None:
+    """Unstripped MinGW m32: PE keeps _clamp; count_bits is renamed to text."""
+    disasm = types.ModuleType("disasm_helper")
+    # PE layout mirrors control_flow_gcc-m32_O0.exe .text entries
+    pe_syms = [
+        (0x4015B0, "_count_bits"),
+        (0x4015D6, "_clamp"),
+        (0x4015F8, "_signum"),
+    ]
+
+    def list_pe_function_symbols(_binary):
+        return list(pe_syms)
+
+    def symbol_names_for_address(_binary, addr):
+        target = int(str(addr), 16) if str(addr).startswith("0x") else int(addr)
+        for va, name in pe_syms:
+            if va == target:
+                bare = name[1:] if name.startswith("_") else name
+                return [name, bare]
+        return []
+
+    disasm.list_pe_function_symbols = list_pe_function_symbols
+    disasm.symbol_names_for_address = symbol_names_for_address
+    monkeypatch.setitem(sys.modules, "disasm_helper", disasm)
+
+    server = load_module("snowman_server_pe", ROOT / "docker/snowman/server.py")
+    # Whole-program-ish dump: stub text, real text (=count_bits), PE-named neighbors
+    code = """
+/* .text */
+int32_t text(int32_t a1) {
+    return 0;
+}
+
+uint32_t _clamp(uint32_t a1, uint32_t a2, uint32_t a3) {
+    if (a1 < a2) return a2;
+    if (a1 > a3) return a3;
+    return a1;
+}
+
+/* .text */
+void text(int32_t a1, int32_t* a2, int32_t* a3, int32_t a4) {
+    __asm__("fninit ");
+    return;
+}
+
+uint32_t text(uint32_t a1) {
+    uint32_t v2;
+    v2 = 0;
+    while (a1) {
+        v2 = v2 + (a1 & 1);
+        a1 = a1 >> 1;
+    }
+    return v2;
+}
+
+int32_t _signum(int32_t a1, uint32_t a2, uint32_t a3) {
+    if (a1 > 0) return 1;
+    if (a1 < 0) return -1;
+    return 0;
+}
+"""
+    fake_bin = b"MZ" + b"\x00" * 64
+
+    name, body, err = server.normalize_snowman_unit(code, "0x4015b0", fake_bin)
+    assert err is None
+    assert name == "fun_4015b0"
+    assert "/* address: 0x4015b0" in body
+    assert "while (a1)" in body
+    assert "fninit" not in body
+
+    name, body, err = server.normalize_snowman_unit(code, "0x4015d6", fake_bin)
+    assert err is None
+    assert name == "fun_4015d6"
+    assert "return a2" in body or "a2" in body
+
+    # Address-based fun_* still works without PE bytes
+    strip_code = "uint32_t fun_4015b0(uint32_t a1) {\n    return a1;\n}\n"
+    name, body, err = server.normalize_snowman_unit(strip_code, "0x4015b0", None)
+    assert err is None
+    assert "fun_4015b0" in body

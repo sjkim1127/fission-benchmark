@@ -14,6 +14,7 @@ RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
 COPY server.py .
 COPY disasm_helper.py .
+COPY boundary.py .
 
 ENTRYPOINT []
 EXPOSE 8000

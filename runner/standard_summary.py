@@ -188,6 +188,21 @@ def build_mvp_by_decompiler(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
 
         attempted = len(tool_rows)
         tested = len(semantic_scores)
+        # Function-boundary diagnostic breakdown (infra first-class).
+        boundary_status: dict[str, int] = defaultdict(int)
+        addr_hit = 0
+        name_hit = 0
+        diag_n = 0
+        for row in tool_rows:
+            diagnostics = row.get("output_diagnostics") or {}
+            if not diagnostics:
+                continue
+            diag_n += 1
+            boundary_status[str(diagnostics.get("status") or "unknown")] += 1
+            if diagnostics.get("expected_address_present"):
+                addr_hit += 1
+            if diagnostics.get("target_name_present"):
+                name_hit += 1
         result[decompiler] = {
             "semantic": {
                 "mean_pass_rate": round(sum(semantic_scores) / tested, 4) if tested else None,
@@ -201,6 +216,16 @@ def build_mvp_by_decompiler(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
                 "invalid_boundary": invalid_boundary,
                 "semantic_tested": tested,
                 "no_wrapper": no_wrapper,
+            },
+            "boundary": {
+                "rows_with_diagnostics": diag_n,
+                "by_status": dict(sorted(boundary_status.items())),
+                "address_anchor_rate": (
+                    round(addr_hit / diag_n, 4) if diag_n else None
+                ),
+                "name_anchor_rate": (
+                    round(name_hit / diag_n, 4) if diag_n else None
+                ),
             },
             "fail_taxonomy": taxonomy,
             "runtime": {
