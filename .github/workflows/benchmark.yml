@@ -16,10 +16,9 @@ env:
   BENCHMARK_VARIANT_LIMIT: ${{ github.event.inputs.benchmark_variant_limit || (github.event_name == 'push' && '1' || '0') }}
   RUN_MODE: ${{ github.event.inputs.run_mode || (github.event_name == 'push' && 'smoke' || 'official') }}
   PUBLISH_RESULTS: ${{ github.event.inputs.publish_results || (github.event_name == 'push' && 'false' || 'true') }}
-  # Push smoke: 20 subjects (not full 120) — enough for rate honesty without full cost.
-  # Use parity_limit=0 on schedule/manual official for full corpus.
+  # Full layered parity by default (0 = no subject cap). Local smoke can override.
   # Timeout must allow Ghidra headless cold-start; 2s was infra-fail only.
-  PARITY_LIMIT: ${{ github.event.inputs.parity_limit || (github.event_name == 'push' && '20' || '0') }}
+  PARITY_LIMIT: ${{ github.event.inputs.parity_limit || '0' }}
   PARITY_DECOMPILERS: ${{ github.event.inputs.parity_decompilers || 'fission,ghidra' }}
   PARITY_REQUEST_TIMEOUT: ${{ github.event.inputs.parity_timeout || '90' }}
   # Publishable scores: strict canonicalize (no LOOSE space-id stubs / dropped operands).

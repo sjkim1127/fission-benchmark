@@ -13,7 +13,7 @@ import json
 import sys
 from pathlib import Path
 
-PRIMARY = ("assembly_parity", "pcode_parity", "cfg_parity")
+PRIMARY = ("assembly_parity", "pcode_parity", "cfg_parity", "function_discovery")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -44,9 +44,14 @@ def main(argv: list[str] | None = None) -> int:
     pub = data.get("publishable") or {}
     pub_stages = set((pub.get("stages") or {}).keys())
     # Headline must not include demoted stages.
-    for bad in ("decode_parity", "function_discovery", "ir_invariants", "golden_repros"):
+    for bad in ("decode_parity", "ir_invariants", "golden_repros"):
         if bad in pub_stages:
             errors.append(f"publishable headline still includes demoted stage {bad}")
+    for need in PRIMARY:
+        if need not in pub_stages and need in stages:
+            # Only require presence when the run emitted that stage.
+            if int((stages.get(need) or {}).get("total") or 0) > 0 and need not in pub_stages:
+                errors.append(f"primary stage {need} missing from publishable headline")
 
     for stage in PRIMARY:
         detail = stages.get(stage)
@@ -72,11 +77,11 @@ def main(argv: list[str] | None = None) -> int:
         # mixed — suspicious
         errors.append("decode_parity has both match and skipped rows — inconsistent")
 
-    # FD 100% without inventory disclaimer is a smell if still in publishable
+    # Legacy presence scoring must not dominate function_discovery.
     fd = stages.get("function_discovery") or {}
-    if (fd.get("match_rate") or 0) >= 0.99 and "function_discovery" in pub_stages:
+    if int(fd.get("legacy_presence_rows") or 0) > 0:
         errors.append(
-            "function_discovery ~100% must not be in publishable headline (presence scoring)"
+            "function_discovery has legacy presence-scored rows; re-run inventory parity"
         )
 
     # Pcode dual metrics required after dual-metric rollout when comparable > 0

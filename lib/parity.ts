@@ -29,6 +29,8 @@ export type ParityPcodeDual = {
   opcode_sequence_match_rate?: number | null;
   loose_full_match_rate?: number | null;
   strict_full_match_rate?: number | null;
+  mean_presence_recall?: number | null;
+  mean_manifest_recall?: number | null;
   note?: string;
 };
 

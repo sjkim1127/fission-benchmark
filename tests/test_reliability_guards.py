@@ -163,12 +163,11 @@ def test_aggregate_reports_attempted_and_coverage() -> None:
     assert summary["schema"] == "parity-telemetry-v2"
     # Headline publishable is only primary stages *present in the run*.
     assert "decode_parity" not in summary["publishable"]["stages"]
-    assert "function_discovery" not in summary["publishable"]["stages"]
     assert "ir_invariants" not in summary["publishable"]["stages"]
     assert "assembly_parity" in summary["publishable"]["stages"]
     assert "pcode_parity" in summary["publishable"]["stages"]
     assert set(summary["publishable"]["stages"]).issubset(
-        {"assembly_parity", "pcode_parity", "cfg_parity"}
+        {"assembly_parity", "pcode_parity", "cfg_parity", "function_discovery"}
     )
     assert "reliability_critique" in summary
 

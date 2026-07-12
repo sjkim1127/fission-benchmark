@@ -25,13 +25,12 @@ STAGE_ORDER = (
 
 # Stages excluded from *headline* publishable quality rates.
 # - decode: stub surface (disasm-derived)
-# - function_discovery (unified runner): presence-at-manifest-addr only, not Ghidra inventory
-# - ir_invariants: currently weak structural checks, not full IR equivalence
+# - ir_invariants: weak structural checks, not full IR equivalence
 # - golden_repros: meta canaries (locks), not a quality rate
+# function_discovery is primary when scored as ghidra_inventory (unified runner).
 NON_PUBLISHABLE_STAGES = frozenset(
     {
         "decode_parity",
-        "function_discovery",
         "ir_invariants",
         "golden_repros",
     }
@@ -43,6 +42,7 @@ PRIMARY_QUALITY_STAGES = frozenset(
         "assembly_parity",
         "pcode_parity",
         "cfg_parity",
+        "function_discovery",
     }
 )
 
@@ -63,6 +63,9 @@ def aggregate_rows(rows: list[dict]) -> dict:
     pcode_metric_n = 0
     fd_presence_only = 0
     fd_n = 0
+    fd_presence_recall_sum = 0.0
+    fd_manifest_recall_sum = 0.0
+    fd_metric_n = 0
 
     for row in rows:
         subject = row.get("subject", {}) or {}
@@ -90,10 +93,16 @@ def aggregate_rows(rows: list[dict]) -> dict:
                 pcode_strict_full += int(metrics.get("strict_full_match") or 0)
         if stage == "function_discovery":
             fd_n += 1
-            if metrics.get("scored_as") == "presence" or (
-                status == "match" and int(metrics.get("name_match") or 1) == 0
-            ):
+            scored = str(metrics.get("scored_as") or "")
+            # Only modern inventory rows set scored_as=ghidra_inventory.
+            if scored != "ghidra_inventory":
                 fd_presence_only += 1
+            if status in {"match", "mismatch"} and metrics:
+                fd_metric_n += 1
+                if metrics.get("presence_recall") is not None:
+                    fd_presence_recall_sum += float(metrics["presence_recall"])
+                if metrics.get("manifest_recall") is not None:
+                    fd_manifest_recall_sum += float(metrics["manifest_recall"])
 
     stages_detail = {}
     for stage in sorted(set(list(STAGE_ORDER) + list(by_stage.keys())), key=lambda s: (STAGE_ORDER.index(s) if s in STAGE_ORDER else 99, s)):
@@ -147,10 +156,28 @@ def aggregate_rows(rows: list[dict]) -> dict:
             }
         if stage == "function_discovery" and fd_n:
             detail["reliability_note"] = (
-                "Unified runner scores manifest address *presence* (and may count "
-                "name-only diffs as match). Not Ghidra full inventory parity."
+                "Primary scoring is Ghidra full inventory vs candidate (address set). "
+                "Exact set equality is strict; use dual recall metrics for triage."
             )
-            detail["presence_scoring_rows"] = fd_presence_only
+            if fd_metric_n:
+                detail["dual"] = {
+                    "n": fd_metric_n,
+                    "mean_presence_recall": round(
+                        fd_presence_recall_sum / fd_metric_n, 4
+                    ),
+                    "mean_manifest_recall": round(
+                        fd_manifest_recall_sum / fd_metric_n, 4
+                    ),
+                    "note": (
+                        "presence_recall = |G∩C|/|G|; manifest_recall = corpus "
+                        "subject addresses found by candidate."
+                    ),
+                }
+            if fd_presence_only:
+                detail["legacy_presence_rows"] = fd_presence_only
+                detail["reliability_note"] += (
+                    f" Warning: {fd_presence_only} legacy presence-scored rows detected."
+                )
         if stage == "ir_invariants":
             detail["reliability_note"] = (
                 "Structural CFG checks only (empty blocks / edge sources); "
@@ -199,10 +226,14 @@ def aggregate_rows(rows: list[dict]) -> dict:
     # Inflated overall rates if demoted high-match stages were included.
     if "function_discovery" in stages_detail:
         fd = stages_detail["function_discovery"]
-        if (fd.get("match_rate") or 0) >= 0.99 and (fd.get("total") or 0) >= 10:
+        if fd.get("legacy_presence_rows"):
             reliability_critique["warnings"].append(
-                "function_discovery near-100% is presence scoring in unified runner, "
-                "not full Ghidra inventory parity — excluded from headline publishable."
+                "function_discovery contains legacy presence-scored rows; re-run parity."
+            )
+        elif (fd.get("match_rate") or 0) >= 0.99 and (fd.get("total") or 0) >= 5:
+            reliability_critique["warnings"].append(
+                "function_discovery near-100% inventory match — verify Ghidra/candidate "
+                "are not under-discovering the same way."
             )
     if "ir_invariants" in stages_detail:
         ir = stages_detail["ir_invariants"]
@@ -260,8 +291,8 @@ def aggregate_rows(rows: list[dict]) -> dict:
                 round(pub_comparable / pub_total, 4) if pub_total else None
             ),
             "definition": (
-                "Headline quality = assembly_parity + pcode_parity + cfg_parity only. "
-                "Decode/FD/IR/golden are diagnostic or meta."
+                "Headline quality = assembly + pcode + cfg + function_discovery "
+                "(Ghidra inventory). Decode/IR/golden are diagnostic or meta."
             ),
             "pcode_dual": dual or None,
         },

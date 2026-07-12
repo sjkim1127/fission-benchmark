@@ -15,9 +15,8 @@ import requests
 from benchmark.assembly_parity.run import compare_assembly
 from benchmark.cfg_parity.run import compare_cfg
 from benchmark.decode_parity.run import compare_decode
-from benchmark.function_discovery.run import compare_functions
+from benchmark.function_discovery.run import compare_functions, function_addresses
 from benchmark.ir_invariants.run import compare_invariants
-# compare_functions also used with presence-first override below
 from benchmark.pcode_parity.run import compare_pcode
 from benchmark.telemetry.aggregate import aggregate_rows
 from benchmark.common.schema import BenchmarkResult, BenchmarkSubject
@@ -487,6 +486,7 @@ def run_parity_benchmarks(
         dict[str, tuple[FetchResult, FetchResult, FetchResult, FetchResult]],
         dict[str, dict[str, tuple[FetchResult, FetchResult, FetchResult, FetchResult]]],
         dict[str, FetchResult],
+        FetchResult,
     ]:
         arch = group[0].get("arch") or ""
         addrs = [s["addr"] for s in group]
@@ -498,10 +498,11 @@ def run_parity_benchmarks(
             str, dict[str, tuple[FetchResult, FetchResult, FetchResult, FetchResult]]
         ] = {}
         cand_functions: dict[str, FetchResult] = {}
+        ghidra_functions = FetchResult(status="empty", data=[])
 
         jobs: dict = {}
         with ThreadPoolExecutor(
-            max_workers=2 + len(batch_cands) + len(candidates)
+            max_workers=3 + len(batch_cands) + len(candidates)
         ) as pool:
             jobs[
                 pool.submit(
@@ -513,6 +514,16 @@ def run_parity_benchmarks(
                     timeout=request_timeout,
                 )
             ] = ("ghidra_map", None)
+            jobs[
+                pool.submit(
+                    fetch_parity_data,
+                    "ghidra",
+                    "functions",
+                    binary,
+                    corpus=corpus,
+                    timeout=request_timeout,
+                )
+            ] = ("ghidra_functions", None)
             for cand in batch_cands:
                 jobs[
                     pool.submit(
@@ -548,16 +559,18 @@ def run_parity_benchmarks(
                     )
                     result = (
                         {}
-                        if kind != "functions"
+                        if kind not in {"functions", "ghidra_functions"}
                         else FetchResult(status="fetch_error", data=[], error=str(exc))
                     )
                 if kind == "ghidra_map":
                     ghidra_map = result  # type: ignore[assignment]
+                elif kind == "ghidra_functions":
+                    ghidra_functions = result  # type: ignore[assignment]
                 elif kind == "cand_map" and name is not None:
                     cand_maps[name] = result  # type: ignore[assignment]
                 elif kind == "functions" and name is not None:
                     cand_functions[name] = result  # type: ignore[assignment]
-        return ghidra_map, cand_maps, cand_functions
+        return ghidra_map, cand_maps, cand_functions, ghidra_functions
 
     binary_items = list(by_binary.items())
     for wave_i in range(0, len(binary_items), BINARY_WORKERS):
@@ -582,16 +595,124 @@ def run_parity_benchmarks(
                     wave_prefetch[binary] = fut.result()
                 except Exception as exc:
                     print(f"    warn: wave prefetch {os.path.basename(binary)}: {exc}")
-                    wave_prefetch[binary] = ({}, {}, {})
+                    wave_prefetch[binary] = (
+                        {},
+                        {},
+                        {},
+                        FetchResult(status="fetch_error", data=[], error=str(exc)),
+                    )
 
         for binary, group in wave:
-            ghidra_map, cand_maps, cand_functions = wave_prefetch.get(
-                binary, ({}, {}, {})
+            ghidra_map, cand_maps, cand_functions, ghidra_functions = wave_prefetch.get(
+                binary,
+                ({}, {}, {}, FetchResult(status="empty", data=[])),
             )
             print(
                 f"Binary {os.path.basename(binary)}: {len(group)} functions "
                 f"→ compare (prefetch ready)"
             )
+
+            # 1. Function discovery once per PE: full Ghidra inventory vs candidate.
+            inv_subj = BenchmarkSubject(
+                binary=group[0]["binary"],
+                function="(inventory)",
+                addr="0x0",
+                arch=group[0].get("arch") or "",
+                compiler=group[0].get("compiler") or "",
+                opt=group[0].get("opt") or "",
+            )
+            manifest_addrs = {
+                _normalize_addr_key(str(s.get("addr") or "")) for s in group
+            }
+            manifest_addrs.discard("0x0")
+            for decompiler, funcs_result in cand_functions.items():
+                try:
+                    if ghidra_functions.status != "ok":
+                        results.append(
+                            BenchmarkResult(
+                                subject=inv_subj,
+                                stage="function_discovery",
+                                status="fetch_error"
+                                if ghidra_functions.status == "fetch_error"
+                                else "reference_empty",
+                                reference="ghidra",
+                                candidate=decompiler,
+                                error=ghidra_functions.error
+                                or f"ghidra functions {ghidra_functions.status}",
+                            )
+                        )
+                        continue
+                    if funcs_result.status != "ok":
+                        results.append(
+                            BenchmarkResult(
+                                subject=inv_subj,
+                                stage="function_discovery",
+                                status="fetch_error"
+                                if funcs_result.status == "fetch_error"
+                                else "candidate_empty",
+                                reference="ghidra",
+                                candidate=decompiler,
+                                error=funcs_result.error
+                                or f"functions inventory {funcs_result.status}",
+                            )
+                        )
+                        continue
+                    ref_list = (
+                        ghidra_functions.data
+                        if isinstance(ghidra_functions.data, list)
+                        else []
+                    )
+                    cand_list = (
+                        funcs_result.data if isinstance(funcs_result.data, list) else []
+                    )
+                    row = compare_functions(
+                        inv_subj, "ghidra", decompiler, ref_list, cand_list
+                    )
+                    # Extra reliability metrics: corpus-manifest subject coverage.
+                    cand_addrs = function_addresses(cand_list)
+                    metrics = dict(row.metrics or {})
+                    metrics["scored_as"] = "ghidra_inventory"
+                    metrics["manifest_subject_count"] = len(manifest_addrs)
+                    metrics["manifest_found_count"] = len(manifest_addrs & cand_addrs)
+                    metrics["manifest_recall"] = (
+                        1.0
+                        if not manifest_addrs
+                        else round(
+                            len(manifest_addrs & cand_addrs) / len(manifest_addrs), 4
+                        )
+                    )
+                    results.append(
+                        BenchmarkResult(
+                            subject=row.subject,
+                            stage=row.stage,
+                            status=row.status,
+                            reference=row.reference,
+                            candidate=row.candidate,
+                            mismatch_kind=row.mismatch_kind,
+                            expected=row.expected,
+                            actual=row.actual,
+                            metrics=metrics,
+                            error=row.error,
+                        )
+                    )
+                    print(
+                        f"  function_discovery ghidra→{decompiler}: "
+                        f"{row.status} ({row.mismatch_kind or 'ok'}) "
+                        f"ref={metrics.get('expected_function_count')} "
+                        f"cand={metrics.get('actual_function_count')} "
+                        f"manifest_recall={metrics.get('manifest_recall')}"
+                    )
+                except Exception as e:
+                    results.append(
+                        BenchmarkResult(
+                            subject=inv_subj,
+                            stage="function_discovery",
+                            status="error",
+                            reference="ghidra",
+                            candidate=decompiler,
+                            error=str(e),
+                        )
+                    )
 
             for sub in group:
                 subj = BenchmarkSubject(
@@ -603,73 +724,6 @@ def run_parity_benchmarks(
                     opt=sub["opt"],
                 )
                 print(f"  Processing {subj.function} @ {subj.addr}...")
-
-                # 1. Function discovery (manifest presence at addr — primary reliability signal)
-                for decompiler, funcs_result in cand_functions.items():
-                    try:
-                        if funcs_result.status != "ok":
-                            results.append(
-                                BenchmarkResult(
-                                    subject=subj,
-                                    stage="function_discovery",
-                                    status="fetch_error"
-                                    if funcs_result.status == "fetch_error"
-                                    else "candidate_empty",
-                                    reference="manifest",
-                                    candidate=decompiler,
-                                    error=funcs_result.error
-                                    or f"functions inventory {funcs_result.status}",
-                                )
-                            )
-                            continue
-                        funcs = funcs_result.data if isinstance(funcs_result.data, list) else []
-                        target = _normalize_addr_key(subj.addr)
-                        actual = [
-                            {"address": f.get("address"), "name": f.get("name")}
-                            for f in funcs
-                            if isinstance(f, dict)
-                            and _normalize_addr_key(str(f.get("address") or "")) == target
-                        ]
-                        expected = [{"address": subj.addr, "name": subj.function}]
-                        # Presence-first: address found = discovery success for reliability.
-                        row = compare_functions(
-                            subj, "manifest", decompiler, expected, actual
-                        )
-                        if (
-                            row.status == "mismatch"
-                            and row.mismatch_kind == "function_metadata"
-                            and actual
-                        ):
-                            # Found at address = discovery success for reliability.
-                            results.append(
-                                BenchmarkResult(
-                                    subject=subj,
-                                    stage="function_discovery",
-                                    status="match",
-                                    reference="manifest",
-                                    candidate=decompiler,
-                                    expected=expected,
-                                    actual=actual,
-                                    metrics={
-                                        **(row.metrics or {}),
-                                        "name_match": 0,
-                                        "scored_as": "presence",
-                                    },
-                                )
-                            )
-                        else:
-                            results.append(row)
-                    except Exception as e:
-                        results.append(
-                            BenchmarkResult(
-                                subject=subj,
-                                stage="function_discovery",
-                                status="error",
-                                reference="manifest",
-                                candidate=decompiler,
-                                error=str(e),
-                            )
-                        )
 
                 nk = _normalize_addr_key(subj.addr)
                 ref_tuple = ghidra_map.get(nk)

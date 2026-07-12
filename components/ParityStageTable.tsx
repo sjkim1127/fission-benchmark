@@ -18,12 +18,11 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 /**
- * Non-headline stages: stub, presence-only, weak structural, or meta canaries.
- * Primary quality = assembly / pcode / cfg only.
+ * Non-headline stages: stub, weak structural, or meta canaries.
+ * Primary quality = assembly / pcode / cfg / function inventory.
  */
 const EXCLUDED_PRIMARY = new Set([
   "decode_parity",
-  "function_discovery",
   "ir_invariants",
   "golden_repros",
 ]);
@@ -59,7 +58,8 @@ export function ParityStageTable({ telemetry }: Props) {
     <div className={styles.wrap}>
       <p className={styles.hint}>
         Layered parity vs reference (typically <strong>Ghidra</strong>).{" "}
-        <strong>Headline quality</strong> = assembly + p-code + CFG only.
+        <strong>Headline quality</strong> = assembly + p-code + CFG + function
+        inventory (Ghidra vs candidate).
         Match rate is among comparable rows; coverage shows infra health.
         Mode: <code>{mode}</code>
         {mode === "strict" ? " (CI/publish default)" : " (local triage)"}.
@@ -78,6 +78,21 @@ export function ParityStageTable({ telemetry }: Props) {
           {pct(pcodeDual.opcode_sequence_match_rate ?? null)} · loose_full=
           {pct(pcodeDual.loose_full_match_rate ?? null)} · strict_full=
           {pct(pcodeDual.strict_full_match_rate ?? null)}
+        </p>
+      )}
+      {telemetry.stages?.function_discovery?.dual && (
+        <p className={styles.hint}>
+          Function inventory dual: set match_rate=
+          {pct(telemetry.stages.function_discovery.match_rate)} · mean
+          presence_recall=
+          {pct(
+            telemetry.stages.function_discovery.dual.mean_presence_recall ?? null
+          )}{" "}
+          · mean manifest_recall=
+          {pct(
+            telemetry.stages.function_discovery.dual.mean_manifest_recall ?? null
+          )}{" "}
+          (exact set equality is strict; Fission often finds fewer CRT/helpers)
         </p>
       )}
       {critique?.warnings && critique.warnings.length > 0 && (
