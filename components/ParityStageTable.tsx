@@ -15,18 +15,36 @@ const STAGE_LABELS: Record<string, string> = {
   function_discovery: "Functions",
   ir_invariants: "IR invariants",
   golden_repros: "Golden repros",
+  abi_parity: "ABI",
+  type_parity: "Types",
+  callgraph_parity: "Call graph",
+  string_recovery: "Strings",
+  dataflow_parity: "Data-flow",
+  seh_parity: "SEH/unwind",
+  strip_discovery: "Strip discovery",
+  strip_semantic_delta: "Strip Δ",
+  opt_cliff: "Opt cliff",
+  throughput: "Throughput",
 };
 
 /**
- * Non-headline stages: stub, weak structural, or meta canaries.
+ * Non-headline stages: stub, weak structural, meta canaries, or extension tracks.
  * Primary quality = assembly / pcode / cfg / function inventory.
  */
 const EXCLUDED_PRIMARY = new Set([
   "decode_parity", // retired stub
   "ir_invariants",
   "golden_repros",
-  "abi_parity", // scaffold pending /abi
-  "strip_discovery", // scaffold pending realworld strip corpus
+  "abi_parity",
+  "type_parity",
+  "callgraph_parity",
+  "string_recovery",
+  "dataflow_parity",
+  "seh_parity",
+  "strip_discovery",
+  "strip_semantic_delta",
+  "opt_cliff",
+  "throughput",
 ]);
 
 function pct(rate: number | null | undefined): string {

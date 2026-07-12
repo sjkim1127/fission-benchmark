@@ -64,6 +64,11 @@ STAGE_ENDPOINT: dict[str, str] = {
     "function_discovery": "functions",
     "parity_bundle": "parity_bundle",
     "abi_parity": "abi",
+    "type_parity": "types",
+    "callgraph_parity": "callgraph",
+    "string_recovery": "strings",
+    "dataflow_parity": "dataflow",
+    "seh_parity": "seh",
 }
 
 

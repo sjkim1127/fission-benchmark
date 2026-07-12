@@ -2,9 +2,13 @@
 
 Status: **Standard-set architecture** — public contract is MVP
 (semantic / coverage / fail taxonomy / runtime + optional CFG secondary) with
-extension tracks (holdout, cross-variant, human study, realworld-strip).
-P0 reliability (original-binary oracle residual cases, official holdout
-evidence, adapter boundary fidelity) still blocks publishable releases.
+extension tracks (holdout, cross-variant, ABI/types/callgraph/strings/dataflow/SEH,
+strip, opt-cliff, throughput, human study pack).
+
+**P0 publication path** (original_binary oracle + official dev/holdout +
+overfitting linkage) has been closed green at least once on the fission+ghidra
+core profile. Remaining work is matrix width, adapter residuals, and extension
+depth — not “no publishable path exists.”
 
 This benchmark tracks decompiler quality work. Infrastructure reliability fixes
 take priority over new axes, composite rankings, or readability formula changes.

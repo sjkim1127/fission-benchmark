@@ -654,6 +654,161 @@ def abi(binary: str, addr: str):
     return _abi_impl(resolve_binary(binary), addr)
 
 
+def _types_impl(bin_path: str, addr: str) -> dict:
+    cache_key = _ck("types", bin_path, _normalize_addr_key(addr))
+    cached = _cache_get(cache_key)
+    if isinstance(cached, dict):
+        return cached
+    abi = _abi_impl(bin_path, addr)
+    ret = abi.get("return") if isinstance(abi.get("return"), dict) else {}
+    params = []
+    for p in abi.get("parameters") or []:
+        if not isinstance(p, dict):
+            continue
+        params.append(
+            {
+                "index": p.get("index"),
+                "name": p.get("name"),
+                "type": "int" if (p.get("size") or 0) <= 4 else "longlong",
+                "size": p.get("size") or 0,
+            }
+        )
+    out = {
+        "status": "ok",
+        "address": _normalize_addr_key(addr),
+        "name": abi.get("name"),
+        "return_type": ret.get("type") or ("int" if (ret.get("size") or 0) <= 4 else "longlong"),
+        "return_size": ret.get("size") or 0,
+        "parameters": params,
+        "source": "decomp_signature_types",
+    }
+    _cache_put(cache_key, out)
+    return out
+
+
+@app.get("/types")
+def types(binary: str, addr: str):
+    validate_address(addr)
+    return _types_impl(resolve_binary(binary), addr)
+
+
+def _callgraph_impl(bin_path: str, addr: str) -> dict:
+    """Callees inferred from CALL-like ops in raw p-code / disasm (best-effort)."""
+    cache_key = _ck("callgraph", bin_path, _normalize_addr_key(addr))
+    cached = _cache_get(cache_key)
+    if isinstance(cached, dict):
+        return cached
+    callees: set[str] = set()
+    try:
+        dis = _disasm_impl(bin_path, addr) or []
+        for inst in dis:
+            if not isinstance(inst, dict):
+                continue
+            mn = str(inst.get("mnemonic") or "").lower()
+            ops = str(inst.get("operands") or "")
+            if mn in {"call", "callq"} or mn.startswith("call"):
+                # extract hex address if present
+                import re
+
+                m = re.search(r"0x[0-9a-fA-F]+", ops)
+                if m:
+                    callees.add(f"0x{int(m.group(0), 16):x}")
+    except Exception:
+        pass
+    src = _normalize_addr_key(addr)
+    edges = [
+        {"source": src, "target": t, "kind": "call"} for t in sorted(callees)
+    ]
+    out = {
+        "status": "ok",
+        "address": src,
+        "callees": sorted(callees),
+        "edges": edges,
+        "callee_count": len(callees),
+        "source": "disasm_call_targets",
+    }
+    _cache_put(cache_key, out)
+    return out
+
+
+@app.get("/callgraph")
+def callgraph(binary: str, addr: str):
+    validate_address(addr)
+    return _callgraph_impl(resolve_binary(binary), addr)
+
+
+@app.get("/strings")
+def strings_export(binary: str, addr: str):
+    """String recovery is limited without a full data xref pass; return empty set honestly."""
+    validate_address(addr)
+    return {
+        "status": "ok",
+        "address": _normalize_addr_key(addr),
+        "strings": [],
+        "count": 0,
+        "source": "not_recovered",
+        "note": "Fission adapter does not yet emit string xrefs; empty is scored honestly",
+    }
+
+
+def _dataflow_impl(bin_path: str, addr: str) -> dict:
+    cache_key = _ck("dataflow", bin_path, _normalize_addr_key(addr))
+    cached = _cache_get(cache_key)
+    if isinstance(cached, dict):
+        return cached
+    returns: list[str] = []
+    stores: list[str] = []
+    try:
+        ops = _pcode_impl(bin_path, addr) or []
+        for op in ops:
+            if not isinstance(op, dict):
+                continue
+            name = str(op.get("op") or "").upper().replace("INT_", "")
+            if "RETURN" in name or name in {"RET", "RETURN"}:
+                out = op.get("output") or (op.get("inputs") or [None])[-1:]
+                returns.append(str(out))
+            if "STORE" in name:
+                stores.append(str(op.get("inputs") or []))
+    except Exception as exc:
+        return {
+            "status": "error",
+            "error": str(exc),
+            "return_sinks": [],
+            "store_sinks": [],
+        }
+    out = {
+        "status": "ok",
+        "address": _normalize_addr_key(addr),
+        "return_sinks": returns,
+        "store_sinks": stores,
+        "source": "raw_pcode_sinks",
+    }
+    _cache_put(cache_key, out)
+    return out
+
+
+@app.get("/dataflow")
+def dataflow(binary: str, addr: str):
+    validate_address(addr)
+    return _dataflow_impl(resolve_binary(binary), addr)
+
+
+@app.get("/seh")
+def seh(binary: str, addr: str):
+    """SEH/unwind not recovered by fission_cli yet — structured not_implemented."""
+    validate_address(addr)
+    return {
+        "status": "ok",
+        "address": _normalize_addr_key(addr),
+        "is_thunk": False,
+        "no_return": False,
+        "convention": "unknown",
+        "program_eh_symbol_count": 0,
+        "seh_surface": "not_recovered",
+        "source": "stub",
+    }
+
+
 def _assemble_bundle(key: str, dis, pc, cg) -> dict:
     out = {
         "schema": "fission-parity-bundle-v1",

@@ -388,6 +388,36 @@ def abi(binary: str, addr: str):
     return run_export_parity(binary, "abi", addr)
 
 
+@app.get("/types")
+def types(binary: str, addr: str):
+    validate_address(addr)
+    return run_export_parity(binary, "types", addr)
+
+
+@app.get("/callgraph")
+def callgraph(binary: str, addr: str):
+    validate_address(addr)
+    return run_export_parity(binary, "callgraph", addr)
+
+
+@app.get("/strings")
+def strings_export(binary: str, addr: str):
+    validate_address(addr)
+    return run_export_parity(binary, "strings", addr)
+
+
+@app.get("/dataflow")
+def dataflow(binary: str, addr: str):
+    validate_address(addr)
+    return run_export_parity(binary, "dataflow", addr)
+
+
+@app.get("/seh")
+def seh(binary: str, addr: str):
+    validate_address(addr)
+    return run_export_parity(binary, "seh", addr)
+
+
 @app.get("/parity_bundle")
 def parity_bundle(binary: str, addr: str):
     """One headless invocation → disasm + pcode + cfg (decode derived)."""

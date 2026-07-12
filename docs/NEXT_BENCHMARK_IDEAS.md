@@ -1,87 +1,50 @@
 # Next benchmark ideas (integrated workspace)
 
-This repo is not “decompiler output vs source only.” It is a **multi-layer measurement
-workspace**. Below are high-value next axes, ordered by leverage for Fission
-engineering and scientific honesty.
+This repo is a **multi-layer measurement workspace**. Status below reflects
+implementation as of the full extension pass (not only MVP semantic).
 
-## Near-term (fits existing infrastructure)
+## Implemented (active)
 
-### 1. Calling-convention / ABI surface parity
-- **What:** Recovered parameter locations (RCX/RDX/stack) and return register vs Ghidra.
-- **Why:** Semantic oracle already compiles; many failures are ABI, not control flow.
-- **How:** Extend adapter `/abi` export; compare normalized parameter lists.
+| Track | Module / surface | Headline? |
+|-------|------------------|-----------|
+| Assembly / pcode / CFG / FD | `runner.run_parity` | Yes (strict dual metrics) |
+| ABI | `abi_parity` + `/abi` | Extension |
+| Type recovery (name-level) | `type_parity` + `/types` | Extension |
+| Call-graph callees | `callgraph_parity` + `/callgraph` | Extension |
+| String xrefs | `string_recovery` + `/strings` | Extension (Fission empty honest) |
+| Data-flow sinks | `dataflow_parity` + `/dataflow` | Extension |
+| SEH flags surface | `seh_parity` + `/seh` | Extension (flags-only) |
+| Strip discovery + Δ | `strip_track` + `semantic_delta` | Extension |
+| Opt cliff | `opt_cliff` from envelopes | Extension |
+| Throughput p50/p95 | `throughput` | Extension |
+| PR canary | `scripts/pr_canary.sh` | CI helper |
+| Official publication | `publication_gate` | Release gate |
+| Golden canaries | `golden_repros` | Meta locks |
+| Readability proxies | `runner/readability.py` | Evidence only |
+| Human study pack | `benchmark/readability/study_pack` | Scaffold for Phase 3 |
 
-### 2. Type recovery differential
-- **What:** Struct/layout and primitive widths recovered at function boundaries.
-- **Why:** Orthogonal to CFG; huge RE productivity impact.
-- **How:** Ghidra DataType JSON vs Fission NIR type table; score field-level IoU.
+Unified extension runner:
 
-### 3. Data-flow / def-use slice canaries
-- **What:** For selected sinks (return, store), compare def-use chains.
-- **Why:** Catches “looks like CFG match but wrong value” without full semantic tests.
-- **How:** Small golden programs + required SSA edges in golden_repros.
+```bash
+python -m runner.run_extensions --corpus dev --limit 20
+```
 
-### 4. Strip / no-symbol track (realworld extension)
-- **What:** Same sources built with `strip`; measure function discovery + semantic drop.
-- **Why:** Dev corpus currently has symbols; real RE does not.
-- **How:** `corpus/realworld/` + compiler flags; report discovery Δ vs unstripped.
+## Still deepening (not greenfield)
 
-### 5. Optimization cliff matrix
-- **What:** Per-function semantic/CFG match rate O0→O2→O3 as a heat-map.
-- **Why:** Already have cross-variant data; productize as first-class extension panel.
-- **How:** Pivot `summary.extensions.cross_variant` + parity telemetry by opt.
+1. **Struct layout IoU** — type stage today is name/size tokens, not field-level.
+2. **Full RUNTIME_FUNCTION / unwind** — SEH stage is flags + symbol counts.
+3. **Fission string/xref product** — adapter returns empty until CLI emits xrefs.
+4. **Third-party realworld corpus** — strip-from-dev is synthetic; external PE needs licenses/wrappers.
+5. **Human readability Phase 3** — study pack exists; no composite until correlations.
+6. **Multi-ISA (arm64/ELF)** — PE path first; oracle ABI matrix must expand explicitly.
+7. **Obfuscation suite** — separate track (CFF/MBA), not default gate.
+8. **Full 8-decompiler official** — publication proven on fission+ghidra core; expand profile.
+9. **Golden growth** — add canaries for every high-severity residual gap.
 
-## Medium-term
+## Design rules
 
-### 6. Inter-procedural / call-graph parity
-- **What:** Callee sets and call-site counts vs Ghidra/radare.
-- **Why:** Whole-program tools (rev.ng) need a fair axis beyond single-function decomp.
-
-### 7. Exception / SEH / unwind recovery (Windows PE)
-- **What:** Personality routines, unwind codes, try/except regions.
-- **Why:** Corpus is PE-heavy; few open benchmarks cover this.
-
-### 8. Constant / string / switch recovery
-- **What:** Recovered string xrefs and jump-table shapes.
-- **Why:** Highly visible RE features; easy golden canaries.
-
-### 9. Throughput & resource budget
-- **What:** p50/p95 decompile and parity export times under fixed RAM.
-- **Why:** Correctness without budgets is not a product metric.
-
-### 10. Differential patch impact (CI for Fission PRs)
-- **What:** Before/after semantic + parity deltas on a fixed canary set.
-- **Why:** Prevents “fix one, break three” without full official runs.
-- **How:** Graphite/PR workflow runs `golden_repros` + `run_parity --limit 20`.
-
-## Longer-term / research
-
-### 11. Human readability study (Phase 3)
-- Already scaffolded under `benchmark/readability/`.
-- Do not invent a composite readability score until correlations land.
-
-### 12. Adversarial / obfuscation suite
-- Control-flow flattening, MBA, virtualization — separate track, not default gate.
-
-### 13. Multi-ISA track
-- arm64/ELF once Windows PE path is publishable; keep oracle ABI matrix explicit.
-
-### 14. Binary-diff assisted ground truth
-- Use compiler IR or DWARF (when present) as intermediate truth for CFG/types,
-  still validating against original PE for semantics.
-
-## Design rules for any new axis
-
-1. **Own a stage name** and JSONL under `results/<stage>/`.
-2. Prefer **Ghidra (or stronger) reference** for structural layers; **original binary** for semantics.
-3. Separate **infra failure** from **quality mismatch** (see `check_parity_smoke.py`).
-4. Add **golden canaries** before expanding corpus breadth.
-5. Dashboard shows **rates + denominators**, never a mystery composite.
-
-## Suggested next implementation order
-
-1. ~~Full-dev parity telemetry + conservative reliability gates~~ (in tree).
-2. Grow `golden_repros` for every high-severity pcode/cfg residual gap.
-3. Implement real adapter `/abi` exports (stage scaffold: `benchmark/abi_parity`).
-4. Populate `corpus/realworld/` strip PE cases (stage scaffold: `benchmark/strip_track`).
-5. PR-local differential canary workflow.
+1. Own a stage name and JSONL under `results/<stage>/`.
+2. Ghidra (or stronger) for structural layers; **original binary** for semantics.
+3. Separate infra failure from quality mismatch.
+4. Golden canaries before corpus breadth.
+5. Dashboard: rates + denominators, no mystery composite.

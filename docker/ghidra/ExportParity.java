@@ -10,6 +10,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionIterator;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Parameter;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.pcode.PcodeOp;
@@ -19,6 +20,11 @@ import ghidra.program.model.block.CodeBlock;
 import ghidra.program.model.block.CodeBlockIterator;
 import ghidra.program.model.block.CodeBlockReferenceIterator;
 import ghidra.program.model.block.CodeBlockReference;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.RefType;
+import ghidra.program.model.data.DataType;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class ExportParity extends GhidraScript {
     @Override
@@ -84,6 +90,16 @@ public class ExportParity extends GhidraScript {
             emit(exportCfgJson(func));
         } else if (mode.equals("abi")) {
             emit(exportAbiJson(func));
+        } else if (mode.equals("types")) {
+            emit(exportTypesJson(func));
+        } else if (mode.equals("callgraph")) {
+            emit(exportCallgraphJson(func));
+        } else if (mode.equals("strings")) {
+            emit(exportStringsJson(func));
+        } else if (mode.equals("dataflow")) {
+            emit(exportDataflowJson(func));
+        } else if (mode.equals("seh")) {
+            emit(exportSehJson(func));
         } else if (mode.equals("bundle")) {
             emit(exportBundleObject(func));
         } else {
@@ -374,4 +390,195 @@ public class ExportParity extends GhidraScript {
             size
         );
     }
+
+    private String exportTypesJson(Function func) throws Exception {
+        StringBuilder params = new StringBuilder();
+        params.append("[");
+        Parameter[] arr = func.getParameters();
+        for (int i = 0; i < arr.length; i++) {
+            if (i > 0) params.append(",");
+            DataType dt = arr[i].getDataType();
+            String ty = dt != null ? dt.getName() : "undefined";
+            params.append(String.format(
+                "{\"index\": %d, \"name\": \"%s\", \"type\": \"%s\", \"size\": %d}",
+                i,
+                jsonEscape(arr[i].getName() != null ? arr[i].getName() : ("param_" + i)),
+                jsonEscape(ty),
+                arr[i].getLength()
+            ));
+        }
+        params.append("]");
+        DataType retDt = func.getReturnType();
+        String retName = retDt != null ? retDt.getName() : "undefined";
+        int retSize = retDt != null ? retDt.getLength() : 0;
+        return String.format(
+            "{\"status\": \"ok\", \"address\": \"0x%s\", \"name\": \"%s\", \"return_type\": \"%s\", \"return_size\": %d, \"parameters\": %s}",
+            func.getEntryPoint().toString(),
+            jsonEscape(func.getName()),
+            jsonEscape(retName),
+            retSize,
+            params.toString()
+        );
+    }
+
+    private String exportCallgraphJson(Function func) throws Exception {
+        Set<String> callees = new LinkedHashSet<String>();
+        InstructionIterator insts = currentProgram.getListing().getInstructions(func.getBody(), true);
+        while (insts.hasNext()) {
+            Instruction inst = insts.next();
+            Reference[] refs = inst.getReferencesFrom();
+            for (int i = 0; i < refs.length; i++) {
+                Reference ref = refs[i];
+                if (ref == null) continue;
+                RefType rt = ref.getReferenceType();
+                if (rt == null || !rt.isCall()) continue;
+                Address to = ref.getToAddress();
+                Function target = currentProgram.getFunctionManager().getFunctionAt(to);
+                if (target == null) {
+                    target = currentProgram.getFunctionManager().getFunctionContaining(to);
+                }
+                if (target != null) {
+                    callees.add(String.format("0x%s", target.getEntryPoint().toString()));
+                } else if (to != null) {
+                    callees.add(String.format("0x%s", to.toString()));
+                }
+            }
+        }
+        StringBuilder edges = new StringBuilder();
+        edges.append("[");
+        boolean first = true;
+        String src = "0x" + func.getEntryPoint().toString();
+        for (String tgt : callees) {
+            if (!first) edges.append(",");
+            first = false;
+            edges.append(String.format(
+                "{\"source\": \"%s\", \"target\": \"%s\", \"kind\": \"call\"}",
+                src, tgt
+            ));
+        }
+        edges.append("]");
+        return String.format(
+            "{\"status\": \"ok\", \"address\": \"%s\", \"callees\": %s, \"edges\": %s, \"callee_count\": %d}",
+            src,
+            toJsonStringArray(callees),
+            edges.toString(),
+            callees.size()
+        );
+    }
+
+    private String toJsonStringArray(Set<String> items) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        boolean first = true;
+        for (String s : items) {
+            if (!first) sb.append(",");
+            first = false;
+            sb.append("\"").append(jsonEscape(s)).append("\"");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    private String exportStringsJson(Function func) throws Exception {
+        Set<String> strings = new LinkedHashSet<String>();
+        InstructionIterator insts = currentProgram.getListing().getInstructions(func.getBody(), true);
+        while (insts.hasNext()) {
+            Instruction inst = insts.next();
+            Reference[] refs = inst.getReferencesFrom();
+            for (Reference ref : refs) {
+                if (ref == null || ref.getToAddress() == null) continue;
+                Data data = currentProgram.getListing().getDataAt(ref.getToAddress());
+                if (data == null) {
+                    data = currentProgram.getListing().getDataContaining(ref.getToAddress());
+                }
+                if (data != null && data.hasStringValue()) {
+                    Object val = data.getValue();
+                    if (val != null) {
+                        String text = String.valueOf(val).trim();
+                        if (!text.isEmpty() && text.length() <= 256) {
+                            strings.add(text);
+                        }
+                    }
+                }
+            }
+        }
+        return String.format(
+            "{\"status\": \"ok\", \"address\": \"0x%s\", \"strings\": %s, \"count\": %d}",
+            func.getEntryPoint().toString(),
+            toJsonStringArray(strings),
+            strings.size()
+        );
+    }
+
+    private String exportDataflowJson(Function func) throws Exception {
+        // Compact sinks: RETURN outputs + STORE destinations (space+offset keys).
+        Set<String> returns = new LinkedHashSet<String>();
+        Set<String> stores = new LinkedHashSet<String>();
+        InstructionIterator insts = currentProgram.getListing().getInstructions(func.getBody(), true);
+        while (insts.hasNext()) {
+            Instruction inst = insts.next();
+            PcodeOp[] ops = inst.getPcode();
+            for (PcodeOp op : ops) {
+                int opc = op.getOpcode();
+                if (opc == PcodeOp.RETURN) {
+                    if (op.getNumInputs() > 1 && op.getInput(1) != null) {
+                        returns.add(varnodeKey(op.getInput(1)));
+                    } else {
+                        returns.add("void");
+                    }
+                } else if (opc == PcodeOp.STORE) {
+                    if (op.getNumInputs() >= 3) {
+                        stores.add(varnodeKey(op.getInput(1)) + "<-" + varnodeKey(op.getInput(2)));
+                    }
+                }
+            }
+        }
+        return String.format(
+            "{\"status\": \"ok\", \"address\": \"0x%s\", \"return_sinks\": %s, \"store_sinks\": %s}",
+            func.getEntryPoint().toString(),
+            toJsonStringArray(returns),
+            toJsonStringArray(stores)
+        );
+    }
+
+    private String varnodeKey(Varnode vn) {
+        if (vn == null) return "null";
+        try {
+            String space = vn.getAddress().getAddressSpace().getName();
+            return space + "+0x" + Long.toHexString(vn.getOffset()) + ":" + vn.getSize();
+        } catch (Exception e) {
+            return "unknown";
+        }
+    }
+
+    private String exportSehJson(Function func) throws Exception {
+        // Best-effort: surface calling convention + whether function is thunk / has no-return.
+        // Full RUNTIME_FUNCTION parsing is PE-loader specific; export structural flags.
+        boolean isThunk = func.isThunk();
+        boolean noReturn = func.hasNoReturn();
+        String conv = func.getCallingConventionName();
+        if (conv == null) conv = "unknown";
+        // Count external exception-style symbols in program (coarse PE signal).
+        int ehCount = 0;
+        try {
+            var syms = currentProgram.getSymbolTable().getSymbolIterator(true);
+            while (syms.hasNext()) {
+                String n = syms.next().getName().toLowerCase();
+                if (n.contains("exception") || n.contains("__c_specific_handler")
+                        || n.contains("_unwind") || n.contains("gs_handler")) {
+                    ehCount++;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return String.format(
+            "{\"status\": \"ok\", \"address\": \"0x%s\", \"is_thunk\": %s, \"no_return\": %s, \"convention\": \"%s\", \"program_eh_symbol_count\": %d, \"seh_surface\": \"flags_only\"}",
+            func.getEntryPoint().toString(),
+            isThunk ? "true" : "false",
+            noReturn ? "true" : "false",
+            jsonEscape(conv),
+            ehCount
+        );
+    }
 }
+

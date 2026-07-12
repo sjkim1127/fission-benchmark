@@ -20,6 +20,16 @@ STAGE_ORDER = (
     "cfg_parity",
     "function_discovery",
     "ir_invariants",
+    "abi_parity",
+    "type_parity",
+    "callgraph_parity",
+    "string_recovery",
+    "dataflow_parity",
+    "seh_parity",
+    "strip_discovery",
+    "strip_semantic_delta",
+    "opt_cliff",
+    "throughput",
     "golden_repros",
 )
 
@@ -27,12 +37,23 @@ STAGE_ORDER = (
 # - decode: stub surface (disasm-derived)
 # - ir_invariants: weak structural checks, not full IR equivalence
 # - golden_repros: meta canaries (locks), not a quality rate
+# - extension tracks (abi/types/callgraph/…): diagnostic until promoted
 # function_discovery is primary when scored as ghidra_inventory (unified runner).
 NON_PUBLISHABLE_STAGES = frozenset(
     {
         "decode_parity",
         "ir_invariants",
         "golden_repros",
+        "abi_parity",
+        "type_parity",
+        "callgraph_parity",
+        "string_recovery",
+        "dataflow_parity",
+        "seh_parity",
+        "strip_discovery",
+        "strip_semantic_delta",
+        "opt_cliff",
+        "throughput",
     }
 )
 

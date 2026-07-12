@@ -3,14 +3,32 @@
 These stages compare Fission (or another candidate) against a **reference** —
 by default **Ghidra** over the Docker HTTP adapters.
 
-| Stage | Module | Reference | Candidate | Endpoint |
-|-------|--------|-----------|-----------|----------|
-| Assembly | `assembly_parity` | Ghidra | Fission | `/disasm` |
-| Decode | `decode_parity` | Ghidra | Fission | `/decode` |
-| P-code | `pcode_parity` | Ghidra | Fission | `/pcode` |
-| CFG | `cfg_parity` | Ghidra | Fission | `/cfg` |
-| Functions | `function_discovery` | Ghidra | Fission | `/functions` |
-| IR invariants | `ir_invariants` | (self) | Fission | local checks |
+| Stage | Module | Reference | Candidate | Endpoint | Headline? |
+|-------|--------|-----------|-----------|----------|-----------|
+| Assembly | `assembly_parity` | Ghidra | Fission | `/disasm` | Yes |
+| Decode | `decode_parity` | — | — | retired | No |
+| P-code | `pcode_parity` | Ghidra | Fission | `/pcode` | Yes |
+| CFG | `cfg_parity` | Ghidra | Fission | `/cfg` | Yes |
+| Functions | `function_discovery` | Ghidra | Fission | `/functions` | Yes |
+| IR invariants | `ir_invariants` | (self) | Fission | local | No |
+| ABI | `abi_parity` | Ghidra | Fission | `/abi` | Ext |
+| Types | `type_parity` | Ghidra | Fission | `/types` | Ext |
+| Call graph | `callgraph_parity` | Ghidra | Fission | `/callgraph` | Ext |
+| Strings | `string_recovery` | Ghidra | Fission | `/strings` | Ext |
+| Data-flow | `dataflow_parity` | Ghidra | Fission | `/dataflow` | Ext |
+| SEH | `seh_parity` | Ghidra | Fission | `/seh` | Ext |
+| Strip | `strip_track` | Ghidra | Fission | `/functions` | Ext |
+| Opt cliff | `opt_cliff` | envelope pivot | — | — | Ext |
+| Throughput | `throughput` | wall clock | — | `/decompile` | Ext |
+
+```bash
+# Headline layers
+python -m runner.run_parity --corpus dev --limit 20 --decompilers fission,ghidra
+# Extension layers
+python -m runner.run_extensions --corpus dev --limit 20
+# PR canary
+scripts/pr_canary.sh
+```
 
 ## Prerequisites
 

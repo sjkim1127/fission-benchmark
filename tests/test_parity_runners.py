@@ -227,6 +227,39 @@ def test_abi_location_aliases_and_count() -> None:
     assert bad.mismatch_kind == "abi_param_count"
 
 
+def test_type_and_callgraph_and_string_extension_compares() -> None:
+    from benchmark.callgraph_parity.run import compare_callgraph
+    from benchmark.string_recovery.run import compare_strings
+    from benchmark.type_parity.run import compare_types
+
+    exp_t = {
+        "status": "ok",
+        "return_type": "int",
+        "parameters": [{"index": 0, "type": "int"}],
+    }
+    act_t = {
+        "status": "ok",
+        "return_type": "int",
+        "parameters": [{"index": 0, "type": "int"}],
+    }
+    assert compare_types(subject(), "ghidra", "fission", exp_t, act_t).status == "match"
+
+    exp_c = {"status": "ok", "callees": ["0x140001000", "0x140001100"]}
+    act_c = {"status": "ok", "callees": ["0x140001100", "0x140001000"]}
+    assert compare_callgraph(subject(), "ghidra", "fission", exp_c, act_c).status == "match"
+
+    exp_s = {"status": "ok", "strings": ["hello", "world"]}
+    act_s = {"status": "ok", "strings": []}
+    assert compare_strings(subject(), "ghidra", "fission", exp_s, act_s).status == "mismatch"
+
+
+def test_opt_cliff_bucket() -> None:
+    from benchmark.opt_cliff.run import _opt_bucket
+
+    assert _opt_bucket("gcc -O0") == "O0"
+    assert _opt_bucket("gcc-m32 -O2") == "O2"
+
+
 def test_function_discovery_detects_function_set_mismatch() -> None:
     expected = [{"address": "0x1000", "name": "main"}, {"address": "0x2000", "name": "foo"}]
     actual = [{"address": "0x1000", "name": "main"}]

@@ -32,6 +32,21 @@ def is_empty_stage_payload(stage: str, payload: object) -> bool:
         return is_empty_list_payload(payload)
     if stage == "cfg_parity":
         return is_empty_cfg_payload(payload)
+    # Extension dict stages: error / missing object is empty; status=ok with
+    # empty collections is still a valid (possibly zero-signal) payload.
+    if stage in {
+        "abi_parity",
+        "type_parity",
+        "callgraph_parity",
+        "string_recovery",
+        "dataflow_parity",
+        "seh_parity",
+    }:
+        if not isinstance(payload, dict):
+            return True
+        if payload.get("status") in {"error", "not_implemented"}:
+            return True
+        return False
     return payload is None
 
 
