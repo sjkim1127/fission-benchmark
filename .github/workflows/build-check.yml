@@ -70,7 +70,7 @@ jobs:
           mv /tmp/.buildx-cache-${{ matrix.service }}-new /tmp/.buildx-cache-${{ matrix.service }}
 
   lint:
-    name: Lint Python
+    name: Lint + reliability unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -78,8 +78,34 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -e ".[dev]"
-      - run: ruff check benchmark/ runner/ docker/ scripts/ tests/
-      - run: pytest -q
+      - name: Ruff (hard-fail)
+        run: ruff check benchmark/ runner/ docker/ scripts/ tests/
+      - name: Pytest (hard-fail)
+        run: pytest -q
+      - name: Reliability gate scripts load + conservative fixtures
+        env:
+          PARITY_CANONICALIZE_MODE: strict
+        run: |
+          set -euo pipefail
+          python scripts/check_parity_smoke.py --help >/dev/null
+          python scripts/check_reliability.py --help >/dev/null
+          # Fixtures already covered by unit tests; assert defaults are strict.
+          python - <<'PY'
+          import importlib.util
+          from pathlib import Path
+          for name, rel in [
+              ("check_parity_smoke", "scripts/check_parity_smoke.py"),
+              ("check_reliability", "scripts/check_reliability.py"),
+          ]:
+              path = Path(rel)
+              spec = importlib.util.spec_from_file_location(name, path)
+              mod = importlib.util.module_from_spec(spec)
+              assert spec and spec.loader
+              spec.loader.exec_module(mod)
+          from benchmark.common.providers import get_canonicalize_mode
+          assert get_canonicalize_mode() == "strict", get_canonicalize_mode()
+          print("OK conservative defaults: canonicalize_mode=strict")
+          PY
       - name: Verify tests do not generate publication artifacts
         run: git diff --exit-code -- docs/index.html results/latest.json results/latest.md results/latest-summary.json results/artifact-manifest.json
 

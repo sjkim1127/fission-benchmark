@@ -20,9 +20,13 @@ env:
   # Timeout must allow Ghidra headless cold-start; 2s was infra-fail only.
   PARITY_LIMIT: ${{ github.event.inputs.parity_limit || '0' }}
   PARITY_DECOMPILERS: ${{ github.event.inputs.parity_decompilers || 'fission,ghidra' }}
-  PARITY_REQUEST_TIMEOUT: ${{ github.event.inputs.parity_timeout || '90' }}
-  # Publishable scores: strict canonicalize (no LOOSE space-id stubs / dropped operands).
+  PARITY_REQUEST_TIMEOUT: ${{ github.event.inputs.parity_timeout || '180' }}
+  # Conservative reliability: strict only, no leniency in CI.
   PARITY_CANONICALIZE_MODE: strict
+  RELIABILITY_POLICY: conservative
+  PARITY_BINARY_WORKERS: "3"
+  GHIDRA_HEADLESS_WORKERS: "3"
+  FISSION_CLI_WORKERS: "8"
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/fission-benchmark
   PYTHONPATH: .
@@ -348,10 +352,23 @@ jobs:
 
       - name: Run parity benchmarks (Ghidra reference)
         id: parity
-        # Always attempt when containers are up — layered workspace gate independent of quality publish.
-        if: steps.fission-gate.outcome == 'success'
+        # Independent reliability gate: runs even if semantic validity fails
+        # (containers must still be healthy). Failures block publication below.
+        if: always() && steps.fission-gate.outcome != 'skipped'
+        timeout-minutes: 45
+        env:
+          PARITY_CANONICALIZE_MODE: strict
+          RELIABILITY_POLICY: conservative
+          PARITY_BINARY_WORKERS: ${{ env.PARITY_BINARY_WORKERS }}
+          GHIDRA_HEADLESS_WORKERS: ${{ env.GHIDRA_HEADLESS_WORKERS }}
+          FISSION_CLI_WORKERS: ${{ env.FISSION_CLI_WORKERS }}
+          FISSION_HOST_PORT: "8000"
         run: |
           set -euo pipefail
+          echo "Reliability policy: conservative (strict only, no leniency)"
+          echo "PARITY_CANONICALIZE_MODE=$PARITY_CANONICALIZE_MODE"
+          echo "PARITY_LIMIT=${PARITY_LIMIT:-0} (0=full)"
+
           EXTRA=()
           if [ -n "${PARITY_LIMIT:-}" ] && [ "$PARITY_LIMIT" != "0" ]; then
             EXTRA+=(--limit "$PARITY_LIMIT")
@@ -364,13 +381,74 @@ jobs:
           python -m benchmark.telemetry.aggregate \
             --output results/telemetry/latest.json \
             --dashboard-copy public/parity-telemetry.json
-          python scripts/check_parity_smoke.py results/telemetry/latest.json
-          python scripts/check_reliability.py results/telemetry/latest.json
-          # Golden canaries hard-fail: known-gap locks + regression locks must hold.
-          if [ -f benchmark/golden_repros/manifest.json ]; then
-            python -m benchmark.golden_repros.run benchmark/golden_repros/manifest.json \
-              --timeout "$PARITY_REQUEST_TIMEOUT"
-          fi
+
+          # Assert aggregate recorded strict mode (guards accidental env drift).
+          python - <<'PY'
+          import json, sys
+          t = json.load(open("results/telemetry/latest.json", encoding="utf-8"))
+          mode = t.get("canonicalize_mode")
+          policy = t.get("reliability_policy")
+          if mode != "strict":
+              print(f"FAIL telemetry canonicalize_mode={mode!r}, require strict", file=sys.stderr)
+              sys.exit(1)
+          if policy not in (None, "conservative", "strict"):
+              print(f"FAIL reliability_policy={policy!r}", file=sys.stderr)
+              sys.exit(1)
+          print(f"OK mode={mode} policy={policy} rows={t.get('total_rows')}")
+          PY
+
+          # Conservative gates — explicit thresholds, hard-fail.
+          python scripts/check_parity_smoke.py results/telemetry/latest.json \
+            --require-strict \
+            --min-comparable 5 \
+            --min-usable-coverage 0.90 \
+            --max-fetch-error-rate 0.10
+          python scripts/check_reliability.py results/telemetry/latest.json \
+            --require-strict \
+            --min-primary-coverage 0.95 \
+            --max-fetch-error-rate 0.05 \
+            --max-global-fetch-error-rate 0.05 \
+            --min-primary-comparable 5
+
+          # Golden canaries required (not optional).
+          test -f benchmark/golden_repros/manifest.json
+          python -m benchmark.golden_repros.run benchmark/golden_repros/manifest.json \
+            --timeout "$PARITY_REQUEST_TIMEOUT"
+
+          {
+            echo "### Parity reliability"
+            echo
+            echo "- mode: \`$PARITY_CANONICALIZE_MODE\`"
+            echo "- policy: \`$RELIABILITY_POLICY\`"
+            echo "- limit: \`${PARITY_LIMIT:-0}\` (0=full)"
+            if [ -f results/telemetry/latest.json ]; then
+              python - <<'PY'
+          import json
+          t=json.load(open("results/telemetry/latest.json"))
+          pub=t.get("publishable") or {}
+          dual=(t.get("stages") or {}).get("pcode_parity", {}).get("dual") or pub.get("pcode_dual") or {}
+          fd=(t.get("stages") or {}).get("function_discovery", {}).get("dual") or {}
+          print(f"- headline_match_rate: `{pub.get('match_rate_comparable')}`")
+          print(f"- pcode opcode/loose/strict: `{dual.get('opcode_sequence_match_rate')}` / `{dual.get('loose_full_match_rate')}` / `{dual.get('strict_full_match_rate')}`")
+          print(f"- fd presence/manifest recall: `{fd.get('mean_presence_recall')}` / `{fd.get('mean_manifest_recall')}`")
+          PY
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload parity telemetry artifacts
+        if: always() && steps.parity.outcome != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: parity-telemetry
+          path: |
+            results/telemetry/latest.json
+            public/parity-telemetry.json
+            results/assembly_parity/latest.jsonl
+            results/pcode_parity/latest.jsonl
+            results/cfg_parity/latest.jsonl
+            results/function_discovery/latest.jsonl
+            results/golden_repros/latest.jsonl
+          if-no-files-found: warn
 
       - name: Write benchmark summary
         if: always()
@@ -383,6 +461,8 @@ jobs:
             echo "- Decompilers: \`$BENCHMARK_DECOMPILERS\`"
             echo "- Benchmark limit: \`$BENCHMARK_LIMIT\`"
             echo "- Benchmark variant limit: \`$BENCHMARK_VARIANT_LIMIT\`"
+            echo "- Parity limit: \`${PARITY_LIMIT:-0}\` (0=full)"
+            echo "- Parity mode: \`$PARITY_CANONICALIZE_MODE\` / policy \`$RELIABILITY_POLICY\`"
             echo
             if [ -f results/latest.md ]; then
               sed -n '1,220p' results/latest.md
@@ -402,13 +482,16 @@ jobs:
           if-no-files-found: warn
 
       - name: Commit results
-        # Do not commit results from an invalid run or non-publishable (smoke) run.
-        if: ${{ steps.publish-mode.outputs.should_publish == 'true' }}
+        # Do not commit results from an invalid run, failed reliability gate, or non-publishable run.
+        if: >-
+          steps.publish-mode.outputs.should_publish == 'true' &&
+          steps.fission-gate.outcome == 'success' &&
+          steps.parity.outcome == 'success'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git pull --rebase --autostash origin main
-          git add -f results/ docs/
+          git add -f results/ docs/ public/parity-telemetry.json
           git diff --staged --quiet || git commit -m "chore: update benchmark results [skip ci]"
           git push
 
@@ -423,7 +506,9 @@ jobs:
   deploy-vercel:
     name: Deploy to Vercel (production)
     needs: run-benchmark
+    # Publish only when the benchmark job succeeded (includes parity reliability gate).
     if: >-
+      needs.run-benchmark.result == 'success' &&
       needs.run-benchmark.outputs.is_current == 'true' &&
       needs.run-benchmark.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
