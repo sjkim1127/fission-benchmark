@@ -16,9 +16,10 @@ env:
   BENCHMARK_VARIANT_LIMIT: ${{ github.event.inputs.benchmark_variant_limit || (github.event_name == 'push' && '1' || '0') }}
   RUN_MODE: ${{ github.event.inputs.run_mode || (github.event_name == 'push' && 'smoke' || 'official') }}
   PUBLISH_RESULTS: ${{ github.event.inputs.publish_results || (github.event_name == 'push' && 'false' || 'true') }}
-  # Smoke default: 3 subjects × ghidra reference + fission candidate.
+  # Push smoke: 20 subjects (not full 120) — enough for rate honesty without full cost.
+  # Use parity_limit=0 on schedule/manual official for full corpus.
   # Timeout must allow Ghidra headless cold-start; 2s was infra-fail only.
-  PARITY_LIMIT: ${{ github.event.inputs.parity_limit || '3' }}
+  PARITY_LIMIT: ${{ github.event.inputs.parity_limit || (github.event_name == 'push' && '20' || '0') }}
   PARITY_DECOMPILERS: ${{ github.event.inputs.parity_decompilers || 'fission,ghidra' }}
   PARITY_REQUEST_TIMEOUT: ${{ github.event.inputs.parity_timeout || '90' }}
   # Publishable scores: strict canonicalize (no LOOSE space-id stubs / dropped operands).
@@ -56,7 +57,7 @@ on:
       parity_limit:
         description: "Parity benchmark subject limit; use 0 for full parity"
         type: string
-        default: "3"
+        default: "0"
       publish_results:
         description: "Commit results and deploy GitHub Pages"
         type: boolean
@@ -365,6 +366,7 @@ jobs:
             --output results/telemetry/latest.json \
             --dashboard-copy public/parity-telemetry.json
           python scripts/check_parity_smoke.py results/telemetry/latest.json
+          python scripts/check_reliability.py results/telemetry/latest.json
           # Golden canaries hard-fail: known-gap locks + regression locks must hold.
           if [ -f benchmark/golden_repros/manifest.json ]; then
             python -m benchmark.golden_repros.run benchmark/golden_repros/manifest.json \

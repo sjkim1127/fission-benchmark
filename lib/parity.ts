@@ -9,6 +9,9 @@ export type ParityStageDetail = {
   usable_coverage?: number | null;
   skipped?: number;
   fetch_error?: number;
+  primary_quality?: boolean;
+  reliability_note?: string;
+  dual?: ParityPcodeDual;
   by_status: Record<string, number>;
   by_mismatch_kind: Record<string, number>;
 };
@@ -21,6 +24,14 @@ export type ParityReliability = {
   skipped_rate?: number | null;
 };
 
+export type ParityPcodeDual = {
+  n?: number;
+  opcode_sequence_match_rate?: number | null;
+  loose_full_match_rate?: number | null;
+  strict_full_match_rate?: number | null;
+  note?: string;
+};
+
 export type ParityPublishable = {
   stages?: Record<string, ParityStageDetail>;
   total_rows?: number;
@@ -28,6 +39,8 @@ export type ParityPublishable = {
   mismatch?: number;
   match_rate_comparable?: number | null;
   usable_coverage?: number | null;
+  definition?: string;
+  pcode_dual?: ParityPcodeDual | null;
 };
 
 export type ParityTelemetry = {
@@ -41,8 +54,10 @@ export type ParityTelemetry = {
   stages?: Record<string, ParityStageDetail>;
   sources?: string[];
   reliability?: ParityReliability;
+  reliability_critique?: { warnings?: string[]; headline_stages?: string[] };
   canonicalize_mode?: string;
   non_publishable_stages?: string[];
+  primary_quality_stages?: string[];
   publishable?: ParityPublishable;
 };
 

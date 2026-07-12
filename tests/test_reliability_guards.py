@@ -161,10 +161,74 @@ def test_aggregate_reports_attempted_and_coverage() -> None:
     assert asm["usable_coverage"] == round(2 / 3, 4)
     assert summary["reliability"]["fetch_error_rate"] is not None
     assert summary["schema"] == "parity-telemetry-v2"
+    # Headline publishable is only primary stages *present in the run*.
     assert "decode_parity" not in summary["publishable"]["stages"]
+    assert "function_discovery" not in summary["publishable"]["stages"]
+    assert "ir_invariants" not in summary["publishable"]["stages"]
     assert "assembly_parity" in summary["publishable"]["stages"]
+    assert "pcode_parity" in summary["publishable"]["stages"]
+    assert set(summary["publishable"]["stages"]).issubset(
+        {"assembly_parity", "pcode_parity", "cfg_parity"}
+    )
+    assert "reliability_critique" in summary
 
 
 def test_empty_pair_helper() -> None:
     r = empty_pair_result(subject(), "pcode_parity", "g", "f", [], [{"op": "COPY"}])
     assert r is not None and r.status == "reference_empty"
+
+
+def test_pcode_dual_metrics_always_present() -> None:
+    import os
+    from benchmark.pcode_parity.run import compare_pcode
+
+    ghidra = [
+        {
+            "seq": 0,
+            "op": "INT_SUB",
+            "output": {"space": "register", "offset": "0x20", "size": 8},
+            "inputs": [
+                {"space": "register", "offset": "0x20", "size": 8},
+                {"space": "const", "offset": "0x8", "size": 8},
+            ],
+        },
+        {
+            "seq": 1,
+            "op": "STORE",
+            "output": None,
+            "inputs": [
+                {"space": "const", "offset": "0x1b1", "size": 8},
+                {"space": "register", "offset": "0x20", "size": 8},
+                {"space": "unique", "offset": "0x4f900", "size": 8},
+            ],
+        },
+    ]
+    fission = [
+        {
+            "seq": 0,
+            "op": "IntSub",
+            "output": {"space": "register", "offset": "0x20", "size": 8},
+            "inputs": [
+                {"space": "register", "offset": "0x20", "size": 8},
+                {"space": "const", "offset": "0x8", "size": 8},
+            ],
+        },
+        {
+            "seq": 1,
+            "op": "Store",
+            "output": None,
+            "inputs": [
+                {"space": "const", "offset": "0x3", "size": 8},
+                {"space": "register", "offset": "0x20", "size": 8},
+                {"space": "unique", "offset": "0x4f900", "size": 8},
+            ],
+        },
+    ]
+    os.environ["PARITY_CANONICALIZE_MODE"] = "strict"
+    r = compare_pcode(subject(), "ghidra", "fission", ghidra, fission)
+    os.environ.pop("PARITY_CANONICALIZE_MODE", None)
+    assert r.status == "mismatch"
+    assert r.mismatch_kind == "varnode"
+    assert r.metrics.get("opcode_sequence_match") == 1
+    assert r.metrics.get("loose_full_match") == 1
+    assert r.metrics.get("strict_full_match") == 0

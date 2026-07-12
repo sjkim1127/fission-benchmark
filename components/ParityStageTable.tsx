@@ -17,8 +17,16 @@ const STAGE_LABELS: Record<string, string> = {
   golden_repros: "Golden repros",
 };
 
-/** Decode is derived-from-disasm stub until adapters emit real decode fields. */
-const EXCLUDED_PRIMARY = new Set(["decode_parity"]);
+/**
+ * Non-headline stages: stub, presence-only, weak structural, or meta canaries.
+ * Primary quality = assembly / pcode / cfg only.
+ */
+const EXCLUDED_PRIMARY = new Set([
+  "decode_parity",
+  "function_discovery",
+  "ir_invariants",
+  "golden_repros",
+]);
 
 function pct(rate: number | null | undefined): string {
   if (rate === null || rate === undefined) return "—";
@@ -41,21 +49,40 @@ export function ParityStageTable({ telemetry }: Props) {
   const excluded = allStages.filter(([stage]) => EXCLUDED_PRIMARY.has(stage));
   const mode = telemetry.canonicalize_mode ?? "loose";
   const pub = telemetry.publishable;
+  const critique = telemetry.reliability_critique;
+  const pcodeDual =
+    pub?.pcode_dual ||
+    telemetry.stages?.pcode_parity?.dual ||
+    null;
 
   return (
     <div className={styles.wrap}>
       <p className={styles.hint}>
-        Layered parity vs reference (typically <strong>Ghidra</strong>). Match
-        rate is among comparable rows (match+mismatch); errors are listed
-        separately. Canonicalize mode: <code>{mode}</code>
-        {mode === "strict" ? " (publishable)" : " (triage / local)"}. Decode is
-        excluded from the primary table until a real decode surface exists.
+        Layered parity vs reference (typically <strong>Ghidra</strong>).{" "}
+        <strong>Headline quality</strong> = assembly + p-code + CFG only.
+        Match rate is among comparable rows; coverage shows infra health.
+        Mode: <code>{mode}</code>
+        {mode === "strict" ? " (CI/publish default)" : " (local triage)"}.
       </p>
       {pub && (
         <p className={styles.hint}>
-          Publishable rollup: match_rate=
+          Headline rollup: match_rate=
           {pct(pub.match_rate_comparable)} · coverage=
           {pct(pub.usable_coverage)} · rows={pub.total_rows}
+          {pub.definition ? ` · ${pub.definition}` : ""}
+        </p>
+      )}
+      {pcodeDual && (
+        <p className={styles.hint}>
+          P-code dual rates (do not read strict 0% alone): opcode=
+          {pct(pcodeDual.opcode_sequence_match_rate ?? null)} · loose_full=
+          {pct(pcodeDual.loose_full_match_rate ?? null)} · strict_full=
+          {pct(pcodeDual.strict_full_match_rate ?? null)}
+        </p>
+      )}
+      {critique?.warnings && critique.warnings.length > 0 && (
+        <p className={styles.hint}>
+          Reliability notes: {critique.warnings.slice(0, 3).join(" · ")}
         </p>
       )}
       <table className={styles.table}>

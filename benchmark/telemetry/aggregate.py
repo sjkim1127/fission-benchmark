@@ -23,8 +23,28 @@ STAGE_ORDER = (
     "golden_repros",
 )
 
-# Stages excluded from publishable primary rates until a real surface exists.
-NON_PUBLISHABLE_STAGES = frozenset({"decode_parity"})
+# Stages excluded from *headline* publishable quality rates.
+# - decode: stub surface (disasm-derived)
+# - function_discovery (unified runner): presence-at-manifest-addr only, not Ghidra inventory
+# - ir_invariants: currently weak structural checks, not full IR equivalence
+# - golden_repros: meta canaries (locks), not a quality rate
+NON_PUBLISHABLE_STAGES = frozenset(
+    {
+        "decode_parity",
+        "function_discovery",
+        "ir_invariants",
+        "golden_repros",
+    }
+)
+
+# Stages that *are* primary layered quality (Ghidra reference vs candidate).
+PRIMARY_QUALITY_STAGES = frozenset(
+    {
+        "assembly_parity",
+        "pcode_parity",
+        "cfg_parity",
+    }
+)
 
 
 def aggregate_rows(rows: list[dict]) -> dict:
@@ -36,6 +56,13 @@ def aggregate_rows(rows: list[dict]) -> dict:
     stage_status: dict[str, Counter[str]] = defaultdict(Counter)
     stage_mismatch: dict[str, Counter[str]] = defaultdict(Counter)
     pair_counts: Counter[str] = Counter()
+    # Dual pcode metrics (when present on rows)
+    pcode_opcode_agree = 0
+    pcode_loose_full = 0
+    pcode_strict_full = 0
+    pcode_metric_n = 0
+    fd_presence_only = 0
+    fd_n = 0
 
     for row in rows:
         subject = row.get("subject", {}) or {}
@@ -53,6 +80,20 @@ def aggregate_rows(rows: list[dict]) -> dict:
         if status == "mismatch":
             stage_mismatch[stage][str(mismatch_kind)] += 1
         pair_counts[pair] += 1
+
+        metrics = row.get("metrics") if isinstance(row.get("metrics"), dict) else {}
+        if stage == "pcode_parity" and status in {"match", "mismatch"} and metrics:
+            if any(k in metrics for k in ("opcode_sequence_match", "loose_full_match", "strict_full_match")):
+                pcode_metric_n += 1
+                pcode_opcode_agree += int(metrics.get("opcode_sequence_match") or 0)
+                pcode_loose_full += int(metrics.get("loose_full_match") or 0)
+                pcode_strict_full += int(metrics.get("strict_full_match") or 0)
+        if stage == "function_discovery":
+            fd_n += 1
+            if metrics.get("scored_as") == "presence" or (
+                status == "match" and int(metrics.get("name_match") or 1) == 0
+            ):
+                fd_presence_only += 1
 
     stages_detail = {}
     for stage in sorted(set(list(STAGE_ORDER) + list(by_stage.keys())), key=lambda s: (STAGE_ORDER.index(s) if s in STAGE_ORDER else 99, s)):
@@ -73,7 +114,7 @@ def aggregate_rows(rows: list[dict]) -> dict:
         usable_coverage = round(comparable / total, 4) if total else None
         # Does NOT drop infra failures — lower when adapters fail.
         match_rate_attempted = round(match / total, 4) if total else None
-        stages_detail[stage] = {
+        detail = {
             "total": total,
             "match": match,
             "mismatch": mismatch,
@@ -89,9 +130,33 @@ def aggregate_rows(rows: list[dict]) -> dict:
             "match_rate_comparable": round(match / comparable, 4) if comparable else None,
             "match_rate_attempted": match_rate_attempted,
             "usable_coverage": usable_coverage,
+            "primary_quality": stage in PRIMARY_QUALITY_STAGES,
             "by_status": dict(sorted(statuses.items())),
             "by_mismatch_kind": dict(sorted(stage_mismatch[stage].items())),
         }
+        if stage == "pcode_parity" and pcode_metric_n:
+            detail["dual"] = {
+                "n": pcode_metric_n,
+                "opcode_sequence_match_rate": round(pcode_opcode_agree / pcode_metric_n, 4),
+                "loose_full_match_rate": round(pcode_loose_full / pcode_metric_n, 4),
+                "strict_full_match_rate": round(pcode_strict_full / pcode_metric_n, 4),
+                "note": (
+                    "opcode_sequence ignores varnodes; loose_full stubs LOAD/STORE "
+                    "space ids; strict_full keeps space ids (publishable default)."
+                ),
+            }
+        if stage == "function_discovery" and fd_n:
+            detail["reliability_note"] = (
+                "Unified runner scores manifest address *presence* (and may count "
+                "name-only diffs as match). Not Ghidra full inventory parity."
+            )
+            detail["presence_scoring_rows"] = fd_presence_only
+        if stage == "ir_invariants":
+            detail["reliability_note"] = (
+                "Structural CFG checks only (empty blocks / edge sources); "
+                "not full IR equivalence."
+            )
+        stages_detail[stage] = detail
 
     # Run-level reliability rollup (excludes skipped-only stages from quality).
     total_rows = len(rows)
@@ -111,9 +176,9 @@ def aggregate_rows(rows: list[dict]) -> dict:
         ),
     }
 
-    # Publishable view: drop stub/non-primary stages (e.g. decode until real).
+    # Headline publishable = primary quality stages only (asm / pcode / cfg).
     publishable_stages = {
-        k: v for k, v in stages_detail.items() if k not in NON_PUBLISHABLE_STAGES
+        k: v for k, v in stages_detail.items() if k in PRIMARY_QUALITY_STAGES
     }
     pub_match = sum(int(v.get("match") or 0) for v in publishable_stages.values())
     pub_mismatch = sum(int(v.get("mismatch") or 0) for v in publishable_stages.values())
@@ -125,6 +190,50 @@ def aggregate_rows(rows: list[dict]) -> dict:
     if canonicalize_mode not in {"loose", "strict"}:
         canonicalize_mode = "loose"
 
+    reliability_critique = {
+        "schema": "parity-reliability-critique-v1",
+        "headline_stages": sorted(PRIMARY_QUALITY_STAGES),
+        "demoted_stages": sorted(NON_PUBLISHABLE_STAGES),
+        "warnings": [],
+    }
+    # Inflated overall rates if demoted high-match stages were included.
+    if "function_discovery" in stages_detail:
+        fd = stages_detail["function_discovery"]
+        if (fd.get("match_rate") or 0) >= 0.99 and (fd.get("total") or 0) >= 10:
+            reliability_critique["warnings"].append(
+                "function_discovery near-100% is presence scoring in unified runner, "
+                "not full Ghidra inventory parity — excluded from headline publishable."
+            )
+    if "ir_invariants" in stages_detail:
+        ir = stages_detail["ir_invariants"]
+        if (ir.get("match_rate") or 0) >= 0.9:
+            reliability_critique["warnings"].append(
+                "ir_invariants high match rate reflects weak structural checks only."
+            )
+    pcode_detail = stages_detail.get("pcode_parity") or {}
+    dual = pcode_detail.get("dual") or {}
+    if dual:
+        if (dual.get("strict_full_match_rate") or 0) < 0.1 and (
+            dual.get("loose_full_match_rate") or 0
+        ) > 0.5:
+            reliability_critique["warnings"].append(
+                "pcode strict_full << loose_full: LOAD/STORE space-id encoding dominates "
+                "strict mismatches; use dual rates, not a single 0% headline."
+            )
+        if (dual.get("opcode_sequence_match_rate") or 0) > (
+            dual.get("strict_full_match_rate") or 0
+        ) + 0.3:
+            reliability_critique["warnings"].append(
+                "pcode opcode sequences agree more than full strict varnodes — "
+                "report opcode_sequence_match_rate alongside status match_rate."
+            )
+    if canonicalize_mode == "strict" and (pcode_detail.get("match_rate") or 0) == 0:
+        if dual.get("loose_full_match_rate"):
+            reliability_critique["warnings"].append(
+                "Primary pcode match_rate is 0% under strict mode; loose_full_match_rate "
+                f"={dual.get('loose_full_match_rate')} is the triage signal."
+            )
+
     return {
         "schema": "parity-telemetry-v2",
         "total_rows": total_rows,
@@ -135,8 +244,10 @@ def aggregate_rows(rows: list[dict]) -> dict:
         "by_pair": dict(sorted(pair_counts.items())),
         "stages": stages_detail,
         "reliability": reliability,
+        "reliability_critique": reliability_critique,
         "canonicalize_mode": canonicalize_mode,
         "non_publishable_stages": sorted(NON_PUBLISHABLE_STAGES),
+        "primary_quality_stages": sorted(PRIMARY_QUALITY_STAGES),
         "publishable": {
             "stages": publishable_stages,
             "total_rows": pub_total,
@@ -148,6 +259,11 @@ def aggregate_rows(rows: list[dict]) -> dict:
             "usable_coverage": (
                 round(pub_comparable / pub_total, 4) if pub_total else None
             ),
+            "definition": (
+                "Headline quality = assembly_parity + pcode_parity + cfg_parity only. "
+                "Decode/FD/IR/golden are diagnostic or meta."
+            ),
+            "pcode_dual": dual or None,
         },
     }
 

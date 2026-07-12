@@ -2,16 +2,48 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 
 from benchmark.common.compare_guards import empty_pair_result
 from benchmark.common.parity_cli import run_pair_stage
-from benchmark.common.providers import canonicalize_pcode
+from benchmark.common.providers import canonicalize_pcode, get_canonicalize_mode
 from benchmark.common.schema import BenchmarkResult, BenchmarkSubject
 
 app = typer.Typer(pretty_exceptions_enable=False)
+
+
+def _op_sequence(ops: object) -> list[str]:
+    if not isinstance(ops, list):
+        return []
+    out: list[str] = []
+    for op in ops:
+        if isinstance(op, dict):
+            out.append(str(op.get("op") or ""))
+    return out
+
+
+def _pcode_dual_metrics(expected: object, actual: object) -> dict[str, Any]:
+    """Always report both loose and strict agreement for reliability.
+
+    Strict-only status can show 0% while opcode sequences largely agree; dual
+    metrics prevent publishing a single misleading headline.
+    """
+    loose_e = canonicalize_pcode(expected, mode="loose")
+    loose_a = canonicalize_pcode(actual, mode="loose")
+    strict_e = canonicalize_pcode(expected, mode="strict")
+    strict_a = canonicalize_pcode(actual, mode="strict")
+    loose_ops = _op_sequence(loose_e)
+    actual_ops = _op_sequence(loose_a)
+    return {
+        "op_count_ref": len(loose_e) if isinstance(loose_e, list) else 0,
+        "op_count_cand": len(loose_a) if isinstance(loose_a, list) else 0,
+        "opcode_sequence_match": 1 if loose_ops == actual_ops and bool(loose_ops) else 0,
+        "loose_full_match": 1 if loose_e == loose_a else 0,
+        "strict_full_match": 1 if strict_e == strict_a else 0,
+        "canonicalize_mode": get_canonicalize_mode(),
+    }
 
 
 def compare_pcode(
@@ -26,6 +58,9 @@ def compare_pcode(
     )
     if guarded is not None:
         return guarded
+
+    dual = _pcode_dual_metrics(expected, actual)
+    # Primary status follows active mode (CI/publish default: strict).
     expected_norm = canonicalize_pcode(expected)
     actual_norm = canonicalize_pcode(actual)
     if expected_norm == actual_norm:
@@ -37,7 +72,10 @@ def compare_pcode(
             candidate=candidate_name,
             expected=expected,
             actual=actual,
-            metrics={"op_count": len(expected) if isinstance(expected, list) else 0},
+            metrics={
+                "op_count": dual["op_count_ref"],
+                **dual,
+            },
         )
 
     mismatch_kind = "op_sequence"
@@ -72,8 +110,9 @@ def compare_pcode(
         expected=expected,
         actual=actual,
         metrics={
-            "expected_op_count": len(expected) if isinstance(expected, list) else 0,
-            "actual_op_count": len(actual) if isinstance(actual, list) else 0,
+            "expected_op_count": dual["op_count_ref"],
+            "actual_op_count": dual["op_count_cand"],
+            **dual,
         },
     )
 
