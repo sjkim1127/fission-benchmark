@@ -1,5 +1,5 @@
 import json
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 
 from runner.graph_utils import generate_mermaid
 from runner.run_parity import run_parity_benchmarks

@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from scoring import FunctionScore
-from run_validity import is_output_failure
 
 if TYPE_CHECKING:
     from run_validity import LoadedResult, RunValidity

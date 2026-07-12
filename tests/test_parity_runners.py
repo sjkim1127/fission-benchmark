@@ -2,7 +2,6 @@ from benchmark.assembly_parity.run import compare_assembly
 from benchmark.cfg_parity.run import compare_cfg
 from benchmark.common.http_providers import corpus_relative_binary
 from benchmark.common.providers import (
-    canonicalize_assembly_list,
     canonicalize_cfg,
     canonicalize_pcode,
     normalize_pcode_op,
