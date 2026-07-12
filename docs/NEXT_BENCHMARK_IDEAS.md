@@ -80,8 +80,8 @@ engineering and scientific honesty.
 
 ## Suggested next implementation order
 
-1. Finish full-dev parity telemetry as the baseline dashboard (`parity-telemetry-v1`).
-2. Grow `golden_repros` for every high-severity pcode/cfg gap.
-3. ABI / parameter recovery stage.
-4. Strip track under `corpus/realworld/`.
+1. ~~Full-dev parity telemetry + conservative reliability gates~~ (in tree).
+2. Grow `golden_repros` for every high-severity pcode/cfg residual gap.
+3. Implement real adapter `/abi` exports (stage scaffold: `benchmark/abi_parity`).
+4. Populate `corpus/realworld/` strip PE cases (stage scaffold: `benchmark/strip_track`).
 5. PR-local differential canary workflow.

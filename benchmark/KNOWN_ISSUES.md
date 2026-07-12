@@ -209,10 +209,24 @@ publication of runs where all Fission rows fail.
 arrays. Because comparators treat equal inputs as a match, a double-empty
 response (both reference and candidate failed to fetch) was recorded as `match`.
 
-**Fix in progress**: `fetch_parity_data()` now returns a typed `FetchResult`
-with `status` in `{"ok", "empty", "fetch_error"}`. Comparators are gated on
-both sides being `status == "ok"`. Double-empty responses are recorded as
-`both_empty_invalid`.
+**Fixed**: `fetch_parity_data()` returns typed `FetchResult`; empty pair guards
+record `both_empty_invalid` / `*_empty`. Decode stage is **retired** until real
+decoder fields exist.
+
+### P-code space-selector policy
+
+LOAD/STORE first input is a space *selector*. Ghidra and Fission encode table
+ids differently. **Strict (CI primary)** abstracts selector offset to
+`space_selector` while keeping space name + size. **Literal** dual metric keeps
+raw ids for forensics. Never treat literal space-id mismatch alone as the only
+reported rate.
+
+### Incomplete extension stages
+
+- `abi_parity` / `GET /abi`: scaffold (`not_implemented` → skip, never match).
+- `strip_discovery` / `corpus/realworld`: scaffold until strip PE manifests land.
+- Official `publication_gate` still requires real official holdout run +
+  overfitting report (`scripts/check_publication_ready.py`).
 
 ### Holdout Corpus Lock
 

@@ -1,43 +1,39 @@
 {
   "by_mismatch_kind": {
     "block_count": 6,
+    "block_span": 100,
     "cfg_fetch_error": 5,
-    "decode_surface_stub": 120,
-    "edge_set": 100,
     "function_set": 36,
     "instruction_count": 25,
-    "none": 234,
+    "none": 304,
     "op_kind": 4,
-    "varnode": 116
+    "varnode": 36
   },
   "by_pair": {
-    "ghidra\u2192fission": 526,
+    "ghidra\u2192fission": 396,
     "invariants\u2192fission": 120
   },
   "by_stage": {
     "assembly_parity": 120,
     "cfg_parity": 120,
-    "decode_parity": 120,
     "function_discovery": 36,
-    "golden_repros": 10,
     "ir_invariants": 120,
     "pcode_parity": 120
   },
   "by_status": {
     "fetch_error": 5,
-    "match": 229,
-    "mismatch": 292,
-    "skipped": 120
+    "match": 299,
+    "mismatch": 212
   },
   "by_variant": {
-    "clang -O0": 38,
-    "clang -O2": 38,
-    "clang-m32 -O0": 38,
-    "clang-m32 -O2": 38,
-    "gcc -O0": 131,
-    "gcc -O2": 121,
-    "gcc-m32 -O0": 121,
-    "gcc-m32 -O2": 121
+    "clang -O0": 31,
+    "clang -O2": 31,
+    "clang-m32 -O0": 31,
+    "clang-m32 -O2": 31,
+    "gcc -O0": 98,
+    "gcc -O2": 98,
+    "gcc-m32 -O0": 98,
+    "gcc-m32 -O2": 98
   },
   "canonicalize_mode": "strict",
   "non_publishable_stages": [
@@ -53,15 +49,17 @@
   ],
   "publishable": {
     "definition": "Headline quality = assembly + pcode + cfg + function_discovery (Ghidra inventory). Decode/IR/golden are diagnostic or meta.",
-    "match": 104,
-    "match_rate_comparable": 0.266,
-    "mismatch": 287,
+    "match": 184,
+    "match_rate_comparable": 0.4706,
+    "mismatch": 207,
     "pcode_dual": {
+      "literal_full_match_rate": 0.0,
       "loose_full_match_rate": 0.6667,
       "n": 120,
-      "note": "opcode_sequence ignores varnodes; loose_full stubs LOAD/STORE space ids; strict_full keeps space ids (publishable default).",
+      "note": "strict (primary): abstract LOAD/STORE space-selector offsets; literal: raw tool space-table ids; loose: stub selector entirely.",
       "opcode_sequence_match_rate": 0.9667,
-      "strict_full_match_rate": 0.0
+      "space_id_policy": "selector_abstract_under_strict",
+      "strict_full_match_rate": 0.6667
     },
     "stages": {
       "assembly_parity": {
@@ -92,7 +90,7 @@
         "both_empty_invalid": 0,
         "by_mismatch_kind": {
           "block_count": 6,
-          "edge_set": 100
+          "block_span": 100
         },
         "by_status": {
           "fetch_error": 5,
@@ -100,6 +98,12 @@
           "mismatch": 106
         },
         "candidate_empty": 0,
+        "dual": {
+          "mean_block_start_jaccard": 0.9878,
+          "mean_edge_pair_jaccard": 0.968,
+          "n": 115,
+          "note": "Jaccard on block starts and kind-agnostic (src,tgt) edges; status match still requires full canonical equality."
+        },
         "error_or_other": 5,
         "fetch_error": 5,
         "match": 9,
@@ -148,27 +152,30 @@
         "both_empty_invalid": 0,
         "by_mismatch_kind": {
           "op_kind": 4,
-          "varnode": 116
+          "varnode": 36
         },
         "by_status": {
-          "mismatch": 120
+          "match": 80,
+          "mismatch": 40
         },
         "candidate_empty": 0,
         "dual": {
+          "literal_full_match_rate": 0.0,
           "loose_full_match_rate": 0.6667,
           "n": 120,
-          "note": "opcode_sequence ignores varnodes; loose_full stubs LOAD/STORE space ids; strict_full keeps space ids (publishable default).",
+          "note": "strict (primary): abstract LOAD/STORE space-selector offsets; literal: raw tool space-table ids; loose: stub selector entirely.",
           "opcode_sequence_match_rate": 0.9667,
-          "strict_full_match_rate": 0.0
+          "space_id_policy": "selector_abstract_under_strict",
+          "strict_full_match_rate": 0.6667
         },
         "error_or_other": 0,
         "fetch_error": 0,
-        "match": 0,
-        "match_rate": 0.0,
-        "match_rate_attempted": 0.0,
-        "match_rate_comparable": 0.0,
-        "mismatch": 120,
-        "mismatch_rate": 1.0,
+        "match": 80,
+        "match_rate": 0.6667,
+        "match_rate_attempted": 0.6667,
+        "match_rate_comparable": 0.6667,
+        "mismatch": 40,
+        "mismatch_rate": 0.3333,
         "primary_quality": true,
         "reference_empty": 0,
         "skipped": 0,
@@ -180,11 +187,11 @@
     "usable_coverage": 0.9874
   },
   "reliability": {
-    "fetch_error_rate": 0.0077,
-    "match_rate_attempted": 0.3545,
-    "match_rate_comparable": 0.4395,
-    "skipped_rate": 0.1858,
-    "usable_coverage": 0.8065
+    "fetch_error_rate": 0.0097,
+    "match_rate_attempted": 0.5795,
+    "match_rate_comparable": 0.5851,
+    "skipped_rate": 0.0,
+    "usable_coverage": 0.9903
   },
   "reliability_critique": {
     "demoted_stages": [
@@ -201,22 +208,12 @@
     "schema": "parity-reliability-critique-v1",
     "warnings": [
       "ir_invariants high match rate reflects weak structural checks only.",
-      "pcode strict_full << loose_full: LOAD/STORE space-id encoding dominates strict mismatches; use dual rates, not a single 0% headline.",
-      "pcode opcode sequences agree more than full strict varnodes \u2014 report opcode_sequence_match_rate alongside status match_rate.",
-      "Primary pcode match_rate is 0% under strict mode; loose_full_match_rate =0.6667 is the triage signal."
+      "pcode literal_full << strict_full: remaining gap is space-table id encoding (documented selector_abstract_under_strict policy).",
+      "pcode opcode sequences agree more than strict full varnodes \u2014 inspect dual metrics for residual semantic gaps."
     ]
   },
   "reliability_policy": "conservative",
   "schema": "parity-telemetry-v2",
-  "sources": [
-    "results/assembly_parity/latest.jsonl",
-    "results/decode_parity/latest.jsonl",
-    "results/pcode_parity/latest.jsonl",
-    "results/cfg_parity/latest.jsonl",
-    "results/function_discovery/latest.jsonl",
-    "results/ir_invariants/latest.jsonl",
-    "results/golden_repros/latest.jsonl"
-  ],
   "stages": {
     "assembly_parity": {
       "both_empty_invalid": 0,
@@ -246,7 +243,7 @@
       "both_empty_invalid": 0,
       "by_mismatch_kind": {
         "block_count": 6,
-        "edge_set": 100
+        "block_span": 100
       },
       "by_status": {
         "fetch_error": 5,
@@ -254,6 +251,12 @@
         "mismatch": 106
       },
       "candidate_empty": 0,
+      "dual": {
+        "mean_block_start_jaccard": 0.9878,
+        "mean_edge_pair_jaccard": 0.968,
+        "n": 115,
+        "note": "Jaccard on block starts and kind-agnostic (src,tgt) edges; status match still requires full canonical equality."
+      },
       "error_or_other": 5,
       "fetch_error": 5,
       "match": 9,
@@ -267,27 +270,6 @@
       "skipped": 0,
       "total": 120,
       "usable_coverage": 0.9583
-    },
-    "decode_parity": {
-      "both_empty_invalid": 0,
-      "by_mismatch_kind": {},
-      "by_status": {
-        "skipped": 120
-      },
-      "candidate_empty": 0,
-      "error_or_other": 120,
-      "fetch_error": 0,
-      "match": 0,
-      "match_rate": null,
-      "match_rate_attempted": 0.0,
-      "match_rate_comparable": null,
-      "mismatch": 0,
-      "mismatch_rate": null,
-      "primary_quality": false,
-      "reference_empty": 0,
-      "skipped": 120,
-      "total": 120,
-      "usable_coverage": 0.0
     },
     "function_discovery": {
       "both_empty_invalid": 0,
@@ -319,27 +301,6 @@
       "total": 36,
       "usable_coverage": 1.0
     },
-    "golden_repros": {
-      "both_empty_invalid": 0,
-      "by_mismatch_kind": {},
-      "by_status": {
-        "match": 10
-      },
-      "candidate_empty": 0,
-      "error_or_other": 0,
-      "fetch_error": 0,
-      "match": 10,
-      "match_rate": 1.0,
-      "match_rate_attempted": 1.0,
-      "match_rate_comparable": 1.0,
-      "mismatch": 0,
-      "mismatch_rate": 0.0,
-      "primary_quality": false,
-      "reference_empty": 0,
-      "skipped": 0,
-      "total": 10,
-      "usable_coverage": 1.0
-    },
     "ir_invariants": {
       "both_empty_invalid": 0,
       "by_mismatch_kind": {
@@ -369,27 +330,30 @@
       "both_empty_invalid": 0,
       "by_mismatch_kind": {
         "op_kind": 4,
-        "varnode": 116
+        "varnode": 36
       },
       "by_status": {
-        "mismatch": 120
+        "match": 80,
+        "mismatch": 40
       },
       "candidate_empty": 0,
       "dual": {
+        "literal_full_match_rate": 0.0,
         "loose_full_match_rate": 0.6667,
         "n": 120,
-        "note": "opcode_sequence ignores varnodes; loose_full stubs LOAD/STORE space ids; strict_full keeps space ids (publishable default).",
+        "note": "strict (primary): abstract LOAD/STORE space-selector offsets; literal: raw tool space-table ids; loose: stub selector entirely.",
         "opcode_sequence_match_rate": 0.9667,
-        "strict_full_match_rate": 0.0
+        "space_id_policy": "selector_abstract_under_strict",
+        "strict_full_match_rate": 0.6667
       },
       "error_or_other": 0,
       "fetch_error": 0,
-      "match": 0,
-      "match_rate": 0.0,
-      "match_rate_attempted": 0.0,
-      "match_rate_comparable": 0.0,
-      "mismatch": 120,
-      "mismatch_rate": 1.0,
+      "match": 80,
+      "match_rate": 0.6667,
+      "match_rate_attempted": 0.6667,
+      "match_rate_comparable": 0.6667,
+      "mismatch": 40,
+      "mismatch_rate": 0.3333,
       "primary_quality": true,
       "reference_empty": 0,
       "skipped": 0,
@@ -397,5 +361,5 @@
       "usable_coverage": 1.0
     }
   },
-  "total_rows": 646
+  "total_rows": 516
 }

@@ -14,7 +14,6 @@ import requests
 
 from benchmark.assembly_parity.run import compare_assembly
 from benchmark.cfg_parity.run import compare_cfg
-from benchmark.decode_parity.run import compare_decode
 from benchmark.function_discovery.run import compare_functions, function_addresses
 from benchmark.ir_invariants.run import compare_invariants
 from benchmark.pcode_parity.run import compare_pcode
@@ -744,7 +743,7 @@ def run_parity_benchmarks(
                     ref_asm_fetch, ref_dec_fetch, ref_pcode_fetch, ref_cfg_fetch = ref_tuple
 
                 for cand in candidates:
-                    asm_res = dec_res = pcode_res = cfg_res = None
+                    asm_res = pcode_res = cfg_res = None
                     cand_tuple = None
                     cmap = cand_maps.get(cand)
                     if cmap:
@@ -796,28 +795,8 @@ def run_parity_benchmarks(
                             )
                             results.append(asm_res)
 
-                    invalid = _fetch_error_result(
-                        subj, "decode_parity", "ghidra", cand, ref_dec_fetch, cand_dec_fetch
-                    )
-                    if invalid is not None:
-                        dec_res = invalid
-                        results.append(dec_res)
-                    else:
-                        try:
-                            dec_res = compare_decode(
-                                subj, "ghidra", cand, ref_dec_fetch.data, cand_dec_fetch.data
-                            )
-                            results.append(dec_res)
-                        except Exception as e:
-                            dec_res = BenchmarkResult(
-                                subject=subj,
-                                stage="decode_parity",
-                                status="error",
-                                reference="ghidra",
-                                candidate=cand,
-                                error=str(e),
-                            )
-                            results.append(dec_res)
+                    # decode_parity is RETIRED from the active suite: adapters only
+                    # stub disasm→decode. Do not emit scored rows (no false stage).
 
                     invalid = _fetch_error_result(
                         subj, "pcode_parity", "ghidra", cand, ref_pcode_fetch, cand_pcode_fetch
@@ -867,14 +846,12 @@ def run_parity_benchmarks(
 
                     has_mismatch = any(
                         r and r.status == "mismatch"
-                        for r in (asm_res, dec_res, pcode_res, cfg_res)
+                        for r in (asm_res, pcode_res, cfg_res)
                     )
                     if has_mismatch:
                         mismatch_info_list = []
                         if asm_res and asm_res.status == "mismatch":
                             mismatch_info_list.append(f"assembly: {asm_res.mismatch_kind}")
-                        if dec_res and dec_res.status == "mismatch":
-                            mismatch_info_list.append(f"decode: {dec_res.mismatch_kind}")
                         if pcode_res and pcode_res.status == "mismatch":
                             mismatch_info_list.append(f"pcode: {pcode_res.mismatch_kind}")
                         if cfg_res and cfg_res.status == "mismatch":
@@ -1044,11 +1021,11 @@ def main():
 
     stages = [
         "assembly_parity",
-        "decode_parity",
         "pcode_parity",
         "cfg_parity",
         "function_discovery",
         "ir_invariants",
+        # decode_parity retired (stub surface) — do not emit active results
     ]
 
     def to_row(r: Any) -> dict:

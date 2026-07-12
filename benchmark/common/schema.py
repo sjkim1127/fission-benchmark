@@ -11,6 +11,8 @@ BenchmarkStage = Literal[
     "cfg_parity",
     "function_discovery",
     "ir_invariants",
+    "abi_parity",
+    "strip_discovery",
     "golden_repros",
     "telemetry",
     "decompiler_quality",

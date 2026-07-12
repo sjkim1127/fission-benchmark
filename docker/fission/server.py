@@ -516,6 +516,21 @@ def cfg(binary: str, addr: str):
     return _cfg_impl(resolve_binary(binary), addr)
 
 
+@app.get("/abi")
+def abi(binary: str, addr: str):
+    """Calling-convention surface — not yet implemented (scaffold)."""
+    validate_address(addr)
+    _ = resolve_binary(binary)
+    return {
+        "status": "not_implemented",
+        "address": addr,
+        "convention": None,
+        "parameters": [],
+        "return": None,
+        "note": "ABI export pending; abi_parity stage must skip, not match",
+    }
+
+
 def _assemble_bundle(key: str, dis, pc, cg) -> dict:
     out = {
         "schema": "fission-parity-bundle-v1",

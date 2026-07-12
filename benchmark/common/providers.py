@@ -191,46 +191,71 @@ def normalize_pcode_op(op_name: Any) -> str:
     return _NON_ALNUM.sub("", text)
 
 
+# ---------------------------------------------------------------------------
+# P-code address-space selector policy (explicit, no silent leniency)
+# ---------------------------------------------------------------------------
+# LOAD/STORE first input is an *address-space selector*, not a program value.
+# Ghidra encodes a tool-local space table index in the const offset (e.g. 0x1b1);
+# Fission uses a different encoding (e.g. 0x3). Comparing those offsets as
+# values invents false mismatches.
+#
+# Policies:
+#   loose   — drop selector to (space=addrspace, offset=*)
+#   strict  — keep space *name* + size; abstract offset to "space_selector"
+#             (primary / conservative default)
+#   literal — keep numeric offset as emitted (debug only; never CI default)
+#
+# All other varnodes remain full literal comparisons under strict/literal.
+
+
 def _canonicalize_pcode_inputs(
     op_key: str,
     inputs: Any,
     *,
-    mode: CanonicalizeMode,
+    mode: str,
 ) -> Any:
-    """Canonicalize op inputs.
-
-    *loose*: stub LOAD/STORE first input (address-space id encoding differs).
-    *strict*: keep space-id varnodes after normal address/hex canonicalize.
-    """
+    """Canonicalize op inputs under the space-selector policy above."""
     if not isinstance(inputs, list):
         return canonicalize(inputs)
-    if mode == "loose" and op_key in {"LOAD", "STORE"} and inputs:
+    if op_key in {"LOAD", "STORE"} and inputs:
+        first = inputs[0] if isinstance(inputs[0], dict) else {}
         rest = inputs[1:]
-        space_size = None
-        first = inputs[0]
-        if isinstance(first, dict) and first.get("size") is not None:
-            space_size = first.get("size")
-        space_stub = {
-            "space": "addrspace",
-            "offset": "*",
-            "size": space_size,
-        }
-        return [canonicalize(space_stub)] + [canonicalize(v) for v in rest]
+        space_size = first.get("size") if isinstance(first, dict) else None
+        if mode == "loose":
+            space_stub = {
+                "space": "addrspace",
+                "offset": "*",
+                "size": space_size,
+            }
+            return [canonicalize(space_stub)] + [canonicalize(v) for v in rest]
+        if mode == "strict":
+            # Encoding-invariant selector: space name + size, not table index.
+            first_c = canonicalize(first) if isinstance(first, dict) else {}
+            space_stub = {
+                "space": first_c.get("space") or "const",
+                "offset": "space_selector",
+                "size": first_c.get("size", space_size),
+            }
+            return [space_stub] + [canonicalize(v) for v in rest]
+        # literal: fall through to full canonicalize of all inputs
     return [canonicalize(v) for v in inputs]
 
 
 def canonicalize_pcode(
     ops: Any,
     *,
-    mode: CanonicalizeMode | None = None,
+    mode: CanonicalizeMode | str | None = None,
 ) -> Any:
     """Compare p-code primarily by op sequence; varnode spaces/offsets secondary.
 
     Always normalizes opcode naming (Ghidra ``INT_SUB`` vs Fission ``IntSub``).
     LOAD/STORE space-id handling depends on *mode* (see
-    :func:`_canonicalize_pcode_inputs`).
+    :func:`_canonicalize_pcode_inputs`). Mode may be ``loose``, ``strict``
+    (default), or ``literal`` (debug).
     """
     mode = mode or get_canonicalize_mode()
+    if mode not in {"loose", "strict", "literal"}:
+        mode = "strict"
     if not isinstance(ops, list):
         return canonicalize(ops)
     cleaned = []
@@ -243,7 +268,7 @@ def canonicalize_pcode(
             "seq": int(op.get("seq", i)) if op.get("seq") is not None else i,
             "op": op_key,
             "inputs": _canonicalize_pcode_inputs(
-                op_key, op.get("inputs") or [], mode=mode
+                op_key, op.get("inputs") or [], mode=str(mode)
             ),
             "output": canonicalize(op.get("output")),
         })

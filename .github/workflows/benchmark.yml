@@ -322,6 +322,14 @@ jobs:
       - name: Evaluate final publication evidence
         if: ${{ steps.fission-gate.outcome == 'success' && env.PUBLISH_RESULTS == 'true' }}
         run: |
+          set -euo pipefail
+          # Structural readiness (holdout manifests, non-empty rows, overfitting).
+          python scripts/check_publication_ready.py \
+            --dev results/dev_latest.json \
+            --holdout results/holdout_latest.json \
+            --overfitting results/overfitting_report.json \
+            --require-official
+          # Full evidence-linked gate.
           python -m runner.publication_gate \
             --dev results/dev_latest.json \
             --holdout results/holdout_latest.json \

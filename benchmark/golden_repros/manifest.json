@@ -15,8 +15,9 @@
       "reference_http": "ghidra",
       "candidate_http": "fission",
       "expect_status": "mismatch",
-      "expect_mismatch_kind": "edge_set",
-      "notes": "Frozen known gap: ghidra\u2192fission cfg_parity edge_set"
+      "expect_mismatch_kind": "block_span",
+      "notes": "Known gap: Ghidra vs Fission CFG block spans differ (block_span). Connectivity jaccard is reported in metrics for triage.",
+      "canonicalize_mode": "strict"
     },
     {
       "name": "cfg_parity__clamp__gcc-O0",
@@ -31,8 +32,9 @@
       "reference_http": "ghidra",
       "candidate_http": "fission",
       "expect_status": "mismatch",
-      "expect_mismatch_kind": "edge_set",
-      "notes": "Frozen known gap: ghidra\u2192fission cfg_parity edge_set"
+      "expect_mismatch_kind": "block_span",
+      "notes": "Known gap: Ghidra vs Fission CFG block spans differ (block_span). Connectivity jaccard is reported in metrics for triage.",
+      "canonicalize_mode": "strict"
     },
     {
       "name": "cfg_parity__signum__gcc-O0",
@@ -47,8 +49,9 @@
       "reference_http": "ghidra",
       "candidate_http": "fission",
       "expect_status": "mismatch",
-      "expect_mismatch_kind": "edge_set",
-      "notes": "Frozen known gap: ghidra\u2192fission cfg_parity edge_set"
+      "expect_mismatch_kind": "block_span",
+      "notes": "Known gap: Ghidra vs Fission CFG block spans differ (block_span). Connectivity jaccard is reported in metrics for triage.",
+      "canonicalize_mode": "strict"
     },
     {
       "name": "cfg_parity__checksum__gcc-O0",
@@ -63,8 +66,9 @@
       "reference_http": "ghidra",
       "candidate_http": "fission",
       "expect_status": "mismatch",
-      "expect_mismatch_kind": "edge_set",
-      "notes": "Frozen known gap: ghidra\u2192fission cfg_parity edge_set"
+      "expect_mismatch_kind": "block_span",
+      "notes": "Known gap: Ghidra vs Fission CFG block spans differ (block_span). Connectivity jaccard is reported in metrics for triage.",
+      "canonicalize_mode": "strict"
     },
     {
       "name": "cfg_parity__saturating_add__gcc-O0",
@@ -79,8 +83,9 @@
       "reference_http": "ghidra",
       "candidate_http": "fission",
       "expect_status": "mismatch",
-      "expect_mismatch_kind": "edge_set",
-      "notes": "Frozen known gap: ghidra\u2192fission cfg_parity edge_set"
+      "expect_mismatch_kind": "block_span",
+      "notes": "Known gap: Ghidra vs Fission CFG block spans differ (block_span). Connectivity jaccard is reported in metrics for triage.",
+      "canonicalize_mode": "strict"
     },
     {
       "name": "pcode_parity__count_bits__gcc-O0",
@@ -94,10 +99,9 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "mismatch",
-      "notes": "Conservative known-gap lock: strict pcode full equality fails on LOAD/STORE address-space id encoding (Ghidra vs Fission). Opcode-name normalization is covered by unit tests, not a free match.",
-      "canonicalize_mode": "strict",
-      "expect_mismatch_kind": "varnode"
+      "expect_status": "match",
+      "notes": "Strict primary uses space_selector abstraction for LOAD/STORE first input (encoding-invariant). Opcode names normalized. Literal space-table ids remain in dual metric literal_full_match only.",
+      "canonicalize_mode": "strict"
     },
     {
       "name": "pcode_parity__clamp__gcc-O0",
@@ -111,10 +115,9 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "mismatch",
-      "notes": "Conservative known-gap lock: strict pcode full equality fails on LOAD/STORE address-space id encoding (Ghidra vs Fission). Opcode-name normalization is covered by unit tests, not a free match.",
-      "canonicalize_mode": "strict",
-      "expect_mismatch_kind": "varnode"
+      "expect_status": "match",
+      "notes": "Strict primary uses space_selector abstraction for LOAD/STORE first input (encoding-invariant). Opcode names normalized. Literal space-table ids remain in dual metric literal_full_match only.",
+      "canonicalize_mode": "strict"
     },
     {
       "name": "pcode_parity__signum__gcc-O0",
@@ -128,10 +131,9 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "mismatch",
-      "notes": "Conservative known-gap lock: strict pcode full equality fails on LOAD/STORE address-space id encoding (Ghidra vs Fission). Opcode-name normalization is covered by unit tests, not a free match.",
-      "canonicalize_mode": "strict",
-      "expect_mismatch_kind": "varnode"
+      "expect_status": "match",
+      "notes": "Strict primary uses space_selector abstraction for LOAD/STORE first input (encoding-invariant). Opcode names normalized. Literal space-table ids remain in dual metric literal_full_match only.",
+      "canonicalize_mode": "strict"
     },
     {
       "name": "pcode_parity__checksum__gcc-O0",
@@ -145,10 +147,9 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "mismatch",
-      "notes": "Conservative known-gap lock: strict pcode full equality fails on LOAD/STORE address-space id encoding (Ghidra vs Fission). Opcode-name normalization is covered by unit tests, not a free match.",
-      "canonicalize_mode": "strict",
-      "expect_mismatch_kind": "varnode"
+      "expect_status": "match",
+      "notes": "Strict primary uses space_selector abstraction for LOAD/STORE first input (encoding-invariant). Opcode names normalized. Literal space-table ids remain in dual metric literal_full_match only.",
+      "canonicalize_mode": "strict"
     },
     {
       "name": "pcode_parity__saturating_add__gcc-O0",
@@ -162,10 +163,9 @@
       "corpus_split": "dev",
       "reference_http": "ghidra",
       "candidate_http": "fission",
-      "expect_status": "mismatch",
-      "notes": "Conservative known-gap lock: strict pcode full equality fails on LOAD/STORE address-space id encoding (Ghidra vs Fission). Opcode-name normalization is covered by unit tests, not a free match.",
-      "canonicalize_mode": "strict",
-      "expect_mismatch_kind": "varnode"
+      "expect_status": "match",
+      "notes": "Strict primary uses space_selector abstraction for LOAD/STORE first input (encoding-invariant). Opcode names normalized. Literal space-table ids remain in dual metric literal_full_match only.",
+      "canonicalize_mode": "strict"
     }
   ]
 }

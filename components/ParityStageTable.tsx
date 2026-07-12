@@ -22,9 +22,11 @@ const STAGE_LABELS: Record<string, string> = {
  * Primary quality = assembly / pcode / cfg / function inventory.
  */
 const EXCLUDED_PRIMARY = new Set([
-  "decode_parity",
+  "decode_parity", // retired stub
   "ir_invariants",
   "golden_repros",
+  "abi_parity", // scaffold pending /abi
+  "strip_discovery", // scaffold pending realworld strip corpus
 ]);
 
 function pct(rate: number | null | undefined): string {

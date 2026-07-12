@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 
@@ -21,6 +21,77 @@ def count_items(graph: object, key: str) -> int:
     return 0
 
 
+def _block_starts(graph: object) -> set[str]:
+    if not isinstance(graph, dict):
+        return set()
+    out: set[str] = set()
+    for b in graph.get("blocks") or []:
+        if isinstance(b, dict) and b.get("start") is not None:
+            out.add(str(b.get("start")))
+    return out
+
+
+def _block_spans(graph: object) -> set[tuple[str, str]]:
+    if not isinstance(graph, dict):
+        return set()
+    out: set[tuple[str, str]] = set()
+    for b in graph.get("blocks") or []:
+        if isinstance(b, dict) and b.get("start") is not None:
+            out.add((str(b.get("start")), str(b.get("end") or "")))
+    return out
+
+
+def _edge_pairs(graph: object, *, with_kind: bool) -> set[tuple]:
+    if not isinstance(graph, dict):
+        return set()
+    out: set[tuple] = set()
+    for e in graph.get("edges") or []:
+        if not isinstance(e, dict):
+            continue
+        src, tgt = e.get("source"), e.get("target")
+        if src is None or tgt is None:
+            continue
+        if with_kind:
+            out.add((str(src), str(tgt), str(e.get("kind") or "")))
+        else:
+            out.add((str(src), str(tgt)))
+    return out
+
+
+def _jaccard(a: set, b: set) -> float:
+    if not a and not b:
+        return 1.0
+    if not a or not b:
+        return 0.0
+    inter = len(a & b)
+    union = len(a | b)
+    return round(inter / union, 4) if union else 0.0
+
+
+def _cfg_dual_metrics(expected_norm: object, actual_norm: object) -> dict[str, Any]:
+    """Connectivity-focused metrics (kind-agnostic edges + block spans)."""
+    exp_starts = _block_starts(expected_norm)
+    act_starts = _block_starts(actual_norm)
+    exp_spans = _block_spans(expected_norm)
+    act_spans = _block_spans(actual_norm)
+    exp_edges = _edge_pairs(expected_norm, with_kind=False)
+    act_edges = _edge_pairs(actual_norm, with_kind=False)
+    exp_edges_k = _edge_pairs(expected_norm, with_kind=True)
+    act_edges_k = _edge_pairs(actual_norm, with_kind=True)
+    return {
+        "block_start_jaccard": _jaccard(exp_starts, act_starts),
+        "block_span_jaccard": _jaccard(exp_spans, act_spans),
+        "edge_pair_jaccard": _jaccard(exp_edges, act_edges),
+        "edge_kind_jaccard": _jaccard(exp_edges_k, act_edges_k),
+        "ref_block_starts": len(exp_starts),
+        "cand_block_starts": len(act_starts),
+        "ref_edge_pairs": len(exp_edges),
+        "cand_edge_pairs": len(act_edges),
+        "shared_block_starts": len(exp_starts & act_starts),
+        "shared_edge_pairs": len(exp_edges & act_edges),
+    }
+
+
 def compare_cfg(
     subject: BenchmarkSubject,
     reference_name: str,
@@ -35,6 +106,8 @@ def compare_cfg(
         return guarded
     expected_norm = canonicalize_cfg(expected)
     actual_norm = canonicalize_cfg(actual)
+    dual = _cfg_dual_metrics(expected_norm, actual_norm)
+
     if expected_norm == actual_norm:
         return BenchmarkResult(
             subject=subject,
@@ -47,30 +120,26 @@ def compare_cfg(
             metrics={
                 "block_count": count_items(expected_norm, "blocks"),
                 "edge_count": count_items(expected_norm, "edges"),
+                **dual,
             },
         )
 
+    # Prefer structural diagnostics over raw kind noise.
     mismatch_kind = "cfg_shape"
     if count_items(expected_norm, "blocks") != count_items(actual_norm, "blocks"):
         mismatch_kind = "block_count"
+    elif _block_starts(expected_norm) != _block_starts(actual_norm):
+        mismatch_kind = "block_set"
+    elif _block_spans(expected_norm) != _block_spans(actual_norm):
+        mismatch_kind = "block_span"
+    elif _edge_pairs(expected_norm, with_kind=False) != _edge_pairs(
+        actual_norm, with_kind=False
+    ):
+        mismatch_kind = "edge_connectivity"
     elif count_items(expected_norm, "edges") != count_items(actual_norm, "edges"):
         mismatch_kind = "edge_count"
     else:
-        # Same counts but different connectivity / block spans.
-        exp_starts = {
-            b.get("start")
-            for b in (expected_norm.get("blocks") or [])
-            if isinstance(b, dict)
-        }
-        act_starts = {
-            b.get("start")
-            for b in (actual_norm.get("blocks") or [])
-            if isinstance(b, dict)
-        }
-        if exp_starts != act_starts:
-            mismatch_kind = "block_set"
-        else:
-            mismatch_kind = "edge_set"
+        mismatch_kind = "edge_set"
 
     return BenchmarkResult(
         subject=subject,
@@ -86,6 +155,7 @@ def compare_cfg(
             "actual_block_count": count_items(actual_norm, "blocks"),
             "expected_edge_count": count_items(expected_norm, "edges"),
             "actual_edge_count": count_items(actual_norm, "edges"),
+            **dual,
         },
     )
 

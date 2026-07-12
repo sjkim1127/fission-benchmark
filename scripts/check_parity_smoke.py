@@ -111,10 +111,10 @@ def main(argv: list[str] | None = None) -> int:
     if usable < 1:
         errors.append("no match/mismatch rows at all — adapters likely unreachable")
 
-    # Decode must not contribute false quality matches
+    # Decode is retired: match rows forbidden; missing stage is OK.
     dec = stages.get("decode_parity") or {}
     if int(dec.get("match") or 0) > 0:
-        errors.append("decode_parity match rows forbidden under stub policy")
+        errors.append("decode_parity match rows forbidden (stage retired / stub)")
 
     # Reliability rollup if present
     rel = data.get("reliability") or {}

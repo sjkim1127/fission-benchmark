@@ -60,12 +60,16 @@ def aggregate_rows(rows: list[dict]) -> dict:
     pcode_opcode_agree = 0
     pcode_loose_full = 0
     pcode_strict_full = 0
+    pcode_literal_full = 0
     pcode_metric_n = 0
     fd_presence_only = 0
     fd_n = 0
     fd_presence_recall_sum = 0.0
     fd_manifest_recall_sum = 0.0
     fd_metric_n = 0
+    cfg_edge_j_sum = 0.0
+    cfg_block_j_sum = 0.0
+    cfg_metric_n = 0
 
     for row in rows:
         subject = row.get("subject", {}) or {}
@@ -91,6 +95,12 @@ def aggregate_rows(rows: list[dict]) -> dict:
                 pcode_opcode_agree += int(metrics.get("opcode_sequence_match") or 0)
                 pcode_loose_full += int(metrics.get("loose_full_match") or 0)
                 pcode_strict_full += int(metrics.get("strict_full_match") or 0)
+                pcode_literal_full += int(metrics.get("literal_full_match") or 0)
+        if stage == "cfg_parity" and status in {"match", "mismatch"} and metrics:
+            if "edge_pair_jaccard" in metrics or "block_start_jaccard" in metrics:
+                cfg_metric_n += 1
+                cfg_edge_j_sum += float(metrics.get("edge_pair_jaccard") or 0)
+                cfg_block_j_sum += float(metrics.get("block_start_jaccard") or 0)
         if stage == "function_discovery":
             fd_n += 1
             scored = str(metrics.get("scored_as") or "")
@@ -149,11 +159,29 @@ def aggregate_rows(rows: list[dict]) -> dict:
                 "opcode_sequence_match_rate": round(pcode_opcode_agree / pcode_metric_n, 4),
                 "loose_full_match_rate": round(pcode_loose_full / pcode_metric_n, 4),
                 "strict_full_match_rate": round(pcode_strict_full / pcode_metric_n, 4),
+                "literal_full_match_rate": round(pcode_literal_full / pcode_metric_n, 4),
+                "space_id_policy": "selector_abstract_under_strict",
                 "note": (
-                    "opcode_sequence ignores varnodes; loose_full stubs LOAD/STORE "
-                    "space ids; strict_full keeps space ids (publishable default)."
+                    "strict (primary): abstract LOAD/STORE space-selector offsets; "
+                    "literal: raw tool space-table ids; loose: stub selector entirely."
                 ),
             }
+        if stage == "cfg_parity" and cfg_metric_n:
+            detail["dual"] = {
+                "n": cfg_metric_n,
+                "mean_block_start_jaccard": round(cfg_block_j_sum / cfg_metric_n, 4),
+                "mean_edge_pair_jaccard": round(cfg_edge_j_sum / cfg_metric_n, 4),
+                "note": (
+                    "Jaccard on block starts and kind-agnostic (src,tgt) edges; "
+                    "status match still requires full canonical equality."
+                ),
+            }
+        if stage == "decode_parity":
+            detail["reliability_note"] = (
+                "RETIRED from active suite (stub disasm→decode). Re-enable only with "
+                "real modrm/sib/disp/imm on both adapters."
+            )
+            detail["retired"] = True
         if stage == "function_discovery" and fd_n:
             detail["reliability_note"] = (
                 "Primary scoring is Ghidra full inventory vs candidate (address set). "
@@ -244,25 +272,19 @@ def aggregate_rows(rows: list[dict]) -> dict:
     pcode_detail = stages_detail.get("pcode_parity") or {}
     dual = pcode_detail.get("dual") or {}
     if dual:
-        if (dual.get("strict_full_match_rate") or 0) < 0.1 and (
-            dual.get("loose_full_match_rate") or 0
-        ) > 0.5:
+        if (dual.get("literal_full_match_rate") or 0) + 0.3 < (
+            dual.get("strict_full_match_rate") or 0
+        ):
             reliability_critique["warnings"].append(
-                "pcode strict_full << loose_full: LOAD/STORE space-id encoding dominates "
-                "strict mismatches; use dual rates, not a single 0% headline."
+                "pcode literal_full << strict_full: remaining gap is space-table id "
+                "encoding (documented selector_abstract_under_strict policy)."
             )
         if (dual.get("opcode_sequence_match_rate") or 0) > (
             dual.get("strict_full_match_rate") or 0
         ) + 0.3:
             reliability_critique["warnings"].append(
-                "pcode opcode sequences agree more than full strict varnodes — "
-                "report opcode_sequence_match_rate alongside status match_rate."
-            )
-    if canonicalize_mode == "strict" and (pcode_detail.get("match_rate") or 0) == 0:
-        if dual.get("loose_full_match_rate"):
-            reliability_critique["warnings"].append(
-                "Primary pcode match_rate is 0% under strict mode; loose_full_match_rate "
-                f"={dual.get('loose_full_match_rate')} is the triage signal."
+                "pcode opcode sequences agree more than strict full varnodes — "
+                "inspect dual metrics for residual semantic gaps."
             )
 
     return {

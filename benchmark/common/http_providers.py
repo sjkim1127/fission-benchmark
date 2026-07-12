@@ -63,6 +63,7 @@ STAGE_ENDPOINT: dict[str, str] = {
     "cfg_parity": "cfg",
     "function_discovery": "functions",
     "parity_bundle": "parity_bundle",
+    "abi_parity": "abi",
 }
 
 

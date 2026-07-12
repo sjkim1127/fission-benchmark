@@ -25,15 +25,17 @@ def _op_sequence(ops: object) -> list[str]:
 
 
 def _pcode_dual_metrics(expected: object, actual: object) -> dict[str, Any]:
-    """Always report both loose and strict agreement for reliability.
+    """Always report opcode / strict / literal agreement (no single misleading rate).
 
-    Strict-only status can show 0% while opcode sequences largely agree; dual
-    metrics prevent publishing a single misleading headline.
+    Primary CI mode is ``strict`` = space-selector-abstract policy (see providers).
+    ``literal`` keeps raw space-table ids for forensics only.
     """
     loose_e = canonicalize_pcode(expected, mode="loose")
     loose_a = canonicalize_pcode(actual, mode="loose")
     strict_e = canonicalize_pcode(expected, mode="strict")
     strict_a = canonicalize_pcode(actual, mode="strict")
+    lit_e = canonicalize_pcode(expected, mode="literal")
+    lit_a = canonicalize_pcode(actual, mode="literal")
     loose_ops = _op_sequence(loose_e)
     actual_ops = _op_sequence(loose_a)
     return {
@@ -42,6 +44,8 @@ def _pcode_dual_metrics(expected: object, actual: object) -> dict[str, Any]:
         "opcode_sequence_match": 1 if loose_ops == actual_ops and bool(loose_ops) else 0,
         "loose_full_match": 1 if loose_e == loose_a else 0,
         "strict_full_match": 1 if strict_e == strict_a else 0,
+        "literal_full_match": 1 if lit_e == lit_a else 0,
+        "space_id_policy": "selector_abstract_under_strict",
         "canonicalize_mode": get_canonicalize_mode(),
     }
 

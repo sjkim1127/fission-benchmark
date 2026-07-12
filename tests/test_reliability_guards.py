@@ -102,8 +102,7 @@ def test_cfg_invariant_edge_source() -> None:
     assert any(x.get("kind") == "edge_source_not_in_blocks" for x in v)
 
 
-def test_strict_pcode_keeps_store_space_id() -> None:
-    import os
+def test_strict_pcode_abstracts_store_space_selector() -> None:
     from benchmark.common.providers import canonicalize_pcode
 
     ops = [
@@ -117,13 +116,12 @@ def test_strict_pcode_keeps_store_space_id() -> None:
             ],
         }
     ]
-    os.environ["PARITY_CANONICALIZE_MODE"] = "loose"
-    loose = canonicalize_pcode(ops)
-    os.environ["PARITY_CANONICALIZE_MODE"] = "strict"
-    strict = canonicalize_pcode(ops)
-    os.environ.pop("PARITY_CANONICALIZE_MODE", None)
+    loose = canonicalize_pcode(ops, mode="loose")
+    strict = canonicalize_pcode(ops, mode="strict")
+    literal = canonicalize_pcode(ops, mode="literal")
     assert loose[0]["inputs"][0]["offset"] == "*"
-    assert strict[0]["inputs"][0]["offset"] == "0x1b1"
+    assert strict[0]["inputs"][0]["offset"] == "space_selector"
+    assert literal[0]["inputs"][0]["offset"] == "0x1b1"
 
 
 def test_assembly_canonicalize_drops_display_and_null_control() -> None:
@@ -226,8 +224,9 @@ def test_pcode_dual_metrics_always_present() -> None:
     os.environ["PARITY_CANONICALIZE_MODE"] = "strict"
     r = compare_pcode(subject(), "ghidra", "fission", ghidra, fission)
     os.environ.pop("PARITY_CANONICALIZE_MODE", None)
-    assert r.status == "mismatch"
-    assert r.mismatch_kind == "varnode"
+    # Strict abstracts space selectors → full match; literal remains 0.
+    assert r.status == "match"
     assert r.metrics.get("opcode_sequence_match") == 1
     assert r.metrics.get("loose_full_match") == 1
-    assert r.metrics.get("strict_full_match") == 0
+    assert r.metrics.get("strict_full_match") == 1
+    assert r.metrics.get("literal_full_match") == 0

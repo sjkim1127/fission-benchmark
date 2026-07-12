@@ -133,19 +133,21 @@ def test_pcode_compare_matches_ghidra_vs_fission_spelling() -> None:
             ],
         },
     ]
-    # Loose (triage) stubs space ids → full match; strict keeps them → varnode mismatch.
+    # Loose stubs selector; strict abstracts selector offset; literal keeps table ids.
     assert canonicalize_pcode(expected, mode="loose") == canonicalize_pcode(
         actual, mode="loose"
     )
-    assert canonicalize_pcode(expected, mode="strict") != canonicalize_pcode(
+    assert canonicalize_pcode(expected, mode="strict") == canonicalize_pcode(
         actual, mode="strict"
     )
+    assert canonicalize_pcode(expected, mode="literal") != canonicalize_pcode(
+        actual, mode="literal"
+    )
     result = compare_pcode(subject(), "ghidra", "fission", expected, actual)
-    assert result.status == "mismatch"
-    assert result.mismatch_kind == "varnode"
+    assert result.status == "match"
     assert result.metrics.get("opcode_sequence_match") == 1
-    assert result.metrics.get("loose_full_match") == 1
-    assert result.metrics.get("strict_full_match") == 0
+    assert result.metrics.get("strict_full_match") == 1
+    assert result.metrics.get("literal_full_match") == 0
 
 
 def test_pcode_compare_still_flags_real_varnode_diffs() -> None:
@@ -170,14 +172,16 @@ def test_pcode_compare_still_flags_real_varnode_diffs() -> None:
     assert result.mismatch_kind == "varnode"
 
 
-def test_cfg_compare_detects_edge_count_mismatch() -> None:
+def test_cfg_compare_detects_edge_connectivity_mismatch() -> None:
     expected = {"blocks": [{"start": "0x1000"}], "edges": [{"source": "0x1000", "target": "0x1010"}]}
     actual = {"blocks": [{"start": "0x1000"}], "edges": []}
 
     result = compare_cfg(subject(), "ref", "fission", expected, actual)
 
     assert result.status == "mismatch"
-    assert result.mismatch_kind == "edge_count"
+    # Prefer connectivity over raw edge_count when pairs differ.
+    assert result.mismatch_kind in {"edge_connectivity", "edge_count"}
+    assert result.metrics.get("edge_pair_jaccard") == 0.0
 
 
 def test_function_discovery_detects_function_set_mismatch() -> None:

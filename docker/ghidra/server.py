@@ -381,6 +381,21 @@ def cfg(binary: str, addr: str):
     return run_export_parity(binary, "cfg", addr)
 
 
+@app.get("/abi")
+def abi(binary: str, addr: str):
+    """Calling-convention surface — not yet implemented (scaffold)."""
+    validate_address(addr)
+    _ = _resolve_binary(binary)
+    return {
+        "status": "not_implemented",
+        "address": addr,
+        "convention": None,
+        "parameters": [],
+        "return": None,
+        "note": "ABI export pending; abi_parity stage must skip, not match",
+    }
+
+
 @app.get("/parity_bundle")
 def parity_bundle(binary: str, addr: str):
     """One headless invocation → disasm + pcode + cfg (decode derived)."""
