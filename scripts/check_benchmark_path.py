@@ -80,9 +80,34 @@ def _check_envelope(path: Path, *, allow_legacy: bool, repair: bool) -> list[str
             f"{path}: summary.schema={summary.get('schema')!r} expected {SUMMARY_SCHEMA!r}"
         )
 
-    by_tool = (summary.get("mvp") or {}).get("by_decompiler") or {}
+    mvp = summary.get("mvp") or {}
+    by_tool = mvp.get("by_decompiler") or {}
     if not by_tool and envelope.get("rows"):
         errors.append(f"{path}: summary.mvp.by_decompiler empty but rows present")
+
+    # MVP-0 same-function matrix (infra honesty axis)
+    same_fn = mvp.get("same_function")
+    if envelope.get("rows"):
+        if not isinstance(same_fn, dict):
+            errors.append(f"{path}: summary.mvp.same_function missing (rebuild summary)")
+        else:
+            if same_fn.get("schema") != "same-function-matrix-v1":
+                errors.append(
+                    f"{path}: same_function.schema={same_fn.get('schema')!r} "
+                    "expected 'same-function-matrix-v1'"
+                )
+            cohorts = same_fn.get("cohorts") or {}
+            for cohort_name in ("core", "multi", "all"):
+                if cohort_name not in cohorts:
+                    errors.append(f"{path}: same_function.cohorts.{cohort_name} missing")
+            # Rate definition smoke: denominators must be consistent
+            for tool, stats in (same_fn.get("by_decompiler") or {}).items():
+                rate = stats.get("same_function_rate")
+                den = stats.get("strict_denominator")
+                if rate is not None and den == 0:
+                    errors.append(
+                        f"{path}: {tool} same_function_rate set but strict_denominator=0"
+                    )
 
     for tool, stats in by_tool.items():
         cov = stats.get("coverage") or {}

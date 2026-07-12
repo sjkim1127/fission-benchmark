@@ -2,6 +2,7 @@
 
 Canonical public contract for the metric set:
 
+  MVP-0 same-function matrix (request contract: binary+addr; core vs multi)
   MVP-1 semantic pass rate (correctness ranking axis)
   MVP-2 coverage (attempted / adapter_clean / invalid_boundary / tested / no_wrapper)
   MVP-3 fail taxonomy (stable exclusive buckets)
@@ -19,6 +20,11 @@ import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Iterable, Mapping
+
+try:
+    from .same_function_matrix import build_same_function_matrix
+except ImportError:
+    from same_function_matrix import build_same_function_matrix
 
 SUMMARY_SCHEMA = "standard-set-v1"
 
@@ -327,9 +333,33 @@ def build_standard_summary(
             if stats["semantic"].get("oracle_subject") is None:
                 stats["semantic"]["oracle_subject"] = oracle_subject
 
+    same_function = build_same_function_matrix(annotated)
+    # Compact form for the envelope summary (full matrix available via CLI).
+    same_function_summary = {
+        "schema": same_function.get("schema"),
+        "contract": same_function.get("contract"),
+        "totals": same_function.get("totals"),
+        "cohorts": same_function.get("cohorts"),
+        "by_decompiler": {
+            name: {
+                "cohort": stats.get("cohort"),
+                "by_status": stats.get("by_status"),
+                "same_function_rate": stats.get("same_function_rate"),
+                "same_function_loose_rate": stats.get("same_function_loose_rate"),
+                "strict_denominator": stats.get("strict_denominator"),
+                "loose_denominator": stats.get("loose_denominator"),
+            }
+            for name, stats in (same_function.get("by_decompiler") or {}).items()
+        },
+        "matrix": same_function.get("matrix"),
+    }
+
     return {
         "schema": SUMMARY_SCHEMA,
-        "mvp": {"by_decompiler": mvp},
+        "mvp": {
+            "same_function": same_function_summary,
+            "by_decompiler": mvp,
+        },
         "secondary": {"cfg": load_cfg_summary(cfg_jsonl)},
         "extensions": {
             "holdout": {"status": holdout_status},
@@ -338,7 +368,9 @@ def build_standard_summary(
         "diagnostics": {
             "note": (
                 "source_similarity, ast_similarity, and readability_proxy are "
-                "non-ranking diagnostic axes; correctness uses semantic evidence only"
+                "non-ranking diagnostic axes; correctness uses semantic evidence only. "
+                "mvp.same_function is the infra honesty axis (requested function "
+                "boundary), not a semantic ranking substitute."
             ),
         },
     }

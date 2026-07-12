@@ -32,13 +32,20 @@ quality. Fission product work is secondary to measurement honesty here.
 Every modern result envelope should carry:
 
 ```json
-"summary": { "schema": "standard-set-v1", "mvp": { "by_decompiler": { ... } } }
+"summary": {
+  "schema": "standard-set-v1",
+  "mvp": {
+    "same_function": { "...": "infra honesty axis" },
+    "by_decompiler": { "...": "semantic + coverage + taxonomy" }
+  }
+}
 ```
 
 Built by `runner/standard_summary.py` and attached in `build_envelope()`.
 
 | Tier | Metric |
 |------|--------|
+| **MVP-0** | **Same-function matrix** (request `(binary, addr)`; core vs multi) |
 | MVP-1 | Semantic pass rate |
 | MVP-2 | Coverage |
 | MVP-3 | Fail taxonomy |
@@ -48,6 +55,47 @@ Built by `runner/standard_summary.py` and attached in `build_envelope()`.
 | EXT-7 | Cross-compiler × opt |
 | EXT-8 | Human study pack |
 | EXT-9 | `corpus/realworld/` track |
+
+### MVP-0 Same-function matrix (infra honesty)
+
+**Contract:** each result row is one request for a **single function entry**
+`(binary, addr)`.  This is deliberately stricter than Dogbolt /
+decompiler-explorer (whole-program C dumps).
+
+| `output_diagnostics.status` | Meaning |
+|-----------------------------|---------|
+| `direct_function` | Single target-like unit with name and/or address anchor |
+| `needs_normalization` | Target-like but soft harness blockers remain |
+| `boundary_mismatch` | Output is not the requested function |
+| `whole_program_output` | Multi-function / truncated dump |
+| `no_output` | Empty / sentinel / failed extract |
+
+**Primary rate (publication auxiliary table):**
+
+```text
+same_function_rate =
+  direct_function
+  / (direct_function + boundary_mismatch + whole_program_output + no_output)
+```
+
+`needs_normalization` is reported separately and included only in
+`same_function_loose_rate`.
+
+**Cohorts:**
+
+- **core** — `fission`, `ghidra` (publication / validity core)
+- **multi** — all other adapters (matrix width; may be `backend_weak`)
+- **all** — every decompiler in the run
+
+```bash
+# From any result envelope (holdout multi preferred for multi-cohort table)
+python -m runner.same_function_matrix results/holdout_infra_multi.json \
+  -o results/same_function_matrix.json \
+  --markdown results/same_function_matrix.md --print
+
+# Also embedded under summary.mvp.same_function when envelopes are built
+python scripts/check_benchmark_path.py --repair results/holdout_infra_multi.json
+```
 
 ## Local loop (measurement quality)
 
@@ -118,7 +166,9 @@ Ideas for the next axes: `docs/NEXT_BENCHMARK_IDEAS.md`.
 
 ## Related files
 
-- `runner/standard_summary.py` — MVP aggregation
+- `runner/standard_summary.py` — MVP aggregation (includes `mvp.same_function`)
+- `runner/same_function_matrix.py` — same-function matrix builder + CLI
+- `runner/output_diagnostics.py` — `direct_function` / boundary statuses
 - `runner/run_parity.py` / `benchmark/*_parity` — layered stages
 - `runner/run_validity.py` / `publication_gate.py` — quality gates
 - `runner/differential_oracle.py` + `docker/oracle/` — original_binary

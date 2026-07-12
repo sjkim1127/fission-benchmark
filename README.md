@@ -402,6 +402,7 @@ Public reporting follows a fixed architecture (`summary.schema = standard-set-v1
 
 | # | Metric | Description |
 |---|---|---|
+| 0 | **Same-function matrix** | Request contract `(binary, addr)`; `same_function_rate = direct / (direct + boundary_*)`; core (fission+ghidra) vs multi; **infra honesty**, not a ranking substitute for semantic |
 | 1 | **Semantic pass rate** | Oracle test pass rate under `original_binary` when PE+addr are supplied; sole ranking axis (`correctness_score`) |
 | 2 | **Coverage** | attempted / adapter clean / invalid boundary / semantic tested / no_wrapper |
 | 3 | **Fail taxonomy** | Exclusive buckets (`adapter_error`, `whole_program_output`, `compile_error`, …) |
