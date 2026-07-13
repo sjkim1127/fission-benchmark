@@ -10,6 +10,7 @@ by default **Ghidra** over the Docker HTTP adapters.
 | P-code | `pcode_parity` | Ghidra | Fission | `/pcode` | Yes |
 | CFG | `cfg_parity` | Ghidra | Fission | `/cfg` | Yes |
 | Functions | `function_discovery` | Ghidra | Fission | `/functions` | Yes |
+| Program metadata | `metadata_parity` | Ghidra | Fission | `/metadata` | Ext |
 | IR invariants | `ir_invariants` | (self) | Fission | local | No |
 | ABI | `abi_parity` | Ghidra | Fission | `/abi` | Ext |
 | Types | `type_parity` | Ghidra | Fission | `/types` | Ext |
@@ -59,6 +60,7 @@ python -m benchmark.cfg_parity.run --limit 2
 python -m benchmark.pcode_parity.run --limit 2
 python -m benchmark.decode_parity.run --limit 2
 python -m benchmark.function_discovery.run --limit 2
+python -m benchmark.metadata_parity.run --limit 1
 ```
 
 ## Unified runner

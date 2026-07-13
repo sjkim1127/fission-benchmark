@@ -1,6 +1,7 @@
 // GhidraScript: Export function diagnostics in JSON for parity benchmarking.
 // Modes:
 //   functions
+//   metadata
 //   disasm | pcode | cfg | bundle   (+ address)
 //   multi_bundle                     (+ comma-separated addresses)
 // multi_bundle: ONE JVM run for many functions in the already-opened program.
@@ -26,8 +27,13 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeComponent;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.data.TypeDef;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.reloc.Relocation;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.Iterator;
 
 public class ExportParity extends GhidraScript {
     @Override
@@ -41,6 +47,10 @@ public class ExportParity extends GhidraScript {
         String mode = args[0];
         if (mode.equals("functions")) {
             emit(exportFunctionsJson());
+            return;
+        }
+        if (mode.equals("metadata")) {
+            emit(exportMetadataJson());
             return;
         }
 
@@ -183,6 +193,93 @@ public class ExportParity extends GhidraScript {
             ));
         }
         sb.append("]");
+        return sb.toString();
+    }
+
+    private String exportMetadataJson() throws Exception {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        sb.append("\"schema\": \"ghidra-program-metadata-v1\",");
+        sb.append("\"binary\": {");
+        sb.append("\"format\": \"").append(jsonEscape(currentProgram.getExecutableFormat())).append("\",");
+        sb.append("\"bitness\": ").append(currentProgram.getDefaultPointerSize() * 8).append(",");
+        sb.append("\"image_base\": ").append(Long.toUnsignedString(currentProgram.getImageBase().getOffset())).append(",");
+        sb.append("\"language_id\": \"").append(jsonEscape(currentProgram.getLanguageID().toString())).append("\",");
+        sb.append("\"compiler_spec_id\": \"").append(jsonEscape(currentProgram.getCompilerSpec().getCompilerSpecID().toString())).append("\"");
+        sb.append("},");
+
+        sb.append("\"memory_blocks\": [");
+        boolean first = true;
+        for (MemoryBlock block : currentProgram.getMemory().getBlocks()) {
+            if (!first) sb.append(",");
+            first = false;
+            sb.append("{");
+            sb.append("\"name\": \"").append(jsonEscape(block.getName())).append("\",");
+            sb.append("\"start\": ").append(Long.toUnsignedString(block.getStart().getOffset())).append(",");
+            sb.append("\"size\": ").append(block.getSize()).append(",");
+            sb.append("\"permissions\": {");
+            sb.append("\"read\": ").append(block.isRead()).append(",");
+            sb.append("\"write\": ").append(block.isWrite()).append(",");
+            sb.append("\"execute\": ").append(block.isExecute());
+            sb.append("}}");
+        }
+        sb.append("],");
+
+        sb.append("\"functions\": [");
+        first = true;
+        for (Function func : currentProgram.getFunctionManager().getFunctions(true)) {
+            if (!first) sb.append(",");
+            first = false;
+            sb.append("{");
+            sb.append("\"entry\": ").append(Long.toUnsignedString(func.getEntryPoint().getOffset())).append(",");
+            sb.append("\"name\": \"").append(jsonEscape(func.getName())).append("\",");
+            sb.append("\"size\": ").append(func.getBody().getNumAddresses()).append(",");
+            sb.append("\"is_import\": ").append(func.isExternal()).append(",");
+            sb.append("\"is_thunk\": ").append(func.isThunk());
+            sb.append("}");
+        }
+        sb.append("],");
+
+        sb.append("\"symbols\": [");
+        first = true;
+        SymbolIterator symbols = currentProgram.getSymbolTable().getAllSymbols(true);
+        while (symbols.hasNext()) {
+            Symbol symbol = symbols.next();
+            if (symbol.getAddress() == null || !symbol.getAddress().isMemoryAddress()) continue;
+            if (!first) sb.append(",");
+            first = false;
+            sb.append("{");
+            sb.append("\"address\": ").append(Long.toUnsignedString(symbol.getAddress().getOffset())).append(",");
+            sb.append("\"name\": \"").append(jsonEscape(symbol.getName())).append("\",");
+            sb.append("\"kind\": \"").append(jsonEscape(symbol.getSymbolType().toString().toLowerCase())).append("\",");
+            sb.append("\"source\": \"").append(jsonEscape(symbol.getSource().toString().toLowerCase())).append("\",");
+            sb.append("\"primary\": ").append(symbol.isPrimary());
+            sb.append("}");
+        }
+        sb.append("],");
+
+        sb.append("\"relocations\": [");
+        first = true;
+        Iterator<Relocation> relocations = currentProgram.getRelocationTable().getRelocations();
+        while (relocations.hasNext()) {
+            Relocation relocation = relocations.next();
+            if (!first) sb.append(",");
+            first = false;
+            byte[] bytes = relocation.getBytes();
+            sb.append("{");
+            sb.append("\"address\": ").append(Long.toUnsignedString(relocation.getAddress().getOffset())).append(",");
+            sb.append("\"relocation_type\": ").append(relocation.getType()).append(",");
+            sb.append("\"size\": ").append(bytes == null ? 0 : bytes.length).append(",");
+            String symbolName = relocation.getSymbolName();
+            if (symbolName == null) {
+                sb.append("\"symbol_name\": null");
+            } else {
+                sb.append("\"symbol_name\": \"").append(jsonEscape(symbolName)).append("\"");
+            }
+            sb.append("}");
+        }
+        sb.append("]");
+        sb.append("}");
         return sb.toString();
     }
 
@@ -706,4 +803,3 @@ public class ExportParity extends GhidraScript {
         );
     }
 }
-

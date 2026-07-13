@@ -9,21 +9,47 @@ from pathlib import Path
 from benchmark.abi_parity.run import compare_abi
 from benchmark.callgraph_parity.run import compare_callgraph
 from benchmark.common.http_providers import ensure_fission_port, fetch_parity_json
+from benchmark.common.schema import BenchmarkSubject
 from benchmark.common.subjects import load_subjects
 from benchmark.dataflow_parity.run import compare_dataflow
+from benchmark.metadata_parity.run import compare_metadata
 from benchmark.seh_parity.run import compare_seh
 from benchmark.string_recovery.run import compare_strings
 from benchmark.telemetry.aggregate import aggregate_rows
 from benchmark.type_parity.run import compare_types
 
 STAGES = [
-    ("abi_parity", compare_abi),
-    ("type_parity", compare_types),
-    ("callgraph_parity", compare_callgraph),
-    ("string_recovery", compare_strings),
-    ("dataflow_parity", compare_dataflow),
-    ("seh_parity", compare_seh),
+    ("metadata_parity", compare_metadata, True),
+    ("abi_parity", compare_abi, False),
+    ("type_parity", compare_types, False),
+    ("callgraph_parity", compare_callgraph, False),
+    ("string_recovery", compare_strings, False),
+    ("dataflow_parity", compare_dataflow, False),
+    ("seh_parity", compare_seh, False),
 ]
+
+
+def _unique_binary_subjects(
+    subjects: list[BenchmarkSubject],
+) -> list[BenchmarkSubject]:
+    seen = set()
+    rows = []
+    for subject in subjects:
+        if subject.binary in seen:
+            continue
+        seen.add(subject.binary)
+        rows.append(
+            BenchmarkSubject(
+                binary=subject.binary,
+                function="(metadata)",
+                addr="0x0",
+                arch=subject.arch,
+                compiler=subject.compiler,
+                opt=subject.opt,
+                corpus_split=subject.corpus_split,
+            )
+        )
+    return rows
 
 
 def main() -> int:
@@ -40,9 +66,10 @@ def main() -> int:
         subjects = subjects[: args.limit]
 
     all_rows: list[dict] = []
-    for stage, compare in STAGES:
+    for stage, compare, once_per_binary in STAGES:
         rows = []
-        for subject in subjects:
+        stage_subjects = _unique_binary_subjects(subjects) if once_per_binary else subjects
+        for subject in stage_subjects:
             try:
                 try:
                     exp = fetch_parity_json("ghidra", stage, subject, timeout=args.timeout)

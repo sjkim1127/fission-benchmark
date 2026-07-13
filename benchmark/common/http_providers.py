@@ -63,6 +63,7 @@ STAGE_ENDPOINT: dict[str, str] = {
     "pcode_parity": "pcode",
     "cfg_parity": "cfg",
     "function_discovery": "functions",
+    "metadata_parity": "metadata",
     "parity_bundle": "parity_bundle",
     "abi_parity": "abi",
     "type_parity": "types",
@@ -118,7 +119,7 @@ def fetch_parity_json(
 
     binary = corpus_relative_binary(subject.binary, subject.corpus_split)
     url = f"{base_url(decompiler)}/{endpoint}?binary={quote(binary, safe='/:')}"
-    if endpoint != "functions" and subject.addr and subject.addr not in {"0x0", "0"}:
+    if endpoint not in {"functions", "metadata"} and subject.addr and subject.addr not in {"0x0", "0"}:
         url += f"&addr={quote(subject.addr, safe='')}"
     if subject.arch and subject.arch not in {"unknown", "arch_unknown"}:
         url += f"&arch={quote(subject.arch, safe='')}"

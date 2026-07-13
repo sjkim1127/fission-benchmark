@@ -10,6 +10,7 @@ BenchmarkStage = Literal[
     "pcode_parity",
     "cfg_parity",
     "function_discovery",
+    "metadata_parity",
     "ir_invariants",
     "abi_parity",
     "type_parity",

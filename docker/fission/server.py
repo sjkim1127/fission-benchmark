@@ -120,6 +120,11 @@ def function_inventory_command(bin_path: str) -> List[str]:
     command.append("--json")
     return command
 
+
+def program_metadata_command(bin_path: str) -> List[str]:
+    """Build the canonical typed program-metadata export command."""
+    return ["inventory", "program-metadata", bin_path]
+
 class DecompileRequest(BaseModel):
     binary_b64: str
     addr: str
@@ -384,6 +389,27 @@ def functions(binary: str):
         })
     _cache_put(cache_key, res)
     return res
+
+
+@app.get("/metadata")
+def metadata(binary: str):
+    bin_path = resolve_binary(binary)
+    cache_key = _ck("metadata", bin_path)
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
+    try:
+        result = run_fission_cli(program_metadata_command(bin_path))
+    except HTTPException as exc:
+        raise HTTPException(
+            status_code=501,
+            detail=(
+                "installed Fission CLI does not expose inventory program-metadata; "
+                f"use a current local build: {exc.detail}"
+            ),
+        ) from exc
+    _cache_put(cache_key, result)
+    return result
 
 
 def _normalize_hex_bytes(raw: object) -> str:

@@ -483,6 +483,11 @@ def functions(binary: str):
     return run_export_parity(binary, "functions")
 
 
+@app.get("/metadata")
+def metadata(binary: str):
+    return run_export_parity(binary, "metadata")
+
+
 @app.get("/disasm")
 def disasm(binary: str, addr: str):
     validate_address(addr)
