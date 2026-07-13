@@ -1,11 +1,33 @@
+import { readFile } from "fs/promises";
+import path from "path";
 import {
   BenchmarkEnvelopeSchema,
   type BenchmarkEnvelope,
 } from "./schemas";
 
-const LATEST_URL =
-  process.env.BENCHMARK_LATEST_URL ??
-  "https://raw.githubusercontent.com/sjkim1127/fission-benchmark/main/results/latest.json";
+const REPO_RAW =
+  "https://raw.githubusercontent.com/sjkim1127/fission-benchmark/main";
+
+/**
+ * Ordered candidates for multi-decomp dashboard data.
+ * `results/latest.json` is only written on full publication; until then
+ * `dev_latest.json` (tracked on main) is the public display fallback.
+ */
+function candidateUrls(): string[] {
+  const urls: string[] = [];
+  if (process.env.BENCHMARK_LATEST_URL) {
+    urls.push(process.env.BENCHMARK_LATEST_URL);
+  }
+  // Same-origin public file when present on Vercel / local `public/`.
+  if (process.env.VERCEL_URL) {
+    urls.push(`https://${process.env.VERCEL_URL}/benchmark-latest.json`);
+  }
+  urls.push(
+    `${REPO_RAW}/results/latest.json`,
+    `${REPO_RAW}/results/dev_latest.json`,
+  );
+  return urls;
+}
 
 export type MvpDecompilerStats = {
   decompiler: string;
@@ -34,7 +56,7 @@ export type CrossVariantRow = {
 /**
  * Strict loader for call sites that already handle missing data.
  * Prefer {@link getLatestBenchmarkOptional} on pages — never throw during
- * Next.js prerender/export (Vercel build has no publishable envelope yet).
+ * Next.js prerender/export.
  */
 export async function getLatestBenchmark(): Promise<BenchmarkEnvelope> {
   const envelope = await getLatestBenchmarkOptional({ requirePublishable: true });
@@ -44,28 +66,73 @@ export async function getLatestBenchmark(): Promise<BenchmarkEnvelope> {
   return envelope;
 }
 
+async function tryParseEnvelope(raw: unknown): Promise<BenchmarkEnvelope | null> {
+  try {
+    return BenchmarkEnvelopeSchema.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+async function loadFromPublicFile(): Promise<BenchmarkEnvelope | null> {
+  try {
+    const filePath = path.join(process.cwd(), "public", "benchmark-latest.json");
+    const text = await readFile(filePath, "utf8");
+    return tryParseEnvelope(JSON.parse(text));
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Load envelope without throwing. Parity page can still render telemetry when
- * the multi-decomp artifact is missing or not yet publishable.
+ * Load multi-decomp envelope without throwing.
+ *
+ * Default: accept any valid envelope (`valid` preferred but not required for
+ * schema parse). Set `requirePublishable: true` only for gates that need the
+ * official publication artifact.
  */
 export async function getLatestBenchmarkOptional(options?: {
   requirePublishable?: boolean;
 }): Promise<BenchmarkEnvelope | null> {
-  // Intentionally NOT using Next.js data cache (next.tags) here because the raw
-  // JSON is ~18-25 MB and exceeds the 2 MB per-entry cache limit.
-  // ISR is instead applied at the route segment level via `export const revalidate`.
-  try {
-    const res = await fetch(LATEST_URL, { cache: "no-store" });
-    if (!res.ok) return null;
-    const raw: unknown = await res.json();
-    const envelope = BenchmarkEnvelopeSchema.parse(raw);
-    if (options?.requirePublishable !== false) {
-      if (envelope.validity?.publishable !== true) return null;
+  // Intentionally NOT using Next.js data cache for multi-MB JSON.
+  const requirePublishable = options?.requirePublishable === true;
+  const preferValid = options?.requirePublishable !== true;
+
+  const candidates: BenchmarkEnvelope[] = [];
+
+  const local = await loadFromPublicFile();
+  if (local) candidates.push(local);
+
+  for (const url of candidateUrls()) {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) continue;
+      const env = await tryParseEnvelope(await res.json());
+      if (env) candidates.push(env);
+    } catch {
+      // try next source
     }
-    return envelope;
-  } catch {
-    return null;
   }
+
+  if (candidates.length === 0) return null;
+
+  // Prefer publishable, then measurement-valid, then first parseable.
+  const ranked = [...candidates].sort((a, b) => {
+    const score = (e: BenchmarkEnvelope) =>
+      (e.validity?.publishable ? 4 : 0) +
+      (e.validity?.valid ? 2 : 0) +
+      (Array.isArray(e.rows) && e.rows.length > 0 ? 1 : 0);
+    return score(b) - score(a);
+  });
+
+  for (const env of ranked) {
+    if (requirePublishable && env.validity?.publishable !== true) continue;
+    if (preferValid && env.validity?.valid === false && env.rows?.length === 0) {
+      continue;
+    }
+    return env;
+  }
+  return ranked[0] ?? null;
 }
 
 function isAdapterFailure(row: BenchmarkEnvelope["rows"][number]): boolean {

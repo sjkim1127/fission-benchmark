@@ -23,7 +23,7 @@ export const metadata = {
 };
 
 async function MatrixSection() {
-  const data = await getLatestBenchmarkOptional({ requirePublishable: true });
+  const data = await getLatestBenchmarkOptional();
   if (!data) {
     return <UnavailableData title="Same-function matrix unavailable" />;
   }

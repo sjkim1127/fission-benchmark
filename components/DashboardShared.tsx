@@ -35,7 +35,7 @@ export function SkeletonSection({ rows = 4 }: { rows?: number }) {
 }
 
 export async function MetaStrip() {
-  const data = await getLatestBenchmarkOptional({ requirePublishable: true });
+  const data = await getLatestBenchmarkOptional();
   if (!data) {
     return (
       <div className={styles.heroMeta}>
@@ -92,7 +92,7 @@ export async function MetaStrip() {
 
 /** Compact same-function cohort tiles for the overview hub. */
 export async function SameFunctionOverviewTiles() {
-  const data = await getLatestBenchmarkOptional({ requirePublishable: true });
+  const data = await getLatestBenchmarkOptional();
   if (!data) {
     return (
       <p className={styles.sectionLead}>

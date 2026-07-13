@@ -25,13 +25,13 @@ export const metadata = {
 };
 
 async function BannerSection() {
-  const data = await getLatestBenchmarkOptional({ requirePublishable: true });
+  const data = await getLatestBenchmarkOptional();
   if (!data) return null;
   return <ValidityBanner validity={data.validity} run={data.run} />;
 }
 
 async function SummarySection() {
-  const data = await getLatestBenchmarkOptional({ requirePublishable: true });
+  const data = await getLatestBenchmarkOptional();
   if (!data) {
     return (
       <section className={styles.section}>
