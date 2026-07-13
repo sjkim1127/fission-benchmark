@@ -15,6 +15,7 @@ on:
       - 'docker/snowman/**'
       - 'docker/revng/**'
       - 'docker/reko/**'
+      - 'docker/retdec/**'
       - 'docker/oracle/**'
       - 'runner/differential_oracle.py'
       - 'runner/semantic.py'
@@ -23,7 +24,7 @@ on:
       services:
         description: "Comma-separated services to rebuild (e.g. fission,ghidra)"
         type: string
-        default: "fission,ghidra,boomerang,radare2,angr,snowman,revng,reko,oracle"
+        default: "fission,ghidra,boomerang,radare2,angr,snowman,revng,reko,retdec,oracle"
       fission_version:
         description: "Fission release tag to bake into the fission image"
         type: string

@@ -11,7 +11,7 @@ export FISSION_ENDPOINT="${FISSION_ENDPOINT:-http://localhost:8007}"
 export FISSION_HOST_PORT="${FISSION_HOST_PORT:-8007}"
 case "$PROFILE" in
   core) DECS=fission,ghidra ;;
-  full) DECS=fission,ghidra,boomerang,radare2,angr,snowman,revng,reko ;;
+  full) DECS=fission,ghidra,boomerang,radare2,angr,snowman,revng,reko,retdec ;;
   *) echo "usage: $0 core|full"; exit 2 ;;
 esac
 echo "Official profile=$PROFILE decompilers=$DECS"

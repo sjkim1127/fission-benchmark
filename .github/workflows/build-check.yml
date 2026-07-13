@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [fission, ghidra, boomerang, radare2, angr, snowman, revng, reko, oracle]
+        service: [fission, ghidra, boomerang, radare2, angr, snowman, revng, reko, retdec, oracle]
     steps:
       - uses: actions/checkout@v4
 
@@ -139,6 +139,8 @@ jobs:
             port: 8006
           - service: reko
             port: 8008
+          - service: retdec
+            port: 8009
           - service: oracle
             port: 8010
     steps:

@@ -11,7 +11,7 @@ env:
   FISSION_ASSETS_TAG: assets-v1
   CORPUS_TARGET: windows-x86_64
   CORPUS_SPLIT: ${{ github.event.inputs.corpus || 'dev' }}
-  BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,boomerang,radare2,angr,snowman,revng,reko' }}
+  BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,boomerang,radare2,angr,snowman,revng,reko,retdec' }}
   BENCHMARK_LIMIT: ${{ github.event.inputs.benchmark_limit || (github.event_name == 'push' && '10' || '0') }}
   BENCHMARK_VARIANT_LIMIT: ${{ github.event.inputs.benchmark_variant_limit || (github.event_name == 'push' && '1' || '0') }}
   RUN_MODE: ${{ github.event.inputs.run_mode || (github.event_name == 'push' && 'smoke' || 'official') }}
@@ -48,7 +48,7 @@ on:
       decompilers:
         description: "Comma-separated decompilers to run"
         type: string
-        default: "fission,ghidra,boomerang,radare2,angr,snowman,revng,reko"
+        default: "fission,ghidra,boomerang,radare2,angr,snowman,revng,reko,retdec"
       benchmark_limit:
         description: "Function limit for dev/holdout benchmark; use 0 for full corpus"
         type: string
@@ -150,7 +150,7 @@ jobs:
 
       - name: Pull or build decompiler images
         run: |
-          SERVICES="fission ghidra boomerang radare2 angr snowman revng reko oracle"
+          SERVICES="fission ghidra boomerang radare2 angr snowman revng reko retdec oracle"
           CHANGED_SERVICES=""
           if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
             CHANGED_SERVICES="$(git diff --name-only HEAD~1 HEAD | awk -F/ '/^docker\// {print $2}' | sort -u)"
@@ -202,8 +202,8 @@ jobs:
 
       - name: Start decompiler containers
         run: |
-          docker compose up -d fission ghidra boomerang radare2 angr snowman revng reko oracle
-          for port in 8000 8001 8002 8003 8004 8005 8006 8008 8010; do
+          docker compose up -d fission ghidra boomerang radare2 angr snowman revng reko retdec oracle
+          for port in 8000 8001 8002 8003 8004 8005 8006 8008 8009 8010; do
             ready=0
             for i in $(seq 1 30); do
               if curl -sf http://localhost:$port/health; then
