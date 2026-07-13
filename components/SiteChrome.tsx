@@ -1,20 +1,48 @@
 import Link from "next/link";
 import styles from "@/app/dashboard.module.css";
 
-export type DashboardPage = "multi" | "parity";
+export type DashboardPage =
+  | "overview"
+  | "same-function"
+  | "functions"
+  | "variants"
+  | "parity";
 
-const NAV: { id: DashboardPage; href: string; label: string; blurb: string }[] = [
+const NAV: {
+  id: DashboardPage;
+  href: string;
+  label: string;
+  blurb: string;
+}[] = [
   {
-    id: "multi",
+    id: "overview",
     href: "/",
-    label: "Multi-decompiler",
-    blurb: "Semantic quality",
+    label: "Overview",
+    blurb: "Semantic ranking",
+  },
+  {
+    id: "same-function",
+    href: "/same-function",
+    label: "Same-function",
+    blurb: "Boundary honesty",
+  },
+  {
+    id: "functions",
+    href: "/functions",
+    label: "Functions",
+    blurb: "Code grid",
+  },
+  {
+    id: "variants",
+    href: "/variants",
+    label: "Variants",
+    blurb: "Compiler × opt",
   },
   {
     id: "parity",
     href: "/fission-vs-ghidra",
     label: "Fission ↔ Ghidra",
-    blurb: "Shared IR / parity",
+    blurb: "Shared IR",
   },
 ];
 
@@ -67,7 +95,8 @@ export function SiteChrome({
       <main className={styles.main}>{children}</main>
       <footer className={styles.footer}>
         <span>
-          Fission Benchmark · Multi quality vs Ghidra layered parity · ISR 15 min
+          Fission Benchmark · Overview · Same-function · Functions · Variants ·
+          IR parity · ISR 15 min
         </span>
         <a
           href="https://github.com/sjkim1127/fission-benchmark"

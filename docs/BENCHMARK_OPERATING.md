@@ -164,8 +164,11 @@ python -m benchmark.golden_repros.run
 
 | Route | Purpose |
 |-------|---------|
-| `/` | **Multi-decompiler quality** — semantic ranking, coverage, same-function, per-function grid |
-| `/fission-vs-ghidra` | **Shared IR / layered parity** — Ghidra reference vs Fission (assembly, p-code dual, CFG, function discovery) |
+| `/` | **Overview** — validity, semantic ranking, same-function snapshot, nav hub |
+| `/same-function` | **MVP-0 same-function matrix** — `(binary, addr)` boundary honesty |
+| `/functions` | **Per-function code grid** (heavy browse surface) |
+| `/variants` | **Compiler × opt** semantic pivots |
+| `/fission-vs-ghidra` | **Shared IR / layered parity** — Ghidra reference vs Fission |
 
 Do not mix IR match rates into multi-tool ranking. Parity telemetry is served from
 `public/parity-telemetry.json` (or remote fallback).

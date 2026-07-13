@@ -26,8 +26,11 @@ A Python runner sends decompile requests in parallel, scores results against ori
 
 | Route | Surface |
 |-------|---------|
-| `/` | Multi-decompiler quality (semantic ranking, same-function, grid) |
-| `/fission-vs-ghidra` | Fission ↔ Ghidra layered parity (shared p-code-class IR; not ranking) |
+| `/` | Overview — semantic ranking hub + nav |
+| `/same-function` | Same-function matrix (boundary honesty) |
+| `/functions` | Per-function code grid |
+| `/variants` | Compiler × opt pivots |
+| `/fission-vs-ghidra` | Fission ↔ Ghidra layered parity (shared IR; not ranking) |
 
 ```
 Binary + Source (ground truth)

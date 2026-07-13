@@ -108,7 +108,7 @@ export default function FissionVsGhidraPage() {
   return (
     <SiteChrome
       active="parity"
-      subtitle="Shared p-code-class IR · Ghidra is reference · Fission is candidate"
+      subtitle="Shared p-code-class IR · Ghidra reference · Fission candidate"
     >
       <div className={`${styles.frame} ${styles.frameParity}`}>
         <div className={styles.frameTitle}>Fission ↔ Ghidra layered parity</div>
