@@ -172,26 +172,29 @@ def compare_functions(
 
     exp_names = _name_map(expected_norm)
     act_names = _name_map(actual_norm)
+    # Name mismatches are tracked as a diagnostic metric but do NOT affect
+    # primary match status.  Tool-generated names (e.g. Ghidra "count_bits" vs
+    # Fission "fun_4015b0") are naming conventions, not discovery quality.
+    # Primary signal: both tools identify the same set of entry-point addresses.
     name_mismatches = sum(
         1
         for addr in expected_addrs & actual_addrs
         if exp_names.get(addr, "") != act_names.get(addr, "")
     )
 
-    if expected_addrs == actual_addrs and name_mismatches == 0:
+    if expected_addrs == actual_addrs:
+        # Address sets identical → discovery match regardless of name conventions.
         status = "match"
         mismatch_kind = None
-    elif expected_addrs != actual_addrs:
-        status = "mismatch"
-        mismatch_kind = "function_set"
     else:
         status = "mismatch"
-        mismatch_kind = "function_metadata"
+        mismatch_kind = "function_set"
 
     metrics = inventory_dual_metrics(
         expected_addrs, actual_addrs, manifest_addrs=manifest_addrs
     )
     metrics["scored_as"] = scored_as
+    # name_mismatch_count: diagnostic only — not a primary quality gate.
     metrics["name_mismatch_count"] = name_mismatches
 
     return BenchmarkResult(
