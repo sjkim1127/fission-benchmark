@@ -77,11 +77,11 @@ export function ParityStageTable({ telemetry }: Props) {
   return (
     <div className={styles.wrap}>
       <p className={styles.hint}>
-        Layered parity vs reference (typically <strong>Ghidra</strong>).{" "}
-        <strong>Headline quality</strong> = assembly + p-code + CFG + function
-        inventory (Ghidra vs candidate).
-        Match rate is among comparable rows; coverage shows infra health.
-        Mode: <code>{mode}</code>
+        Layered parity with <strong>Ghidra as reference</strong> and candidates
+        (typically Fission). <strong>Headline stages</strong> = assembly + p-code
+        + CFG + function inventory. Match rate is among comparable rows; coverage
+        shows infra health. This is <strong>not</strong> multi-decompiler semantic
+        ranking. Mode: <code>{mode}</code>
         {mode === "strict"
           ? " (conservative / no leniency)"
           : " (local triage only — not for CI)"}

@@ -1,26 +1,23 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import {
   getLatestBenchmark,
   groupByDecompiler,
   getFunctionNames,
   getCrossVariantRows,
-  getCfgSecondary,
+  getSameFunctionSummary,
 } from "@/lib/benchmark";
-import { getParityTelemetry } from "@/lib/parity";
+import { SiteChrome } from "@/components/SiteChrome";
 import { ValidityBanner } from "@/components/ValidityBanner";
 import { SummaryTable } from "@/components/SummaryTable";
 import { FunctionGrid } from "@/components/FunctionGrid";
 import { CrossVariantTable } from "@/components/CrossVariantTable";
-import { CfgSecondaryPanel } from "@/components/CfgSecondaryPanel";
-import { ParityStageTable } from "@/components/ParityStageTable";
-import styles from "./page.module.css";
+import { SameFunctionPanel } from "@/components/SameFunctionPanel";
+import styles from "./dashboard.module.css";
 
 // ISR: cache the rendered HTML output for 15 minutes.
-// The raw JSON (~18-25 MB) is fetched server-side with cache:"no-store" and is
-// NOT stored in the Next.js data cache. Only the rendered HTML is cached here.
 export const revalidate = 900;
 
-// Progressive streaming sections
 async function MetaStrip() {
   const data = await getLatestBenchmark();
   const functionNames = getFunctionNames(data.rows);
@@ -65,11 +62,29 @@ async function SummarySection() {
   const stats = groupByDecompiler(data);
   return (
     <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>MVP Summary</h2>
+      <h2 className={styles.sectionTitle}>MVP · Semantic ranking</h2>
       <p className={styles.sectionLead}>
-        Semantic · Coverage · Fail taxonomy · Runtime (standard set)
+        Only <strong>semantic pass rate</strong> ranks tools. Coverage and fail
+        taxonomy keep denominators honest. Multi-decompiler fairness surface —
+        not IR kinship with Ghidra.
       </p>
       <SummaryTable stats={stats} />
+    </section>
+  );
+}
+
+async function SameFunctionSection() {
+  const data = await getLatestBenchmark();
+  const sameFn = getSameFunctionSummary(data);
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>MVP-0 · Same-function matrix</h2>
+      <p className={styles.sectionLead}>
+        Did each adapter decompile the <strong>requested</strong>{" "}
+        <code>(binary, addr)</code>? Infra honesty — separate from oracle
+        correctness.
+      </p>
+      <SameFunctionPanel summary={sameFn} />
     </section>
   );
 }
@@ -79,36 +94,12 @@ async function GridSection() {
   const functionNames = getFunctionNames(data.rows);
   return (
     <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Per-Function Results</h2>
-      {/* rows includes decompiled_code — passed as serialized RSC payload to the
-          client component so the code modal works without a separate fetch */}
-      <FunctionGrid functionNames={functionNames} rows={data.rows} />
-    </section>
-  );
-}
-
-async function CfgSection() {
-  const data = await getLatestBenchmark();
-  const cfg = getCfgSecondary(data);
-  return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Secondary · CFG match (envelope)</h2>
-      <CfgSecondaryPanel status={cfg.status} byDecompiler={cfg.byDecompiler} />
-    </section>
-  );
-}
-
-async function ParitySection() {
-  const telemetry = await getParityTelemetry();
-  return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Layered parity · Ghidra reference</h2>
+      <h2 className={styles.sectionTitle}>Per-function results</h2>
       <p className={styles.sectionLead}>
-        Assembly · p-code · CFG · function discovery (decode excluded until a
-        real decode surface exists) — independent of decompiler-output quality
-        scoring.
+        Side-by-side decompiler outputs for each corpus function (click a cell
+        for code).
       </p>
-      <ParityStageTable telemetry={telemetry} />
+      <FunctionGrid functionNames={functionNames} rows={data.rows} />
     </section>
   );
 }
@@ -119,21 +110,10 @@ async function CrossVariantSection() {
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Extension · Cross-compiler / opt</h2>
-      <CrossVariantTable rows={rows} />
-    </section>
-  );
-}
-
-async function DiagnosticsNote() {
-  return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Diagnostics (non-ranking)</h2>
       <p className={styles.sectionLead}>
-        Source similarity, AST structure similarity, and readability proxies remain
-        on individual rows for triage. They do not affect correctness rank. Human
-        readability scores require the study in{" "}
-        <code>benchmark/readability/human_study.md</code>.
+        Semantic means pivoted by compiler variant (gcc / gcc-m32 × opt).
       </p>
+      <CrossVariantTable rows={rows} />
     </section>
   );
 }
@@ -164,78 +144,73 @@ function SkeletonSection({ rows = 4 }: { rows?: number }) {
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerInner}>
-          <div className={styles.headerLeft}>
-            <div className={styles.logo}>
-              <span className={styles.logoIcon}>⚡</span>
-              <span className={styles.logoText}>Fission</span>
-              <span className={styles.logoBadge}>Benchmark</span>
-            </div>
-            <p className={styles.headerSub}>
-              Standard set: semantic (original binary) · coverage · fail taxonomy ·
-              runtime — Fission vs Ghidra, Boomerang, Radare2, angr, Snowman, rev.ng, Reko
-            </p>
-          </div>
-          <div className={styles.headerLinks}>
-            <a
-              href="https://github.com/sjkim1127/fission-benchmark"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.headerLink}
-            >
-              GitHub →
-            </a>
-          </div>
+    <SiteChrome
+      active="multi"
+      subtitle="Multi-decompiler quality — semantic oracle, coverage, same-function honesty"
+    >
+      <div className={styles.frame}>
+        <div className={styles.frameTitle}>Multi-decompiler quality</div>
+        <p className={styles.frameBody}>
+          Compare <strong>Fission</strong> against open decompilers on the same
+          corpus under an <strong>original_binary</strong> oracle. Ranking axis
+          is semantic pass rate only. Layered p-code / assembly / CFG agreement
+          with Ghidra lives on a separate page — Fission shares a p-code-class
+          IR, so that comparison is structural kinship, not a multi-tool score.
+        </p>
+      </div>
+
+      <div className={styles.cardGrid}>
+        <Link href="/fission-vs-ghidra" className={styles.card}>
+          <div className={styles.cardKicker}>Shared IR</div>
+          <div className={styles.cardTitle}>Fission ↔ Ghidra parity</div>
+          <p className={styles.cardBody}>
+            Assembly, p-code dual metrics, CFG, and function discovery vs Ghidra
+            as reference — not a ranking table.
+          </p>
+          <div className={styles.cardCta}>Open layered parity →</div>
+        </Link>
+        <div className={styles.card} style={{ cursor: "default" }}>
+          <div className={styles.cardKicker}>This page</div>
+          <div className={styles.cardTitle}>Semantic multi-matrix</div>
+          <p className={styles.cardBody}>
+            MVP semantic · coverage · taxonomy · same-function · per-function
+            grid · cross-compiler pivots.
+          </p>
         </div>
-      </header>
+      </div>
 
-      <main className={styles.main}>
-        {/* Each Suspense boundary streams independently.
-            Browser receives HTML in order: meta → banner → summary → grid */}
-        <Suspense fallback={<SkeletonMeta />}>
-          <MetaStrip />
-        </Suspense>
+      <Suspense fallback={<SkeletonMeta />}>
+        <MetaStrip />
+      </Suspense>
 
-        <Suspense fallback={<div className={styles.bannerSkeleton} />}>
-          <BannerSection />
-        </Suspense>
+      <Suspense fallback={<div className={styles.bannerSkeleton} />}>
+        <BannerSection />
+      </Suspense>
 
-        <Suspense fallback={<SkeletonSection rows={5} />}>
-          <SummarySection />
-        </Suspense>
+      <Suspense fallback={<SkeletonSection rows={5} />}>
+        <SummarySection />
+      </Suspense>
 
-        <Suspense fallback={<SkeletonSection rows={4} />}>
-          <ParitySection />
-        </Suspense>
+      <Suspense fallback={<SkeletonSection rows={3} />}>
+        <SameFunctionSection />
+      </Suspense>
 
-        {/* Grid is largest — streams last while user reads the summary table */}
-        <Suspense fallback={<SkeletonSection rows={8} />}>
-          <GridSection />
-        </Suspense>
+      <Suspense fallback={<SkeletonSection rows={8} />}>
+        <GridSection />
+      </Suspense>
 
-        <Suspense fallback={<SkeletonSection rows={3} />}>
-          <CfgSection />
-        </Suspense>
+      <Suspense fallback={<SkeletonSection rows={4} />}>
+        <CrossVariantSection />
+      </Suspense>
 
-        <Suspense fallback={<SkeletonSection rows={4} />}>
-          <CrossVariantSection />
-        </Suspense>
-
-        <DiagnosticsNote />
-      </main>
-
-      <footer className={styles.footer}>
-        <span>Fission Benchmark · Auto-updated on official runs · ISR 15 min</span>
-        <a
-          href="https://github.com/sjkim1127/fission-benchmark"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          sjkim1127/fission-benchmark
-        </a>
-      </footer>
-    </div>
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Diagnostics (non-ranking)</h2>
+        <p className={styles.sectionLead}>
+          Source similarity, AST proxies, and readability scores stay on row
+          detail for triage. They never rank tools. Human readability requires
+          the study pack in <code>benchmark/readability/</code>.
+        </p>
+      </section>
+    </SiteChrome>
   );
 }

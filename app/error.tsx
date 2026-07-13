@@ -1,14 +1,25 @@
 "use client";
 
-import styles from "./page.module.css";
+import Link from "next/link";
+import styles from "./dashboard.module.css";
 
 export default function ErrorState() {
   return (
-    <main className={styles.page}>
-      <section className={styles.errorState}>
-        <h1>No publishable benchmark result is currently available.</h1>
-        <p>The validation pipeline is under reconstruction. Unverified results are not displayed.</p>
-      </section>
-    </main>
+    <div className={styles.page}>
+      <main className={styles.main}>
+        <div className={styles.frame}>
+          <div className={styles.frameTitle}>
+            No publishable multi-decomp result available
+          </div>
+          <p className={styles.frameBody}>
+            The multi-decompiler page requires an official publishable envelope.
+            Layered Fission↔Ghidra parity may still load from telemetry alone.
+          </p>
+          <p className={styles.sectionLead} style={{ marginTop: "1rem" }}>
+            <Link href="/fission-vs-ghidra">Open Fission ↔ Ghidra parity →</Link>
+          </p>
+        </div>
+      </main>
+    </div>
   );
 }

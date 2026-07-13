@@ -22,6 +22,13 @@ A Python runner sends decompile requests in parallel, scores results against ori
 
 **Benchmark-first:** this repo’s primary job is measurement honesty, not shipping Fission features. See [docs/BENCHMARK_OPERATING.md](docs/BENCHMARK_OPERATING.md) for the operating guide and standard-set contract.
 
+**Dashboard (split):**
+
+| Route | Surface |
+|-------|---------|
+| `/` | Multi-decompiler quality (semantic ranking, same-function, grid) |
+| `/fission-vs-ghidra` | Fission ↔ Ghidra layered parity (shared p-code-class IR; not ranking) |
+
 ```
 Binary + Source (ground truth)
         ↓

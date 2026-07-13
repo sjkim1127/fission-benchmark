@@ -15,12 +15,16 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fission Benchmark Dashboard",
+  title: {
+    default: "Fission Benchmark",
+    template: "%s · Fission Benchmark",
+  },
   description:
-    "Multi-decompiler comparison benchmark: Fission vs Ghidra, angr, RetDec, Radare2, Snowman, rev.ng, Reko",
+    "Multi-decompiler semantic quality and Fission↔Ghidra layered parity (shared p-code-class IR).",
   openGraph: {
-    title: "Fission Benchmark Dashboard",
-    description: "Live benchmark results comparing Fission against leading open-source decompilers",
+    title: "Fission Benchmark",
+    description:
+      "Semantic multi-decompiler ranking + dedicated Fission vs Ghidra IR parity.",
     type: "website",
   },
 };

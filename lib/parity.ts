@@ -29,6 +29,11 @@ export type ParityPcodeDual = {
   opcode_sequence_match_rate?: number | null;
   loose_full_match_rate?: number | null;
   strict_full_match_rate?: number | null;
+  literal_full_match_rate?: number | null;
+  // CFG dual (reuses same bag on stage.dual)
+  mean_block_start_jaccard?: number | null;
+  mean_edge_pair_jaccard?: number | null;
+  // Function discovery dual
   mean_presence_recall?: number | null;
   mean_manifest_recall?: number | null;
   note?: string;

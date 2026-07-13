@@ -32,22 +32,35 @@ export type CrossVariantRow = {
 };
 
 export async function getLatestBenchmark(): Promise<BenchmarkEnvelope> {
-  // Intentionally NOT using Next.js data cache (next.tags) here because the raw
-  // JSON is ~18-25 MB and exceeds the 2 MB per-entry cache limit.
-  // ISR is instead applied at the route segment level via `export const revalidate`
-  // in page.tsx. The rendered HTML output is what gets cached, not the source data.
-  const res = await fetch(LATEST_URL, { cache: "no-store" });
-
-  if (!res.ok) {
-    throw new Error(`Failed to load benchmark data: ${res.status} ${res.statusText}`);
-  }
-
-  const raw: unknown = await res.json();
-  const envelope = BenchmarkEnvelopeSchema.parse(raw);
-  if (envelope.validity?.publishable !== true) {
-    throw new Error("Latest benchmark artifact is not a publishable official run");
+  const envelope = await getLatestBenchmarkOptional({ requirePublishable: true });
+  if (!envelope) {
+    throw new Error("Failed to load a publishable official benchmark envelope");
   }
   return envelope;
+}
+
+/**
+ * Load envelope without throwing. Parity page can still render telemetry when
+ * the multi-decomp artifact is missing or not yet publishable.
+ */
+export async function getLatestBenchmarkOptional(options?: {
+  requirePublishable?: boolean;
+}): Promise<BenchmarkEnvelope | null> {
+  // Intentionally NOT using Next.js data cache (next.tags) here because the raw
+  // JSON is ~18-25 MB and exceeds the 2 MB per-entry cache limit.
+  // ISR is instead applied at the route segment level via `export const revalidate`.
+  try {
+    const res = await fetch(LATEST_URL, { cache: "no-store" });
+    if (!res.ok) return null;
+    const raw: unknown = await res.json();
+    const envelope = BenchmarkEnvelopeSchema.parse(raw);
+    if (options?.requirePublishable !== false) {
+      if (envelope.validity?.publishable !== true) return null;
+    }
+    return envelope;
+  } catch {
+    return null;
+  }
 }
 
 function isAdapterFailure(row: BenchmarkEnvelope["rows"][number]): boolean {
@@ -260,4 +273,107 @@ export function getFunctionNames(rows: BenchmarkEnvelope["rows"]): string[] {
 /** Get rows for a specific function */
 export function getRowsForFunction(rows: BenchmarkEnvelope["rows"], fn: string) {
   return rows.filter((r) => r.function_name === fn);
+}
+
+export const CORE_DECOMPILERS = ["fission", "ghidra"] as const;
+
+export type SameFunctionToolStats = {
+  decompiler: string;
+  cohort: string | null;
+  sameFunctionRate: number | null;
+  sameFunctionLooseRate: number | null;
+  byStatus: Record<string, number>;
+};
+
+export type SameFunctionSummary = {
+  schema: string | null;
+  coreRate: number | null;
+  multiRate: number | null;
+  allRate: number | null;
+  coreLoose: number | null;
+  multiLoose: number | null;
+  byDecompiler: SameFunctionToolStats[];
+  addressAnchorRate: number | null;
+};
+
+/** MVP-0 same-function matrix from envelope.summary (if present). */
+export function getSameFunctionSummary(
+  data: BenchmarkEnvelope
+): SameFunctionSummary | null {
+  const raw = (data.summary?.mvp as { same_function?: Record<string, unknown> } | undefined)
+    ?.same_function;
+  if (!raw || typeof raw !== "object") return null;
+
+  const cohorts = (raw.cohorts || {}) as Record<
+    string,
+    {
+      same_function_rate?: number | null;
+      same_function_loose_rate?: number | null;
+    }
+  >;
+  const by = (raw.by_decompiler || {}) as Record<
+    string,
+    {
+      cohort?: string;
+      same_function_rate?: number | null;
+      same_function_loose_rate?: number | null;
+      by_status?: Record<string, number>;
+    }
+  >;
+  const totals = (raw.totals || {}) as {
+    address_anchor_rate?: number | null;
+  };
+
+  const byDecompiler: SameFunctionToolStats[] = Object.entries(by)
+    .map(([decompiler, s]) => ({
+      decompiler,
+      cohort: s.cohort ?? null,
+      sameFunctionRate:
+        s.same_function_rate === undefined || s.same_function_rate === null
+          ? null
+          : Number(s.same_function_rate),
+      sameFunctionLooseRate:
+        s.same_function_loose_rate === undefined || s.same_function_loose_rate === null
+          ? null
+          : Number(s.same_function_loose_rate),
+      byStatus: s.by_status ?? {},
+    }))
+    .sort((a, b) => {
+      if (a.decompiler === "fission") return -1;
+      if (b.decompiler === "fission") return 1;
+      if (a.decompiler === "ghidra") return -1;
+      if (b.decompiler === "ghidra") return 1;
+      return a.decompiler.localeCompare(b.decompiler);
+    });
+
+  return {
+    schema: typeof raw.schema === "string" ? raw.schema : null,
+    coreRate: cohorts.core?.same_function_rate ?? null,
+    multiRate: cohorts.multi?.same_function_rate ?? null,
+    allRate: cohorts.all?.same_function_rate ?? null,
+    coreLoose: cohorts.core?.same_function_loose_rate ?? null,
+    multiLoose: cohorts.multi?.same_function_loose_rate ?? null,
+    byDecompiler,
+    addressAnchorRate: totals.address_anchor_rate ?? null,
+  };
+}
+
+/** Filter MVP stats / rows to the Fission + Ghidra core pair. */
+export function filterCorePairStats(
+  stats: MvpDecompilerStats[]
+): MvpDecompilerStats[] {
+  const set = new Set<string>(CORE_DECOMPILERS);
+  return stats.filter((s) => set.has(s.decompiler));
+}
+
+export function filterCorePairRows(
+  rows: BenchmarkEnvelope["rows"]
+): BenchmarkEnvelope["rows"] {
+  const set = new Set<string>(CORE_DECOMPILERS);
+  return rows.filter((r) => set.has(r.decompiler));
+}
+
+export function pct(rate: number | null | undefined, digits = 1): string {
+  if (rate === null || rate === undefined || Number.isNaN(rate)) return "—";
+  return `${(rate * 100).toFixed(digits)}%`;
 }

@@ -160,7 +160,15 @@ python scripts/extract_golden_repros.py \
 python -m benchmark.golden_repros.run
 ```
 
-Dashboard panel: **Layered parity · Ghidra reference** (reads `/parity-telemetry.json`).
+### Dashboard IA (split surfaces)
+
+| Route | Purpose |
+|-------|---------|
+| `/` | **Multi-decompiler quality** — semantic ranking, coverage, same-function, per-function grid |
+| `/fission-vs-ghidra` | **Shared IR / layered parity** — Ghidra reference vs Fission (assembly, p-code dual, CFG, function discovery) |
+
+Do not mix IR match rates into multi-tool ranking. Parity telemetry is served from
+`public/parity-telemetry.json` (or remote fallback).
 
 ### Function discovery (function *finding*)
 
