@@ -29,13 +29,14 @@ def payload(*, functions=(0x1000,), block_size=0x100):
         ],
         "functions": [{"entry": entry} for entry in functions],
         "symbols": [{"address": 0x1000}],
-        "relocations": [{"address": 0x1020}],
+        "relocations": [{"address": 0x1020, "relocation_type": 10}],
     }
 
 
 def test_metadata_exact_match():
     row = compare_metadata(SUBJECT, "ghidra", "fission", payload(), payload())
     assert row.status == "match"
+    assert row.metrics["core_metadata_match"] == 1
     assert row.metrics["function_entry_jaccard"] == 1.0
 
 
@@ -55,3 +56,26 @@ def test_metadata_reports_first_structural_mismatch():
 def test_metadata_missing_schema_is_not_a_match():
     row = compare_metadata(SUBJECT, "ghidra", "fission", payload(), {})
     assert row.status == "candidate_empty"
+
+
+def test_metadata_ignores_pe_absolute_relocation_padding():
+    expected = payload()
+    expected["relocations"].append(
+        {"address": 0x2000, "relocation_type": 0}
+    )
+
+    row = compare_metadata(SUBJECT, "ghidra", "fission", expected, payload())
+    assert row.status == "match"
+    assert row.metrics["ref_relocations"] == 1
+
+
+def test_symbol_coverage_does_not_hide_core_metadata_parity():
+    expected = payload()
+    expected["symbols"].append({"address": 0x1030})
+
+    row = compare_metadata(SUBJECT, "ghidra", "fission", expected, payload())
+    assert row.status == "mismatch"
+    assert row.mismatch_kind == "symbol_addresses"
+    assert row.metrics["core_metadata_match"] == 1
+    assert row.metrics["symbol_reference_recall"] == 0.5
+    assert row.metrics["symbol_candidate_precision"] == 1.0

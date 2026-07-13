@@ -60,6 +60,14 @@ def _address_keys(payload: object, table: str, field: str) -> set[int]:
     return {_as_int(row.get(field)) for row in _rows(payload, table)}
 
 
+def _relocation_address_keys(payload: object) -> set[int]:
+    return {
+        _as_int(row.get("address"))
+        for row in _rows(payload, "relocations")
+        if _as_int(row.get("relocation_type")) != 0
+    }
+
+
 def _binary_identity(payload: object) -> tuple[int, int, str]:
     binary = payload.get("binary") if isinstance(payload, dict) else {}
     binary = binary if isinstance(binary, dict) else {}
@@ -112,11 +120,17 @@ def compare_metadata(
     cand_functions = _address_keys(actual, "functions", "entry")
     ref_symbols = _address_keys(expected, "symbols", "address")
     cand_symbols = _address_keys(actual, "symbols", "address")
-    ref_relocations = _address_keys(expected, "relocations", "address")
-    cand_relocations = _address_keys(actual, "relocations", "address")
+    ref_relocations = _relocation_address_keys(expected)
+    cand_relocations = _relocation_address_keys(actual)
     shared_functions = len(ref_functions & cand_functions)
     shared_symbols = len(ref_symbols & cand_symbols)
     shared_relocations = len(ref_relocations & cand_relocations)
+    core_metadata_match = (
+        ref_identity == cand_identity
+        and ref_blocks == cand_blocks
+        and ref_functions == cand_functions
+        and ref_relocations == cand_relocations
+    )
 
     comparisons = (
         ("binary_identity", ref_identity == cand_identity),
@@ -138,6 +152,7 @@ def compare_metadata(
         expected=expected,
         actual=actual,
         metrics={
+            "core_metadata_match": int(core_metadata_match),
             "binary_identity_match": int(ref_identity == cand_identity),
             "memory_block_jaccard": jaccard(ref_blocks, cand_blocks),
             "memory_block_start_permission_jaccard": jaccard(
@@ -157,6 +172,11 @@ def compare_metadata(
             "symbol_address_jaccard": jaccard(ref_symbols, cand_symbols),
             "symbol_reference_recall": round(shared_symbols / len(ref_symbols), 4)
             if ref_symbols
+            else 1.0,
+            "symbol_candidate_precision": round(
+                shared_symbols / len(cand_symbols), 4
+            )
+            if cand_symbols
             else 1.0,
             "relocation_address_jaccard": jaccard(ref_relocations, cand_relocations),
             "relocation_reference_recall": round(
