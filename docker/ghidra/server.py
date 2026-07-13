@@ -4,12 +4,17 @@ Performance features for layered parity:
   1. Persistent project cache (no -deleteProject) keyed by path + content fingerprint.
   2. /parity_bundle — one headless run emits disasm+pcode+cfg.
   3. In-process result cache for repeated (content, mode, addr) hits.
+  4. [FAST PATH] pyghidra persistent JVM: JVM is started once at server startup
+     and reused for all subsequent requests, eliminating 4-5s per-request
+     JVM startup overhead. Falls back to subprocess analyzeHeadless if pyghidra
+     is unavailable or raises an unexpected error.
 """
 from __future__ import annotations
 
 import base64
 import hashlib
 import json
+import logging
 import os
 import subprocess
 import tempfile
@@ -21,13 +26,32 @@ from typing import List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-app = FastAPI(title="ghidra-decompiler", version="1.2")
+app = FastAPI(title="ghidra-decompiler", version="1.3")
 GHIDRA_HOME = Path("/opt/ghidra")
 GHIDRA_HEADLESS = GHIDRA_HOME / "support" / "analyzeHeadless"
 SCRIPT_DIR = Path("/opt/ghidra_scripts")
 BATCH_MARKER = "===BATCH_RESULT==="
 PROJECT_CACHE = Path(os.environ.get("GHIDRA_PROJECT_CACHE", "/var/cache/ghidra-projects"))
 PROJECT_CACHE.mkdir(parents=True, exist_ok=True)
+
+# ── pyghidra persistent JVM ───────────────────────────────────────────────────
+# If GHIDRA_USE_PYGHIDRA=0 is set, disable the fast path entirely.
+_USE_PYGHIDRA = os.environ.get("GHIDRA_USE_PYGHIDRA", "1") not in {"0", "false", "no"}
+_pyghidra_ready = False  # set to True once JVM is successfully started
+_pyghidra_lock = threading.Lock()  # serialize program-open calls
+_pyghidra_error: str | None = None  # non-None if startup failed permanently
+
+if _USE_PYGHIDRA:
+    try:
+        import pyghidra as _pyghidra  # type: ignore[import]
+        _PYGHIDRA_AVAILABLE = True
+    except ImportError:
+        _PYGHIDRA_AVAILABLE = False
+        logging.warning("pyghidra not installed — using subprocess fallback")
+else:
+    _PYGHIDRA_AVAILABLE = False
+
+# ─────────────────────────────────────────────────────────────────────────────
 
 # Concurrent analyzeHeadless is safe for *different* project keys (one PE each).
 # Cap total JVM headless processes; serialize same-project work to avoid import races.
@@ -52,6 +76,92 @@ def _project_lock(project_name: str) -> threading.Lock:
             lock = threading.Lock()
             _PROJECT_LOCKS[project_name] = lock
         return lock
+
+
+@app.on_event("startup")
+def _startup_pyghidra() -> None:
+    """Start the persistent JVM once at server startup.
+
+    Runs in a background thread so uvicorn starts accepting HTTP requests
+    immediately while Ghidra initialises (avoids Docker health-check timeouts).
+    """
+    global _pyghidra_ready, _pyghidra_error  # noqa: PLW0603
+    if not _PYGHIDRA_AVAILABLE:
+        return
+
+    def _init():
+        global _pyghidra_ready, _pyghidra_error  # noqa: PLW0603
+        try:
+            logging.info("[pyghidra] Starting persistent JVM (install_dir=%s)…", GHIDRA_HOME)
+            _pyghidra.start(install_dir=GHIDRA_HOME)
+            _pyghidra_ready = True
+            logging.info("[pyghidra] JVM ready — fast path active")
+        except Exception as exc:  # noqa: BLE001
+            _pyghidra_error = str(exc)
+            logging.warning("[pyghidra] JVM startup failed (%s) — subprocess fallback active", exc)
+
+    threading.Thread(target=_init, daemon=True, name="pyghidra-init").start()
+
+
+def _run_via_pyghidra(binary_path: str, mode: str, addr: str = "") -> object | None:
+    """Fast path: run ExportParity.java in the persistent JVM (no subprocess).
+
+    Captures the ===RESULT=== line that ExportParity prints to System.out
+    and returns the parsed JSON. Returns None on any failure so the caller
+    falls back to subprocess analyzeHeadless.
+    """
+    if not _PYGHIDRA_AVAILABLE or not _pyghidra_ready:
+        return None
+
+    try:
+        import jpype  # type: ignore[import]
+
+        # Redirect Java System.out to a ByteArrayOutputStream so we can capture
+        # the ===RESULT=== line from ExportParity.java without subprocess.
+        PrintStream = jpype.JClass("java.io.PrintStream")  # type: ignore[attr-defined]
+        ByteArrayOutputStream = jpype.JClass("java.io.ByteArrayOutputStream")  # type: ignore[attr-defined]
+        baos = ByteArrayOutputStream()
+        ps = PrintStream(baos)
+        original_out = jpype.java.lang.System.out  # type: ignore[attr-defined]
+
+        script_args = [mode, addr] if addr else [mode]
+
+        with _pyghidra_lock:
+            try:
+                jpype.java.lang.System.setOut(ps)  # type: ignore[attr-defined]
+                _pyghidra.run_script(
+                    binary_path,
+                    str(SCRIPT_DIR / "ExportParity.java"),
+                    project_location=str(PROJECT_CACHE),
+                    project_name=f"bin_{_project_key(binary_path)}",
+                    script_args=script_args,
+                    analyze=not _project_exists(f"bin_{_project_key(binary_path)}"),
+                )
+            finally:
+                jpype.java.lang.System.setOut(original_out)  # type: ignore[attr-defined]
+                captured = str(baos.toString("UTF-8"))
+
+        # Parse ===RESULT=== from captured output
+        for line in captured.splitlines():
+            idx = line.find("===RESULT===")
+            if idx < 0:
+                continue
+            payload = line[idx + len("===RESULT==="):].strip()
+            if payload.endswith("(GhidraScript)"):
+                payload = payload[: -len("(GhidraScript)")].strip()
+            try:
+                res = json.loads(payload)
+                if isinstance(res, dict) and "error" in res:
+                    return None  # let subprocess handle errors
+                return res
+            except json.JSONDecodeError:
+                return None
+
+        return None  # ===RESULT=== not found
+    except Exception as exc:  # noqa: BLE001
+        logging.debug("[pyghidra fast path] %s — falling back to subprocess", exc)
+        return None
+
 
 
 class DecompileRequest(BaseModel):
@@ -176,7 +286,18 @@ def _safe_program_name(binary_path: str) -> str:
 
 
 def _run_headless_parity(binary_path: str, mode: str, addr: str = "") -> object:
-    """Run ExportParity with persistent project cache (no -deleteProject)."""
+    """Run ExportParity — tries pyghidra persistent JVM first, then subprocess.
+
+    Fast path: _run_via_pyghidra reuses the JVM started at server startup,
+    eliminating ~4-5s JVM cold-start overhead per request.
+    Slow path (fallback): subprocess analyzeHeadless (original behaviour).
+    """
+    # ── Fast path: persistent JVM ──────────────────────────────────────────
+    fast = _run_via_pyghidra(binary_path, mode, addr)
+    if fast is not None:
+        return fast
+    # ── Slow path: subprocess analyzeHeadless ──────────────────────────────
+
     project_name = f"bin_{_project_key(binary_path)}"
     program_name = _safe_program_name(binary_path)
     exists = _project_exists(project_name) or project_name in _IMPORTED_PROJECTS
@@ -347,6 +468,12 @@ def health():
             "bundle_endpoint": "/parity_bundle",
             "headless_workers": _HEADLESS_WORKERS,
             "cache_key": "path+content_fingerprint",
+        },
+        "pyghidra": {
+            "available": _PYGHIDRA_AVAILABLE,
+            "ready": _pyghidra_ready,
+            "fast_path_active": _PYGHIDRA_AVAILABLE and _pyghidra_ready,
+            "error": _pyghidra_error,
         },
     }
 
