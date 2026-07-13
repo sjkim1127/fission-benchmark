@@ -29,6 +29,11 @@ services:
       dockerfile: docker/oracle/Dockerfile
     platform: linux/amd64
     ports: ["8010:8000"]
+    # Always use the checkout's harness (rename/types/sanitize). The image COPY
+    # of runner/ is only a bootstrap — without this mount, CI pulls a stale
+    # ghcr oracle and multi-decomp compile floors never move after harness fixes.
+    volumes:
+      - ./runner:/app/runner:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s

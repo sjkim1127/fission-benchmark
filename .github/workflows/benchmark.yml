@@ -163,6 +163,11 @@ jobs:
           CHANGED_SERVICES=""
           if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
             CHANGED_SERVICES="$(git diff --name-only HEAD~1 HEAD | awk -F/ '/^docker\// {print $2}' | sort -u | tr '\n' ' ')"
+            # Oracle bakes runner/ at image build time; harness-only commits must
+            # not silently keep a stale ghcr oracle (even with volume mount).
+            if git diff --name-only HEAD~1 HEAD | grep -Eq '^runner/(differential_oracle|semantic)\.py$|^docker-compose\.yml$'; then
+              CHANGED_SERVICES="$(printf '%s oracle\n' "$CHANGED_SERVICES" | tr ' ' '\n' | sed '/^$/d' | sort -u | tr '\n' ' ')"
+            fi
             echo "Docker services changed in this push: ${CHANGED_SERVICES:-<none>}"
           fi
           mkdir -p /tmp/img-status

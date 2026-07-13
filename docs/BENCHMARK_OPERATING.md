@@ -213,6 +213,19 @@ Other push-path speedups (no quality gate regression):
 
 Official/full runs are unchanged: no subject caps, same reliability thresholds.
 
+### Oracle harness freshness
+
+The differential oracle image bakes `runner/` at build time, but compose **bind-mounts**
+`./runner → /app/runner` so harness fixes (`differential_oracle.py`, `semantic.py`)
+apply on the next Benchmark run without waiting for ghcr republish. Publish-images
+still rebuilds `oracle` when those files change; Benchmark also force-rebuilds
+oracle locally when the same paths (or `docker-compose.yml`) change on push.
+
+If multi-tool rows show mass `compile_error` with errors like
+`unknown type name 'word32'` or `undefined reference to oracle_candidate_*`
+after a harness fix, the run used a **stale oracle** (pre-mount race). Re-run
+Benchmark; do not treat that as decompiler quality.
+
 ### Function discovery (function *finding*)
 
 Primary layered stage: **whole-binary function inventory** (`GET /functions`).
