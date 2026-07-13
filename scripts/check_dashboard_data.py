@@ -66,6 +66,7 @@ def evaluate_envelope(
     source: str,
     min_rows: int,
     require_valid: bool,
+    min_decompilers: int = 1,
 ) -> list[str]:
     """Return error strings if envelope is not displayable."""
     errors: list[str] = []
@@ -85,12 +86,20 @@ def evaluate_envelope(
             f"{source}: validity.valid is not true "
             f"(publishable={validity.get('publishable')}, reasons={validity.get('reasons')})"
         )
-    # Must have at least one decompiler name for multi UI tables.
-    if n > 0:
-        tools = {str(r.get("decompiler") or "") for r in rows if isinstance(r, dict)}
-        tools.discard("")
-        if not tools:
-            errors.append(f"{source}: rows present but no decompiler fields")
+    tools = {
+        str(r.get("decompiler") or "")
+        for r in rows
+        if isinstance(r, dict) and r.get("decompiler")
+    }
+    tools.discard("")
+    if n > 0 and not tools:
+        errors.append(f"{source}: rows present but no decompiler fields")
+    if min_decompilers > 1 and len(tools) < min_decompilers:
+        errors.append(
+            f"{source}: decompilers={sorted(tools)} count={len(tools)} "
+            f"< min_decompilers={min_decompilers} "
+            f"(dashboard would hide most backends — re-run multi-decomp and update envelope)"
+        )
     return errors
 
 
@@ -131,6 +140,15 @@ def main(argv: list[str] | None = None) -> int:
         default=True,
         help="Require a local display source under the repo (default true)",
     )
+    parser.add_argument(
+        "--min-decompilers",
+        type=int,
+        default=1,
+        help=(
+            "Minimum distinct decompiler names in rows (default 1). "
+            "Set to 8+ so fission+ghidra-only envelopes fail CI."
+        ),
+    )
     args = parser.parse_args(argv)
 
     root: Path = args.root
@@ -146,6 +164,7 @@ def main(argv: list[str] | None = None) -> int:
             source=rel,
             min_rows=args.min_rows,
             require_valid=args.require_valid,
+            min_decompilers=args.min_decompilers,
         )
         if errs:
             for e in errs:
@@ -153,10 +172,17 @@ def main(argv: list[str] | None = None) -> int:
             continue
         rows = data.get("rows") or []
         validity = data.get("validity") or {}
+        tools = sorted(
+            {
+                str(r.get("decompiler"))
+                for r in rows
+                if isinstance(r, dict) and r.get("decompiler")
+            }
+        )
         print(
-            f"OK local {rel}: rows={len(rows)} "
+            f"OK local {rel}: rows={len(rows)} tools={len(tools)} "
             f"valid={validity.get('valid')} publishable={validity.get('publishable')} "
-            f"corpus={(data.get('run') or {}).get('corpus')}"
+            f"corpus={(data.get('run') or {}).get('corpus')} decompilers={tools}"
         )
         local_hits.append((rel, data))
 
@@ -172,6 +198,7 @@ def main(argv: list[str] | None = None) -> int:
                 source=url,
                 min_rows=args.min_rows,
                 require_valid=args.require_valid,
+                min_decompilers=args.min_decompilers,
             )
             if errs:
                 for e in errs:
@@ -179,9 +206,17 @@ def main(argv: list[str] | None = None) -> int:
                 continue
             rows = data.get("rows") or []
             validity = data.get("validity") or {}
+            tools = sorted(
+                {
+                    str(r.get("decompiler"))
+                    for r in rows
+                    if isinstance(r, dict) and r.get("decompiler")
+                }
+            )
             print(
-                f"OK remote {url.split('/')[-1]}: rows={len(rows)} "
-                f"valid={validity.get('valid')} publishable={validity.get('publishable')}"
+                f"OK remote {url.split('/')[-1]}: rows={len(rows)} tools={len(tools)} "
+                f"valid={validity.get('valid')} publishable={validity.get('publishable')} "
+                f"decompilers={tools}"
             )
             remote_hits.append((url, data))
 

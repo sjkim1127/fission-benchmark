@@ -483,26 +483,34 @@ Path("results/holdout_latest.json").write_text(
           # Repo must always ship a displayable envelope for Vercel.
           python scripts/check_dashboard_data.py \
             --min-rows 1 \
+            --min-decompilers 8 \
             --require-valid \
             --require-local \
             --check-remote
-          # Fresh smoke/official output (when present) must also be non-empty.
+          # Fresh smoke/official output (when present) must be multi-tool + non-empty.
           if [ -f results/dev_latest.json ]; then
-            # Explicit file check for this run's dev artifact
             python - <<'PY'
           import json, sys
           from pathlib import Path
           p = Path("results/dev_latest.json")
           d = json.loads(p.read_text())
-          n = len(d.get("rows") or [])
+          rows = d.get("rows") or []
+          n = len(rows)
           valid = (d.get("validity") or {}).get("valid")
+          tools = sorted({str(r.get("decompiler")) for r in rows if r.get("decompiler")})
           if n < 1:
               print(f"FAIL this-run dev_latest has rows={n}", file=sys.stderr)
               sys.exit(1)
           if valid is not True:
               print(f"FAIL this-run dev_latest valid={valid}", file=sys.stderr)
               sys.exit(1)
-          print(f"OK this-run dev_latest rows={n} valid={valid}")
+          if len(tools) < 8:
+              print(
+                  f"FAIL this-run dev_latest tools={tools} (need multi-decompilers, not core-only)",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+          print(f"OK this-run dev_latest rows={n} valid={valid} tools={tools}")
           PY
           fi
 
@@ -537,8 +545,71 @@ Path("results/holdout_latest.json").write_text(
             docs/
           if-no-files-found: warn
 
+      # -----------------------------------------------------------------------
+      # Dashboard display envelope — always refresh multi-decomp UI data when
+      # measurement is valid, even if not fully publishable. This is what Vercel
+      # loads (results/dev_latest.json fallback). Without this step operators
+      # must manually re-run multi-decomp and force-add the JSON.
+      # -----------------------------------------------------------------------
+      - name: Update dashboard multi-decomp envelope
+        id: dashboard-envelope
+        if: >-
+          always() &&
+          steps.fission-gate.outcome == 'success' &&
+          env.MEASUREMENT_VALID == 'true'
+        run: |
+          set -euo pipefail
+          test -f results/dev_latest.json
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from collections import Counter
+          from runner.standard_summary import attach_summary_to_envelope
+
+          path = Path("results/dev_latest.json")
+          env = json.loads(path.read_text(encoding="utf-8"))
+          attach_summary_to_envelope(env)
+          path.write_text(json.dumps(env, indent=2) + "\n", encoding="utf-8")
+
+          rows = env.get("rows") or []
+          tools = sorted({str(r.get("decompiler")) for r in rows if r.get("decompiler")})
+          print(f"dashboard envelope rows={len(rows)} tools={len(tools)} {tools}")
+          if len(tools) < 2:
+              raise SystemExit(
+                  f"FAIL dashboard envelope has only {tools} — expected multi-decompilers "
+                  f"(check BENCHMARK_DECOMPILERS={__import__('os').environ.get('BENCHMARK_DECOMPILERS')!r})"
+              )
+          # Seed public/ for same-origin Vercel fetch (optional but preferred).
+          public = Path("public/benchmark-latest.json")
+          public.parent.mkdir(parents=True, exist_ok=True)
+          public.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+          print(f"Wrote {public} ({public.stat().st_size} bytes)")
+          PY
+
+          # Gate: multi-tool display data required (not fission+ghidra only).
+          python scripts/check_dashboard_data.py \
+            --min-rows 1 \
+            --min-decompilers 8 \
+            --require-valid \
+            --require-local
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase --autostash origin main || true
+          git add -f results/dev_latest.json public/benchmark-latest.json
+          if git diff --staged --quiet; then
+            echo "Dashboard envelope unchanged — no commit"
+            echo "committed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "chore: refresh multi-decomp dashboard envelope [skip ci]"
+            git push
+            echo "committed=true" >> "$GITHUB_OUTPUT"
+            echo "OK committed multi-decomp dashboard envelope"
+          fi
+
       - name: Commit results
-        # Do not commit results from an invalid run, failed reliability gate, or non-publishable run.
+        # Full publication artifacts only (publishable official path).
         if: >-
           steps.publish-mode.outputs.should_publish == 'true' &&
           steps.fission-gate.outcome == 'success' &&
@@ -547,7 +618,7 @@ Path("results/holdout_latest.json").write_text(
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git pull --rebase --autostash origin main
-          git add -f results/ docs/ public/parity-telemetry.json
+          git add -f results/ docs/ public/parity-telemetry.json public/benchmark-latest.json
           git diff --staged --quiet || git commit -m "chore: update benchmark results [skip ci]"
           git push
 

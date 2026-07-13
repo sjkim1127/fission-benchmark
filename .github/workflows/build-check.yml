@@ -109,10 +109,11 @@ jobs:
       - name: Dashboard must have non-empty multi-decomp data
         run: |
           set -euo pipefail
-          # Fail if the deployed Next.js multi-decomp pages would render empty.
+          # Fail if multi-decomp UI would be empty or fission+ghidra-only.
           # Prefer tracked results/dev_latest.json (or public/benchmark-latest.json).
           python scripts/check_dashboard_data.py \
             --min-rows 1 \
+            --min-decompilers 8 \
             --require-valid \
             --require-local \
             --check-remote

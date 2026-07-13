@@ -173,16 +173,26 @@ python -m benchmark.golden_repros.run
 Do not mix IR match rates into multi-tool ranking. Parity telemetry is served from
 `public/parity-telemetry.json` (or remote fallback).
 
-**Empty multi-decomp UI is a CI failure.** Gate:
+**Empty / core-only multi-decomp UI is a CI failure.** Gate:
 
 ```bash
-python scripts/check_dashboard_data.py --min-rows 1 --require-valid --check-remote
+python scripts/check_dashboard_data.py \
+  --min-rows 1 --min-decompilers 8 --require-valid --check-remote
 ```
 
 Requires a displayable envelope in
 `public/benchmark-latest.json` **or** `results/latest.json` **or**
-`results/dev_latest.json` (rows ≥ 1, `validity.valid=true`). Publishable is
-not required for smoke display; empty is never allowed on main.
+`results/dev_latest.json` (rows ≥ 1, `validity.valid=true`, **≥ 8 decompilers**).
+Publishable is not required for smoke display; empty or fission+ghidra-only is
+never allowed on main.
+
+**CI auto-refresh (no manual multi re-run):** on every successful measurement
+(`MEASUREMENT_VALID=true`), Benchmark & Deploy:
+
+1. Runs the full `BENCHMARK_DECOMPILERS` list (includes retdec, etc.)
+2. Attaches `summary.mvp.same_function`
+3. Commits `results/dev_latest.json` + `public/benchmark-latest.json` with
+   `[skip ci]` so Vercel picks up multi-tool tables without a local force-add
 
 ### Function discovery (function *finding*)
 

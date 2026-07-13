@@ -68,6 +68,19 @@ def test_evaluate_envelope_empty_rows():
     assert any("rows=0" in e for e in errs)
 
 
+def test_evaluate_envelope_min_decompilers():
+    mod = _load_mod()
+    # single-tool envelope fails multi requirement
+    errs = mod.evaluate_envelope(
+        _envelope(5, True),
+        source="t",
+        min_rows=1,
+        require_valid=True,
+        min_decompilers=8,
+    )
+    assert any("min_decompilers" in e for e in errs)
+
+
 def test_main_fails_without_local_data(tmp_path: Path):
     mod = _load_mod()
     # empty root — no results/
