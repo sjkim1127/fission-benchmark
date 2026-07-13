@@ -25,6 +25,7 @@ DEFAULT_PORTS: dict[str, int] = {
     "snowman": int(os.environ.get("SNOWMAN_HOST_PORT", "8005")),
     "revng": int(os.environ.get("REVNG_HOST_PORT", "8006")),
     "reko": int(os.environ.get("REKO_HOST_PORT", "8008")),
+    "retdec": int(os.environ.get("RETDEC_HOST_PORT", "8009")),
 }
 
 _FISSION_PORT_PROBED = False

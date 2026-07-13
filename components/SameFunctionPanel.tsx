@@ -11,6 +11,7 @@ const COLORS: Record<string, string> = {
   snowman: "#8b5cf6",
   revng: "#f97316",
   reko: "#06b6d4",
+  retdec: "#a78bfa",
 };
 
 export function SameFunctionPanel({

@@ -38,7 +38,7 @@ Binary + Source (ground truth)
 ┌──────────────────────────────────────────────────────────────┐
 │  runner.py  (parallel httpx requests)                        │
 │  Fission :8000 · Ghidra :8001 · Boomerang :8002 · Radare2 :8003 │
-│  angr :8004 · Snowman :8005 · rev.ng :8006 · Reko :8008         │
+│  angr :8004 · Snowman :8005 · rev.ng :8006 · Reko :8008 · RetDec :8009 │
 └──────────────────────────────┬───────────────────────────────┘
                                │
                      ↓
@@ -140,7 +140,7 @@ python runner/runner.py --corpus dev --decompilers fission,ghidra
 
 # Full core decompiler set
 python runner/runner.py --corpus dev \
-  --decompilers fission,ghidra,boomerang,radare2,angr,snowman,revng,reko
+  --decompilers fission,ghidra,boomerang,radare2,angr,snowman,revng,reko,retdec
 
 # Skip a specific decompiler via environment variable
 FISSION_ENDPOINT=skip python runner/runner.py --corpus dev
@@ -243,7 +243,8 @@ fission-benchmark/
 │   ├── angr/        angr decompiler + FastAPI
 │   ├── snowman/     Snowman/nocode + FastAPI
 │   ├── revng/       rev.ng + FastAPI
-│   └── reko/        Reko + FastAPI
+│   ├── reko/        Reko + FastAPI
+│   └── retdec/      RetDec v5 + FastAPI
 ├── runner/
 │   ├── runner.py         Candidate-run orchestrator (--corpus, --run-mode)
 │   ├── corpus.py         Corpus management + holdout split
@@ -342,6 +343,7 @@ debugging with `*_ENDPOINT=skip` or by passing a narrower `--decompilers` list.
 | `snowman` | 8005 | Uses `nocode`; legacy baseline, amd64-only |
 | `revng` | 8006 | Uses `decompile-to-single-file`; whole-program oriented |
 | `reko` | 8008 | Reko decompiler |
+| `retdec` | 8009 | RetDec v5 (range-comment slice + address anchors) |
 
 Hosted CI runs the full core set by default and pulls prebuilt GHCR images when
 available before falling back to local builds.

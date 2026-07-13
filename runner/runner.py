@@ -144,6 +144,7 @@ def configured_decompilers() -> dict[str, str]:
         "snowman":   os.environ.get("SNOWMAN_ENDPOINT",   "http://localhost:8005"),
         "revng":     os.environ.get("REVNG_ENDPOINT",     "http://localhost:8006"),
         "reko":      os.environ.get("REKO_ENDPOINT",      "http://localhost:8008"),
+        "retdec":    os.environ.get("RETDEC_ENDPOINT",    "http://localhost:8009"),
     }
     # Exclude any endpoint explicitly set to "skip".
     return {k: v for k, v in defaults.items() if v.lower() != "skip"}
