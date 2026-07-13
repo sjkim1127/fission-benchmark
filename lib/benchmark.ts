@@ -31,6 +31,11 @@ export type CrossVariantRow = {
   perfect_rows: number;
 };
 
+/**
+ * Strict loader for call sites that already handle missing data.
+ * Prefer {@link getLatestBenchmarkOptional} on pages — never throw during
+ * Next.js prerender/export (Vercel build has no publishable envelope yet).
+ */
 export async function getLatestBenchmark(): Promise<BenchmarkEnvelope> {
   const envelope = await getLatestBenchmarkOptional({ requirePublishable: true });
   if (!envelope) {

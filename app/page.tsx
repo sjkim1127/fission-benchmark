@@ -1,9 +1,13 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { getLatestBenchmark, groupByDecompiler } from "@/lib/benchmark";
+import {
+  getLatestBenchmarkOptional,
+  groupByDecompiler,
+} from "@/lib/benchmark";
 import { SiteChrome } from "@/components/SiteChrome";
 import { ValidityBanner } from "@/components/ValidityBanner";
 import { SummaryTable } from "@/components/SummaryTable";
+import { UnavailableData } from "@/components/UnavailableData";
 import {
   MetaStrip,
   SameFunctionOverviewTiles,
@@ -21,12 +25,21 @@ export const metadata = {
 };
 
 async function BannerSection() {
-  const data = await getLatestBenchmark();
+  const data = await getLatestBenchmarkOptional({ requirePublishable: true });
+  if (!data) return null;
   return <ValidityBanner validity={data.validity} run={data.run} />;
 }
 
 async function SummarySection() {
-  const data = await getLatestBenchmark();
+  const data = await getLatestBenchmarkOptional({ requirePublishable: true });
+  if (!data) {
+    return (
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>MVP · Semantic ranking</h2>
+        <UnavailableData />
+      </section>
+    );
+  }
   const stats = groupByDecompiler(data);
   return (
     <section className={styles.section}>

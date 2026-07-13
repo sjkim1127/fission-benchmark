@@ -1,8 +1,12 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { getLatestBenchmark, getFunctionNames } from "@/lib/benchmark";
+import {
+  getLatestBenchmarkOptional,
+  getFunctionNames,
+} from "@/lib/benchmark";
 import { SiteChrome } from "@/components/SiteChrome";
 import { FunctionGrid } from "@/components/FunctionGrid";
+import { UnavailableData } from "@/components/UnavailableData";
 import {
   MetaStrip,
   SkeletonMeta,
@@ -19,7 +23,10 @@ export const metadata = {
 };
 
 async function GridSection() {
-  const data = await getLatestBenchmark();
+  const data = await getLatestBenchmarkOptional({ requirePublishable: true });
+  if (!data) {
+    return <UnavailableData title="Per-function grid unavailable" />;
+  }
   const functionNames = getFunctionNames(data.rows);
   return (
     <section className={styles.section}>

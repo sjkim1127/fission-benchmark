@@ -1,5 +1,5 @@
 import {
-  getLatestBenchmark,
+  getLatestBenchmarkOptional,
   groupByDecompiler,
   getFunctionNames,
   pct,
@@ -35,7 +35,29 @@ export function SkeletonSection({ rows = 4 }: { rows?: number }) {
 }
 
 export async function MetaStrip() {
-  const data = await getLatestBenchmark();
+  const data = await getLatestBenchmarkOptional({ requirePublishable: true });
+  if (!data) {
+    return (
+      <div className={styles.heroMeta}>
+        <span className={styles.metaItem}>
+          <span className={styles.metaLabel}>Status</span>
+          <span className={styles.metaValue}>no publishable run</span>
+        </span>
+        <span className={styles.metaItem}>
+          <span className={styles.metaLabel}>Corpus</span>
+          <code className={styles.metaValue}>—</code>
+        </span>
+        <span className={styles.metaItem}>
+          <span className={styles.metaLabel}>Functions</span>
+          <span className={styles.metaValue}>—</span>
+        </span>
+        <span className={styles.metaItem}>
+          <span className={styles.metaLabel}>Decompilers</span>
+          <span className={styles.metaValue}>—</span>
+        </span>
+      </div>
+    );
+  }
   const functionNames = getFunctionNames(data.rows);
   const stats = groupByDecompiler(data);
   const corpus = data.run?.corpus ?? "dev";
@@ -70,7 +92,14 @@ export async function MetaStrip() {
 
 /** Compact same-function cohort tiles for the overview hub. */
 export async function SameFunctionOverviewTiles() {
-  const data = await getLatestBenchmark();
+  const data = await getLatestBenchmarkOptional({ requirePublishable: true });
+  if (!data) {
+    return (
+      <p className={styles.sectionLead}>
+        Same-function snapshot unavailable until a publishable run is published.
+      </p>
+    );
+  }
   const sameFn = getSameFunctionSummary(data);
   if (!sameFn) {
     return (

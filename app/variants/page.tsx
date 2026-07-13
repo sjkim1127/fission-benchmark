@@ -1,8 +1,12 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { getLatestBenchmark, getCrossVariantRows } from "@/lib/benchmark";
+import {
+  getLatestBenchmarkOptional,
+  getCrossVariantRows,
+} from "@/lib/benchmark";
 import { SiteChrome } from "@/components/SiteChrome";
 import { CrossVariantTable } from "@/components/CrossVariantTable";
+import { UnavailableData } from "@/components/UnavailableData";
 import {
   MetaStrip,
   SkeletonMeta,
@@ -19,7 +23,10 @@ export const metadata = {
 };
 
 async function VariantsSection() {
-  const data = await getLatestBenchmark();
+  const data = await getLatestBenchmarkOptional({ requirePublishable: true });
+  if (!data) {
+    return <UnavailableData title="Variant table unavailable" />;
+  }
   const rows = getCrossVariantRows(data);
   return (
     <section className={styles.section}>

@@ -1,8 +1,12 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { getLatestBenchmark, getSameFunctionSummary } from "@/lib/benchmark";
+import {
+  getLatestBenchmarkOptional,
+  getSameFunctionSummary,
+} from "@/lib/benchmark";
 import { SiteChrome } from "@/components/SiteChrome";
 import { SameFunctionPanel } from "@/components/SameFunctionPanel";
+import { UnavailableData } from "@/components/UnavailableData";
 import {
   MetaStrip,
   SkeletonMeta,
@@ -19,7 +23,10 @@ export const metadata = {
 };
 
 async function MatrixSection() {
-  const data = await getLatestBenchmark();
+  const data = await getLatestBenchmarkOptional({ requirePublishable: true });
+  if (!data) {
+    return <UnavailableData title="Same-function matrix unavailable" />;
+  }
   const sameFn = getSameFunctionSummary(data);
   return (
     <section className={styles.section}>
