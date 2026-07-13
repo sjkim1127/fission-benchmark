@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import struct
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Union
 
 from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
 import pefile

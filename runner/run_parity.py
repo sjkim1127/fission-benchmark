@@ -14,7 +14,7 @@ import requests
 
 from benchmark.assembly_parity.run import compare_assembly
 from benchmark.cfg_parity.run import compare_cfg
-from benchmark.function_discovery.run import compare_functions, function_addresses
+from benchmark.function_discovery.run import compare_functions
 from benchmark.ir_invariants.run import compare_invariants
 from benchmark.pcode_parity.run import compare_pcode
 from benchmark.telemetry.aggregate import aggregate_rows
@@ -674,6 +674,7 @@ def run_parity_benchmarks(
                         scored_as="ghidra_inventory",
                     )
                     results.append(row)
+                    metrics = row.metrics or {}
                     print(
                         f"  function_discovery ghidra→{decompiler}: "
                         f"{row.status} ({row.mismatch_kind or 'ok'}) "

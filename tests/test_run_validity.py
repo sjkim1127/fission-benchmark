@@ -3,7 +3,6 @@
 Run with: pytest tests/test_run_validity.py -v
 """
 import json
-from pathlib import Path
 
 import pytest
 

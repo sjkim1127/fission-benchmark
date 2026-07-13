@@ -5,7 +5,7 @@ import re
 import subprocess
 import tempfile
 import time
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel

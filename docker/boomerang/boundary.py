@@ -5,7 +5,6 @@ Copied into adapter images (some still on Python 3.7 — keep syntax compatible)
 from __future__ import annotations
 
 import re
-from typing import Iterable, List, Optional, Set, Tuple, Union
 
 
 CONTROL_KEYWORDS = frozenset({"if", "for", "while", "switch", "do", "return", "sizeof"})

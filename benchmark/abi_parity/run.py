@@ -1,7 +1,6 @@
 """ABI / calling-convention parity — Ghidra storage vs Fission recovered slots."""
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from typing import Optional
 

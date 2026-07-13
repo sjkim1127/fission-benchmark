@@ -112,7 +112,7 @@ def function_unwind_info(pe_path: str, func_addr: str) -> dict[str, Any]:
     if data[e_lfanew : e_lfanew + 4] != b"PE\0\0":
         return {"status": "error", "error": "bad PE", "has_unwind": False, "covering": None}
     coff = e_lfanew + 4
-    size_opt = _u16(data, coff + 16)
+    _ = _u16(data, coff + 16)  # SizeOfOptionalHeader (reserved for future bounds)
     opt = coff + 20
     magic = _u16(data, opt)
     if magic == 0x20B:

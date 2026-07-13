@@ -274,7 +274,9 @@ def assign_consensus_ranks(
     src_gotos = source_goto_counts or {}
     src_depths = source_nesting_depths or {}
 
-    # First pass: compute structural penalty and correctness score for each entry.
+    # First pass: structural penalty + correctness for every row.
+    # correctness_score tracks semantic even when adapter/output error is set
+    # (contract check: correctness_score == semantic_score when finite).
     for s in scores:
         if s.error is None:
             s.structural_penalty = compute_structural_penalty(
@@ -283,13 +285,15 @@ def assign_consensus_ranks(
                 src_gotos.get(s.function_name, 0),
                 src_depths.get(s.function_name, 0),
             )
-            s.correctness_score = compute_correctness_score(
-                s.semantic_score,  # may be None for no_wrapper
-                s.source_similarity,
-                s.structural_penalty,
+            s.uses_intrinsics = s.uses_intrinsics or check_uses_intrinsics(
+                s.decompiled_code
             )
-            s.composite_score = s.correctness_score or 0.0
-            s.uses_intrinsics = s.uses_intrinsics or check_uses_intrinsics(s.decompiled_code)
+        s.correctness_score = compute_correctness_score(
+            s.semantic_score,  # may be None for no_wrapper
+            s.source_similarity,
+            s.structural_penalty,
+        )
+        s.composite_score = s.correctness_score or 0.0
 
     # Group by (function_name, compiler_variant)
     groups: dict[tuple, list[FunctionScore]] = defaultdict(list)
