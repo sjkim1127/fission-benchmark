@@ -476,6 +476,36 @@ Path("results/holdout_latest.json").write_text(
             results/golden_repros/latest.jsonl
           if-no-files-found: warn
 
+      - name: Dashboard data gate (non-empty multi-decomp UI)
+        if: always()
+        run: |
+          set -euo pipefail
+          # Repo must always ship a displayable envelope for Vercel.
+          python scripts/check_dashboard_data.py \
+            --min-rows 1 \
+            --require-valid \
+            --require-local \
+            --check-remote
+          # Fresh smoke/official output (when present) must also be non-empty.
+          if [ -f results/dev_latest.json ]; then
+            # Explicit file check for this run's dev artifact
+            python - <<'PY'
+          import json, sys
+          from pathlib import Path
+          p = Path("results/dev_latest.json")
+          d = json.loads(p.read_text())
+          n = len(d.get("rows") or [])
+          valid = (d.get("validity") or {}).get("valid")
+          if n < 1:
+              print(f"FAIL this-run dev_latest has rows={n}", file=sys.stderr)
+              sys.exit(1)
+          if valid is not True:
+              print(f"FAIL this-run dev_latest valid={valid}", file=sys.stderr)
+              sys.exit(1)
+          print(f"OK this-run dev_latest rows={n} valid={valid}")
+          PY
+          fi
+
       - name: Write benchmark summary
         if: always()
         run: |

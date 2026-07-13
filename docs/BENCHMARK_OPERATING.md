@@ -173,6 +173,17 @@ python -m benchmark.golden_repros.run
 Do not mix IR match rates into multi-tool ranking. Parity telemetry is served from
 `public/parity-telemetry.json` (or remote fallback).
 
+**Empty multi-decomp UI is a CI failure.** Gate:
+
+```bash
+python scripts/check_dashboard_data.py --min-rows 1 --require-valid --check-remote
+```
+
+Requires a displayable envelope in
+`public/benchmark-latest.json` **or** `results/latest.json` **or**
+`results/dev_latest.json` (rows ≥ 1, `validity.valid=true`). Publishable is
+not required for smoke display; empty is never allowed on main.
+
 ### Function discovery (function *finding*)
 
 Primary layered stage: **whole-binary function inventory** (`GET /functions`).

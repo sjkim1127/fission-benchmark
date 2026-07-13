@@ -106,6 +106,16 @@ jobs:
           assert get_canonicalize_mode() == "strict", get_canonicalize_mode()
           print("OK conservative defaults: canonicalize_mode=strict")
           PY
+      - name: Dashboard must have non-empty multi-decomp data
+        run: |
+          set -euo pipefail
+          # Fail if the deployed Next.js multi-decomp pages would render empty.
+          # Prefer tracked results/dev_latest.json (or public/benchmark-latest.json).
+          python scripts/check_dashboard_data.py \
+            --min-rows 1 \
+            --require-valid \
+            --require-local \
+            --check-remote
       - name: Verify tests do not generate publication artifacts
         run: git diff --exit-code -- docs/index.html results/latest.json results/latest.md results/latest-summary.json results/artifact-manifest.json
 
