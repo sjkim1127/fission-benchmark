@@ -96,16 +96,12 @@ def test_decompile_batch_endpoint(decompiler_client) -> None:
 
     res = data["results"][0]
     assert res["addr"] == "0x4015b0"
-    
-    if dname != "snowman":
-        assert res.get("error") is None, f"Decompilation error for {dname}: {res.get('error')}"
-        assert "code" in res
-        assert isinstance(res["code"], str)
-        assert len(res["code"].strip()) > 0
-    else:
-        # Snowman is known to fail function extraction on this gcc-m32 binary, returning the extraction error
-        assert "error" in res
-        assert "Snowman returned whole-program output and target function extraction failed" in (res.get("error") or "")
+
+    # All decompilers including snowman should now return successful function extraction.
+    assert res.get("error") is None, f"Decompilation error for {dname}: {res.get('error')}"
+    assert "code" in res
+    assert isinstance(res["code"], str)
+    assert len(res["code"].strip()) > 0
 
 
 def test_error_missing_file(decompiler_client) -> None:

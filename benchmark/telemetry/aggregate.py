@@ -15,7 +15,8 @@ app = typer.Typer(pretty_exceptions_enable=False)
 
 STAGE_ORDER = (
     "assembly_parity",
-    "decode_parity",
+    # decode_parity: retired stub stage — excluded from auto-discover to prevent
+    # stale results/decode_parity/latest.jsonl from inflating total_rows.
     "pcode_parity",
     "cfg_parity",
     "function_discovery",

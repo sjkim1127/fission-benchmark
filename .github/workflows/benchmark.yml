@@ -485,9 +485,13 @@ jobs:
           PY
 
           # Conservative gates — explicit thresholds, hard-fail.
+          # --min-comparable-fd / --min-primary-comparable-fd: function_discovery
+          # is scored per-binary (not per-function), so its comparable row count
+          # equals the number of unique binaries in the run, not PARITY_LIMIT.
           python scripts/check_parity_smoke.py results/telemetry/latest.json \
             --require-strict \
             --min-comparable 5 \
+            --min-comparable-fd 1 \
             --min-usable-coverage 0.90 \
             --max-fetch-error-rate 0.10
           python scripts/check_reliability.py results/telemetry/latest.json \
@@ -495,7 +499,8 @@ jobs:
             --min-primary-coverage 0.95 \
             --max-fetch-error-rate 0.05 \
             --max-global-fetch-error-rate 0.05 \
-            --min-primary-comparable 5
+            --min-primary-comparable 5 \
+            --min-primary-comparable-fd 1
 
           # Golden canaries required (not optional).
           test -f benchmark/golden_repros/manifest.json

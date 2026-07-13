@@ -55,7 +55,16 @@ def main(argv: list[str] | None = None) -> int:
         "--min-primary-comparable",
         type=int,
         default=5,
-        help="Minimum match+mismatch rows per primary stage",
+        help="Minimum match+mismatch rows per primary stage (assembly/pcode/cfg)",
+    )
+    parser.add_argument(
+        "--min-primary-comparable-fd",
+        type=int,
+        default=1,
+        help=(
+            "Minimum match+mismatch rows for function_discovery. "
+            "Defaults to 1 because this stage is per-binary, not per-function."
+        ),
     )
     args = parser.parse_args(argv)
 
@@ -111,9 +120,10 @@ def main(argv: list[str] | None = None) -> int:
         fetch_error = int(detail.get("fetch_error") or 0)
         if total > 0 and need not in pub_stages:
             errors.append(f"primary stage {need} missing from publishable headline")
-        if comparable < args.min_primary_comparable:
+        if comparable < (args.min_primary_comparable_fd if need == "function_discovery" else args.min_primary_comparable):
             errors.append(
-                f"{need}: comparable {comparable} < {args.min_primary_comparable}"
+                f"{need}: comparable {comparable} < "
+                f"{args.min_primary_comparable_fd if need == 'function_discovery' else args.min_primary_comparable}"
             )
         cov = detail.get("usable_coverage")
         if total > 0 and cov is not None and float(cov) < args.min_primary_coverage:

@@ -18,12 +18,14 @@ import sys
 from pathlib import Path
 
 # Stages that must produce usable quality signal (match|mismatch).
-REQUIRED_STAGES = (
+# function_discovery is checked separately via --min-comparable-fd because it
+# produces one row per *binary* (not per function), so the threshold differs.
+PER_FUNCTION_STAGES = (
     "assembly_parity",
     "cfg_parity",
     "pcode_parity",
-    "function_discovery",
 )
+REQUIRED_STAGES = PER_FUNCTION_STAGES + ("function_discovery",)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -38,7 +40,17 @@ def main(argv: list[str] | None = None) -> int:
         "--min-comparable",
         type=int,
         default=5,
-        help="Minimum match+mismatch rows required per required stage",
+        help="Minimum match+mismatch rows required per assembly/cfg/pcode stage",
+    )
+    parser.add_argument(
+        "--min-comparable-fd",
+        type=int,
+        default=1,
+        help=(
+            "Minimum match+mismatch rows for function_discovery stage. "
+            "Defaults to 1 because this stage produces one row per unique binary, "
+            "not per function — set equal to the number of unique binaries in the run."
+        ),
     )
     parser.add_argument(
         "--min-usable-coverage",
@@ -85,9 +97,11 @@ def main(argv: list[str] | None = None) -> int:
         mismatch = int(detail.get("mismatch") or 0)
         comparable = match + mismatch
         fetch_error = int(detail.get("fetch_error") or 0)
-        if comparable < args.min_comparable:
+        # function_discovery is per-binary, not per-function — use separate threshold.
+        min_comp = args.min_comparable_fd if stage == "function_discovery" else args.min_comparable
+        if comparable < min_comp:
             errors.append(
-                f"{stage}: comparable rows {comparable} < {args.min_comparable} "
+                f"{stage}: comparable rows {comparable} < {min_comp} "
                 f"(match={match}, mismatch={mismatch}, "
                 f"error_or_other={detail.get('error_or_other')}) — likely infra/fetch failure"
             )
