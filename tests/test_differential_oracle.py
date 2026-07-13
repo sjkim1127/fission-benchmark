@@ -1,3 +1,4 @@
+import re
 import subprocess
 from pathlib import Path
 
@@ -93,6 +94,46 @@ def test_rename_accepts_synthetic_proc_names() -> None:
     out = _rename_function(code, "classify_range", "oracle_candidate_classify_range")
     assert "oracle_candidate_classify_range" in out
     assert "proc_0x0000160b" not in out
+
+
+def test_rename_ignores_comment_only_corpus_name() -> None:
+    """Radare2 often leaves //int count_bits above fcn_* — must rename the def."""
+    from runner.differential_oracle import _rename_function
+
+    code = (
+        "/* address: 0x140001530 */\n\n"
+        "int fcn_140001530(unsigned int x)\n\n"
+        "{\n"
+        "    //int count_bits(unsigned int x);\n"
+        "    int count = 0;\n"
+        "    return count;\n"
+        "}\n"
+    )
+    out = _rename_function(code, "count_bits", "oracle_candidate_count_bits")
+    assert "oracle_candidate_count_bits" in out
+    assert "fcn_140001530" not in out
+    # Comment may still mention the corpus name or the replacement — either ok;
+    # the definition must be the harness symbol.
+    assert re.search(
+        r"\bint\s+oracle_candidate_count_bits\s*\(", out
+    ), out[:300]
+
+
+def test_sanitize_candidate_c_cpp_casts_and_reg() -> None:
+    from runner.differential_oracle import sanitize_candidate_c
+
+    raw = (
+        "int fun_1(uint32_t ecx) {\n"
+        "  return reinterpret_cast<int32_t>(ecx) + static_cast<int>(1);\n"
+        "  generic64_t r _REG(rcx_x86_64);\n"
+        "}\n"
+    )
+    out = sanitize_candidate_c(raw)
+    assert "reinterpret_cast" not in out
+    assert "static_cast" not in out
+    assert "((int32_t)(ecx))" in out
+    assert "((int)(1))" in out
+    assert "_REG" not in out
 
 
 def test_extract_function_signature_handles_pointers_and_void() -> None:

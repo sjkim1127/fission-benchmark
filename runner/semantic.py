@@ -20,7 +20,7 @@ STANDARD_HEADER = """
 #include <string.h>
 #include <limits.h>
 
-// Common decompiler types
+// Common decompiler types (Ghidra / Hex-Rays style)
 typedef uint8_t byte;
 typedef uint16_t word;
 typedef uint32_t dword;
@@ -37,6 +37,42 @@ typedef unsigned short ushort;
 typedef unsigned char uchar;
 typedef unsigned long long ulonglong;
 typedef long long longlong;
+
+// Reko-style fixed-width names
+typedef uint8_t word8;
+typedef uint16_t word16;
+typedef uint32_t word32;
+typedef uint64_t word64;
+typedef int8_t int8;
+typedef int16_t int16;
+typedef int32_t int32;
+typedef int64_t int64;
+typedef uint8_t uint8;
+typedef uint16_t uint16;
+typedef uint32_t uint32;
+typedef uint64_t uint64;
+
+// Boomerang size types
+typedef int8_t __size8;
+typedef int16_t __size16;
+typedef int32_t __size32;
+typedef int64_t __size64;
+typedef uint8_t __size8u;
+typedef uint16_t __size16u;
+typedef uint32_t __size32u;
+typedef uint64_t __size64u;
+
+// Rev.ng / other synthetic register types + no-op ABI markers
+typedef uint64_t generic64_t;
+typedef uint32_t generic32_t;
+typedef uint16_t generic16_t;
+typedef uint8_t generic8_t;
+#ifndef _REG
+#define _REG(x)
+#endif
+#ifndef _STACK
+#define _STACK
+#endif
 
 // Structures used in corpus
 typedef struct Pair {

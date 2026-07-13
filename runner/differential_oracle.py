@@ -56,59 +56,94 @@ class FunctionSignature:
 
 
 # Capture "ret_type name(" without letting type tokens swallow the identifier.
+# Synthetic ids used by radare2/boomerang/ghidra/snowman/revng are accepted.
+_FN_DEF_NAME = (
+    r"(?P<name>"
+    r"[A-Za-z_]\w*"
+    r"|proc_0x[0-9A-Fa-f]+"
+    r"|FUN_[0-9A-Fa-f]+"
+    r"|fun_0x[0-9A-Fa-f]+"
+    r"|fcn_[0-9A-Fa-f]+"
+    r"|function_0x[0-9A-Fa-f]+"
+    r")"
+)
 _FN_DEF_RE = re.compile(
     r"(?ms)"
     r"^[ \t]*(?:(?:static|inline|extern)\s+)*"
     r"(?:[\w\s\*]+?)\s+"
-    r"(?P<name>[A-Za-z_]\w*|proc_0x[0-9A-Fa-f]+|FUN_[0-9A-Fa-f]+|fun_0x[0-9A-Fa-f]+)"
-    r"\s*\([^;{}]*\)\s*\{",
+    + _FN_DEF_NAME
+    + r"\s*\([^;{}]*\)\s*\{",
+)
+# Rev.ng often emits definitions with no return type token.
+_FN_DEF_LOOSE_RE = re.compile(
+    r"(?ms)\b"
+    + _FN_DEF_NAME
+    + r"\s*\([^;{}]*\)\s*\{",
+)
+_KW_NOT_FUNCS = frozenset(
+    {"if", "for", "while", "switch", "return", "sizeof", "main", "else", "do"}
 )
 
 
-def _first_function_def_name(code: str) -> str | None:
-    for match in _FN_DEF_RE.finditer(code):
+def _function_def_names(code: str) -> list[str]:
+    """Return function definition names in source order (not comment mentions)."""
+    names: list[str] = []
+    seen: set[str] = set()
+    for match in list(_FN_DEF_RE.finditer(code)) + list(_FN_DEF_LOOSE_RE.finditer(code)):
         found = match.group("name")
-        if found not in {"if", "for", "while", "switch", "return", "sizeof", "main"}:
-            return found
-    # Looser fallback: any identifier immediately before '(' on a line with '{' soon after.
-    loose = re.search(
-        r"(?ms)\b([A-Za-z_]\w*|proc_0x[0-9A-Fa-f]+)\s*\([^;{}]*\)\s*\{",
-        code,
-    )
-    if loose:
-        found = loose.group(1)
-        if found not in {"if", "for", "while", "switch", "return", "sizeof"}:
-            return found
-    return None
+        if found in _KW_NOT_FUNCS or found in seen:
+            continue
+        seen.add(found)
+        names.append(found)
+    return names
+
+
+def _first_function_def_name(code: str) -> str | None:
+    names = _function_def_names(code)
+    return names[0] if names else None
 
 
 def _rename_function(code: str, function_name: str, replacement: str) -> str:
     """Rename target symbol so the oracle harness can call the candidate.
 
-    Decompilers often emit synthetic names (``proc_0x…``, ``FUN_…``) instead of
-    the corpus symbol. For infrastructure reliability we accept the first C
-    function definition as the candidate body when the expected name is absent.
+    Decompilers often emit synthetic names (``proc_0x…``, ``fcn_…``, ``fun_…``)
+    instead of the corpus symbol. Comment-only mentions of the corpus name
+    (radare2 often leaves ``//int count_bits(...)`` above ``fcn_…``) must not
+    short-circuit rename of the real definition — that caused mass
+    ``undefined reference to oracle_candidate_*`` link errors.
     """
     if not code or not str(code).strip():
         raise ValueError(f"target function {function_name!r} not found (empty candidate)")
 
-    # Exact / underscore-prefixed corpus name
-    pattern = re.compile(rf"\b_?{re.escape(function_name)}\b")
-    renamed, count = pattern.subn(replacement, code)
-    if count > 0:
-        return renamed
+    def_names = _function_def_names(code)
+    expected_forms = {function_name, f"_{function_name}"}
 
-    # stdcall decoration: _name@N
-    stdcall = re.compile(rf"\b_?{re.escape(function_name)}@\d+\b")
-    renamed, count = stdcall.subn(replacement, code)
-    if count > 0:
-        return renamed
+    # Prefer renaming an actual definition of the corpus symbol.
+    for form in (function_name, f"_{function_name}"):
+        if form in def_names:
+            return re.sub(rf"\b{re.escape(form)}\b", replacement, code)
 
+    # stdcall decoration on a real definition: _name@N
+    stdcall_defs = [n for n in def_names if re.fullmatch(rf"_?{re.escape(function_name)}@\d+", n)]
+    if stdcall_defs:
+        out = code
+        for form in stdcall_defs:
+            out = re.sub(rf"\b{re.escape(form)}\b", replacement, out)
+        return out
+
+    # Corpus name appears only in comments / strings — rename first real def.
+    # (Do not treat comment hits as success.)
     found = _first_function_def_name(code)
-    if found:
+    if found and found not in expected_forms:
         renamed, count = re.subn(rf"\b{re.escape(found)}\b", replacement, code)
         if count > 0:
             return renamed
+
+    # Exact text replace as last structural attempt (body may be declaration-only).
+    pattern = re.compile(rf"\b_?{re.escape(function_name)}\b")
+    renamed, count = pattern.subn(replacement, code)
+    if count > 0 and found is None:
+        return renamed
 
     # Last resort: wrap entire fragment as a function with the replacement name
     # using a permissive signature — callers with real params will compile-fail
@@ -124,6 +159,27 @@ def _rename_function(code: str, function_name: str, replacement: str) -> str:
         f"  return 0;\n"
         f"}}\n"
     )
+
+
+def sanitize_candidate_c(code: str) -> str:
+    """Normalize common non-ISO-C decompiler dialects for MinGW compile.
+
+    These are harness adaptations (types / C++ casts / ABI annotations), not
+    semantic repairs of the decompiled algorithm.
+    """
+    if not code:
+        return code
+    out = code
+    # C++ casts emitted by snowman et al. → C casts. Args are usually bare ids.
+    out = re.sub(
+        r"\b(?:reinterpret_cast|static_cast|const_cast|dynamic_cast)\s*<\s*([^>]+?)\s*>\s*\(([^)]*)\)",
+        r"((\1)(\2))",
+        out,
+    )
+    # Rev.ng ABI noise on parameters: `name _REG(rcx_x86_64)`
+    out = re.sub(r"\s*_REG\s*\(\s*[^)]+\s*\)", "", out)
+    out = re.sub(r"\s*_STACK\b", "", out)
+    return out
 
 
 def extract_function_signature(reference_code: str, function_name: str) -> FunctionSignature:
@@ -248,7 +304,9 @@ def build_differential_translation_unit(
     reference_name = f"oracle_reference_{function_name}"
     candidate_name = f"oracle_candidate_{function_name}"
     reference = _rename_function(reference_code, function_name, reference_name)
-    candidate = _rename_function(candidate_code, function_name, candidate_name)
+    candidate = _rename_function(
+        sanitize_candidate_c(candidate_code), function_name, candidate_name
+    )
     case_functions, dispatch = _build_case_functions(
         function_name, reference_name, candidate_name, cases
     )
@@ -288,7 +346,9 @@ def build_original_binary_translation_unit(
     rva = function_addr_to_rva(pe_bytes, function_addr)
     reference_name = f"oracle_reference_{function_name}"
     candidate_name = f"oracle_candidate_{function_name}"
-    candidate = _rename_function(candidate_code, function_name, candidate_name)
+    candidate = _rename_function(
+        sanitize_candidate_c(candidate_code), function_name, candidate_name
+    )
 
     args = sig.param_names
     call = f"oracle_pe_fn({args})" if args else "oracle_pe_fn()"
