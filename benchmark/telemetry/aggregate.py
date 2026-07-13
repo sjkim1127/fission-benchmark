@@ -154,7 +154,11 @@ def aggregate_rows(rows: list[dict]) -> dict:
         both_empty = statuses.get("both_empty_invalid", 0)
         ref_empty = statuses.get("reference_empty", 0)
         cand_empty = statuses.get("candidate_empty", 0)
-        errorish = total - match - mismatch
+        # BUG-04 fix: errorish must reflect genuine infra failures only.
+        # skipped = intentional exclusion (e.g. decode_surface_stub) — not an error.
+        # both_empty/ref_empty/cand_empty are tracked separately and have their own
+        # semantics. Only fetch_error and truly unknown statuses are infra failures.
+        errorish = total - match - mismatch - skipped - both_empty - ref_empty - cand_empty
         comparable = match + mismatch
         # Reliability: coverage of attempts that produced a quality signal.
         usable_coverage = round(comparable / total, 4) if total else None

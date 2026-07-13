@@ -10,6 +10,7 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 import requests
 
 from benchmark.assembly_parity.run import compare_assembly
@@ -121,8 +122,16 @@ def _bundle_dict_to_fetches(data: dict) -> tuple[FetchResult, FetchResult, Fetch
 
     return (
         _stage_fetch("disasm", disasm),
-        # decode is derived from disasm; inherit disasm tool failure
-        _stage_fetch("disasm", decode)
+        # BUG-06 fix: decode is derived from disasm.
+        # When disasm tool_error is present, propagate the error but keep the
+        # already-derived decode stub data (not an empty list).  Using
+        # _stage_fetch("disasm", decode) was wrong: it re-checked tool_errors["disasm"]
+        # and returned data=[] instead of the derived decode list.
+        FetchResult(
+            status="fetch_error",
+            data=decode if decode is not None else [],
+            error=str(tool_errors["disasm"]),
+        )
         if "disasm" in tool_errors
         else _as_fetch(decode),
         _stage_fetch("pcode", data.get("pcode")),
@@ -329,15 +338,29 @@ def fetch_parity_data(
             error=f"No port configured for decompiler {decompiler!r}",
         )
 
-    if not binary.startswith("corpus/"):
-        binary = f"corpus/{corpus}/{binary}"
-    url = f"http://localhost:{port}/{endpoint}?binary={binary}"
+    # BUG-02: binary may be an absolute path (e.g. /abs/path/corpus/dev/foo.exe).
+    # Normalise to corpus-relative form that adapter servers expect.
+    # Use only the basename when the path contains 'corpus/<split>/binaries/';
+    # otherwise fall back to basename alone so the server resolves via its mount.
+    _bin = binary.replace("\\", "/")
+    _marker = f"/corpus/{corpus}/"
+    if _marker in _bin:
+        # Strip everything up to and including corpus/<split>/
+        _bin = _bin[_bin.index(_marker) + 1:]  # → corpus/<split>/...
+    elif _bin.startswith("corpus/"):
+        pass  # already relative
+    else:
+        # Bare filename or unknown structure — wrap in corpus prefix
+        _bin = f"corpus/{corpus}/{Path(_bin).name}"
+
+    # BUG-03: URL-encode all query param values to handle spaces and special chars.
+    url = f"http://localhost:{port}/{endpoint}?binary={quote(_bin, safe='/:')}"
     if endpoint == "parity_multi_bundle" and addrs:
-        url += f"&addrs={addrs}"
+        url += f"&addrs={quote(addrs, safe=',')}"
     elif addr:
-        url += f"&addr={addr}"
+        url += f"&addr={quote(addr, safe='')}"
     if arch:
-        url += f"&arch={arch}"
+        url += f"&arch={quote(arch, safe='')}"
 
     try:
         resp = requests.get(url, timeout=timeout)

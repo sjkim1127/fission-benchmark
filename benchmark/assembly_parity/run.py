@@ -40,12 +40,27 @@ def compare_assembly(
             metrics={"instruction_count": len(expected) if isinstance(expected, list) else 0},
         )
 
+    # BUG-07 fix: sort both lists by address before comparison.
+    # Both adapters should return instructions in address order but network or
+    # implementation quirks can occasionally produce a different ordering.
+    # Address-sorted comparison is canonical for instruction-set parity.
+    def _addr_key(inst: object) -> str:
+        if not isinstance(inst, dict):
+            return ""
+        addr = inst.get("address") or ""
+        try:
+            return f"{int(str(addr), 16):016x}"
+        except (ValueError, TypeError):
+            return str(addr)
+
     mismatch_kind = "instruction_sequence"
     if isinstance(expected_norm, list) and isinstance(actual_norm, list):
-        if len(expected_norm) != len(actual_norm):
+        expected_sorted = sorted(expected_norm, key=_addr_key)
+        actual_sorted = sorted(actual_norm, key=_addr_key)
+        if len(expected_sorted) != len(actual_sorted):
             mismatch_kind = "instruction_count"
         else:
-            for exp, act in zip(expected_norm, actual_norm):
+            for exp, act in zip(expected_sorted, actual_sorted):
                 if not isinstance(exp, dict) or not isinstance(act, dict):
                     continue
                 if exp.get("bytes") != act.get("bytes"):
