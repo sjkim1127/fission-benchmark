@@ -8,12 +8,14 @@ from typing import Any, Optional
 
 import typer
 
+from benchmark.abi_parity.run import compare_abi
 from benchmark.assembly_parity.run import compare_assembly
 from benchmark.cfg_parity.run import compare_cfg
 from benchmark.common.http_providers import fetch_parity_json
 from benchmark.common.io import write_jsonl
 from benchmark.common.providers import canonicalize, run_json_provider
 from benchmark.common.schema import BenchmarkResult, BenchmarkSubject
+from benchmark.dataflow_parity.run import compare_dataflow
 from benchmark.decode_parity.run import compare_decode
 from benchmark.function_discovery.run import compare_functions
 from benchmark.pcode_parity.run import compare_pcode
@@ -21,7 +23,9 @@ from benchmark.pcode_parity.run import compare_pcode
 app = typer.Typer(pretty_exceptions_enable=False)
 
 COMPARE = {
+    "abi_parity": compare_abi,
     "assembly_parity": compare_assembly,
+    "dataflow_parity": compare_dataflow,
     "decode_parity": compare_decode,
     "pcode_parity": compare_pcode,
     "cfg_parity": compare_cfg,
