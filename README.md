@@ -276,12 +276,12 @@ fission-benchmark/
 
 ## Fission Release Tracking
 
-CI sets `FISSION_SOURCE=release` and uses `FISSION_VERSION=latest` by default,
-so scheduled and manual benchmark runs pull the latest published Fission release
-only. The `/health` probe must report `"source": "release"` (CI fails on
-`local-*`). The benchmark workflow also accepts a cross-repository dispatch
-event so the Fission release pipeline can trigger a run immediately after
-publishing:
+CI sets `FISSION_SOURCE=release` and pins `FISSION_VERSION=v0.1.2` by default.
+This keeps scheduled, push, and manual runs reproducible until the repository's
+declared baseline is deliberately advanced. The `/health` probe must report
+`"source": "release"` (CI fails on `local-*`). The benchmark workflow also
+accepts a cross-repository dispatch event so the Fission release pipeline can
+trigger a run immediately after publishing:
 
 ```bash
 gh api repos/sjkim1127/fission-benchmark/dispatches \
@@ -289,8 +289,8 @@ gh api repos/sjkim1127/fission-benchmark/dispatches \
   -f client_payload='{"fission_version":"v0.1.2"}'
 ```
 
-Manual workflow runs can override `fission_version` with a specific tag for
-reproducibility.
+Manual workflow runs can override `fission_version` with another specific tag,
+or with `latest` to resolve the newest GitHub Release dynamically.
 
 ## CI Workflow
 
