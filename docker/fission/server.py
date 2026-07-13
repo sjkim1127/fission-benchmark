@@ -32,6 +32,10 @@ GIT_SHA_FILE = Path("/opt/fission-git-sha")
 _CAPABILITY_CACHE: Dict[str, bool] = {}
 _CAPABILITY_PROBED: bool = False
 _CAPABILITY_PROBE_ERROR: str | None = None
+_CAPABILITY_LOCK = threading.Lock()
+_LIST_CAPABILITY_CACHE: Dict[str, bool] = {}
+_LIST_CAPABILITY_PROBED: bool = False
+_LIST_CAPABILITY_LOCK = threading.Lock()
 
 
 def _probe_capabilities() -> None:
@@ -39,39 +43,82 @@ def _probe_capabilities() -> None:
     global _CAPABILITY_PROBED, _CAPABILITY_PROBE_ERROR
     if _CAPABILITY_PROBED:
         return
-    _CAPABILITY_PROBED = True
-    try:
-        r = subprocess.run(
-            [str(FISSION_BIN), "decomp", "--help"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        help_text = r.stdout + r.stderr
-        if r.returncode not in (0, 1):  # --help may exit 1 on some CLIs
-            _CAPABILITY_PROBE_ERROR = (
-                f"fission_cli decomp --help exited {r.returncode}: "
-                f"{help_text[:200]}"
+    with _CAPABILITY_LOCK:
+        if _CAPABILITY_PROBED:
+            return
+        try:
+            r = subprocess.run(
+                [str(FISSION_BIN), "decomp", "--help"],
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
+            help_text = r.stdout + r.stderr
+            if r.returncode not in (0, 1):  # --help may exit 1 on some CLIs
+                _CAPABILITY_PROBE_ERROR = (
+                    f"fission_cli decomp --help exited {r.returncode}: "
+                    f"{help_text[:200]}"
+                )
+                _CAPABILITY_CACHE["--layer"] = False
+                _CAPABILITY_CACHE["--benchmark"] = False
+                _CAPABILITY_CACHE["--timeout-ms"] = False
+            else:
+                _CAPABILITY_CACHE["--layer"] = "--layer" in help_text
+                _CAPABILITY_CACHE["--benchmark"] = "--benchmark" in help_text
+                _CAPABILITY_CACHE["--timeout-ms"] = "--timeout-ms" in help_text
+        except Exception as exc:
+            # If help fails, assume minimal capability set (no optional flags).
+            _CAPABILITY_PROBE_ERROR = str(exc)
             _CAPABILITY_CACHE["--layer"] = False
             _CAPABILITY_CACHE["--benchmark"] = False
             _CAPABILITY_CACHE["--timeout-ms"] = False
-        else:
-            _CAPABILITY_CACHE["--layer"] = "--layer" in help_text
-            _CAPABILITY_CACHE["--benchmark"] = "--benchmark" in help_text
-            _CAPABILITY_CACHE["--timeout-ms"] = "--timeout-ms" in help_text
-    except Exception as exc:
-        # If help fails, assume minimal capability set (no optional flags).
-        _CAPABILITY_PROBE_ERROR = str(exc)
-        _CAPABILITY_CACHE["--layer"] = False
-        _CAPABILITY_CACHE["--benchmark"] = False
-        _CAPABILITY_CACHE["--timeout-ms"] = False
+        finally:
+            _CAPABILITY_PROBED = True
 
 
 def supports(flag: str) -> bool:
     """Return True if the CLI binary supports the given flag."""
     _probe_capabilities()
     return _CAPABILITY_CACHE.get(flag, False)
+
+
+def supports_list(flag: str) -> bool:
+    """Return whether the installed CLI exposes a complete-list contract flag."""
+    global _LIST_CAPABILITY_PROBED
+    if _LIST_CAPABILITY_PROBED:
+        return _LIST_CAPABILITY_CACHE.get(flag, False)
+    with _LIST_CAPABILITY_LOCK:
+        if not _LIST_CAPABILITY_PROBED:
+            try:
+                result = subprocess.run(
+                    [str(FISSION_BIN), "list", "--help"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                help_text = result.stdout + result.stderr
+                for candidate in (
+                    "--function-discovery-profile",
+                    "--include-nonuser-functions",
+                ):
+                    _LIST_CAPABILITY_CACHE[candidate] = candidate in help_text
+            except Exception:
+                _LIST_CAPABILITY_CACHE["--function-discovery-profile"] = False
+                _LIST_CAPABILITY_CACHE["--include-nonuser-functions"] = False
+            finally:
+                _LIST_CAPABILITY_PROBED = True
+    return _LIST_CAPABILITY_CACHE.get(flag, False)
+
+
+def function_inventory_command(bin_path: str) -> List[str]:
+    """Build the strongest function-inventory command supported by this CLI."""
+    command = ["list", bin_path]
+    if supports_list("--function-discovery-profile"):
+        command.extend(["--function-discovery-profile", "conservative"])
+    if supports_list("--include-nonuser-functions"):
+        command.append("--include-nonuser-functions")
+    command.append("--json")
+    return command
 
 class DecompileRequest(BaseModel):
     binary_b64: str
@@ -326,14 +373,14 @@ def functions(binary: str):
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
-    data = run_fission_cli(["list", bin_path, "--json"])
+    data = run_fission_cli(function_inventory_command(bin_path))
     res = []
     for item in data:
         res.append({
             "address": item.get("address"),
             "name": item.get("name"),
             "size": item.get("size", 0),
-            "kind": "function" if item.get("kind") == "code" else item.get("kind", "function")
+            "kind": "function",
         })
     _cache_put(cache_key, res)
     return res

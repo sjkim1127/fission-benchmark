@@ -3,7 +3,9 @@ from __future__ import annotations
 import importlib.util
 import subprocess
 import sys
+import threading
 import types
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 
@@ -39,6 +41,101 @@ def test_fission_uses_addresses_file_batch_cli() -> None:
     assert "--json" in command
     assert "--layer" in command
     assert command[command.index("--layer") + 1] == "nir"
+
+
+def test_fission_requests_complete_sleigh_validated_function_inventory() -> None:
+    server = load_module("fission_server_inventory", ROOT / "docker/fission/server.py")
+    server._LIST_CAPABILITY_CACHE.update(
+        {
+            "--function-discovery-profile": True,
+            "--include-nonuser-functions": True,
+        }
+    )
+    server._LIST_CAPABILITY_PROBED = True
+
+    command = server.function_inventory_command("/tmp/target.bin")
+
+    assert command == [
+        "list",
+        "/tmp/target.bin",
+        "--function-discovery-profile",
+        "conservative",
+        "--include-nonuser-functions",
+        "--json",
+    ]
+
+
+def test_fission_function_inventory_falls_back_for_older_cli() -> None:
+    server = load_module("fission_server_inventory_fallback", ROOT / "docker/fission/server.py")
+    server._LIST_CAPABILITY_CACHE.update(
+        {
+            "--function-discovery-profile": False,
+            "--include-nonuser-functions": False,
+        }
+    )
+    server._LIST_CAPABILITY_PROBED = True
+
+    assert server.function_inventory_command("/tmp/target.bin") == [
+        "list",
+        "/tmp/target.bin",
+        "--json",
+    ]
+
+
+def test_fission_function_inventory_capability_probe_is_atomic(monkeypatch) -> None:
+    server = load_module("fission_server_inventory_atomic", ROOT / "docker/fission/server.py")
+    entered = threading.Event()
+    release = threading.Event()
+    calls = 0
+
+    def fake_run(*_args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        entered.set()
+        assert release.wait(timeout=2)
+        return types.SimpleNamespace(
+            stdout="--function-discovery-profile --include-nonuser-functions",
+            stderr="",
+            returncode=0,
+        )
+
+    monkeypatch.setattr(server.subprocess, "run", fake_run)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(server.supports_list, "--function-discovery-profile")
+        assert entered.wait(timeout=2)
+        second = pool.submit(server.supports_list, "--include-nonuser-functions")
+        release.set()
+
+    assert first.result() is True
+    assert second.result() is True
+    assert calls == 1
+
+
+def test_fission_function_endpoint_normalizes_internal_provenance_kind(monkeypatch) -> None:
+    server = load_module("fission_server_inventory_kind", ROOT / "docker/fission/server.py")
+    monkeypatch.setattr(server, "resolve_binary", lambda _binary: "/tmp/target.bin")
+    monkeypatch.setattr(server, "_binary_fingerprint", lambda _path: "fixture")
+    monkeypatch.setattr(
+        server,
+        "run_fission_cli",
+        lambda _command: [
+            {
+                "address": "0x401000",
+                "name": "validated_thunk",
+                "size": 6,
+                "kind": "validated_symbol",
+            }
+        ],
+    )
+
+    assert server.functions("target.bin") == [
+        {
+            "address": "0x401000",
+            "name": "validated_thunk",
+            "size": 6,
+            "kind": "function",
+        }
+    ]
 
 
 def test_fission_normalizes_new_batch_json_shape() -> None:
