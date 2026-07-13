@@ -51,6 +51,117 @@ async function StageTableSection() {
   );
 }
 
+async function OptCliffSection() {
+  const telemetry = await getParityTelemetry();
+  const oc = telemetry?.stages?.opt_cliff;
+  const byCand = oc?.by_candidate as Record<
+    string,
+    Record<string, { n: number; mean_correctness: number }>
+  > | undefined;
+  if (!byCand || Object.keys(byCand).length === 0) return null;
+
+  const candidates = Object.keys(byCand).sort((a, b) =>
+    a === "fission" ? -1 : b === "fission" ? 1 : a.localeCompare(b)
+  );
+  const opts = [...new Set(Object.values(byCand).flatMap((o) => Object.keys(o)))].sort();
+
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>Opt cliff · correctness by optimization level</h2>
+      <p className={styles.sectionLead}>
+        Mean correctness (oracle pass rate) per candidate × optimization level.
+        Higher = fewer regressions at aggressive optimization.
+      </p>
+      <table className={styles.table ?? ""}>
+        <thead>
+          <tr>
+            <th>Candidate</th>
+            {opts.map((o) => (
+              <th key={o} className={styles.num ?? ""}><code>{o}</code></th>
+            ))}
+            <th className={styles.num ?? ""}>Δ (O2−O0)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {candidates.map((cand) => {
+            const byOpt = byCand[cand] ?? {};
+            const o0 = byOpt["O0"]?.mean_correctness ?? null;
+            const o2 = byOpt["O2"]?.mean_correctness ?? null;
+            const delta = o0 != null && o2 != null ? o2 - o0 : null;
+            return (
+              <tr key={cand} className={cand === "fission" ? styles.fissionRow ?? "" : ""}>
+                <td><strong style={{ color: cand === "fission" ? "#6366f1" : cand === "ghidra" ? "#10b981" : undefined }}>{cand}</strong></td>
+                {opts.map((o) => {
+                  const v = byOpt[o]?.mean_correctness;
+                  return (
+                    <td key={o} className={styles.num ?? ""}>
+                      {v != null ? `${(v * 100).toFixed(1)}%` : "—"}
+                    </td>
+                  );
+                })}
+                <td className={styles.num ?? ""} style={{ color: delta != null && delta >= 0 ? "#10b981" : "#f87171" }}>
+                  {delta != null ? `${delta >= 0 ? "+" : ""}${(delta * 100).toFixed(1)}%` : "—"}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+async function ThroughputSection() {
+  const telemetry = await getParityTelemetry();
+  const tp = telemetry?.stages?.throughput;
+  const byCand = tp?.throughput_by_candidate as Record<
+    string,
+    { mean_ms: number; n: number }
+  > | undefined;
+  if (!byCand || Object.keys(byCand).length === 0) return null;
+
+  const sorted = Object.entries(byCand).sort(([a], [b]) =>
+    a === "fission" ? -1 : b === "fission" ? 1 : a.localeCompare(b)
+  );
+
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>Throughput · decompile time per binary</h2>
+      <p className={styles.sectionLead}>
+        Mean wall-clock time to decompile one binary. Lower = faster adapter.
+      </p>
+      <table className={styles.table ?? ""}>
+        <thead>
+          <tr>
+            <th>Candidate</th>
+            <th className={styles.num ?? ""}>Mean time</th>
+            <th className={styles.num ?? ""}>Binaries</th>
+            <th>Speed comparison</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map(([cand, v]) => {
+            const fastest = Math.min(...Object.values(byCand).map((x) => x.mean_ms));
+            const ratio = fastest > 0 ? v.mean_ms / fastest : 1;
+            return (
+              <tr key={cand} className={cand === "fission" ? styles.fissionRow ?? "" : ""}>
+                <td><strong style={{ color: cand === "fission" ? "#6366f1" : cand === "ghidra" ? "#10b981" : undefined }}>{cand}</strong></td>
+                <td className={styles.num ?? ""}>
+                  {v.mean_ms >= 1000 ? `${(v.mean_ms / 1000).toFixed(1)}s` : `${Math.round(v.mean_ms)}ms`}
+                </td>
+                <td className={styles.num ?? ""}>{v.n}</td>
+                <td>
+                  {ratio <= 1.01 ? "⚡ fastest" : `${ratio.toFixed(0)}× slower`}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
 async function CoreSemanticSection() {
   const data = await getLatestBenchmarkOptional({ requirePublishable: false });
   if (!data) {
@@ -149,6 +260,14 @@ export default function FissionVsGhidraPage() {
 
       <Suspense fallback={<SkeletonSection rows={6} />}>
         <StageTableSection />
+      </Suspense>
+
+      <Suspense fallback={<SkeletonSection rows={3} />}>
+        <OptCliffSection />
+      </Suspense>
+
+      <Suspense fallback={<SkeletonSection rows={3} />}>
+        <ThroughputSection />
       </Suspense>
 
       <Suspense fallback={<SkeletonSection rows={4} />}>

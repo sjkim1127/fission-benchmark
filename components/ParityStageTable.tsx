@@ -170,16 +170,55 @@ export function ParityStageTable({ telemetry }: Props) {
         </tbody>
       </table>
       {excluded.length > 0 && (
-        <p className={styles.hint}>
-          Excluded from primary (not scored for ranking):{" "}
-          {excluded
-            .map(([stage, s]) => {
-              const skip = s.by_status?.skipped ?? 0;
-              return `${STAGE_LABELS[stage] ?? stage} (total=${s.total}, skipped=${skip})`;
-            })
-            .join("; ")}
-          . Implement real modrm/sib/disp/imm before promoting decode.
-        </p>
+        <>
+          <p className={styles.hint} style={{ marginTop: "1.5rem" }}>
+            <strong>Extension tracks</strong> — diagnostic or incubating; not
+            scored for primary ranking. Promote a stage by removing it from{" "}
+            <code>NON_PUBLISHABLE_STAGES</code> in{" "}
+            <code>benchmark/telemetry/aggregate.py</code>.
+          </p>
+          <table className={styles.table} style={{ opacity: 0.72 }}>
+            <thead>
+              <tr>
+                <th>Stage</th>
+                <th className={styles.num}>Total</th>
+                <th className={styles.num}>Match</th>
+                <th className={styles.num}>Mismatch</th>
+                <th className={styles.num}>Skipped</th>
+                <th className={styles.num}>Match rate</th>
+                <th className={styles.num}>Coverage</th>
+                <th>Top mismatch kinds</th>
+              </tr>
+            </thead>
+            <tbody>
+              {excluded.map(([stage, s]) => {
+                const skip = s.by_status?.skipped ?? 0;
+                const kinds = Object.entries(s.by_mismatch_kind || {})
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 3)
+                  .map(([k, n]) => `${k}:${n}`)
+                  .join(" · ");
+                return (
+                  <tr key={stage}>
+                    <td>
+                      <span style={{ color: "var(--text-dim, #94a3b8)" }}>
+                        {STAGE_LABELS[stage] ?? stage}
+                      </span>
+                      <div className={styles.tax}>{stage}</div>
+                    </td>
+                    <td className={styles.num}>{s.total}</td>
+                    <td className={styles.num}>{s.match}</td>
+                    <td className={styles.num}>{s.mismatch}</td>
+                    <td className={styles.num}>{skip || "—"}</td>
+                    <td className={styles.num}>{pct(s.match_rate)}</td>
+                    <td className={styles.num}>{pct(s.usable_coverage ?? null)}</td>
+                    <td className={styles.tax}>{kinds || "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </>
       )}
       <p className={styles.hint}>
         Rows: {telemetry.total_rows}

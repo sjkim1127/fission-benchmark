@@ -1,45 +1,87 @@
 {
   "by_mismatch_kind": {
+    "abi_locations": 1,
+    "abi_param_count": 1,
     "block_count": 6,
     "block_span": 100,
     "cfg_fetch_error": 5,
-    "function_set": 36,
+    "function_set": 11,
     "instruction_count": 25,
-    "none": 304,
+    "none": 569,
     "op_kind": 4,
+    "sink_set": 3,
+    "type_set": 4,
     "varnode": 36
   },
   "by_pair": {
-    "ghidra\u2192fission": 396,
-    "invariants\u2192fission": 120
+    "budget\u2192fission": 3,
+    "budget\u2192ghidra": 3,
+    "ghidra\u2192fission": 401,
+    "ghidra\u2192ghidra": 3,
+    "invariants\u2192fission": 120,
+    "oracle\u2192fission": 116,
+    "oracle\u2192ghidra": 119
   },
   "by_stage": {
+    "abi_parity": 3,
     "assembly_parity": 120,
+    "callgraph_parity": 3,
     "cfg_parity": 120,
-    "function_discovery": 36,
+    "dataflow_parity": 3,
+    "function_discovery": 6,
+    "golden_repros": 10,
     "ir_invariants": 120,
-    "pcode_parity": 120
+    "opt_cliff": 235,
+    "pcode_parity": 120,
+    "seh_parity": 4,
+    "string_recovery": 3,
+    "strip_discovery": 8,
+    "throughput": 6,
+    "type_parity": 4
   },
   "by_status": {
     "fetch_error": 5,
-    "match": 299,
-    "mismatch": 212
+    "match": 564,
+    "mismatch": 196
   },
   "by_variant": {
-    "clang -O0": 31,
-    "clang -O2": 31,
-    "clang-m32 -O0": 31,
-    "clang-m32 -O2": 31,
-    "gcc -O0": 98,
-    "gcc -O2": 98,
-    "gcc-m32 -O0": 98,
-    "gcc-m32 -O2": 98
+    "clang -O0": 28,
+    "clang -O2": 28,
+    "clang O0": 14,
+    "clang O2": 14,
+    "clang-m32 -O0": 28,
+    "clang-m32 -O2": 28,
+    "clang-m32 O0": 13,
+    "clang-m32 O2": 13,
+    "gcc -O0": 112,
+    "gcc -O0+strip": 2,
+    "gcc -O2": 100,
+    "gcc -O2+strip": 2,
+    "gcc O0": 46,
+    "gcc O2": 45,
+    "gcc-m32 -O0": 102,
+    "gcc-m32 -O0+strip": 2,
+    "gcc-m32 -O2": 94,
+    "gcc-m32 -O2+strip": 2,
+    "gcc-m32 O0": 45,
+    "gcc-m32 O2": 45,
+    "na na": 2
   },
   "canonicalize_mode": "strict",
   "non_publishable_stages": [
+    "abi_parity",
+    "callgraph_parity",
+    "dataflow_parity",
     "decode_parity",
     "golden_repros",
-    "ir_invariants"
+    "ir_invariants",
+    "opt_cliff",
+    "seh_parity",
+    "string_recovery",
+    "strip_discovery",
+    "strip_semantic_delta",
+    "throughput",
+    "type_parity"
   ],
   "primary_quality_stages": [
     "assembly_parity",
@@ -49,9 +91,9 @@
   ],
   "publishable": {
     "definition": "Headline quality = assembly + pcode + cfg + function_discovery (Ghidra inventory). Decode/IR/golden are diagnostic or meta.",
-    "match": 184,
-    "match_rate_comparable": 0.4706,
-    "mismatch": 207,
+    "match": 187,
+    "match_rate_comparable": 0.518,
+    "mismatch": 174,
     "pcode_dual": {
       "literal_full_match_rate": 0.0,
       "loose_full_match_rate": 0.6667,
@@ -121,31 +163,32 @@
       "function_discovery": {
         "both_empty_invalid": 0,
         "by_mismatch_kind": {
-          "function_set": 36
+          "function_set": 3
         },
         "by_status": {
-          "mismatch": 36
+          "match": 3,
+          "mismatch": 3
         },
         "candidate_empty": 0,
         "dual": {
           "mean_manifest_recall": 1.0,
-          "mean_presence_recall": 0.9118,
-          "n": 36,
-          "note": "presence_recall = |G\u2229C|/|G|; manifest_recall = corpus subject addresses found by candidate."
+          "mean_presence_recall": 0.9461,
+          "n": 6,
+          "note": "presence_recall = |R\u2229C|/|R|; presence_precision = |R\u2229C|/|C|; manifest_recall = corpus subject addresses found by candidate. See runner/function_discovery_report.py for full matrix."
         },
         "error_or_other": 0,
         "fetch_error": 0,
-        "match": 0,
-        "match_rate": 0.0,
-        "match_rate_attempted": 0.0,
-        "match_rate_comparable": 0.0,
-        "mismatch": 36,
-        "mismatch_rate": 1.0,
+        "match": 3,
+        "match_rate": 0.5,
+        "match_rate_attempted": 0.5,
+        "match_rate_comparable": 0.5,
+        "mismatch": 3,
+        "mismatch_rate": 0.5,
         "primary_quality": true,
         "reference_empty": 0,
         "reliability_note": "Primary scoring is Ghidra full inventory vs candidate (address set). Exact set equality is strict; use dual recall metrics for triage.",
         "skipped": 0,
-        "total": 36,
+        "total": 6,
         "usable_coverage": 1.0
       },
       "pcode_parity": {
@@ -183,21 +226,31 @@
         "usable_coverage": 1.0
       }
     },
-    "total_rows": 396,
-    "usable_coverage": 0.9874
+    "total_rows": 366,
+    "usable_coverage": 0.9863
   },
   "reliability": {
-    "fetch_error_rate": 0.0097,
-    "match_rate_attempted": 0.5795,
-    "match_rate_comparable": 0.5851,
+    "fetch_error_rate": 0.0065,
+    "match_rate_attempted": 0.7373,
+    "match_rate_comparable": 0.7421,
     "skipped_rate": 0.0,
-    "usable_coverage": 0.9903
+    "usable_coverage": 0.9935
   },
   "reliability_critique": {
     "demoted_stages": [
+      "abi_parity",
+      "callgraph_parity",
+      "dataflow_parity",
       "decode_parity",
       "golden_repros",
-      "ir_invariants"
+      "ir_invariants",
+      "opt_cliff",
+      "seh_parity",
+      "string_recovery",
+      "strip_discovery",
+      "strip_semantic_delta",
+      "throughput",
+      "type_parity"
     ],
     "headline_stages": [
       "assembly_parity",
@@ -214,7 +267,49 @@
   },
   "reliability_policy": "conservative",
   "schema": "parity-telemetry-v2",
+  "sources": [
+    "results/assembly_parity/latest.jsonl",
+    "results/pcode_parity/latest.jsonl",
+    "results/cfg_parity/latest.jsonl",
+    "results/function_discovery/latest.jsonl",
+    "results/ir_invariants/latest.jsonl",
+    "results/abi_parity/latest.jsonl",
+    "results/type_parity/latest.jsonl",
+    "results/callgraph_parity/latest.jsonl",
+    "results/string_recovery/latest.jsonl",
+    "results/dataflow_parity/latest.jsonl",
+    "results/seh_parity/latest.jsonl",
+    "results/strip_discovery/latest.jsonl",
+    "results/opt_cliff/latest.jsonl",
+    "results/throughput/latest.jsonl",
+    "results/golden_repros/latest.jsonl"
+  ],
   "stages": {
+    "abi_parity": {
+      "both_empty_invalid": 0,
+      "by_mismatch_kind": {
+        "abi_locations": 1,
+        "abi_param_count": 1
+      },
+      "by_status": {
+        "match": 1,
+        "mismatch": 2
+      },
+      "candidate_empty": 0,
+      "error_or_other": 0,
+      "fetch_error": 0,
+      "match": 1,
+      "match_rate": 0.3333,
+      "match_rate_attempted": 0.3333,
+      "match_rate_comparable": 0.3333,
+      "mismatch": 2,
+      "mismatch_rate": 0.6667,
+      "primary_quality": false,
+      "reference_empty": 0,
+      "skipped": 0,
+      "total": 3,
+      "usable_coverage": 1.0
+    },
     "assembly_parity": {
       "both_empty_invalid": 0,
       "by_mismatch_kind": {
@@ -237,6 +332,27 @@
       "reference_empty": 0,
       "skipped": 0,
       "total": 120,
+      "usable_coverage": 1.0
+    },
+    "callgraph_parity": {
+      "both_empty_invalid": 0,
+      "by_mismatch_kind": {},
+      "by_status": {
+        "match": 3
+      },
+      "candidate_empty": 0,
+      "error_or_other": 0,
+      "fetch_error": 0,
+      "match": 3,
+      "match_rate": 1.0,
+      "match_rate_attempted": 1.0,
+      "match_rate_comparable": 1.0,
+      "mismatch": 0,
+      "mismatch_rate": 0.0,
+      "primary_quality": false,
+      "reference_empty": 0,
+      "skipped": 0,
+      "total": 3,
       "usable_coverage": 1.0
     },
     "cfg_parity": {
@@ -271,34 +387,79 @@
       "total": 120,
       "usable_coverage": 0.9583
     },
-    "function_discovery": {
+    "dataflow_parity": {
       "both_empty_invalid": 0,
       "by_mismatch_kind": {
-        "function_set": 36
+        "sink_set": 3
       },
       "by_status": {
-        "mismatch": 36
+        "mismatch": 3
       },
       "candidate_empty": 0,
-      "dual": {
-        "mean_manifest_recall": 1.0,
-        "mean_presence_recall": 0.9118,
-        "n": 36,
-        "note": "presence_recall = |G\u2229C|/|G|; manifest_recall = corpus subject addresses found by candidate."
-      },
       "error_or_other": 0,
       "fetch_error": 0,
       "match": 0,
       "match_rate": 0.0,
       "match_rate_attempted": 0.0,
       "match_rate_comparable": 0.0,
-      "mismatch": 36,
+      "mismatch": 3,
       "mismatch_rate": 1.0,
+      "primary_quality": false,
+      "reference_empty": 0,
+      "skipped": 0,
+      "total": 3,
+      "usable_coverage": 1.0
+    },
+    "function_discovery": {
+      "both_empty_invalid": 0,
+      "by_mismatch_kind": {
+        "function_set": 3
+      },
+      "by_status": {
+        "match": 3,
+        "mismatch": 3
+      },
+      "candidate_empty": 0,
+      "dual": {
+        "mean_manifest_recall": 1.0,
+        "mean_presence_recall": 0.9461,
+        "n": 6,
+        "note": "presence_recall = |R\u2229C|/|R|; presence_precision = |R\u2229C|/|C|; manifest_recall = corpus subject addresses found by candidate. See runner/function_discovery_report.py for full matrix."
+      },
+      "error_or_other": 0,
+      "fetch_error": 0,
+      "match": 3,
+      "match_rate": 0.5,
+      "match_rate_attempted": 0.5,
+      "match_rate_comparable": 0.5,
+      "mismatch": 3,
+      "mismatch_rate": 0.5,
       "primary_quality": true,
       "reference_empty": 0,
       "reliability_note": "Primary scoring is Ghidra full inventory vs candidate (address set). Exact set equality is strict; use dual recall metrics for triage.",
       "skipped": 0,
-      "total": 36,
+      "total": 6,
+      "usable_coverage": 1.0
+    },
+    "golden_repros": {
+      "both_empty_invalid": 0,
+      "by_mismatch_kind": {},
+      "by_status": {
+        "match": 10
+      },
+      "candidate_empty": 0,
+      "error_or_other": 0,
+      "fetch_error": 0,
+      "match": 10,
+      "match_rate": 1.0,
+      "match_rate_attempted": 1.0,
+      "match_rate_comparable": 1.0,
+      "mismatch": 0,
+      "mismatch_rate": 0.0,
+      "primary_quality": false,
+      "reference_empty": 0,
+      "skipped": 0,
+      "total": 10,
       "usable_coverage": 1.0
     },
     "ir_invariants": {
@@ -324,6 +485,49 @@
       "reliability_note": "Structural CFG checks only (empty blocks / edge sources); not full IR equivalence.",
       "skipped": 0,
       "total": 120,
+      "usable_coverage": 1.0
+    },
+    "opt_cliff": {
+      "both_empty_invalid": 0,
+      "by_candidate": {
+        "fission": {
+          "O0": {
+            "mean_correctness": 0.0546,
+            "n": 58
+          },
+          "O2": {
+            "mean_correctness": 0.2115,
+            "n": 58
+          }
+        },
+        "ghidra": {
+          "O0": {
+            "mean_correctness": 0.665,
+            "n": 60
+          },
+          "O2": {
+            "mean_correctness": 0.8983,
+            "n": 59
+          }
+        }
+      },
+      "by_mismatch_kind": {},
+      "by_status": {
+        "match": 235
+      },
+      "candidate_empty": 0,
+      "error_or_other": 0,
+      "fetch_error": 0,
+      "match": 235,
+      "match_rate": 1.0,
+      "match_rate_attempted": 1.0,
+      "match_rate_comparable": 1.0,
+      "mismatch": 0,
+      "mismatch_rate": 0.0,
+      "primary_quality": false,
+      "reference_empty": 0,
+      "skipped": 0,
+      "total": 235,
       "usable_coverage": 1.0
     },
     "pcode_parity": {
@@ -359,7 +563,126 @@
       "skipped": 0,
       "total": 120,
       "usable_coverage": 1.0
+    },
+    "seh_parity": {
+      "both_empty_invalid": 0,
+      "by_mismatch_kind": {},
+      "by_status": {
+        "match": 4
+      },
+      "candidate_empty": 0,
+      "error_or_other": 0,
+      "fetch_error": 0,
+      "match": 4,
+      "match_rate": 1.0,
+      "match_rate_attempted": 1.0,
+      "match_rate_comparable": 1.0,
+      "mismatch": 0,
+      "mismatch_rate": 0.0,
+      "primary_quality": false,
+      "reference_empty": 0,
+      "skipped": 0,
+      "total": 4,
+      "usable_coverage": 1.0
+    },
+    "string_recovery": {
+      "both_empty_invalid": 0,
+      "by_mismatch_kind": {},
+      "by_status": {
+        "match": 3
+      },
+      "candidate_empty": 0,
+      "error_or_other": 0,
+      "fetch_error": 0,
+      "match": 3,
+      "match_rate": 1.0,
+      "match_rate_attempted": 1.0,
+      "match_rate_comparable": 1.0,
+      "mismatch": 0,
+      "mismatch_rate": 0.0,
+      "primary_quality": false,
+      "reference_empty": 0,
+      "skipped": 0,
+      "total": 3,
+      "usable_coverage": 1.0
+    },
+    "strip_discovery": {
+      "both_empty_invalid": 0,
+      "by_mismatch_kind": {
+        "function_set": 8
+      },
+      "by_status": {
+        "mismatch": 8
+      },
+      "candidate_empty": 0,
+      "error_or_other": 0,
+      "fetch_error": 0,
+      "match": 0,
+      "match_rate": 0.0,
+      "match_rate_attempted": 0.0,
+      "match_rate_comparable": 0.0,
+      "mismatch": 8,
+      "mismatch_rate": 1.0,
+      "primary_quality": false,
+      "reference_empty": 0,
+      "skipped": 0,
+      "total": 8,
+      "usable_coverage": 1.0
+    },
+    "throughput": {
+      "both_empty_invalid": 0,
+      "by_mismatch_kind": {},
+      "by_status": {
+        "match": 6
+      },
+      "candidate_empty": 0,
+      "error_or_other": 0,
+      "fetch_error": 0,
+      "match": 6,
+      "match_rate": 1.0,
+      "match_rate_attempted": 1.0,
+      "match_rate_comparable": 1.0,
+      "mismatch": 0,
+      "mismatch_rate": 0.0,
+      "primary_quality": false,
+      "reference_empty": 0,
+      "skipped": 0,
+      "throughput_by_candidate": {
+        "fission": {
+          "mean_ms": 7.04,
+          "n": 1
+        },
+        "ghidra": {
+          "mean_ms": 7290.8,
+          "n": 1
+        }
+      },
+      "total": 6,
+      "usable_coverage": 1.0
+    },
+    "type_parity": {
+      "both_empty_invalid": 0,
+      "by_mismatch_kind": {
+        "type_set": 4
+      },
+      "by_status": {
+        "mismatch": 4
+      },
+      "candidate_empty": 0,
+      "error_or_other": 0,
+      "fetch_error": 0,
+      "match": 0,
+      "match_rate": 0.0,
+      "match_rate_attempted": 0.0,
+      "match_rate_comparable": 0.0,
+      "mismatch": 4,
+      "mismatch_rate": 1.0,
+      "primary_quality": false,
+      "reference_empty": 0,
+      "skipped": 0,
+      "total": 4,
+      "usable_coverage": 1.0
     }
   },
-  "total_rows": 516
+  "total_rows": 765
 }

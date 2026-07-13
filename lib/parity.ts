@@ -14,6 +14,10 @@ export type ParityStageDetail = {
   dual?: ParityPcodeDual;
   by_status: Record<string, number>;
   by_mismatch_kind: Record<string, number>;
+  /** opt_cliff: per-opt correctness means keyed by candidate then opt level */
+  by_candidate?: Record<string, Record<string, { n: number; mean_correctness: number }>>;
+  /** throughput: per-candidate timing summary */
+  throughput_by_candidate?: Record<string, { mean_ms: number; p50_ms?: number; p95_ms?: number; n: number }>;
 };
 
 export type ParityReliability = {

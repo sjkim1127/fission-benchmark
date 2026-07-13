@@ -92,6 +92,10 @@ def aggregate_rows(rows: list[dict]) -> dict:
     cfg_edge_j_sum = 0.0
     cfg_block_j_sum = 0.0
     cfg_metric_n = 0
+    # opt_cliff: {candidate: {opt: [correctness, ...]}}
+    opt_cliff_by_cand: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+    # throughput: {candidate: [time_ms, ...]}
+    throughput_by_cand: dict[str, list[float]] = defaultdict(list)
 
     for row in rows:
         subject = row.get("subject", {}) or {}
@@ -140,6 +144,20 @@ def aggregate_rows(rows: list[dict]) -> dict:
                     fd_presence_recall_sum += float(metrics["presence_recall"])
                 if metrics.get("manifest_recall") is not None:
                     fd_manifest_recall_sum += float(metrics["manifest_recall"])
+        if stage == "opt_cliff" and metrics:
+            cand = str(row.get("candidate") or "unknown")
+            opt = str(metrics.get("opt") or subject.get("opt") or "?")
+            correctness = metrics.get("correctness")
+            if correctness is not None:
+                opt_cliff_by_cand[cand][opt].append(float(correctness))
+        if stage == "throughput" and metrics:
+            cand = str(row.get("candidate") or "unknown")
+            # Only aggregate rows (not per-binary rows) carry mean_ms
+            if "mean_ms" in metrics and metrics.get("mean_ms") is not None:
+                throughput_by_cand[cand].append(float(metrics["mean_ms"]))
+            elif "time_ms" in metrics and metrics.get("time_ms") is not None:
+                # per-binary rows also accepted if no aggregate present
+                throughput_by_cand.setdefault(cand, [])  # ensure key exists
 
     stages_detail = {}
     for stage in sorted(set(list(STAGE_ORDER) + list(by_stage.keys())), key=lambda s: (STAGE_ORDER.index(s) if s in STAGE_ORDER else 99, s)):
@@ -243,6 +261,26 @@ def aggregate_rows(rows: list[dict]) -> dict:
                 "Structural CFG checks only (empty blocks / edge sources); "
                 "not full IR equivalence."
             )
+        if stage == "opt_cliff" and opt_cliff_by_cand:
+            detail["by_candidate"] = {
+                cand: {
+                    opt: {
+                        "n": len(scores),
+                        "mean_correctness": round(sum(scores) / len(scores), 4),
+                    }
+                    for opt, scores in by_opt.items()
+                }
+                for cand, by_opt in sorted(opt_cliff_by_cand.items())
+            }
+        if stage == "throughput" and throughput_by_cand:
+            detail["throughput_by_candidate"] = {
+                cand: {
+                    "n": len(ms_list),
+                    "mean_ms": round(sum(ms_list) / len(ms_list), 2) if ms_list else 0,
+                }
+                for cand, ms_list in sorted(throughput_by_cand.items())
+                if ms_list
+            }
         stages_detail[stage] = detail
 
     # Run-level reliability rollup (excludes skipped-only stages from quality).
