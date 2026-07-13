@@ -278,41 +278,42 @@ jobs:
           if ! find corpus/holdout/manifests -name '*.json' -print -quit | grep -q .; then
             echo "No holdout manifests found; writing empty holdout result set."
             mkdir -p results
-            # Prefer Python over bash heredoc: indented EOF under YAML `|` breaks
-            # (wanted `EOF` / unexpected end of file).
-            python3 -c '
-import json
-from pathlib import Path
-Path("results/holdout_latest.json").write_text(
-    json.dumps(
-        {
-            "schema_version": 2,
-            "run": {
-                "status": "skipped",
-                "skip_reason": "no_holdout_manifests",
-                "corpus": "holdout",
-                "official": False,
-            },
-            "toolchain": {},
-            "matrix": {
-                "expected_decompilers": [],
-                "expected_cells": [],
-                "expected_rows": 0,
-                "observed_rows": 0,
-            },
-            "oracle": {"mode": "example_cases", "valid": False},
-            "validity": {
-                "valid": False,
-                "publishable": False,
-                "reasons": ["no_result_rows"],
-            },
-            "rows": [],
-        },
-        indent=2,
-    )
-    + "\n"
-)
-'
+            # YAML `|` strips common indent; keep body indented so the block stays valid.
+            # Heredoc terminator must share that indent so bash sees bare `PY` after strip.
+            python3 <<'PY'
+          import json
+          from pathlib import Path
+          Path("results/holdout_latest.json").write_text(
+              json.dumps(
+                  {
+                      "schema_version": 2,
+                      "run": {
+                          "status": "skipped",
+                          "skip_reason": "no_holdout_manifests",
+                          "corpus": "holdout",
+                          "official": False,
+                      },
+                      "toolchain": {},
+                      "matrix": {
+                          "expected_decompilers": [],
+                          "expected_cells": [],
+                          "expected_rows": 0,
+                          "observed_rows": 0,
+                      },
+                      "oracle": {"mode": "example_cases", "valid": False},
+                      "validity": {
+                          "valid": False,
+                          "publishable": False,
+                          "reasons": ["no_result_rows"],
+                      },
+                      "rows": [],
+                  },
+                  indent=2,
+              )
+              + "\n",
+              encoding="utf-8",
+          )
+          PY
             if [ "$PUBLISH_RESULTS" = "true" ]; then
               echo "Official publication requires a non-empty holdout corpus."
               exit 1
