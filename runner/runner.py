@@ -402,7 +402,14 @@ async def run_all(
                     groups[key] = []
                 groups[key].append((fn, variant, function_source))
 
-    concurrency = os.cpu_count() or 4
+    # HTTP decompile batches are I/O-bound (work runs in containers). Prefer an
+    # explicit BENCHMARK_HTTP_CONCURRENCY override in CI; otherwise scale past
+    # cpu_count so multiple adapters can be in-flight on small runners.
+    env_conc = os.environ.get("BENCHMARK_HTTP_CONCURRENCY", "").strip()
+    if env_conc.isdigit() and int(env_conc) > 0:
+        concurrency = int(env_conc)
+    else:
+        concurrency = max((os.cpu_count() or 4) * 2, 8)
     sem = asyncio.Semaphore(concurrency)
     typer.echo(f"Starting batch benchmark run with concurrency limit of {concurrency} workers.")
 

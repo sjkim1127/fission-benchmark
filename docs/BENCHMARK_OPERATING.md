@@ -194,6 +194,25 @@ never allowed on main.
 3. Commits `results/dev_latest.json` + `public/benchmark-latest.json` with
    `[skip ci]` so Vercel picks up multi-tool tables without a local force-add
 
+### CI speed profile (push vs official)
+
+| Trigger | Semantic matrix | Parity subjects | Notes |
+|---------|-----------------|-----------------|-------|
+| **push → main** | smoke: limit 10 × 1 variant × 9 tools | `PARITY_LIMIT=20` | Fast path; gates need ≥5 comparable |
+| **schedule / fission-release** | full official | full (`0`) | Publication-quality |
+| **workflow_dispatch** | inputs (default full limits) | inputs (default `0`) | Override freely |
+
+Other push-path speedups (no quality gate regression):
+
+- **Parallel image pull** (×6) then sequential build only for miss/changed
+- **Parallel container health waits**
+- **Corpus binary cache** (`actions/cache` on `corpus/*/binaries`)
+- **pip cache** via `setup-python`
+- **`BENCHMARK_HTTP_CONCURRENCY=12`** for I/O-bound multi-adapter batches
+- **`paths-ignore`**: `**.md`, `docs/**`, `LICENSE` skip the full workflow
+
+Official/full runs are unchanged: no subject caps, same reliability thresholds.
+
 ### Function discovery (function *finding*)
 
 Primary layered stage: **whole-binary function inventory** (`GET /functions`).

@@ -16,9 +16,10 @@ env:
   BENCHMARK_VARIANT_LIMIT: ${{ github.event.inputs.benchmark_variant_limit || (github.event_name == 'push' && '1' || '0') }}
   RUN_MODE: ${{ github.event.inputs.run_mode || (github.event_name == 'push' && 'smoke' || 'official') }}
   PUBLISH_RESULTS: ${{ github.event.inputs.publish_results || (github.event_name == 'push' && 'false' || 'true') }}
-  # Full layered parity by default (0 = no subject cap). Local smoke can override.
+  # Push smoke: cap parity subjects (gates need ≥5 comparable). Full (0) on
+  # schedule / repository_dispatch / workflow_dispatch default.
   # Timeout must allow Ghidra headless cold-start; 2s was infra-fail only.
-  PARITY_LIMIT: ${{ github.event.inputs.parity_limit || '0' }}
+  PARITY_LIMIT: ${{ github.event.inputs.parity_limit || (github.event_name == 'push' && '20' || '0') }}
   PARITY_DECOMPILERS: ${{ github.event.inputs.parity_decompilers || 'fission,ghidra' }}
   PARITY_REQUEST_TIMEOUT: ${{ github.event.inputs.parity_timeout || '180' }}
   # Conservative reliability: strict only, no leniency in CI.
@@ -27,6 +28,8 @@ env:
   PARITY_BINARY_WORKERS: "3"
   GHIDRA_HEADLESS_WORKERS: "3"
   FISSION_CLI_WORKERS: "8"
+  # I/O-bound HTTP batches across adapters (containers do the heavy work).
+  BENCHMARK_HTTP_CONCURRENCY: "12"
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/fission-benchmark
   PYTHONPATH: .
@@ -34,6 +37,11 @@ env:
 on:
   push:
     branches: [main]
+    # Docs-only pushes do not need a 15–25m multi-decompiler run.
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
   workflow_dispatch:
     inputs:
       fission_version:
@@ -129,9 +137,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Resolve Fission release version
         id: fission-version
         env:
@@ -148,44 +153,61 @@ jobs:
           echo "FISSION_VERSION=$resolved" >> "$GITHUB_ENV"
           echo "version=$resolved" >> "$GITHUB_OUTPUT"
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Pull or build decompiler images
         run: |
+          set -euo pipefail
           SERVICES="fission ghidra boomerang radare2 angr snowman revng reko retdec oracle"
           CHANGED_SERVICES=""
           if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
-            CHANGED_SERVICES="$(git diff --name-only HEAD~1 HEAD | awk -F/ '/^docker\// {print $2}' | sort -u)"
-            echo "Docker services changed in this push:"
-            echo "${CHANGED_SERVICES:-<none>}"
+            CHANGED_SERVICES="$(git diff --name-only HEAD~1 HEAD | awk -F/ '/^docker\// {print $2}' | sort -u | tr '\n' ' ')"
+            echo "Docker services changed in this push: ${CHANGED_SERVICES:-<none>}"
           fi
+          mkdir -p /tmp/img-status
 
-          for svc in $SERVICES; do
+          pull_one() {
+            local svc="$1"
+            local remote tag
             if [ "$svc" = "fission" ]; then
-              REMOTE="${IMAGE_PREFIX}-fission:${FISSION_VERSION}"
-              echo "==> Trying to pull ${REMOTE}..."
-              if docker pull "${REMOTE}" 2>/dev/null; then
-                docker tag "${REMOTE}" "fission-benchmark-fission"
-                echo "  ✓ Pulled fission ${FISSION_VERSION} from ghcr.io"
-              else
-                echo "  ⚠  Fission ${FISSION_VERSION} image not found — building locally"
-                docker compose build --pull fission
-              fi
-              continue
-            fi
-
-            if echo "$CHANGED_SERVICES" | grep -qx "$svc"; then
-              echo "==> Building changed service ${svc} locally for push benchmark..."
-              docker compose build "${svc}"
-              continue
-            fi
-
-            REMOTE="${IMAGE_PREFIX}-${svc}:latest"
-            echo "==> Trying to pull ${REMOTE}..."
-            if docker pull "${REMOTE}" 2>/dev/null; then
-              # Tag as compose expects
-              docker tag "${REMOTE}" "fission-benchmark-${svc}"
-              echo "  ✓ Pulled ${svc} from ghcr.io"
+              remote="${IMAGE_PREFIX}-fission:${FISSION_VERSION}"
+              tag="fission-benchmark-fission"
             else
-              echo "  ⚠  Not found on ghcr.io — building ${svc} locally"
+              remote="${IMAGE_PREFIX}-${svc}:latest"
+              tag="fission-benchmark-${svc}"
+            fi
+            if echo " ${CHANGED_SERVICES} " | grep -q " ${svc} "; then
+              echo "build" > "/tmp/img-status/${svc}"
+              echo "==> ${svc}: changed in push — queue local build"
+              return 0
+            fi
+            echo "==> Trying to pull ${remote}..."
+            if docker pull "${remote}"; then
+              docker tag "${remote}" "${tag}"
+              echo "ok" > "/tmp/img-status/${svc}"
+              echo "  ✓ Pulled ${svc}"
+            else
+              echo "miss" > "/tmp/img-status/${svc}"
+              echo "  ⚠  Pull miss ${svc} — will build locally"
+            fi
+          }
+          export -f pull_one
+          export IMAGE_PREFIX FISSION_VERSION CHANGED_SERVICES
+
+          # Phase 1: parallel pulls (I/O bound; was ~3–5m sequential).
+          printf '%s\n' $SERVICES | xargs -P 6 -n 1 bash -c 'pull_one "$@"' _
+
+          # Phase 2: sequential builds for changed/missed images only.
+          for svc in $SERVICES; do
+            st="$(cat "/tmp/img-status/${svc}" 2>/dev/null || echo miss)"
+            if [ "$st" = "ok" ]; then
+              continue
+            fi
+            echo "==> Building ${svc} locally (status=${st})..."
+            if [ "$svc" = "fission" ]; then
+              docker compose build --pull fission
+            else
               docker compose build "${svc}"
             fi
           done
@@ -193,33 +215,66 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Install Python deps
         run: pip install -e ".[dev]"
 
+      - name: Cache corpus binaries
+        id: corpus-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            corpus/dev/binaries
+            corpus/holdout/binaries
+          key: corpus-bin-${{ hashFiles('corpus/**/source/**', 'corpus/**/manifests/**', 'docker/corpus-builder/**') }}
+
       - name: Build corpus binaries
+        if: steps.corpus-cache.outputs.cache-hit != 'true'
         run: docker compose --profile tools run --rm --build corpus-builder
+
+      - name: Verify corpus binaries present
+        run: |
+          set -euo pipefail
+          # Cache hit must still leave usable PE fixtures for the smoke matrix.
+          count="$(find corpus/dev/binaries -type f 2>/dev/null | wc -l | tr -d ' ')"
+          echo "corpus/dev/binaries files: ${count}"
+          if [ "${count}" -lt 1 ]; then
+            echo "Cache empty or incomplete — rebuilding corpus"
+            docker compose --profile tools run --rm --build corpus-builder
+            count="$(find corpus/dev/binaries -type f 2>/dev/null | wc -l | tr -d ' ')"
+            echo "after rebuild: ${count}"
+          fi
+          test "${count}" -ge 1
 
       - name: Start decompiler containers
         run: |
+          set -euo pipefail
           docker compose up -d fission ghidra boomerang radare2 angr snowman revng reko retdec oracle
-          for port in 8000 8001 8002 8003 8004 8005 8006 8008 8009 8010; do
-            ready=0
-            for i in $(seq 1 30); do
-              if curl -sf http://localhost:$port/health; then
-                ready=1
-                break
+
+          wait_port() {
+            local port="$1"
+            local i
+            for i in $(seq 1 60); do
+              if curl -sf "http://localhost:${port}/health" >/dev/null; then
+                echo "ready :${port}"
+                return 0
               fi
-              echo "Waiting for port $port... ($i/30)"
-              sleep 5
+              sleep 2
             done
-            if [ "$ready" -ne 1 ]; then
-              echo "Service on port $port did not become healthy"
-              docker compose ps
-              docker compose logs --no-color
-              exit 1
-            fi
-          done
+            echo "Service on port ${port} did not become healthy" >&2
+            return 1
+          }
+          export -f wait_port
+
+          # Parallel health waits — sequential 5s polls stacked ~minutes of idle.
+          if ! printf '%s\n' 8000 8001 8002 8003 8004 8005 8006 8008 8009 8010 \
+            | xargs -P 10 -n 1 bash -c 'wait_port "$@"' _; then
+            docker compose ps
+            docker compose logs --no-color
+            exit 1
+          fi
 
       - name: Verify Fission container version
         run: |
