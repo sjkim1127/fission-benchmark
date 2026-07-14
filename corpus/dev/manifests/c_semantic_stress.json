@@ -1,0 +1,329 @@
+{
+  "_comment": "Semantic stress family: wraparound, bounded parsing, state machines, aliasing, signed widening, and rotates.",
+  "functions": [
+    {
+      "name": "rolling_hash32",
+      "source": "source/semantic_stress.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_gcc_O0.exe",
+          "addr": "0x140001530"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_gcc_O2.exe",
+          "addr": "0x140001530"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_gcc-m32_O0.exe",
+          "addr": "0x4015b0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_gcc-m32_O2.exe",
+          "addr": "0x4015b0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_clang_O0.exe",
+          "addr": "0x140001510"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_clang_O2.exe",
+          "addr": "0x140001510"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_clang-m32_O0.exe",
+          "addr": "0x4014e0"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_clang-m32_O2.exe",
+          "addr": "0x4014e0"
+        }
+      ]
+    },
+    {
+      "name": "bounded_tlv_sum",
+      "source": "source/semantic_stress.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_gcc_O0.exe",
+          "addr": "0x140001595"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_gcc_O2.exe",
+          "addr": "0x140001560"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_gcc-m32_O0.exe",
+          "addr": "0x4015fc"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_gcc-m32_O2.exe",
+          "addr": "0x4015f0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_clang_O0.exe",
+          "addr": "0x140001590"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_clang_O2.exe",
+          "addr": "0x140001590"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_clang-m32_O0.exe",
+          "addr": "0x401550"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_clang-m32_O2.exe",
+          "addr": "0x401560"
+        }
+      ]
+    },
+    {
+      "name": "state_machine_score",
+      "source": "source/semantic_stress.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_gcc_O0.exe",
+          "addr": "0x140001663"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_gcc_O2.exe",
+          "addr": "0x1400015e0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_gcc-m32_O0.exe",
+          "addr": "0x4016a1"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_gcc-m32_O2.exe",
+          "addr": "0x401680"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_clang_O0.exe",
+          "addr": "0x140001680"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_clang_O2.exe",
+          "addr": "0x140001740"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_clang-m32_O0.exe",
+          "addr": "0x401620"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_clang-m32_O2.exe",
+          "addr": "0x401660"
+        }
+      ]
+    },
+    {
+      "name": "overlap_move",
+      "source": "source/semantic_stress.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_gcc_O0.exe",
+          "addr": "0x140001755"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_gcc_O2.exe",
+          "addr": "0x1400016a0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_gcc-m32_O0.exe",
+          "addr": "0x40177b"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_gcc-m32_O2.exe",
+          "addr": "0x401740"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_clang_O0.exe",
+          "addr": "0x1400017d0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_clang_O2.exe",
+          "addr": "0x140001800"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_clang-m32_O0.exe",
+          "addr": "0x401740"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_clang-m32_O2.exe",
+          "addr": "0x401700"
+        }
+      ]
+    },
+    {
+      "name": "mixed_width_accumulate",
+      "source": "source/semantic_stress.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_gcc_O0.exe",
+          "addr": "0x140001826"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_gcc_O2.exe",
+          "addr": "0x140001710"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_gcc-m32_O0.exe",
+          "addr": "0x40180e"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_gcc-m32_O2.exe",
+          "addr": "0x4017b0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_clang_O0.exe",
+          "addr": "0x1400018d0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_clang_O2.exe",
+          "addr": "0x140001be0"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_clang-m32_O0.exe",
+          "addr": "0x401810"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_clang-m32_O2.exe",
+          "addr": "0x401860"
+        }
+      ]
+    },
+    {
+      "name": "rotate_words",
+      "source": "source/semantic_stress.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_gcc_O0.exe",
+          "addr": "0x14000188e"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_gcc_O2.exe",
+          "addr": "0x140001740"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_gcc-m32_O0.exe",
+          "addr": "0x40185c"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_gcc-m32_O2.exe",
+          "addr": "0x4017f0"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_clang_O0.exe",
+          "addr": "0x140001960"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_clang_O2.exe",
+          "addr": "0x140001cf0"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O0",
+          "binary": "binaries/semantic_stress_clang-m32_O0.exe",
+          "addr": "0x401890"
+        },
+        {
+          "compiler": "clang-m32",
+          "opt": "-O2",
+          "binary": "binaries/semantic_stress_clang-m32_O2.exe",
+          "addr": "0x4018e0"
+        }
+      ]
+    }
+  ]
+}

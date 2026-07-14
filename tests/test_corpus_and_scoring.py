@@ -3,6 +3,7 @@ from pathlib import Path
 from runner.corpus import Corpus
 from runner.scoring import FunctionScore, assign_consensus_ranks, extract_function_source, compute_correctness_score
 from runner.test_wrappers import TEST_WRAPPERS
+from scripts.precompute_source_metrics import discover_source_files
 
 
 def test_manifest_preserves_variant_addr(tmp_path: Path) -> None:
@@ -94,6 +95,47 @@ def test_holdout_split_is_non_empty_and_disjoint() -> None:
     assert holdout, "holdout corpus must be populated (run scripts/populate_holdout.py)"
     assert dev, "dev corpus must remain non-empty after holdout lock"
     assert dev.isdisjoint(holdout), f"overlap: {sorted(dev & holdout)}"
+
+
+def test_semantic_stress_family_has_full_variant_matrix() -> None:
+    manifest = (
+        Path(__file__).parent.parent
+        / "corpus"
+        / "dev"
+        / "manifests"
+        / "c_semantic_stress.json"
+    )
+    corpus = Corpus.load(manifest)
+    expected_functions = {
+        "rolling_hash32",
+        "bounded_tlv_sum",
+        "state_machine_score",
+        "overlap_move",
+        "mixed_width_accumulate",
+        "rotate_words",
+    }
+    expected_variants = {
+        (compiler, opt)
+        for compiler in ("gcc", "gcc-m32", "clang", "clang-m32")
+        for opt in ("-O0", "-O2")
+    }
+
+    assert {fn.name for fn in corpus.functions} == expected_functions
+    for fn in corpus.functions:
+        variants = {(v.compiler, v.opt) for v in fn.compiler_variants}
+        assert variants == expected_variants
+        assert all(v.addr != "0x0" for v in fn.compiler_variants)
+
+
+def test_source_metrics_ignore_generated_decompiler_output(tmp_path: Path) -> None:
+    authored = tmp_path / "dev" / "source" / "sample.c"
+    generated = tmp_path / "dev" / "binaries" / "sample.reko" / "sample.c"
+    authored.parent.mkdir(parents=True)
+    generated.parent.mkdir(parents=True)
+    authored.write_text("int authored(void) { return 1; }")
+    generated.write_text("int generated(void) { goto done; done: return 2; }")
+
+    assert discover_source_files(tmp_path) == [authored]
 
 
 def test_assign_consensus_ranks_handles_ties_correctly() -> None:

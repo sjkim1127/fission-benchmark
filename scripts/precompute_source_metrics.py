@@ -57,14 +57,23 @@ def extract_function(source: str, function_name: str) -> str:
     return ""
 
 
-def compute_metrics() -> dict:
+def discover_source_files(corpus_root: Path = CORPUS_ROOT) -> list[Path]:
+    """Return authored corpus sources, excluding generated adapter output."""
+    return sorted(
+        source_path
+        for source_dir in corpus_root.glob("*/source")
+        for source_path in source_dir.rglob("*.c")
+    )
+
+
+def compute_metrics(corpus_root: Path = CORPUS_ROOT) -> dict:
     """Walk all corpus C source files and compute per-function metrics."""
     goto_counts: dict[str, int] = {}
     nesting_depths: dict[str, int] = {}
 
-    source_files = list(CORPUS_ROOT.rglob("*.c"))
+    source_files = discover_source_files(corpus_root)
     if not source_files:
-        print(f"No .c source files found under {CORPUS_ROOT}")
+        print(f"No authored .c source files found under {corpus_root}")
         return {"goto_counts": {}, "nesting_depths": {}}
 
     print(f"Found {len(source_files)} source files")
@@ -112,7 +121,7 @@ def main():
     metrics = compute_metrics()
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT_PATH.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    OUTPUT_PATH.write_text(json.dumps(metrics, indent=2) + "\n", encoding="utf-8")
     print(f"✅ Written to {OUTPUT_PATH}")
 
     # Summary
