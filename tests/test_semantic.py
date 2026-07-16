@@ -16,6 +16,28 @@ def test_single_translation_unit_preserves_static_target() -> None:
     assert source.count("int main(void)") == 1
 
 
+def test_host_semantic_widens_m32_uint_formals_for_function_pointers() -> None:
+    """m32 surface uses uint for pointers; host wrappers pass ulonglong fps."""
+    from runner.semantic import adapt_32bit_surface_for_host_semantic
+
+    code = (
+        "uint _apply_binop(uint param_1, uint param_2, uint param_3)\n"
+        "{\n"
+        "    if (param_1) {\n"
+        "        return ((unsigned long long (*)())(param_1))(param_2, param_3);\n"
+        "    }\n"
+        "    return 0;\n"
+        "}\n"
+    )
+    adapted = adapt_32bit_surface_for_host_semantic("apply_binop", code)
+    assert "ulonglong _apply_binop(ulonglong param_1, ulonglong param_2, ulonglong param_3)" in adapted
+    # Body unchanged (still casts param_1 as callable).
+    assert "((unsigned long long (*)())(param_1))" in adapted
+
+    score, err, cat, passed, total = verify_semantic_correctness("apply_binop", code)
+    assert (score, cat, passed, total) == (1.0, "", 6, 6), (score, err, cat, passed, total)
+
+
 def test_semantic_verification_compiles_once_and_runs_each_case(monkeypatch) -> None:
     calls: list[list[str]] = []
 

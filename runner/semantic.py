@@ -129,12 +129,45 @@ typedef union DataValue DataValue;
 """
 
 
+# 32-bit decompiler surface types that may hold pointers (m32). Do not match
+# plain ``int`` — host wrappers for int-only functions stay host-native.
+_HOST_WIDEN_TYPE = r"(?:uint|dword|undefined4|word32|uint32_t)"
+
+
+def adapt_32bit_surface_for_host_semantic(func_name: str, decompiled_code: str) -> str:
+    """Widen 32-bit formals of the target function for host recompilation.
+
+    m32 decompilation correctly types pointers as ``uint``. The host semantic
+    harness runs natively (no ``-m32`` on arm64) and wrappers pass host-width
+    function pointers as ``ulonglong``. Truncating those to ``uint`` corrupts
+    the pointer and crashes the harness — even when the decompiled *logic* is
+    correct.
+
+    This adaptation is harness-only; it does not change decompiler surface
+    output or bare-compile diagnostics.
+    """
+    # uint _apply_binop(uint param_1, uint param_2, uint param_3)
+    sig = re.compile(
+        rf"^([ \t]*)({_HOST_WIDEN_TYPE})[ \t]+"
+        rf"(_?{re.escape(func_name)})\s*\(([^;{{]*)\)",
+        re.MULTILINE,
+    )
+
+    def _widen(match: re.Match[str]) -> str:
+        indent, _ret, name, params = match.group(1), match.group(2), match.group(3), match.group(4)
+        new_params = re.sub(rf"\b{_HOST_WIDEN_TYPE}\b", "ulonglong", params)
+        return f"{indent}ulonglong {name}({new_params})"
+
+    return sig.sub(_widen, decompiled_code, count=1)
+
+
 def build_single_translation_unit(
     func_name: str,
     decompiled_code: str,
     cases: list[str],
 ) -> str:
     """Combine the decompilation and every semantic case into one C program."""
+    decompiled_code = adapt_32bit_surface_for_host_semantic(func_name, decompiled_code)
     alias = ""
     if f" _{func_name}" in decompiled_code or f" *_{func_name}" in decompiled_code:
         alias = f"#define {func_name} _{func_name}\n"
