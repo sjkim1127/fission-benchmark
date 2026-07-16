@@ -287,15 +287,15 @@ TEST_WRAPPERS: dict[str, list[str]] = {
         "\nint main() { if (kv_lookup(0,0,1) != -1) return 1; return 0; }\n",
         "\nint main() { Kv t[]={{-1,-9},{0,5}}; if (kv_lookup(t,2,-1) != -9) return 1; return 0; }\n",
     ],
-    # Uses harness helpers (bench_add_ints / bench_mul_ints) so single-function
-    # decomp of apply_binop does not require sibling symbols from the PE.
+    # Cast fn pointers through integer: recovered signatures often use ulonglong
+    # for the first param (register CallInd carrier) rather than a C function type.
     "apply_binop": [
         "\nint main() { if (apply_binop(0, 3, 4) != 0) return 1; return 0; }\n",
-        "\nint main() { if (apply_binop(bench_add_ints, 3, 4) != 7) return 1; return 0; }\n",
-        "\nint main() { if (apply_binop(bench_mul_ints, 2, 5) != 10) return 1; return 0; }\n",
-        "\nint main() { if (apply_binop(bench_add_ints, -3, 8) != 5) return 1; return 0; }\n",
-        "\nint main() { if (apply_binop(bench_mul_ints, -2, -4) != 8) return 1; return 0; }\n",
-        "\nint main() { if (apply_binop(bench_add_ints, 0, 0) != 0) return 1; return 0; }\n",
+        "\nint main() { if (apply_binop((ulonglong)(uintptr_t)bench_add_ints, 3, 4) != 7) return 1; return 0; }\n",
+        "\nint main() { if (apply_binop((ulonglong)(uintptr_t)bench_mul_ints, 2, 5) != 10) return 1; return 0; }\n",
+        "\nint main() { if (apply_binop((ulonglong)(uintptr_t)bench_add_ints, -3, 8) != 5) return 1; return 0; }\n",
+        "\nint main() { if (apply_binop((ulonglong)(uintptr_t)bench_mul_ints, -2, -4) != 8) return 1; return 0; }\n",
+        "\nint main() { if (apply_binop((ulonglong)(uintptr_t)bench_add_ints, 0, 0) != 0) return 1; return 0; }\n",
     ],
     "add_ints": [
         "\nint main() { if (add_ints(1, 2) != 3) return 1; return 0; }\n",

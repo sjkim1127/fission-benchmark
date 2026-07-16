@@ -14,6 +14,7 @@ except ImportError:  # Direct script/module execution from runner/.
 
 STANDARD_HEADER = """
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
