@@ -6,6 +6,7 @@ export type DashboardPage =
   | "same-function"
   | "functions"
   | "variants"
+  | "quality"
   | "parity";
 
 const NAV: {
@@ -37,6 +38,12 @@ const NAV: {
     href: "/variants",
     label: "Variants",
     blurb: "Compiler × opt",
+  },
+  {
+    id: "quality",
+    href: "/quality",
+    label: "Quality EXT",
+    blurb: "Bare-compile · readability",
   },
   {
     id: "parity",

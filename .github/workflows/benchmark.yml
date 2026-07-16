@@ -641,6 +641,32 @@ jobs:
           rows = env.get("rows") or []
           tools = sorted({str(r.get("decompiler")) for r in rows if r.get("decompiler")})
           print(f"dashboard envelope rows={len(rows)} tools={len(tools)} {tools}")
+          summary = env.get("summary") or {}
+          extensions = summary.get("extensions") or {}
+          bare = (extensions.get("bare_compile") or {}).get("by_decompiler") or {}
+          tracks = (extensions.get("tracks") or {}).get("by_track") or {}
+          readability = (extensions.get("readability_axis") or {}).get("by_decompiler") or {}
+          print(
+              "quality_extensions "
+              f"bare_tools={len(bare)} readability_tools={len(readability)} "
+              f"tracks={sorted(tracks)}"
+          )
+          # Emit operator-facing summary for Actions UI.
+          import os
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if step_summary:
+              lines = [
+                  "### Quality extensions (non-ranking)",
+                  "",
+                  f"- bare-compile tools: `{len(bare)}`",
+                  f"- readability tools: `{len(readability)}`",
+                  f"- tracks: `{', '.join(sorted(tracks)) or 'none'}`",
+                  "",
+                  "Dashboard: `/quality` — never mixed into semantic ranking.",
+                  "",
+              ]
+              with open(step_summary, "a", encoding="utf-8") as fh:
+                  fh.write("\n".join(lines))
           if len(tools) < 2:
               raise SystemExit(
                   f"FAIL dashboard envelope has only {tools} — expected multi-decompilers "

@@ -504,6 +504,11 @@ def generate_html(
             "error": s.error,
             "has_parity_diff": has_parity_diff,
             "parity_diff_path": parity_diff_path,
+            "bare_compile": getattr(s, "bare_compile", {}) or {},
+            "track": getattr(s, "track", "") or "",
+            "isa_format": getattr(s, "isa_format", {}) or {},
+            "binary": getattr(s, "binary", "") or "",
+            "corpus": getattr(s, "corpus", "") or "",
         })
     scores_json = json.dumps(serialized_scores, indent=2)
 

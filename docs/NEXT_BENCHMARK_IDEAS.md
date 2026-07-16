@@ -22,6 +22,11 @@ implementation as of the full extension pass (not only MVP semantic).
 | Golden canaries | `golden_repros` | Meta locks |
 | Readability proxies | `runner/readability.py` | Evidence only |
 | Human study pack | `benchmark/readability/study_pack` | Scaffold for Phase 3 |
+| **Bare-compile rate** | `runner/bare_compile.py` + summary EXT | Diagnostic only |
+| **Readability axis (goto/temp/flag)** | `summary.extensions.readability_axis` | Diagnostic only |
+| **Track / ISA / format pivots** | `summary.extensions.tracks` | Diagnostic only |
+| **Advanced pattern corpus** | `corpus/dev/source/advanced_patterns.c` | Semantic matrix |
+| **Dashboard Quality EXT** | `/quality` | Non-ranking UI |
 
 Unified extension runner:
 

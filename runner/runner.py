@@ -32,6 +32,7 @@ from readability import analyze_readability, ast_structure_similarity, summarize
 from output_diagnostics import analyze_output_diagnostics, invalid_output_reason
 from run_validity import build_envelope
 from test_wrappers import TEST_WRAPPERS
+from bare_compile import try_bare_compile, classify_track, classify_isa_format
 import subprocess
 
 app = typer.Typer(help="Fission decompiler benchmark runner.")
@@ -158,8 +159,10 @@ async def decompile_batch_and_score(
     targets: List[tuple],  # list of (fn_object, variant_object, function_source)
     sem: asyncio.Semaphore,
     oracle_endpoint: str | None,
+    corpus_split: str = "dev",
 ) -> List[FunctionScore]:
     addresses = [t[1].addr for t in targets]
+    binary_rel = str(binary_path)
 
     try:
         binary_b64 = base64.b64encode(binary_path.read_bytes()).decode()
@@ -319,6 +322,18 @@ async def decompile_batch_and_score(
         else:
             fn_time_ms = data.get("time_ms", 0) // max(len(targets), 1)
 
+        bare = (
+            try_bare_compile(semantic_code)
+            if semantic_code and not error
+            else {"ok": False, "category": "empty", "error": error or "no code"}
+        )
+        track = classify_track(
+            binary=binary_rel,
+            function_name=fn.name,
+            corpus=corpus_split,
+        )
+        isa_fmt = classify_isa_format(binary_rel)
+
         fn_scores.append(FunctionScore(
             decompiler=dname,
             function_name=fn.name,
@@ -345,6 +360,11 @@ async def decompile_batch_and_score(
             ast_similarity=ast_similarity,
             output_diagnostics=output_diagnostics,
             oracle_evidence=oracle_evidence,
+            bare_compile=bare,
+            track=track,
+            isa_format=isa_fmt,
+            binary=binary_rel,
+            corpus=corpus_split,
         ))
 
         # Direct feedback output
@@ -418,7 +438,14 @@ async def run_all(
         for (dname, url, binary_path), targets in groups.items():
             tasks.append(
                 decompile_batch_and_score(
-                    client, dname, url, binary_path, targets, sem, oracle_endpoint
+                    client,
+                    dname,
+                    url,
+                    binary_path,
+                    targets,
+                    sem,
+                    oracle_endpoint,
+                    corpus_split=corpus_split,
                 )
             )
 

@@ -53,6 +53,56 @@ export type CrossVariantRow = {
   perfect_rows: number;
 };
 
+/** Non-ranking extension pivots from envelope.summary. */
+export type QualityExtensions = {
+  bareByDecompiler: Record<string, Record<string, number | null | undefined>>;
+  readabilityByDecompiler: Record<
+    string,
+    Record<string, number | null | undefined>
+  >;
+  byTrack: Record<string, Record<string, number | null | undefined>>;
+  byIsa: Record<string, Record<string, number | null | undefined>>;
+  byFormat: Record<string, Record<string, number | null | undefined>>;
+};
+
+export function extractQualityExtensions(
+  data: BenchmarkEnvelope | null | undefined,
+): QualityExtensions {
+  const empty: QualityExtensions = {
+    bareByDecompiler: {},
+    readabilityByDecompiler: {},
+    byTrack: {},
+    byIsa: {},
+    byFormat: {},
+  };
+  if (!data) return empty;
+  const summary = (data as { summary?: Record<string, unknown> }).summary;
+  if (!summary || typeof summary !== "object") return empty;
+  const extensions = (summary.extensions || {}) as Record<string, unknown>;
+  const diagnostics = (summary.diagnostics || {}) as Record<string, unknown>;
+  const bare =
+    (extensions.bare_compile as Record<string, unknown> | undefined) ||
+    (diagnostics.bare_compile as Record<string, unknown> | undefined) ||
+    {};
+  const readability =
+    (extensions.readability_axis as Record<string, unknown> | undefined) ||
+    (diagnostics.readability_axis as Record<string, unknown> | undefined) ||
+    {};
+  const tracks =
+    (extensions.tracks as Record<string, unknown> | undefined) ||
+    (diagnostics.tracks as Record<string, unknown> | undefined) ||
+    {};
+  return {
+    bareByDecompiler: (bare.by_decompiler as QualityExtensions["bareByDecompiler"]) || {},
+    readabilityByDecompiler:
+      (readability.by_decompiler as QualityExtensions["readabilityByDecompiler"]) ||
+      {},
+    byTrack: (tracks.by_track as QualityExtensions["byTrack"]) || {},
+    byIsa: (tracks.by_isa as QualityExtensions["byIsa"]) || {},
+    byFormat: (tracks.by_format as QualityExtensions["byFormat"]) || {},
+  };
+}
+
 /**
  * Strict loader for call sites that already handle missing data.
  * Prefer {@link getLatestBenchmarkOptional} on pages — never throw during

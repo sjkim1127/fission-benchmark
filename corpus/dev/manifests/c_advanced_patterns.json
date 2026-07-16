@@ -1,0 +1,215 @@
+{
+  "_comment": "Advanced patterns: linked list, struct fields, function pointers, nested stride loops.",
+  "functions": [
+    {
+      "name": "list_sum",
+      "source": "source/advanced_patterns.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc_O0.exe",
+          "addr": "0x140001450"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc_O2.exe",
+          "addr": "0x140001480"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x401460"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x401480"
+        }
+      ]
+    },
+    {
+      "name": "kv_lookup",
+      "source": "source/advanced_patterns.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc_O0.exe",
+          "addr": "0x140001492"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc_O2.exe",
+          "addr": "0x1400014a0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x401491"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x4014a0"
+        }
+      ]
+    },
+    {
+      "name": "apply_binop",
+      "source": "source/advanced_patterns.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc_O0.exe",
+          "addr": "0x1400014fc"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc_O2.exe",
+          "addr": "0x1400014f0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x4014dd"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x4014f0"
+        }
+      ]
+    },
+    {
+      "name": "add_ints",
+      "source": "source/advanced_patterns.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc_O0.exe",
+          "addr": "0x140001532"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc_O2.exe",
+          "addr": "0x140001460"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x401504"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x401460"
+        }
+      ]
+    },
+    {
+      "name": "mul_ints",
+      "source": "source/advanced_patterns.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc_O0.exe",
+          "addr": "0x140001546"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc_O2.exe",
+          "addr": "0x140001470"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x401511"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x401470"
+        }
+      ]
+    },
+    {
+      "name": "dot_product_stride",
+      "source": "source/advanced_patterns.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc_O0.exe",
+          "addr": "0x140001559"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc_O2.exe",
+          "addr": "0x140001510"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x40151d"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x401520"
+        }
+      ]
+    },
+    {
+      "name": "bounded_checksum",
+      "source": "source/advanced_patterns.c",
+      "compiler_variants": [
+        {
+          "compiler": "gcc",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc_O0.exe",
+          "addr": "0x140001609"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc_O2.exe",
+          "addr": "0x1400015a0"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x40159f"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O2",
+          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x4015c0"
+        }
+      ]
+    }
+  ]
+}

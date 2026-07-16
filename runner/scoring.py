@@ -57,6 +57,12 @@ class FunctionScore:
     oracle_evidence: dict[str, Any] = field(default_factory=dict)
     # Stable exclusive fail bucket for standard-set reporting (see standard_summary).
     fail_taxonomy: str = ""
+    # Extension diagnostics (never used for semantic ranking).
+    bare_compile: dict[str, Any] = field(default_factory=dict)
+    track: str = ""
+    isa_format: dict[str, str] = field(default_factory=dict)
+    binary: str = ""
+    corpus: str = ""
 
 
 

@@ -271,4 +271,83 @@ TEST_WRAPPERS: dict[str, list[str]] = {
         "\nint main() { uint32_t v[] = {0xdeadbeefu,0x01020304u}; if (rotate_words(v,2,8) != 0xafbdebdcu) return 1; if (v[0]!=0xadbeefdeu||v[1]!=0x02030401u) return 2; return 0; }\n",
         "\nint main() { uint32_t v[] = {0xffffffffu,0u,1u}; if (rotate_words(v,3,33) != 0xfffffffau) return 1; if (v[0]!=0xffffffffu||v[1]!=0u||v[2]!=2u) return 2; return 0; }\n",
     ],
+    # advanced_patterns.c — list / struct / indirect call / stride
+    "list_sum": [
+        "\nint main() { if (list_sum(0) != 0) return 1; return 0; }\n",
+        "\nint main() { Node c={3,0}; Node b={2,&c}; Node a={1,&b}; if (list_sum(&a) != 6) return 1; return 0; }\n",
+        "\nint main() { Node a={-5,0}; if (list_sum(&a) != -5) return 1; return 0; }\n",
+        "\nint main() { Node d={4,0}; Node c={3,&d}; Node b={2,&c}; Node a={1,&b}; if (list_sum(&a) != 10) return 1; return 0; }\n",
+        "\nint main() { Node b={0,0}; Node a={0,&b}; if (list_sum(&a) != 0) return 1; return 0; }\n",
+    ],
+    "kv_lookup": [
+        "\nint main() { Kv t[]={{1,10},{2,20}}; if (kv_lookup(t,2,1) != 10) return 1; return 0; }\n",
+        "\nint main() { Kv t[]={{1,10},{2,20},{3,30}}; if (kv_lookup(t,3,2) != 20) return 1; return 0; }\n",
+        "\nint main() { Kv t[]={{1,10},{2,20}}; if (kv_lookup(t,2,99) != -1) return 1; return 0; }\n",
+        "\nint main() { Kv t[]={{7,0}}; if (kv_lookup(t,1,7) != 0) return 1; return 0; }\n",
+        "\nint main() { if (kv_lookup(0,0,1) != -1) return 1; return 0; }\n",
+        "\nint main() { Kv t[]={{-1,-9},{0,5}}; if (kv_lookup(t,2,-1) != -9) return 1; return 0; }\n",
+    ],
+    # Uses harness helpers (bench_add_ints / bench_mul_ints) so single-function
+    # decomp of apply_binop does not require sibling symbols from the PE.
+    "apply_binop": [
+        "\nint main() { if (apply_binop(0, 3, 4) != 0) return 1; return 0; }\n",
+        "\nint main() { if (apply_binop(bench_add_ints, 3, 4) != 7) return 1; return 0; }\n",
+        "\nint main() { if (apply_binop(bench_mul_ints, 2, 5) != 10) return 1; return 0; }\n",
+        "\nint main() { if (apply_binop(bench_add_ints, -3, 8) != 5) return 1; return 0; }\n",
+        "\nint main() { if (apply_binop(bench_mul_ints, -2, -4) != 8) return 1; return 0; }\n",
+        "\nint main() { if (apply_binop(bench_add_ints, 0, 0) != 0) return 1; return 0; }\n",
+    ],
+    "add_ints": [
+        "\nint main() { if (add_ints(1, 2) != 3) return 1; return 0; }\n",
+        "\nint main() { if (add_ints(-1, 1) != 0) return 1; return 0; }\n",
+        "\nint main() { if (add_ints(100, 200) != 300) return 1; return 0; }\n",
+        "\nint main() { if (add_ints(0, 0) != 0) return 1; return 0; }\n",
+        "\nint main() { if (add_ints(-5, -7) != -12) return 1; return 0; }\n",
+    ],
+    "mul_ints": [
+        "\nint main() { if (mul_ints(2, 3) != 6) return 1; return 0; }\n",
+        "\nint main() { if (mul_ints(-2, 3) != -6) return 1; return 0; }\n",
+        "\nint main() { if (mul_ints(0, 99) != 0) return 1; return 0; }\n",
+        "\nint main() { if (mul_ints(7, 1) != 7) return 1; return 0; }\n",
+        "\nint main() { if (mul_ints(-4, -5) != 20) return 1; return 0; }\n",
+    ],
+    "dot_product_stride": [
+        "\nint main() { int a[]={1,2,3,4}; int b[]={5,6,7,8}; if (dot_product_stride(a,b,2,2) != 70) return 1; return 0; }\n",
+        "\nint main() { int a[]={1}; int b[]={9}; if (dot_product_stride(a,b,1,1) != 9) return 1; return 0; }\n",
+        "\nint main() { int a[]={0,0,0,0}; int b[]={1,2,3,4}; if (dot_product_stride(a,b,2,2) != 0) return 1; return 0; }\n",
+        "\nint main() { int a[]={1,0,0,1}; int b[]={2,0,0,3}; if (dot_product_stride(a,b,2,2) != 5) return 1; return 0; }\n",
+        "\nint main() { int a[]={-1,2}; int b[]={3,-4}; if (dot_product_stride(a,b,1,2) != -3) return 1; return 0; }\n",
+    ],
+    "bounded_checksum": [
+        "\nint main() { unsigned char p[]={1,2,3}; if (bounded_checksum(p,3,0) != 0u) return 1; return 0; }\n",
+        "\nint main() { unsigned char p[]={1,2,3}; if (bounded_checksum(p,3,1) != 1u) return 1; return 0; }\n",
+        "\nint main() { unsigned char p[]={1,2,3}; if (bounded_checksum(p,3,3) != 1158u) return 1; return 0; }\n",
+        "\nint main() { unsigned char p[]={1,2,3,4,5}; if (bounded_checksum(p,5,3) != 1158u) return 1; return 0; }\n",
+        "\nint main() { unsigned char p[]={0}; if (bounded_checksum(p,1,1) != 0u) return 1; return 0; }\n",
+        "\nint main() { unsigned char p[]={10,20}; if (bounded_checksum(p,2,2) != 350u) return 1; return 0; }\n",
+    ],
+    # realworld util_lib.c
+    "util_hash": [
+        "\nint main() { if (util_hash(0) != 0u) return 1; return 0; }\n",
+        "\nint main() { if (util_hash(\"\") != 2166136261u) return 1; return 0; }\n",
+        "\nint main() { if (util_hash(\"a\") != 3826002220u) return 1; return 0; }\n",
+        "\nint main() { uint32_t h=util_hash(\"ab\"); if (h==0u) return 1; return 0; }\n",
+        "\nint main() { if (util_hash(\"a\") == util_hash(\"b\")) return 1; return 0; }\n",
+    ],
+    "util_clamp": [
+        "\nint main() { if (util_clamp(5,0,10) != 5) return 1; return 0; }\n",
+        "\nint main() { if (util_clamp(-1,0,10) != 0) return 1; return 0; }\n",
+        "\nint main() { if (util_clamp(99,0,10) != 10) return 1; return 0; }\n",
+        "\nint main() { if (util_clamp(0,0,10) != 0) return 1; return 0; }\n",
+        "\nint main() { if (util_clamp(10,0,10) != 10) return 1; return 0; }\n",
+        "\nint main() { if (util_clamp(-100,-5,5) != -5) return 1; return 0; }\n",
+    ],
+    "util_count_bits": [
+        "\nint main() { if (util_count_bits(0u) != 0) return 1; return 0; }\n",
+        "\nint main() { if (util_count_bits(1u) != 1) return 1; return 0; }\n",
+        "\nint main() { if (util_count_bits(0xffffffffu) != 32) return 1; return 0; }\n",
+        "\nint main() { if (util_count_bits(0x0fu) != 4) return 1; return 0; }\n",
+        "\nint main() { if (util_count_bits(0x80000000u) != 1) return 1; return 0; }\n",
+        "\nint main() { if (util_count_bits(0xaaaaaaaau) != 16) return 1; return 0; }\n",
+    ],
 }

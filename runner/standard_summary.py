@@ -12,6 +12,9 @@ Canonical public contract for the metric set:
 
 Source similarity, AST, and readability proxies are intentionally excluded from
 ranking surfaces — they may still appear under diagnostics elsewhere.
+
+Extension pivots (bare-compile, readability axis, track/ISA) are attached under
+``extensions`` / ``diagnostics`` and must never feed correctness ranking.
 """
 from __future__ import annotations
 
@@ -25,6 +28,19 @@ try:
     from .same_function_matrix import build_same_function_matrix
 except ImportError:
     from same_function_matrix import build_same_function_matrix
+
+try:
+    from .bare_compile import (
+        aggregate_bare_compile,
+        aggregate_readability_axis,
+        aggregate_track_taxonomy,
+    )
+except ImportError:
+    from bare_compile import (
+        aggregate_bare_compile,
+        aggregate_readability_axis,
+        aggregate_track_taxonomy,
+    )
 
 SUMMARY_SCHEMA = "standard-set-v1"
 
@@ -354,6 +370,10 @@ def build_standard_summary(
         "matrix": same_function.get("matrix"),
     }
 
+    bare = aggregate_bare_compile(annotated)
+    readability_axis = aggregate_readability_axis(annotated)
+    tracks = aggregate_track_taxonomy(annotated)
+
     return {
         "schema": SUMMARY_SCHEMA,
         "mvp": {
@@ -364,14 +384,24 @@ def build_standard_summary(
         "extensions": {
             "holdout": {"status": holdout_status},
             "cross_variant": build_cross_variant(annotated),
+            # EXT-10: bare-compile form quality (not ranking)
+            "bare_compile": bare,
+            # EXT-11: readability diagnostic 2-axis (goto/temp/flag soup)
+            "readability_axis": readability_axis,
+            # EXT-12: realworld / multi-ISA / track pivots + fail taxonomy
+            "tracks": tracks,
         },
         "diagnostics": {
             "note": (
-                "source_similarity, ast_similarity, and readability_proxy are "
-                "non-ranking diagnostic axes; correctness uses semantic evidence only. "
+                "source_similarity, ast_similarity, readability_proxy, bare_compile, "
+                "and track/ISA pivots are non-ranking diagnostic axes; correctness "
+                "uses semantic evidence only (original_binary oracle). "
                 "mvp.same_function is the infra honesty axis (requested function "
                 "boundary), not a semantic ranking substitute."
             ),
+            "bare_compile": bare,
+            "readability_axis": readability_axis,
+            "tracks": tracks,
         },
     }
 

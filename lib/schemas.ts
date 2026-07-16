@@ -89,6 +89,12 @@ export const RowSchema = z.object({
   uses_intrinsics: z.boolean().optional(),
   oracle_evidence: z.record(z.string(), z.unknown()).optional(),
   output_diagnostics: z.record(z.string(), z.unknown()).optional(),
+  bare_compile: z.record(z.string(), z.unknown()).optional(),
+  track: z.string().optional(),
+  isa_format: z.record(z.string(), z.string()).optional(),
+  corpus: z.string().optional(),
+  readability_metrics: z.record(z.string(), z.unknown()).optional(),
+  readability_proxy_score: z.number().nullable().optional(),
 });
 
 /** Optional standard-set summary block (schema standard-set-v1). */

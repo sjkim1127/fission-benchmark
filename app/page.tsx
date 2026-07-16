@@ -96,6 +96,15 @@ export default function Home() {
           </p>
           <div className={styles.cardCta}>Open variants →</div>
         </Link>
+        <Link href="/quality" className={styles.card}>
+          <div className={styles.cardKicker}>Diagnostics</div>
+          <div className={styles.cardTitle}>Quality extensions</div>
+          <p className={styles.cardBody}>
+            Bare-compile rate, readability proxies (goto / temps / flag soup),
+            and realworld · multi-ISA track pivots — never ranking.
+          </p>
+          <div className={styles.cardCta}>Open diagnostics →</div>
+        </Link>
         <Link href="/fission-vs-ghidra" className={styles.card}>
           <div className={styles.cardKicker}>Shared IR</div>
           <div className={styles.cardTitle}>Fission ↔ Ghidra</div>

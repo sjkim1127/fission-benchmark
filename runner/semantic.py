@@ -80,6 +80,20 @@ typedef struct Pair {
     int value;
 } Pair;
 
+// advanced_patterns.c fixtures
+typedef struct Node {
+    int value;
+    struct Node *next;
+} Node;
+typedef struct Kv {
+    int key;
+    int value;
+} Kv;
+typedef int (*binop_fn)(int, int);
+// File-scope helpers for apply_binop oracle cases (host gcc/clang; no nested fns).
+static inline int bench_add_ints(int a, int b) { return a + b; }
+static inline int bench_mul_ints(int a, int b) { return a * b; }
+
 // Bitfield / union layout used by memory_layouts.c
 struct Flags {
     uint32_t is_active : 1;
