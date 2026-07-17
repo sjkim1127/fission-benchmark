@@ -8,6 +8,7 @@ export type DashboardPage =
   | "nir-hir"
   | "variants"
   | "quality"
+  | "speed"
   | "parity";
 
 const NAV: {
@@ -51,6 +52,12 @@ const NAV: {
     href: "/quality",
     label: "Quality EXT",
     blurb: "Bare-compile · readability",
+  },
+  {
+    id: "speed",
+    href: "/speed",
+    label: "Speed",
+    blurb: "Decompile latency",
   },
   {
     id: "parity",
@@ -110,7 +117,7 @@ export function SiteChrome({
       <footer className={styles.footer}>
         <span>
           Fission Benchmark · Overview · Functions · NIR vs HIR · Quality EXT ·
-          IR parity · ISR 15 min
+          Speed · IR parity · ISR 15 min
         </span>
         <a
           href="https://github.com/sjkim1127/fission-benchmark"

@@ -9,7 +9,8 @@ Fission · Ghidra · Radare2+r2ghidra · angr · Snowman · rev.ng · Boomerang 
 [![Benchmark](https://github.com/sjkim1127/fission-benchmark/actions/workflows/benchmark.yml/badge.svg)](https://github.com/sjkim1127/fission-benchmark/actions/workflows/benchmark.yml)
 [![Docker Build](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml/badge.svg)](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml)
 
-📊 **[Live Dashboard →](https://fission-benchmark.vercel.app)**
+📊 **[Live Dashboard →](https://fission-benchmark.vercel.app)**  
+⏱️ **Speed tab** (`/speed`): decompile latency (`time_ms`) — Fission vs others, non-ranking
 
 </div>
 
