@@ -20,7 +20,7 @@ services:
       - .:/workspace
     environment:
       - CORPUS_TARGET=${CORPUS_TARGET:-windows-x86_64}
-    command: ["python3", "scripts/build_matrix.py", "--split", "${CORPUS_SPLIT:-dev}", "--languages", "${CORPUS_LANGUAGES:-c,cpp}"]
+    command: ["python3", "scripts/build_matrix.py", "--split", "${CORPUS_SPLIT:-dev}", "--languages", "${CORPUS_LANGUAGES:-c,cpp,rust}"]
     profiles: ["tools"]
 
   oracle:

@@ -187,27 +187,117 @@ def _nm_for_compiler(compiler: str) -> str:
     return "nm"
 
 
+def _rust_opt_level(opt: str) -> str:
+    o = (opt or "").strip()
+    mapping = {
+        "-O0": "0",
+        "0": "0",
+        "-O1": "1",
+        "1": "1",
+        "-O2": "2",
+        "2": "2",
+        "-O3": "3",
+        "3": "3",
+        "-Os": "s",
+        "s": "s",
+    }
+    return mapping.get(o, "0")
+
+
+def compile_rust(opt: str, source: Path, output: Path) -> None:
+    """Compile a Rust bin crate (single .rs with main) for CORPUS_TARGET."""
+    rustc = shutil.which("rustc")
+    if not rustc:
+        raise SystemExit("rustc not found on PATH (install rustup + rustc)")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    level = _rust_opt_level(opt)
+    cmd = [
+        rustc,
+        str(source),
+        "--edition",
+        "2021",
+        "--crate-type",
+        "bin",
+        f"-Copt-level={level}",
+        "-Cdebuginfo=1",
+        "-Cpanic=abort",
+        "-o",
+        str(output),
+    ]
+    if CORPUS_TARGET == "windows-x86_64":
+        linker = shutil.which("x86_64-w64-mingw32-gcc")
+        if not linker:
+            raise SystemExit(
+                "x86_64-w64-mingw32-gcc required to link rustc windows-gnu PE"
+            )
+        cmd.extend(
+            [
+                "--target",
+                "x86_64-pc-windows-gnu",
+                f"-Clinker={linker}",
+            ]
+        )
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        detail = e.stderr or e.stdout or str(e)
+        print(f"Rust compilation error ({source.name}): {detail}", file=sys.stderr)
+        raise
+
+
+def _compile_one(
+    language: str,
+    compiler: str,
+    opt: str,
+    source: Path,
+    output: Path,
+) -> None:
+    if language == "rust" or compiler == "rustc":
+        compile_rust(opt, source, output)
+    elif language in {"c", "cpp"} or compiler in {
+        "gcc",
+        "clang",
+        "gcc-m32",
+        "clang-m32",
+        "g++",
+        "clang++",
+    }:
+        compile_c_family(
+            compiler,
+            opt,
+            source,
+            output,
+            language="cpp" if language == "cpp" or compiler in {"g++", "clang++"} else "c",
+        )
+    else:
+        raise SystemExit(f"Unsupported language/compiler: {language}/{compiler}")
+
+
 def build_manifest(manifest_path: Path, split: str, languages: set[str] | None) -> None:
     data = json.loads(manifest_path.read_text())
     built: set[tuple[str, str, str, str]] = set()
+    supported = {"c", "cpp", "rust"}
 
     for fn in data["functions"]:
         language = fn.get("language") or "c"
-        if language == "c" and "/c/" not in fn.get("source", "") and not fn.get("source", "").startswith("source/c/"):
-            # Allow legacy paths during migration
+        if language == "c" and "/c/" not in fn.get("source", "") and not fn.get(
+            "source", ""
+        ).startswith("source/c/"):
             language = "c"
         if languages is not None and language not in languages:
             continue
-        if language not in {"c", "cpp"}:
-            print(f"[skip] {fn.get('name')}: language={language} not built by C family path yet")
+        if language not in supported:
+            print(
+                f"[skip] {fn.get('name')}: language={language} not built yet "
+                f"(supported: {sorted(supported)})"
+            )
             continue
 
         source = CORPUS_ROOT / split / fn["source"]
         if not source.is_file():
-            # Try migrated path source/c/<basename>
-            alt = CORPUS_ROOT / split / "source" / "c" / Path(fn["source"]).name
+            alt = CORPUS_ROOT / split / "source" / language / Path(fn["source"]).name
             if alt.is_file():
-                fn["source"] = str(Path("source/c") / alt.name)
+                fn["source"] = str(Path("source") / language / alt.name)
                 source = alt
             else:
                 print(f"[warn] missing source {source}", file=sys.stderr)
@@ -237,13 +327,7 @@ def build_manifest(manifest_path: Path, split: str, languages: set[str] | None) 
             if key in built:
                 continue
             out = CORPUS_ROOT / split / variant["binary"]
-            compile_c_family(
-                compiler,
-                variant["opt"],
-                source,
-                out,
-                language=language if language == "cpp" else "c",
-            )
+            _compile_one(language, compiler, variant["opt"], source, out)
             built.add(key)
 
     addr_cache: dict[str, dict[str, str]] = {}
@@ -251,7 +335,7 @@ def build_manifest(manifest_path: Path, split: str, languages: set[str] | None) 
         language = fn.get("language") or "c"
         if languages is not None and language not in languages:
             continue
-        if language not in {"c", "cpp"}:
+        if language not in supported:
             continue
         for variant in fn.get("compiler_variants", []):
             binary = variant["binary"]
@@ -296,8 +380,8 @@ def main() -> None:
     parser.add_argument("--split", default="dev", choices=["dev", "holdout"])
     parser.add_argument(
         "--languages",
-        default="c,cpp",
-        help="Comma-separated languages to build (default: c,cpp)",
+        default="c,cpp,rust",
+        help="Comma-separated languages to build (default: c,cpp,rust)",
     )
     parser.add_argument(
         "--profile",

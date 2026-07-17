@@ -89,12 +89,21 @@ profiles:
     timeout_minutes: 60
 
   lang_rust:
-    description: "Rust PE/ELF subset"
+    description: "Rust PE subset (no_mangle extern C, rustc O0/O2)"
     languages: [rust]
-    formats: [pe, elf]
+    formats: [pe]
     isas: [x86_64]
-    opts: ["0", "2", "-O0", "-O2"]
+    opts: ["-O0", "-O2", "0", "2"]
     compilers: [rustc]
+    function_allowlist:
+      - rust_add_ints
+      - rust_clamp_int
+      - rust_max3
+      - rust_count_bits
+      - rust_dot_product
+      - rust_cstr_len
+      - rust_sum_range
+      - rust_saturating_add
     max_functions: 0
     max_variants_per_function: 0
     decompilers_default: fission,ghidra

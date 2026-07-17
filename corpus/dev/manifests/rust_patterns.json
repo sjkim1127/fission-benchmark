@@ -1,0 +1,246 @@
+{
+  "_comment": "Rust PE family \u2014 no_mangle extern C exports, rustc windows-gnu O0/O2",
+  "functions": [
+    {
+      "name": "rust_add_ints",
+      "language": "rust",
+      "source": "source/rust/patterns.rs",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "rust_add_ints",
+        "oracle": "pe_wine",
+        "note": "C ABI export; Rust body (checked_add, loops)"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "rustc",
+          "opt": "-O0",
+          "binary": "binaries/rust/patterns_rustc_O0.exe",
+          "addr": "0x140001840",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "rustc",
+          "opt": "-O2",
+          "binary": "binaries/rust/patterns_rustc_O2.exe",
+          "addr": "0x1400014b0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "rust_clamp_int",
+      "language": "rust",
+      "source": "source/rust/patterns.rs",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "rust_clamp_int",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "rustc",
+          "opt": "-O0",
+          "binary": "binaries/rust/patterns_rustc_O0.exe",
+          "addr": "0x140001850",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "rustc",
+          "opt": "-O2",
+          "binary": "binaries/rust/patterns_rustc_O2.exe",
+          "addr": "0x1400014c0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "rust_max3",
+      "language": "rust",
+      "source": "source/rust/patterns.rs",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "rust_max3",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "rustc",
+          "opt": "-O0",
+          "binary": "binaries/rust/patterns_rustc_O0.exe",
+          "addr": "0x140001b40",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "rustc",
+          "opt": "-O2",
+          "binary": "binaries/rust/patterns_rustc_O2.exe",
+          "addr": "0x1400015f0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "rust_count_bits",
+      "language": "rust",
+      "source": "source/rust/patterns.rs",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "rust_count_bits",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "rustc",
+          "opt": "-O0",
+          "binary": "binaries/rust/patterns_rustc_O0.exe",
+          "addr": "0x1400018a0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "rustc",
+          "opt": "-O2",
+          "binary": "binaries/rust/patterns_rustc_O2.exe",
+          "addr": "0x1400014d0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "rust_dot_product",
+      "language": "rust",
+      "source": "source/rust/patterns.rs",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "rust_dot_product",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "rustc",
+          "opt": "-O0",
+          "binary": "binaries/rust/patterns_rustc_O0.exe",
+          "addr": "0x1400019b0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "rustc",
+          "opt": "-O2",
+          "binary": "binaries/rust/patterns_rustc_O2.exe",
+          "addr": "0x140001500",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "rust_cstr_len",
+      "language": "rust",
+      "source": "source/rust/patterns.rs",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "rust_cstr_len",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "rustc",
+          "opt": "-O0",
+          "binary": "binaries/rust/patterns_rustc_O0.exe",
+          "addr": "0x140001900",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "rustc",
+          "opt": "-O2",
+          "binary": "binaries/rust/patterns_rustc_O2.exe",
+          "addr": "0x1400014f0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "rust_sum_range",
+      "language": "rust",
+      "source": "source/rust/patterns.rs",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "rust_sum_range",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "rustc",
+          "opt": "-O0",
+          "binary": "binaries/rust/patterns_rustc_O0.exe",
+          "addr": "0x140001bd0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "rustc",
+          "opt": "-O2",
+          "binary": "binaries/rust/patterns_rustc_O2.exe",
+          "addr": "0x140001620",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "rust_saturating_add",
+      "language": "rust",
+      "source": "source/rust/patterns.rs",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "rust_saturating_add",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "rustc",
+          "opt": "-O0",
+          "binary": "binaries/rust/patterns_rustc_O0.exe",
+          "addr": "0x140001b80",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "rustc",
+          "opt": "-O2",
+          "binary": "binaries/rust/patterns_rustc_O2.exe",
+          "addr": "0x140001600",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    }
+  ]
+}
