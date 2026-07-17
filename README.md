@@ -279,14 +279,44 @@ fission-benchmark/
 CI sets `FISSION_SOURCE=release` and pins `FISSION_VERSION=v0.1.4` by default.
 This keeps scheduled, push, and manual runs reproducible until the repository's
 declared baseline is deliberately advanced. The `/health` probe must report
-`"source": "release"` (CI fails on `local-*`). The benchmark workflow also
-accepts a cross-repository dispatch event so the Fission release pipeline can
-trigger a run immediately after publishing:
+`"source": "release"` (CI fails on `local-*`).
+
+### Preferred operator path (GitHub CLI)
+
+Bake the release CLI into GHCR, then chain an official benchmark (Publish Images
+does the chain automatically after a successful fission bake):
 
 ```bash
-gh api repos/sjkim1127/fission-benchmark/dispatches \
-  -f event_type=fission-release \
-  -f client_payload='{"fission_version":"v0.1.4"}'
+# 1) Bake fission image for a SemVer tag (also chains Benchmark & Deploy)
+gh workflow run "Publish Images" \
+  --repo sjkim1127/fission-benchmark \
+  -f services=fission \
+  -f fission_version=v0.1.4
+
+# 2) Or run official + Pages publish only (image must already exist)
+gh workflow run "Benchmark & Deploy" \
+  --repo sjkim1127/fission-benchmark \
+  -f fission_version=v0.1.4 \
+  -f corpus=dev \
+  -f run_mode=official \
+  -f publish_results=true \
+  -f matrix_profile=core_c_pe
+```
+
+### Cross-repo dispatch from Fission
+
+`repository_dispatch` (`fission-release`) starts **Publish Images** only (avoids
+racing Benchmark before the image exists). After bake, CI runs
+`gh workflow run "Benchmark & Deploy"` with the same version.
+
+```bash
+# Correct client_payload shape (must be a JSON object, not a string):
+gh api repos/sjkim1127/fission-benchmark/dispatches --input - <<'EOF'
+{
+  "event_type": "fission-release",
+  "client_payload": { "fission_version": "v0.1.4" }
+}
+EOF
 ```
 
 Manual workflow runs can override `fission_version` with another specific tag,
@@ -298,8 +328,8 @@ or with `latest` to resolve the newest GitHub Release dynamically.
 |---|---|---|
 | `push` to `main` | `smoke` | No — candidate JSON only |
 | Weekly schedule (`cron`) | `official` | Yes — if measurement valid |
-| Manual dispatch | `official` | Yes — if measurement valid |
-| `fission-release` dispatch | `official` | Yes — if measurement valid |
+| Manual `gh workflow run` | configurable | Per inputs (`publish_results`) |
+| `fission-release` dispatch | Publish Images → chained official | Yes — if measurement valid |
 
 Official runs that pass the validity gate commit `results/` + `docs/` and deploy to **https://fission-benchmark.vercel.app** via Vercel CLI.
 

@@ -86,8 +86,11 @@ on:
         type: choice
         options: [smoke, core_c_pe, opt_cliff, lang_cpp, lang_rust, lang_go, multi_isa, full_matrix]
         default: core_c_pe
-  repository_dispatch:
-    types: [fission-release]
+  # Note: fission-release repository_dispatch is handled by Publish Images first
+  # (bake GHCR), which then chains this workflow via `gh workflow run`.
+  # Keeping dispatch here would race the image bake. Use:
+  #   gh workflow run "Publish Images" -f fission_version=vX.Y.Z
+  # or repository_dispatch event_type=fission-release on this repo.
   schedule:
     - cron: '0 0 * * 0'  # Every Sunday midnight UTC
 
@@ -165,6 +168,26 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Wait for GHCR fission image (release bake)
+        if: github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="${IMAGE_PREFIX}-fission:${FISSION_VERSION}"
+          echo "Waiting for ${remote} (up to ~15m)..."
+          for i in $(seq 1 30); do
+            if docker pull "${remote}"; then
+              echo "✓ Available after attempt ${i}"
+              exit 0
+            fi
+            echo "  miss ${i}/30 — sleep 30s"
+            sleep 30
+          done
+          echo "⚠ Image still missing after wait; local build fallback will run"
+          exit 0
 
       - name: Pull or build decompiler images
         run: |

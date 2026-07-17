@@ -153,3 +153,41 @@ jobs:
 
       - name: Image digest
         run: echo "Pushed ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:latest"
+
+  # GITHUB_TOKEN cannot re-fire sibling workflows from a bare tag/API side-effect.
+  # After a successful bake (release dispatch or manual), chain Benchmark via gh CLI.
+  chain-benchmark:
+    name: Chain Benchmark (gh CLI)
+    needs: publish
+    if: >
+      always()
+      && needs.publish.result == 'success'
+      && (github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Trigger Benchmark & Deploy after image bake
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ver="${{ github.event.client_payload.fission_version || github.event.inputs.fission_version || 'v0.1.4' }}"
+          if [ "$ver" = "latest" ]; then
+            ver="$(gh api repos/sjkim1127/Fission/releases/latest --jq .tag_name)"
+          fi
+          echo "Dispatching Benchmark & Deploy for FISSION_VERSION=${ver}"
+          # Same-repo workflow_dispatch chains with GITHUB_TOKEN (unlike on.push).
+          gh workflow run "Benchmark & Deploy" \
+            --repo "${{ github.repository }}" \
+            -f "fission_version=${ver}" \
+            -f "corpus=dev" \
+            -f "run_mode=official" \
+            -f "publish_results=true" \
+            -f "matrix_profile=core_c_pe" \
+            -f "benchmark_limit=0" \
+            -f "benchmark_variant_limit=0" \
+            -f "parity_limit=0"
+          echo "Queued. Track with: gh run list --workflow 'Benchmark & Deploy' --limit 5"
