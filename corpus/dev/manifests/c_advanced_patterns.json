@@ -9,7 +9,7 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
-          "addr": "0x140001450",
+          "addr": "0x140001530",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -18,7 +18,7 @@
           "compiler": "gcc",
           "opt": "-O1",
           "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
-          "addr": "0x0",
+          "addr": "0x14000153a",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -27,7 +27,7 @@
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
-          "addr": "0x140001480",
+          "addr": "0x140001550",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -36,7 +36,7 @@
           "compiler": "gcc",
           "opt": "-Os",
           "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
-          "addr": "0x0",
+          "addr": "0x14000153a",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -45,7 +45,7 @@
           "compiler": "gcc",
           "opt": "-O3",
           "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
-          "addr": "0x0",
+          "addr": "0x140001550",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -54,7 +54,7 @@
           "compiler": "gcc-m32",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x401460",
+          "addr": "0x4015b0",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -63,7 +63,7 @@
           "compiler": "gcc-m32",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x401480",
+          "addr": "0x4015d0",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -72,7 +72,7 @@
           "compiler": "clang",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_clang_O0.exe",
-          "addr": "0x0",
+          "addr": "0x140001510",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -81,7 +81,7 @@
           "compiler": "clang",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_clang_O2.exe",
-          "addr": "0x0",
+          "addr": "0x140001510",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -102,7 +102,7 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
-          "addr": "0x140001492",
+          "addr": "0x140001572",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -111,7 +111,7 @@
           "compiler": "gcc",
           "opt": "-O1",
           "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
-          "addr": "0x0",
+          "addr": "0x140001557",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -120,7 +120,7 @@
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
-          "addr": "0x1400014a0",
+          "addr": "0x140001570",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -129,7 +129,7 @@
           "compiler": "gcc",
           "opt": "-Os",
           "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
-          "addr": "0x0",
+          "addr": "0x14000154a",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -138,7 +138,7 @@
           "compiler": "gcc",
           "opt": "-O3",
           "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
-          "addr": "0x0",
+          "addr": "0x140001570",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -147,7 +147,7 @@
           "compiler": "gcc-m32",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x401491",
+          "addr": "0x4015e1",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -156,7 +156,7 @@
           "compiler": "gcc-m32",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x4014a0",
+          "addr": "0x4015f0",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -165,7 +165,7 @@
           "compiler": "clang",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_clang_O0.exe",
-          "addr": "0x0",
+          "addr": "0x140001560",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -174,7 +174,7 @@
           "compiler": "clang",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_clang_O2.exe",
-          "addr": "0x0",
+          "addr": "0x140001530",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -195,7 +195,7 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
-          "addr": "0x1400014fc",
+          "addr": "0x1400015dc",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -204,7 +204,7 @@
           "compiler": "gcc",
           "opt": "-O1",
           "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
-          "addr": "0x0",
+          "addr": "0x140001585",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -213,7 +213,7 @@
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
-          "addr": "0x1400014f0",
+          "addr": "0x1400015b0",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -222,7 +222,7 @@
           "compiler": "gcc",
           "opt": "-Os",
           "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
-          "addr": "0x0",
+          "addr": "0x14000156b",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -231,7 +231,7 @@
           "compiler": "gcc",
           "opt": "-O3",
           "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
-          "addr": "0x0",
+          "addr": "0x1400015b0",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -240,7 +240,7 @@
           "compiler": "gcc-m32",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x4014dd",
+          "addr": "0x40162d",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -249,7 +249,7 @@
           "compiler": "gcc-m32",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x4014f0",
+          "addr": "0x401630",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -258,7 +258,7 @@
           "compiler": "clang",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_clang_O0.exe",
-          "addr": "0x0",
+          "addr": "0x1400015e0",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -267,7 +267,7 @@
           "compiler": "clang",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_clang_O2.exe",
-          "addr": "0x0",
+          "addr": "0x140001570",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -288,7 +288,7 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
-          "addr": "0x140001532",
+          "addr": "0x140001612",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -297,7 +297,7 @@
           "compiler": "gcc",
           "opt": "-O1",
           "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
-          "addr": "0x0",
+          "addr": "0x140001530",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -306,7 +306,7 @@
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
-          "addr": "0x140001460",
+          "addr": "0x140001530",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -315,7 +315,7 @@
           "compiler": "gcc",
           "opt": "-Os",
           "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
-          "addr": "0x0",
+          "addr": "0x140001530",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -324,7 +324,7 @@
           "compiler": "gcc",
           "opt": "-O3",
           "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
-          "addr": "0x0",
+          "addr": "0x140001530",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -333,7 +333,7 @@
           "compiler": "gcc-m32",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x401504",
+          "addr": "0x401654",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -342,7 +342,7 @@
           "compiler": "gcc-m32",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x401460",
+          "addr": "0x4015b0",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -351,7 +351,7 @@
           "compiler": "clang",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_clang_O0.exe",
-          "addr": "0x0",
+          "addr": "0x140001630",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -360,7 +360,7 @@
           "compiler": "clang",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_clang_O2.exe",
-          "addr": "0x0",
+          "addr": "0x140001590",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -381,7 +381,7 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
-          "addr": "0x140001546",
+          "addr": "0x140001626",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -390,7 +390,7 @@
           "compiler": "gcc",
           "opt": "-O1",
           "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
-          "addr": "0x0",
+          "addr": "0x140001534",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -399,7 +399,7 @@
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
-          "addr": "0x140001470",
+          "addr": "0x140001540",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -408,7 +408,7 @@
           "compiler": "gcc",
           "opt": "-Os",
           "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
-          "addr": "0x0",
+          "addr": "0x140001534",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -417,7 +417,7 @@
           "compiler": "gcc",
           "opt": "-O3",
           "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
-          "addr": "0x0",
+          "addr": "0x140001540",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -426,7 +426,7 @@
           "compiler": "gcc-m32",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x401511",
+          "addr": "0x401661",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -435,7 +435,7 @@
           "compiler": "gcc-m32",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x401470",
+          "addr": "0x4015c0",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -444,7 +444,7 @@
           "compiler": "clang",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_clang_O0.exe",
-          "addr": "0x0",
+          "addr": "0x140001650",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -453,7 +453,7 @@
           "compiler": "clang",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_clang_O2.exe",
-          "addr": "0x0",
+          "addr": "0x1400015a0",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -474,7 +474,7 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
-          "addr": "0x140001559",
+          "addr": "0x140001639",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -483,7 +483,7 @@
           "compiler": "gcc",
           "opt": "-O1",
           "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
-          "addr": "0x0",
+          "addr": "0x1400015a9",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -492,7 +492,7 @@
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
-          "addr": "0x140001510",
+          "addr": "0x1400015d0",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -501,7 +501,7 @@
           "compiler": "gcc",
           "opt": "-Os",
           "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
-          "addr": "0x0",
+          "addr": "0x14000157e",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -510,7 +510,7 @@
           "compiler": "gcc",
           "opt": "-O3",
           "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
-          "addr": "0x0",
+          "addr": "0x1400015d0",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -519,7 +519,7 @@
           "compiler": "gcc-m32",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x40151d",
+          "addr": "0x40166d",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -528,7 +528,7 @@
           "compiler": "gcc-m32",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x401520",
+          "addr": "0x401660",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -537,7 +537,7 @@
           "compiler": "clang",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_clang_O0.exe",
-          "addr": "0x0",
+          "addr": "0x140001670",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -546,7 +546,7 @@
           "compiler": "clang",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_clang_O2.exe",
-          "addr": "0x0",
+          "addr": "0x1400015b0",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -567,7 +567,7 @@
           "compiler": "gcc",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
-          "addr": "0x140001609",
+          "addr": "0x1400016e9",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -576,7 +576,7 @@
           "compiler": "gcc",
           "opt": "-O1",
           "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
-          "addr": "0x0",
+          "addr": "0x14000162b",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -585,7 +585,7 @@
           "compiler": "gcc",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
-          "addr": "0x1400015a0",
+          "addr": "0x140001660",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -594,7 +594,7 @@
           "compiler": "gcc",
           "opt": "-Os",
           "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
-          "addr": "0x0",
+          "addr": "0x1400015da",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -603,7 +603,7 @@
           "compiler": "gcc",
           "opt": "-O3",
           "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
-          "addr": "0x0",
+          "addr": "0x140001740",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -612,7 +612,7 @@
           "compiler": "gcc-m32",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x40159f",
+          "addr": "0x4016ef",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -621,7 +621,7 @@
           "compiler": "gcc-m32",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x4015c0",
+          "addr": "0x401700",
           "isa": "x86_32",
           "format": "pe",
           "abi_profile": "windows-x86"
@@ -630,7 +630,7 @@
           "compiler": "clang",
           "opt": "-O0",
           "binary": "binaries/c/advanced_patterns_clang_O0.exe",
-          "addr": "0x0",
+          "addr": "0x140001730",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
@@ -639,7 +639,7 @@
           "compiler": "clang",
           "opt": "-O2",
           "binary": "binaries/c/advanced_patterns_clang_O2.exe",
-          "addr": "0x0",
+          "addr": "0x140001860",
           "isa": "x86_64",
           "format": "pe",
           "abi_profile": "windows-x86_64"
