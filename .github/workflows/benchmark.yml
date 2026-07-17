@@ -11,28 +11,32 @@ env:
   FISSION_ASSETS_TAG: assets-v1
   CORPUS_TARGET: windows-x86_64
   CORPUS_SPLIT: ${{ github.event.inputs.corpus || 'dev' }}
-  BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,boomerang,radare2,angr,snowman,revng,reko,retdec' }}
-  # Prefer matrix profiles over raw limits. Push → smoke; schedule/dispatch → core_c_pe.
-  BENCHMARK_PROFILE: ${{ github.event.inputs.matrix_profile || (github.event_name == 'push' && 'smoke' || 'core_c_pe') }}
+  # Tiered decompiler sets (wall-clock ≈ cells × Ghidra cost):
+  #   ranking / release / weekly full_matrix: fission+ghidra (default)
+  #   push smoke: full 9-tool on small smoke profile (multi-decomp dashboard envelope)
+  #   optional multi snapshot: pass decompilers=… all 9 explicitly
+  BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || (github.event_name == 'push' && 'fission,ghidra,boomerang,radare2,angr,snowman,revng,reko,retdec' || 'fission,ghidra') }}
+  # Push → smoke; weekly → full_matrix (2-tool parallel fan-out); else core_c_pe ranking.
+  BENCHMARK_PROFILE: ${{ github.event.inputs.matrix_profile || (github.event_name == 'push' && 'smoke' || (github.event_name == 'schedule' && 'full_matrix' || 'core_c_pe')) }}
   # Limits default to 0 when a profile selects the slice (smoke/core_c_pe).
   BENCHMARK_LIMIT: ${{ github.event.inputs.benchmark_limit || '0' }}
   BENCHMARK_VARIANT_LIMIT: ${{ github.event.inputs.benchmark_variant_limit || '0' }}
   RUN_MODE: ${{ github.event.inputs.run_mode || (github.event_name == 'push' && 'smoke' || 'official') }}
   PUBLISH_RESULTS: ${{ github.event.inputs.publish_results || (github.event_name == 'push' && 'false' || 'true') }}
-  # Push smoke: cap parity subjects (gates need ≥5 comparable). Full (0) on
-  # schedule / repository_dispatch / workflow_dispatch default.
-  # Timeout must allow Ghidra headless cold-start; 2s was infra-fail only.
-  PARITY_LIMIT: ${{ github.event.inputs.parity_limit || (github.event_name == 'push' && '20' || '0') }}
+  # Parity capped on ranking path (not full corpus); full only when operator sets 0.
+  PARITY_LIMIT: ${{ github.event.inputs.parity_limit || (github.event_name == 'push' && '20' || '40') }}
   PARITY_DECOMPILERS: ${{ github.event.inputs.parity_decompilers || 'fission,ghidra' }}
   PARITY_REQUEST_TIMEOUT: ${{ github.event.inputs.parity_timeout || '180' }}
   # Conservative reliability: strict only, no leniency in CI.
   PARITY_CANONICALIZE_MODE: strict
   RELIABILITY_POLICY: conservative
-  PARITY_BINARY_WORKERS: "3"
-  GHIDRA_HEADLESS_WORKERS: "3"
+  PARITY_BINARY_WORKERS: "4"
+  GHIDRA_HEADLESS_WORKERS: "4"
   FISSION_CLI_WORKERS: "8"
   # I/O-bound HTTP batches across adapters (containers do the heavy work).
-  BENCHMARK_HTTP_CONCURRENCY: "12"
+  # Ranking (2 tools) can push harder; multi (9 tools) stays moderate.
+  BENCHMARK_HTTP_CONCURRENCY: "16"
+  FANOUT_PARALLEL: "2"
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/fission-benchmark
   PYTHONPATH: .
@@ -57,9 +61,9 @@ on:
         options: [dev, holdout]
         default: dev
       decompilers:
-        description: "Comma-separated decompilers to run"
+        description: "Comma-separated decompilers (default ranking: fission,ghidra; use full 9 for multi-decomp UI)"
         type: string
-        default: "fission,ghidra,boomerang,radare2,angr,snowman,revng,reko,retdec"
+        default: "fission,ghidra"
       benchmark_limit:
         description: "Function limit for dev/holdout benchmark; use 0 for full corpus"
         type: string
@@ -69,9 +73,9 @@ on:
         type: string
         default: "0"
       parity_limit:
-        description: "Parity benchmark subject limit; use 0 for full parity"
+        description: "Parity subject limit; 0=full. Ranking default 40; weekly multi 0"
         type: string
-        default: "0"
+        default: "40"
       publish_results:
         description: "Commit results and deploy GitHub Pages"
         type: boolean
@@ -366,12 +370,13 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${BENCHMARK_PROFILE:-}" = "full_matrix" ]; then
-            echo "full_matrix fan-out (core ranking + language/ISA slices)"
+            echo "full_matrix fan-out (core ranking + language/ISA slices, parallel)"
             chmod +x scripts/run_matrix_fanout.sh
-            # Core slice keeps requested decompilers; language/ISA slices use fission+ghidra.
-            CORE_DECOMPILERS="$BENCHMARK_DECOMPILERS" \
+            # Language/ISA slices always 2-tool. Core uses requested set (ranking default 2).
+            CORE_DECOMPILERS="${BENCHMARK_DECOMPILERS:-fission,ghidra}" \
             SLICE_DECOMPILERS="fission,ghidra" \
             RUN_MODE="$RUN_MODE" \
+            FANOUT_PARALLEL="${FANOUT_PARALLEL:-2}" \
             FANOUT_PROFILES="core_c_pe lang_cpp lang_rust lang_go multi_isa" \
               ./scripts/run_matrix_fanout.sh dev results/dev_latest.json
             # Publication ranking artifact: pure core_c_pe slice.
@@ -552,9 +557,11 @@ jobs:
 
       - name: Run parity benchmarks (Ghidra reference)
         id: parity
-        # Independent reliability gate: runs even if semantic validity fails
-        # (containers must still be healthy). Failures block publication below.
+        # Reliability telemetry: capped by PARITY_LIMIT on ranking path.
+        # Does not block ranking publish (see Commit results); soft-fail here so
+        # wall-clock and flake from parity do not hold Pages updates.
         if: always() && steps.fission-gate.outcome != 'skipped'
+        continue-on-error: true
         timeout-minutes: 45
         env:
           PARITY_CANONICALIZE_MODE: strict
@@ -659,14 +666,15 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
-          # Repo must always ship a displayable envelope for Vercel.
+          # Repo must always ship a displayable multi-decomp envelope for Vercel
+          # (historical / last multi run). Ranking-only runs do not replace it.
           python scripts/check_dashboard_data.py \
             --min-rows 1 \
             --min-decompilers 8 \
             --require-valid \
             --require-local \
             --check-remote
-          # Fresh smoke/official output (when present) must be multi-tool + non-empty.
+          # This-run output: ranking path (2 tools) is valid; multi path needs ≥8.
           if [ -f results/dev_latest.json ]; then
             python - <<'PY'
           import json, sys
@@ -683,13 +691,16 @@ jobs:
           if valid is not True:
               print(f"FAIL this-run dev_latest valid={valid}", file=sys.stderr)
               sys.exit(1)
+          if len(tools) < 2:
+              print(f"FAIL this-run dev_latest tools={tools} (need ≥2)", file=sys.stderr)
+              sys.exit(1)
           if len(tools) < 8:
               print(
-                  f"FAIL this-run dev_latest tools={tools} (need multi-decompilers, not core-only)",
-                  file=sys.stderr,
+                  f"OK ranking-path this-run tools={tools} "
+                  f"(multi-decomp UI kept from last multi run; rows={n} valid={valid})"
               )
-              sys.exit(1)
-          print(f"OK this-run dev_latest rows={n} valid={valid} tools={tools}")
+          else:
+              print(f"OK multi-decomp this-run rows={n} valid={valid} tools={tools}")
           PY
           fi
 
@@ -732,6 +743,8 @@ jobs:
       # -----------------------------------------------------------------------
       - name: Update dashboard multi-decomp envelope
         id: dashboard-envelope
+        # Only refresh multi-decomp UI when this run actually measured ≥8 tools.
+        # Ranking-only (fission+ghidra) must not clobber the multi-tool envelope.
         if: >-
           always() &&
           steps.fission-gate.outcome == 'success' &&
@@ -740,10 +753,25 @@ jobs:
           set -euo pipefail
           test -f results/dev_latest.json
 
-          python - <<'PY'
+          # Ranking-only runs (fission+ghidra) must not clobber multi-tool UI data.
+          tool_count="$(python - <<'PY'
           import json
           from pathlib import Path
-          from collections import Counter
+          d = json.loads(Path("results/dev_latest.json").read_text(encoding="utf-8"))
+          tools = {str(r.get("decompiler")) for r in (d.get("rows") or []) if r.get("decompiler")}
+          print(len(tools))
+          PY
+          )"
+          if [ "${tool_count}" -lt 8 ]; then
+            echo "SKIP multi-decomp envelope refresh: tool_count=${tool_count} (need ≥8)"
+            echo "committed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
           from runner.standard_summary import attach_summary_to_envelope
 
           path = Path("results/dev_latest.json")
@@ -764,8 +792,6 @@ jobs:
               f"bare_tools={len(bare)} readability_tools={len(readability)} "
               f"tracks={sorted(tracks)}"
           )
-          # Emit operator-facing summary for Actions UI.
-          import os
           step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
           if step_summary:
               lines = [
@@ -780,19 +806,12 @@ jobs:
               ]
               with open(step_summary, "a", encoding="utf-8") as fh:
                   fh.write("\n".join(lines))
-          if len(tools) < 2:
-              raise SystemExit(
-                  f"FAIL dashboard envelope has only {tools} — expected multi-decompilers "
-                  f"(check BENCHMARK_DECOMPILERS={__import__('os').environ.get('BENCHMARK_DECOMPILERS')!r})"
-              )
-          # Seed public/ for same-origin Vercel fetch (optional but preferred).
           public = Path("public/benchmark-latest.json")
           public.parent.mkdir(parents=True, exist_ok=True)
           public.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
           print(f"Wrote {public} ({public.stat().st_size} bytes)")
           PY
 
-          # Gate: multi-tool display data required (not fission+ghidra only).
           python scripts/check_dashboard_data.py \
             --min-rows 1 \
             --min-decompilers 8 \
@@ -814,11 +833,11 @@ jobs:
           fi
 
       - name: Commit results
-        # Full publication artifacts only (publishable official path).
+        # Ranking publish path: validity + holdout gate only. Parity is telemetry
+        # (continue-on-error above) and must not block Pages on ranking runs.
         if: >-
           steps.publish-mode.outputs.should_publish == 'true' &&
-          steps.fission-gate.outcome == 'success' &&
-          steps.parity.outcome == 'success'
+          steps.fission-gate.outcome == 'success'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

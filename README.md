@@ -293,15 +293,46 @@ gh workflow run "Publish Images" \
   -f services=fission \
   -f fission_version=v0.1.4
 
-# 2) Or run official + Pages publish only (image must already exist)
+# 2) Official ranking + Pages (fast path: fission+ghidra only)
 gh workflow run "Benchmark & Deploy" \
   --repo sjkim1127/fission-benchmark \
   -f fission_version=v0.1.4 \
   -f corpus=dev \
   -f run_mode=official \
   -f publish_results=true \
-  -f matrix_profile=core_c_pe
+  -f matrix_profile=core_c_pe \
+  -f decompilers=fission,ghidra \
+  -f parity_limit=40
+
+# 3) Multi-decomp UI snapshot (slow: 9 tools; smoke or core as needed)
+gh workflow run "Benchmark & Deploy" \
+  --repo sjkim1127/fission-benchmark \
+  -f fission_version=v0.1.4 \
+  -f run_mode=official \
+  -f publish_results=false \
+  -f matrix_profile=smoke \
+  -f decompilers=fission,ghidra,boomerang,radare2,angr,snowman,revng,reko,retdec
+
+# 4) Language pivots (weekly default: full_matrix, 2-tool parallel fan-out)
+gh workflow run "Benchmark & Deploy" \
+  --repo sjkim1127/fission-benchmark \
+  -f fission_version=v0.1.4 \
+  -f run_mode=official \
+  -f publish_results=true \
+  -f matrix_profile=full_matrix \
+  -f decompilers=fission,ghidra
 ```
+
+### Performance tiers
+
+| Path | Profile | Decompilers | Typical wall-clock | Publishes ranking? |
+|------|---------|-------------|--------------------|--------------------|
+| push | smoke | 9-tool | ~15–40m | No (multi envelope only) |
+| release / manual | core_c_pe | **fission+ghidra** | ~30–70m | Yes |
+| weekly schedule | full_matrix | fission+ghidra | ~1–3h (parallel slices) | Yes + lang pivots |
+| optional multi | smoke/core | 9-tool | long | Multi UI only |
+
+Runner already batches decompile by `(decompiler, binary)`. Ghidra reuses a **content-hash project cache** for batch decompile (no per-request cold import).
 
 ### Cross-repo dispatch from Fission
 
@@ -326,10 +357,11 @@ or with `latest` to resolve the newest GitHub Release dynamically.
 
 | Trigger | Run mode | Publishes? |
 |---|---|---|
-| `push` to `main` | `smoke` | No — candidate JSON only |
-| Weekly schedule (`cron`) | `official` | Yes — if measurement valid |
-| Manual `gh workflow run` | configurable | Per inputs (`publish_results`) |
-| `fission-release` dispatch | Publish Images → chained official | Yes — if measurement valid |
+| `push` to `main` | `smoke` (9-tool) | No — multi envelope only |
+| Weekly schedule (`cron`) | `official` full_matrix (2-tool) | Yes — ranking + lang pivots |
+| Manual ranking | `official` core_c_pe (2-tool) | Yes — if gate valid |
+| Manual multi | 9-tool smoke/core | Multi UI (optional) |
+| `fission-release` dispatch | Publish Images → chained ranking | Yes — 2-tool core_c_pe |
 
 Official runs that pass the validity gate commit `results/` + `docs/` and deploy to **https://fission-benchmark.vercel.app** via Vercel CLI.
 

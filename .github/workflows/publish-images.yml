@@ -180,6 +180,7 @@ jobs:
           fi
           echo "Dispatching Benchmark & Deploy for FISSION_VERSION=${ver}"
           # Same-repo workflow_dispatch chains with GITHUB_TOKEN (unlike on.push).
+          # Ranking path: fission+ghidra only (~4–5× fewer cells than 9-tool).
           gh workflow run "Benchmark & Deploy" \
             --repo "${{ github.repository }}" \
             -f "fission_version=${ver}" \
@@ -187,7 +188,8 @@ jobs:
             -f "run_mode=official" \
             -f "publish_results=true" \
             -f "matrix_profile=core_c_pe" \
+            -f "decompilers=fission,ghidra" \
             -f "benchmark_limit=0" \
             -f "benchmark_variant_limit=0" \
-            -f "parity_limit=0"
+            -f "parity_limit=40"
           echo "Queued. Track with: gh run list --workflow 'Benchmark & Deploy' --limit 5"

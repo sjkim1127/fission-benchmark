@@ -17,7 +17,6 @@ import json
 import logging
 import os
 import subprocess
-import tempfile
 import threading
 import time
 from pathlib import Path
@@ -650,60 +649,96 @@ def decompile(req: DecompileRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def _run_ghidra_headless(binary_bytes: bytes, addresses: List[str]) -> List[DecompileResultItem]:
-    with tempfile.TemporaryDirectory() as tmpdir:
-        binary_path = Path(tmpdir) / "target.bin"
-        binary_path.write_bytes(binary_bytes)
-        project_dir = Path(tmpdir) / "proj"
-        project_dir.mkdir()
+def _content_project_key(binary_bytes: bytes) -> str:
+    """Stable project id for HTTP batch decompile (b64 payload, no corpus path)."""
+    return hashlib.sha256(binary_bytes).hexdigest()[:20]
 
+
+def _run_ghidra_headless(binary_bytes: bytes, addresses: List[str]) -> List[DecompileResultItem]:
+    """Decompile many addresses with persistent project cache (parity-style).
+
+    Previously each batch used a throwaway project + ``-deleteProject``, so every
+    PE paid full import/analysis cost again. Reuse ``PROJECT_CACHE`` keyed by
+    content hash: first call imports, later calls ``-process`` + multi-addr script.
+    """
+    project_name = f"dec_{_content_project_key(binary_bytes)}"
+    # Materialize bytes under the cache root so re-import paths stay stable.
+    # Program name inside Ghidra matches the imported file basename.
+    blob_dir = PROJECT_CACHE / "blobs"
+    blob_dir.mkdir(parents=True, exist_ok=True)
+    binary_path = blob_dir / f"{project_name}.bin"
+    program_name = binary_path.name
+    if not binary_path.is_file() or binary_path.stat().st_size != len(binary_bytes):
+        binary_path.write_bytes(binary_bytes)
+
+    script_log = PROJECT_CACHE / f"{project_name}.script.log"
+    exists = _project_exists(project_name) or project_name in _IMPORTED_PROJECTS
+
+    if exists:
         args = [
             str(GHIDRA_HEADLESS),
-            str(project_dir),
-            "TempProject",
-            "-import",
-            str(binary_path),
+            str(PROJECT_CACHE),
+            project_name,
+            "-process",
+            program_name,
+            "-noanalysis",
             "-scriptPath",
             str(SCRIPT_DIR),
             "-postScript",
             "DecompileFunction.java",
-        ] + addresses + [
+            *addresses,
             "-scriptlog",
-            str(Path(tmpdir) / "script.log"),
-            "-deleteProject",
+            str(script_log),
+        ]
+    else:
+        args = [
+            str(GHIDRA_HEADLESS),
+            str(PROJECT_CACHE),
+            project_name,
+            "-import",
+            str(binary_path),
+            "-overwrite",
+            "-scriptPath",
+            str(SCRIPT_DIR),
+            "-postScript",
+            "DecompileFunction.java",
+            *addresses,
+            "-scriptlog",
+            str(script_log),
         ]
 
-        script_log = Path(tmpdir) / "script.log"
-        # Temp decompile projects are unique per request; only cap global JVMs.
+    with _project_lock(project_name):
         with _HEADLESS_SEM:
             result = subprocess.run(args, capture_output=True, text=True, timeout=300)
+        if result.returncode == 0 or _project_exists(project_name):
+            _IMPORTED_PROJECTS.add(project_name)
 
-        parse_sources = [result.stdout, result.stderr]
-        if script_log.exists():
-            parse_sources.append(script_log.read_text(errors="replace"))
+    parse_sources = [result.stdout, result.stderr]
+    if script_log.exists():
+        parse_sources.append(script_log.read_text(errors="replace"))
 
-        for source in parse_sources:
-            res_list = None
-            try:
-                res_list = _extract_marked_json_line(source, BATCH_MARKER)
-            except Exception:
-                pass
-            if res_list is not None:
-                items = []
-                for item in res_list:
-                    items.append(
-                        DecompileResultItem(
-                            addr=item.get("addr") or item.get("address"),
-                            name=item.get("name", "?"),
-                            code=item.get("code", ""),
-                            error=item.get("error"),
-                        )
+    for source in parse_sources:
+        res_list = None
+        try:
+            res_list = _extract_marked_json_line(source, BATCH_MARKER)
+        except Exception:
+            pass
+        if res_list is not None:
+            items = []
+            for item in res_list:
+                items.append(
+                    DecompileResultItem(
+                        addr=item.get("addr") or item.get("address"),
+                        name=item.get("name", "?"),
+                        code=item.get("code", ""),
+                        error=item.get("error"),
                     )
-                return items
+                )
+            return items
 
-        raise RuntimeError(
-            f"Ghidra script failed or marker not found. Exit code {result.returncode}"
-        )
+    raise RuntimeError(
+        f"Ghidra script failed or marker not found. Exit code {result.returncode}"
+    )
 
 
 @app.post("/decompile_batch", response_model=BatchDecompileResponse)
