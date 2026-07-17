@@ -4,6 +4,8 @@ import {
   getLatestBenchmarkOptional,
   groupByDecompiler,
   buildReadabilityDiagnostics,
+  extractQualityExtensions,
+  pct,
 } from "@/lib/benchmark";
 import { SiteChrome } from "@/components/SiteChrome";
 import { ValidityBanner } from "@/components/ValidityBanner";
@@ -16,6 +18,7 @@ import {
   SkeletonMeta,
   SkeletonSection,
 } from "@/components/DashboardShared";
+import tableStyles from "@/components/SummaryTable.module.css";
 import styles from "./dashboard.module.css";
 
 export const revalidate = 900;
@@ -150,6 +153,20 @@ export default function Home() {
       </section>
 
       <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>
+          Diagnostics · language · ISA (non-ranking)
+        </h2>
+        <p className={styles.sectionLead}>
+          Multi-corpus pivots from the latest envelope. Full tables on{" "}
+          <Link href="/quality">Quality EXT</Link>. Ranking remains semantic on
+          core C PE only.
+        </p>
+        <Suspense fallback={<SkeletonSection rows={3} />}>
+          <CorpusPivotsOverviewSection />
+        </Suspense>
+      </section>
+
+      <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Diagnostics · readability (non-ranking)</h2>
         <p className={styles.sectionLead}>
           Source similarity, AST tree-edit proxies, and readability proxies are
@@ -161,6 +178,67 @@ export default function Home() {
         </Suspense>
       </section>
     </SiteChrome>
+  );
+}
+
+async function CorpusPivotsOverviewSection() {
+  const data = await getLatestBenchmarkOptional();
+  if (!data) return <UnavailableData />;
+  const ext = extractQualityExtensions(data);
+  const languages = Object.keys(ext.byLanguage);
+  const isas = Object.keys(ext.byIsa);
+  if (languages.length === 0 && isas.length === 0) {
+    return (
+      <p className={styles.sectionLead}>
+        No language/ISA pivots on this envelope yet.
+      </p>
+    );
+  }
+  return (
+    <div className={tableStyles.wrap}>
+      <table className={tableStyles.table}>
+        <thead>
+          <tr>
+            <th>Pivot</th>
+            <th>Key</th>
+            <th className={tableStyles.num}>Rows</th>
+            <th className={tableStyles.num}>Mean pass</th>
+          </tr>
+        </thead>
+        <tbody>
+          {languages.map((name) => {
+            const row = ext.byLanguage[name] || {};
+            return (
+              <tr key={`lang-${name}`}>
+                <td>language</td>
+                <td>
+                  <code>{name}</code>
+                </td>
+                <td className={tableStyles.num}>{row.rows ?? "—"}</td>
+                <td className={tableStyles.num}>
+                  {pct(row.mean_pass_rate as number | null | undefined)}
+                </td>
+              </tr>
+            );
+          })}
+          {isas.map((name) => {
+            const row = ext.byIsa[name] || {};
+            return (
+              <tr key={`isa-${name}`}>
+                <td>isa</td>
+                <td>
+                  <code>{name}</code>
+                </td>
+                <td className={tableStyles.num}>{row.rows ?? "—"}</td>
+                <td className={tableStyles.num}>
+                  {pct(row.mean_pass_rate as number | null | undefined)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

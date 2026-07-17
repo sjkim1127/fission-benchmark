@@ -60,6 +60,7 @@ class FunctionScore:
     # Extension diagnostics (never used for semantic ranking).
     bare_compile: dict[str, Any] = field(default_factory=dict)
     track: str = ""
+    language: str = "c"
     isa_format: dict[str, str] = field(default_factory=dict)
     binary: str = ""
     corpus: str = ""

@@ -296,6 +296,10 @@ async def decompile_batch_and_score(
         )
 
         oracle_evidence = {}
+        lang = getattr(fn, "language", None) or "c"
+        var_fmt = getattr(variant, "format", None) or ""
+        var_isa = getattr(variant, "isa", None) or ""
+        var_abi = getattr(variant, "abi_profile", None) or ""
         if not error and oracle_endpoint and fn.name in TEST_WRAPPERS:
             binary_bytes = binary_path.read_bytes()
             differential = await verify_with_oracle(
@@ -307,9 +311,11 @@ async def decompile_batch_and_score(
                 cases=TEST_WRAPPERS[fn.name],
                 compiler_variant=variant_label,
                 reference_binary_sha256=hashlib.sha256(binary_bytes).hexdigest(),
-                # Always bind official oracle evidence to the corpus PE under test.
+                # Bind oracle evidence to the corpus binary under test (PE or ELF).
                 reference_binary_b64=base64.b64encode(binary_bytes).decode("ascii"),
                 function_addr=variant.addr,
+                target_abi=var_abi or None,
+                binary_format=var_fmt or None,
             )
             sem_score = differential.score
             sem_err = differential.error
@@ -336,12 +342,16 @@ async def decompile_batch_and_score(
             if semantic_code and not error
             else {"ok": False, "category": "empty", "error": error or "no code"}
         )
+        isa_fmt = classify_isa_format(
+            binary_rel, isa=var_isa or None, fmt=var_fmt or None
+        )
         track = classify_track(
             binary=binary_rel,
             function_name=fn.name,
             corpus=corpus_split,
+            language=lang,
+            fmt=isa_fmt.get("format"),
         )
-        isa_fmt = classify_isa_format(binary_rel)
 
         fn_scores.append(FunctionScore(
             decompiler=dname,
@@ -371,6 +381,7 @@ async def decompile_batch_and_score(
             oracle_evidence=oracle_evidence,
             bare_compile=bare,
             track=track,
+            language=lang,
             isa_format=isa_fmt,
             binary=binary_rel,
             corpus=corpus_split,

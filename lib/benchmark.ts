@@ -61,8 +61,10 @@ export type QualityExtensions = {
     Record<string, number | null | undefined>
   >;
   byTrack: Record<string, Record<string, number | null | undefined>>;
+  byLanguage: Record<string, Record<string, number | null | undefined>>;
   byIsa: Record<string, Record<string, number | null | undefined>>;
   byFormat: Record<string, Record<string, number | null | undefined>>;
+  byOpt: Record<string, Record<string, number | null | undefined>>;
 };
 
 export function extractQualityExtensions(
@@ -72,8 +74,10 @@ export function extractQualityExtensions(
     bareByDecompiler: {},
     readabilityByDecompiler: {},
     byTrack: {},
+    byLanguage: {},
     byIsa: {},
     byFormat: {},
+    byOpt: {},
   };
   if (!data) return empty;
   const summary = (data as { summary?: Record<string, unknown> }).summary;
@@ -98,8 +102,10 @@ export function extractQualityExtensions(
       (readability.by_decompiler as QualityExtensions["readabilityByDecompiler"]) ||
       {},
     byTrack: (tracks.by_track as QualityExtensions["byTrack"]) || {},
+    byLanguage: (tracks.by_language as QualityExtensions["byLanguage"]) || {},
     byIsa: (tracks.by_isa as QualityExtensions["byIsa"]) || {},
     byFormat: (tracks.by_format as QualityExtensions["byFormat"]) || {},
+    byOpt: (tracks.by_opt as QualityExtensions["byOpt"]) || {},
   };
 }
 

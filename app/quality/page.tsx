@@ -56,18 +56,21 @@ async function QualitySection() {
   });
   const readStats = buildReadabilityDiagnostics(data);
   const tracks = Object.keys(ext.byTrack);
+  const languages = Object.keys(ext.byLanguage);
   const isas = Object.keys(ext.byIsa);
   const formats = Object.keys(ext.byFormat);
+  const opts = Object.keys(ext.byOpt);
 
   return (
     <>
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Non-ranking diagnostics</h2>
         <p className={styles.sectionLead}>
-          Semantic pass rate on the <strong>original_binary</strong> oracle
-          remains the only ranking axis. The tables below are form quality,
-          readability proxies (including source similarity and AST), and track
-          pivots for investigation only.
+          Semantic pass rate on the <strong>original_binary</strong> / native
+          oracle remains the only ranking axis (core C PE headline). The tables
+          below are form quality, readability proxies, and{" "}
+          <strong>language · ISA · format · opt</strong> pivots for multi-corpus
+          investigation only.
         </p>
         <div className={styles.frame}>
           <div className={styles.frameTitle}>Policy</div>
@@ -76,8 +79,8 @@ async function QualitySection() {
             reports source similarity, AST tree-edit similarity, proxy score,
             generic naming, goto / nest / temp / flag density. For Fission,
             semantic rows use NIR; readability proxies prefer HIR when dual
-            layers are present. Study pack:{" "}
-            <code>benchmark/readability/</code>.
+            layers are present. ELF uses host/qemu recompile ABI (not wine).
+            Study pack: <code>benchmark/readability/</code>.
           </p>
         </div>
       </section>
@@ -139,13 +142,62 @@ async function QualitySection() {
       </section>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>EXT · Tracks · ISA · format</h2>
-        {tracks.length === 0 && isas.length === 0 ? (
+        <h2 className={styles.sectionTitle}>
+          EXT · Language · ISA · format · opt
+        </h2>
+        {tracks.length === 0 &&
+        languages.length === 0 &&
+        isas.length === 0 ? (
           <p className={styles.sectionLead}>
-            No track/ISA pivot data on this envelope.
+            No language/ISA pivot data on this envelope. Re-run multi-decomp
+            after the multi-corpus track ship.
           </p>
         ) : (
           <>
+            {languages.length > 0 ? (
+              <div className={tableStyles.wrap}>
+                <h3 className={styles.sectionTitle}>By language</h3>
+                <table className={tableStyles.table}>
+                  <thead>
+                    <tr>
+                      <th>Language</th>
+                      <th>Rows</th>
+                      <th>Tested</th>
+                      <th>Mean pass</th>
+                      <th>Perfect</th>
+                      <th>Timeouts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {languages.map((name) => {
+                      const row = ext.byLanguage[name] || {};
+                      return (
+                        <tr key={name}>
+                          <td>
+                            <code>{name}</code>
+                          </td>
+                          <td className={tableStyles.num}>{row.rows ?? "—"}</td>
+                          <td className={tableStyles.num}>
+                            {row.semantic_tested ?? "—"}
+                          </td>
+                          <td className={tableStyles.num}>
+                            <RateCell
+                              value={row.mean_pass_rate as number | null}
+                            />
+                          </td>
+                          <td className={tableStyles.num}>
+                            {row.perfect_rows ?? "—"}
+                          </td>
+                          <td className={tableStyles.num}>
+                            {row.timeout_rows ?? "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
             {tracks.length > 0 ? (
               <div className={tableStyles.wrap}>
                 <h3 className={styles.sectionTitle}>By track</h3>
@@ -205,7 +257,9 @@ async function QualitySection() {
                       const row = ext.byIsa[name] || {};
                       return (
                         <tr key={name}>
-                          <td>{name}</td>
+                          <td>
+                            <code>{name}</code>
+                          </td>
                           <td className={tableStyles.num}>{row.rows ?? "—"}</td>
                           <td className={tableStyles.num}>
                             <RateCell
@@ -238,12 +292,54 @@ async function QualitySection() {
                       const row = ext.byFormat[name] || {};
                       return (
                         <tr key={name}>
-                          <td>{name}</td>
+                          <td>
+                            <code>{name}</code>
+                          </td>
                           <td className={tableStyles.num}>{row.rows ?? "—"}</td>
                           <td className={tableStyles.num}>
                             <RateCell
                               value={row.mean_pass_rate as number | null}
                             />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+            {opts.length > 0 ? (
+              <div className={tableStyles.wrap}>
+                <h3 className={styles.sectionTitle}>By opt</h3>
+                <table className={tableStyles.table}>
+                  <thead>
+                    <tr>
+                      <th>Opt</th>
+                      <th>Rows</th>
+                      <th>Tested</th>
+                      <th>Mean pass</th>
+                      <th>Perfect</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {opts.map((name) => {
+                      const row = ext.byOpt[name] || {};
+                      return (
+                        <tr key={name}>
+                          <td>
+                            <code>{name}</code>
+                          </td>
+                          <td className={tableStyles.num}>{row.rows ?? "—"}</td>
+                          <td className={tableStyles.num}>
+                            {row.semantic_tested ?? "—"}
+                          </td>
+                          <td className={tableStyles.num}>
+                            <RateCell
+                              value={row.mean_pass_rate as number | null}
+                            />
+                          </td>
+                          <td className={tableStyles.num}>
+                            {row.perfect_rows ?? "—"}
                           </td>
                         </tr>
                       );

@@ -127,6 +127,8 @@ def classify_track(
     binary: str | None = None,
     function_name: str | None = None,
     corpus: str | None = None,
+    language: str | None = None,
+    fmt: str | None = None,
 ) -> str:
     """Coarse track label for extension pivots (not ranking)."""
     blob = " ".join(
@@ -141,31 +143,61 @@ def classify_track(
         "app_process",
     }:
         return "realworld"
-    if "multi_isa" in blob or blob.endswith("hello_elf_x86_64") or "/elf" in blob:
+    if (
+        "multi_isa" in blob
+        or blob.endswith("hello_elf_x86_64")
+        or "/elf" in blob
+        or "gcc-elf" in blob
+        or "gcc-aarch64" in blob
+        or "aarch64" in blob
+        or (fmt or "").lower() == "elf"
+    ):
         return "multi_isa"
+    lang = (language or "").lower()
+    if lang in {"cpp", "c++"}:
+        return "lang_cpp"
+    if lang == "rust":
+        return "lang_rust"
+    if lang == "go":
+        return "lang_go"
     if "holdout" in blob or (corpus or "") == "holdout":
         return "holdout"
     return "dev"
 
 
-def classify_isa_format(binary: str | None) -> dict[str, str]:
-    """Best-effort ISA/format tag from binary path name."""
+def classify_isa_format(
+    binary: str | None,
+    *,
+    isa: str | None = None,
+    fmt: str | None = None,
+) -> dict[str, str]:
+    """ISA/format tag: prefer explicit variant fields, else path heuristics."""
+    if isa and fmt:
+        return {"isa": isa, "format": fmt}
     name = (binary or "").lower()
-    if name.endswith(".exe"):
-        fmt = "pe"
-    elif "elf" in name or (name and not name.endswith((".exe", ".dll", ".o"))):
-        fmt = "elf" if "elf" in name or "/" in name else "unknown"
+    if fmt:
+        resolved_fmt = fmt
+    elif name.endswith(".exe") or name.endswith(".dll"):
+        resolved_fmt = "pe"
+    elif "elf" in name or "gcc-elf" in name or "aarch64" in name:
+        resolved_fmt = "elf"
+    elif name and not name.endswith((".exe", ".dll", ".o")):
+        # Bare path under binaries/c/... without .exe often means ELF.
+        resolved_fmt = "elf" if "binaries/" in name.replace("\\", "/") else "unknown"
     else:
-        fmt = "unknown"
-    if "m32" in name or "i686" in name or "x86_32" in name:
-        isa = "x86_32"
+        resolved_fmt = "unknown"
+
+    if isa:
+        resolved_isa = isa
+    elif "m32" in name or "i686" in name or "x86_32" in name:
+        resolved_isa = "x86_32"
     elif "arm64" in name or "aarch64" in name:
-        isa = "aarch64"
+        resolved_isa = "aarch64"
     elif "x86_64" in name or "x64" in name or name.endswith(".exe"):
-        isa = "x86_64"
+        resolved_isa = "x86_64"
     else:
-        isa = "unknown"
-    return {"isa": isa, "format": fmt}
+        resolved_isa = "unknown"
+    return {"isa": resolved_isa, "format": resolved_fmt}
 
 
 def aggregate_bare_compile(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
@@ -272,7 +304,7 @@ def aggregate_readability_axis(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
 
 
 def aggregate_track_taxonomy(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
-    """Semantic pass + fail taxonomy pivoted by track / isa / format."""
+    """Semantic pass + fail taxonomy pivoted by track / language / isa / format / opt."""
     from collections import defaultdict
 
     try:
@@ -281,19 +313,32 @@ def aggregate_track_taxonomy(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
         from standard_summary import normalize_fail_taxonomy
 
     track_rows: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    lang_rows: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
     isa_rows: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
     fmt_rows: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    opt_rows: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
 
     for row in rows:
-        track = str(row.get("track") or classify_track(
-            binary=str(row.get("binary") or ""),
-            function_name=str(row.get("function_name") or ""),
-            corpus=str(row.get("corpus") or ""),
-        ))
-        track_rows[track].append(row)
+        lang = str(row.get("language") or "c")
         isa_fmt = row.get("isa_format") or classify_isa_format(str(row.get("binary") or ""))
+        track = str(
+            row.get("track")
+            or classify_track(
+                binary=str(row.get("binary") or ""),
+                function_name=str(row.get("function_name") or ""),
+                corpus=str(row.get("corpus") or ""),
+                language=lang,
+                fmt=str(isa_fmt.get("format") or ""),
+            )
+        )
+        track_rows[track].append(row)
+        lang_rows[lang].append(row)
         isa_rows[str(isa_fmt.get("isa") or "unknown")].append(row)
         fmt_rows[str(isa_fmt.get("format") or "unknown")].append(row)
+        # compiler_variant is typically "gcc -O2" or "go noopt"
+        variant = str(row.get("compiler_variant") or "").strip()
+        opt = variant.split()[-1] if variant else "unknown"
+        opt_rows[opt].append(row)
 
     def _pivot(groups: dict[str, list[Mapping[str, Any]]]) -> dict[str, Any]:
         out: dict[str, Any] = {}
@@ -323,10 +368,12 @@ def aggregate_track_taxonomy(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
     return {
         "ranking": False,
         "note": (
-            "Track/ISA pivots are extension diagnostics. Official ranking remains "
-            "semantic pass rate on the primary corpus matrix."
+            "Track/language/ISA/opt pivots are extension diagnostics. Official ranking "
+            "remains semantic pass rate on the core C PE cohort."
         ),
         "by_track": _pivot(track_rows),
+        "by_language": _pivot(lang_rows),
         "by_isa": _pivot(isa_rows),
         "by_format": _pivot(fmt_rows),
+        "by_opt": _pivot(opt_rows),
     }

@@ -7,8 +7,12 @@ RUN dpkg --add-architecture i386 \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
+        gcc \
         gcc-mingw-w64-i686 \
         gcc-mingw-w64-x86-64 \
+        gcc-aarch64-linux-gnu \
+        libc6-dev \
+        qemu-user-static \
         python3 \
         python3-pip \
         python3-venv \

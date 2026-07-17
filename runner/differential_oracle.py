@@ -550,12 +550,15 @@ async def verify_with_oracle(
     reference_binary_sha256: str,
     reference_binary_b64: str | None = None,
     function_addr: str | None = None,
+    target_abi: str | None = None,
+    binary_format: str | None = None,
 ) -> DifferentialResult:
     """Execute a differential harness through the target-ABI oracle service.
 
     When ``reference_binary_b64`` and ``function_addr`` are provided the oracle
-    uses ``oracle_subject=original_binary`` (PE-anchored reference). Otherwise it
-    falls back to source recompilation evidence.
+    uses ``oracle_subject=original_binary`` for PE binaries. ELF binaries use a
+    native/qemu linux ABI path (source recompile under host/aarch64 gcc) until
+    an ELF function-call loader exists.
     """
     payload = {
         "function_name": function_name,
@@ -568,6 +571,10 @@ async def verify_with_oracle(
     if reference_binary_b64 and function_addr:
         payload["reference_binary_b64"] = reference_binary_b64
         payload["function_addr"] = function_addr
+    if target_abi:
+        payload["target_abi"] = target_abi
+    if binary_format:
+        payload["binary_format"] = binary_format
     try:
         # Wine is process-serialized per ABI inside the oracle; under concurrent
         # official matrix load a request may wait several minutes in queue.
