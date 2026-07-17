@@ -214,22 +214,34 @@ def decompile_batch(req: BatchDecompileRequest):
         start = time.monotonic()
         results = []
         try:
-            artifact = subprocess.run(
-                [
-                    "revng",
-                    "artifact",
-                    "--analyze",
-                    "decompile-to-single-file",
-                    str(binary_path),
-                    "-o",
-                    str(ptml_path),
-                ],
-                capture_output=True,
-                text=True,
-                timeout=240,
-            )
-            if artifact.returncode != 0:
-                detail = artifact.stderr or artifact.stdout or "revng artifact failed"
+            # rev.ng renamed the single-file decompile artifact:
+            #   legacy docs/images: decompile-to-single-file
+            #   current revng/revng:latest: emit-c-as-single-file
+            artifact = None
+            last_detail = ""
+            for artifact_name in ("emit-c-as-single-file", "decompile-to-single-file"):
+                artifact = subprocess.run(
+                    [
+                        "revng",
+                        "artifact",
+                        "--analyze",
+                        artifact_name,
+                        str(binary_path),
+                        "-o",
+                        str(ptml_path),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=240,
+                )
+                if artifact.returncode == 0:
+                    break
+                last_detail = artifact.stderr or artifact.stdout or "revng artifact failed"
+                # Only retry on unknown-artifact; other failures are terminal.
+                if "No known artifact" not in last_detail and "unknown artifact" not in last_detail.lower():
+                    break
+            if artifact is None or artifact.returncode != 0:
+                detail = last_detail or "revng artifact failed"
                 results = [
                     DecompileResultItem(addr=addr, name=f"func_{addr}", error=detail)
                     for addr in req.addresses

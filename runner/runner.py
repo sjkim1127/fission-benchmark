@@ -213,14 +213,23 @@ async def decompile_batch_and_score(
                 ) for t in targets
             ]
 
-    # Map batch results back
-    results_by_addr = {item.get("addr"): item for item in batch_results}
+    # Map batch results back (normalize hex forms so 0x1400… vs 0X1400… match).
+    def _addr_key(addr: object) -> str:
+        text = str(addr or "").strip().lower()
+        if not text:
+            return ""
+        try:
+            return f"0x{int(text, 16):x}"
+        except ValueError:
+            return text
+
+    results_by_addr = {_addr_key(item.get("addr")): item for item in batch_results}
     code_counts = Counter((item.get("code") or "").strip() for item in batch_results if (item.get("code") or "").strip())
     fn_scores = []
 
     for fn, variant, function_source in targets:
         variant_label = f"{variant.compiler} {variant.opt}"
-        item = results_by_addr.get(variant.addr)
+        item = results_by_addr.get(_addr_key(variant.addr))
 
         if not item:
             fn_scores.append(FunctionScore(

@@ -201,6 +201,55 @@ def test_ghidra_extracts_marker_from_info_prefixed_line(monkeypatch, tmp_path) -
     ]
 
 
+def test_revng_prefers_emit_c_as_single_file_artifact(monkeypatch) -> None:
+    """Current revng images renamed decompile-to-single-file → emit-c-as-single-file."""
+    monkeypatch.setitem(sys.modules, "disasm_helper", types.ModuleType("disasm_helper"))
+    server = load_module("revng_server_artifact", ROOT / "docker/revng/server.py")
+
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append(list(cmd))
+        if cmd[0] == "revng" and cmd[1] == "artifact":
+            name = cmd[3] if len(cmd) > 3 else ""
+            # First preferred name succeeds.
+            if name == "emit-c-as-single-file":
+                out = Path(cmd[cmd.index("-o") + 1])
+                out.write_text("<ptml>ok</ptml>", encoding="utf-8")
+                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+            return subprocess.CompletedProcess(
+                cmd,
+                1,
+                stdout="",
+                stderr=f"No known artifact named {name}.\n",
+            )
+        if cmd[0] == "revng" and cmd[1] == "ptml":
+            return subprocess.CompletedProcess(
+                cmd,
+                0,
+                stdout=(
+                    "_ABI(raw_x86_64)\n"
+                    "void function_0x140001530_Code_x86_64(void) { return; }\n"
+                ),
+                stderr="",
+            )
+        return subprocess.CompletedProcess(cmd, 1, stdout="", stderr="unexpected")
+
+    monkeypatch.setattr(server.subprocess, "run", fake_run)
+
+    resp = server.decompile_batch(
+        server.BatchDecompileRequest(
+            binary_b64=__import__("base64").b64encode(b"MZ").decode(),
+            addresses=["0x140001530"],
+        )
+    )
+    assert resp.results
+    assert not resp.results[0].error
+    assert "function_0x140001530" in (resp.results[0].code or "")
+    artifact_names = [c[3] for c in calls if c[:2] == ["revng", "artifact"]]
+    assert artifact_names[0] == "emit-c-as-single-file"
+
+
 def test_revng_extracts_address_named_function(monkeypatch) -> None:
     monkeypatch.setitem(sys.modules, "disasm_helper", types.ModuleType("disasm_helper"))
     server = load_module("revng_server", ROOT / "docker/revng/server.py")
