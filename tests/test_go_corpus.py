@@ -38,7 +38,10 @@ def test_go_functions_load_as_go_language() -> None:
     assert expected <= names
     for fn in go_fns:
         if fn.name in expected:
-            assert "patterns" in fn.source
+            # Prefer a file path (directory sources used to crash the runner).
+            assert fn.source.endswith("main.go") or "patterns" in fn.source
+            src_path = ROOT / "corpus/dev" / fn.source
+            assert src_path.is_file() or (src_path.is_dir() and (src_path / "main.go").is_file())
             assert all(v.compiler == "go" for v in fn.compiler_variants)
             assert all(v.format == "pe" for v in fn.compiler_variants)
 

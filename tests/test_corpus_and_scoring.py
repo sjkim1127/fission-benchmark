@@ -1,9 +1,24 @@
 from pathlib import Path
 
 from runner.corpus import Corpus
+from runner.runner import load_function_source_text
 from runner.scoring import FunctionScore, assign_consensus_ranks, extract_function_source, compute_correctness_score
 from runner.test_wrappers import TEST_WRAPPERS
 from scripts.precompute_source_metrics import discover_source_files
+
+
+def test_load_function_source_text_handles_file_and_directory(tmp_path: Path) -> None:
+    """Multi-file language packages must not raise IsADirectoryError."""
+    pkg = tmp_path / "patterns"
+    pkg.mkdir()
+    (pkg / "main.go").write_text("package main\n//export go_add_ints\n", encoding="utf-8")
+    (pkg / "go.mod").write_text("module patterns\n", encoding="utf-8")
+
+    from_file = load_function_source_text(pkg / "main.go")
+    from_dir = load_function_source_text(pkg)
+    assert "go_add_ints" in from_file
+    assert "go_add_ints" in from_dir
+    assert load_function_source_text(tmp_path / "missing.go") == ""
 
 
 def test_manifest_preserves_variant_addr(tmp_path: Path) -> None:

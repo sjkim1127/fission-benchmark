@@ -399,6 +399,48 @@ async def decompile_batch_and_score(
     return fn_scores
 
 
+def load_function_source_text(source_path: Path) -> str:
+    """Read corpus source text for similarity scoring.
+
+    Manifests normally point at a single file (e.g. ``source/c/foo.c``).
+    Multi-file language packages (Go CGO module dir with ``main.go``) may
+    point at a directory — resolve to a readable text blob instead of
+    raising ``IsADirectoryError``.
+    """
+    if not source_path.exists():
+        return ""
+    if source_path.is_file():
+        return source_path.read_text(errors="replace")
+    if not source_path.is_dir():
+        return ""
+
+    # Prefer conventional entry files, then concatenate remaining sources.
+    preferred_names = (
+        "main.go",
+        "main.c",
+        "main.cpp",
+        "lib.rs",
+        "mod.rs",
+        "main.rs",
+    )
+    for name in preferred_names:
+        candidate = source_path / name
+        if candidate.is_file():
+            return candidate.read_text(errors="replace")
+
+    chunks: list[str] = []
+    for path in sorted(source_path.rglob("*")):
+        if not path.is_file():
+            continue
+        if path.suffix.lower() not in {".c", ".cc", ".cpp", ".h", ".hpp", ".go", ".rs", ".s"}:
+            continue
+        try:
+            chunks.append(path.read_text(errors="replace"))
+        except OSError:
+            continue
+    return "\n\n".join(chunks)
+
+
 async def run_all(
     functions: list,
     decompilers: dict[str, str],
@@ -414,7 +456,7 @@ async def run_all(
     groups = {}
     for fn in fn_list:
         source_path = CORPUS_ROOT / corpus_split / fn.source
-        source_code = source_path.read_text(errors="replace") if source_path.exists() else ""
+        source_code = load_function_source_text(source_path)
         function_source = extract_function_source(source_code, fn.name) or source_code
 
         variants = fn.compiler_variants[:variant_limit] if variant_limit else fn.compiler_variants

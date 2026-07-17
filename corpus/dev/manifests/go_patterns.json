@@ -4,7 +4,7 @@
     {
       "name": "go_add_ints",
       "language": "go",
-      "source": "source/go/patterns",
+      "source": "source/go/patterns/main.go",
       "semantic": {
         "mode": "c_wrapper",
         "wrapper_id": "go_add_ints",
@@ -35,7 +35,7 @@
     {
       "name": "go_clamp_int",
       "language": "go",
-      "source": "source/go/patterns",
+      "source": "source/go/patterns/main.go",
       "semantic": {
         "mode": "c_wrapper",
         "wrapper_id": "go_clamp_int",
@@ -65,7 +65,7 @@
     {
       "name": "go_max3",
       "language": "go",
-      "source": "source/go/patterns",
+      "source": "source/go/patterns/main.go",
       "semantic": {
         "mode": "c_wrapper",
         "wrapper_id": "go_max3",
@@ -95,7 +95,7 @@
     {
       "name": "go_count_bits",
       "language": "go",
-      "source": "source/go/patterns",
+      "source": "source/go/patterns/main.go",
       "semantic": {
         "mode": "c_wrapper",
         "wrapper_id": "go_count_bits",
@@ -125,7 +125,7 @@
     {
       "name": "go_dot_product",
       "language": "go",
-      "source": "source/go/patterns",
+      "source": "source/go/patterns/main.go",
       "semantic": {
         "mode": "c_wrapper",
         "wrapper_id": "go_dot_product",
@@ -155,7 +155,7 @@
     {
       "name": "go_cstr_len",
       "language": "go",
-      "source": "source/go/patterns",
+      "source": "source/go/patterns/main.go",
       "semantic": {
         "mode": "c_wrapper",
         "wrapper_id": "go_cstr_len",
@@ -185,7 +185,7 @@
     {
       "name": "go_sum_range",
       "language": "go",
-      "source": "source/go/patterns",
+      "source": "source/go/patterns/main.go",
       "semantic": {
         "mode": "c_wrapper",
         "wrapper_id": "go_sum_range",
@@ -215,7 +215,7 @@
     {
       "name": "go_saturating_add",
       "language": "go",
-      "source": "source/go/patterns",
+      "source": "source/go/patterns/main.go",
       "semantic": {
         "mode": "c_wrapper",
         "wrapper_id": "go_saturating_add",

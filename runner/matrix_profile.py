@@ -1,7 +1,6 @@
 """Load and apply corpus/matrix/profiles.yaml filters."""
 from __future__ import annotations
 
-import copy
 import os
 from pathlib import Path
 from typing import Any
