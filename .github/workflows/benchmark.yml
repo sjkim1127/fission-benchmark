@@ -318,6 +318,58 @@ jobs:
             docker compose --profile tools run --rm --build corpus-builder
           fi
 
+          # Holdout is required for official publication. corpus-builder defaults
+          # to CORPUS_SPLIT=dev, so holdout PE fixtures were often never built
+          # (or restored empty from cache) → fixture_error on every holdout row.
+          if find corpus/holdout/manifests -name '*.json' -print -quit | grep -q .; then
+            hold_count="$(find corpus/holdout/binaries -type f 2>/dev/null | wc -l | tr -d ' ')"
+            echo "corpus/holdout/binaries files: ${hold_count}"
+            need_holdout=0
+            if [ "${hold_count}" -lt 1 ]; then
+              need_holdout=1
+            elif ! python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("corpus/holdout")
+          missing = 0
+          checked = 0
+          for man in (root / "manifests").glob("*.json"):
+              data = json.loads(man.read_text())
+              for fn in data.get("functions", []):
+                  for var in fn.get("compiler_variants", []):
+                      rel = var.get("binary") or ""
+                      if not rel:
+                          continue
+                      # core_c_pe uses O0/O2 × gcc/gcc-m32/clang — only require
+                      # those that the profile would actually schedule is still
+                      # too heavy here; require every referenced path that exists
+                      # in the manifest for opts we keep on disk after a full build.
+                      opt = (var.get("opt") or "").strip()
+                      compiler = (var.get("compiler") or "").strip()
+                      if opt not in {"-O0", "-O2"}:
+                          continue
+                      if compiler not in {"gcc", "gcc-m32", "clang"}:
+                          continue
+                      checked += 1
+                      path = root / rel
+                      if not path.is_file():
+                          print(f"missing holdout binary: {rel}")
+                          missing += 1
+          print(f"holdout core paths checked={checked} missing={missing}")
+          raise SystemExit(1 if missing else 0)
+          PY
+            then
+              need_holdout=1
+            fi
+            if [ "${need_holdout}" = "1" ]; then
+              echo "Building holdout corpus binaries (CORPUS_SPLIT=holdout)"
+              CORPUS_SPLIT=holdout docker compose --profile tools run --rm --build corpus-builder
+              hold_count="$(find corpus/holdout/binaries -type f 2>/dev/null | wc -l | tr -d ' ')"
+              echo "after holdout rebuild: ${hold_count}"
+              test "${hold_count}" -ge 1
+            fi
+          fi
+
       - name: Start decompiler containers
         run: |
           set -euo pipefail

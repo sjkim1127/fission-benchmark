@@ -87,6 +87,44 @@ def test_oracle_evidence_rejects_missing_row_proof() -> None:
     assert len(aggregate["row_evidence_sha256"]) == 64
 
 
+def test_oracle_infra_error_without_evidence_does_not_poison_aggregate() -> None:
+    """One oracle_error with empty evidence must not sink envelope ABI validity."""
+    good = {
+        "mode": "differential",
+        "valid": True,
+        "oracle_subject": "original_binary",
+        "target_abi": "windows-x86_64",
+        "compiler": "x86_64-w64-mingw32-gcc",
+        "compiler_version": "gcc 12",
+        "runner": "wine",
+        "wrapper_sha256": "a" * 64,
+        "reference_binary_sha256": "b" * 64,
+    }
+    aggregate = aggregate_oracle_evidence([
+        {
+            "decompiler": "fission",
+            "function_name": "clamp",
+            "compiler_variant": "gcc -O0",
+            "error": None,
+            "semantic_score": 1.0,
+            "fail_category": "",
+            "oracle_evidence": good,
+        },
+        {
+            "decompiler": "fission",
+            "function_name": "bounded_checksum",
+            "compiler_variant": "gcc -O0",
+            "error": None,
+            "semantic_score": 0.0,
+            "fail_category": "oracle_error",
+            "oracle_evidence": {},
+        },
+    ])
+    assert aggregate["valid"] is True
+    assert aggregate["tested_rows"] == 2
+    assert aggregate["oracle_subject"] == "original_binary"
+
+
 def test_rename_accepts_synthetic_proc_names() -> None:
     from runner.differential_oracle import _rename_function
 

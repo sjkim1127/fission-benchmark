@@ -428,6 +428,25 @@ def _aggregate_hash(values: list[str]) -> str:
     return hashlib.sha256("\0".join(sorted(values)).encode("utf-8")).hexdigest()
 
 
+def _oracle_evidence_nonempty(item: Any) -> bool:
+    """True when a row attached a real evidence object (not None / {})."""
+    return isinstance(item, dict) and bool(item)
+
+
+def _row_is_oracle_infra_failure_without_evidence(row: dict[str, Any]) -> bool:
+    """Oracle harness threw before attaching evidence (poison-row exclusion).
+
+    A single ``oracle_error`` with empty evidence must not invalidate the
+    envelope-level ABI identity when every other tested row has full
+    differential evidence. Success-looking rows with empty evidence still fail
+    aggregation (see tests).
+    """
+    oe = row.get("oracle_evidence")
+    if _oracle_evidence_nonempty(oe):
+        return False
+    return row.get("fail_category") == "oracle_error"
+
+
 def aggregate_oracle_evidence(rows: list[dict[str, Any]]) -> dict[str, Any]:
     """Aggregate row evidence without trusting a caller-provided validity flag."""
     tested_rows = [
@@ -437,8 +456,14 @@ def aggregate_oracle_evidence(rows: list[dict[str, Any]]) -> dict[str, Any]:
         and row.get("semantic_score") is not None
         and row.get("fail_category") != "no_wrapper"
     ]
-    evidence = [row.get("oracle_evidence") for row in tested_rows]
-    valid = bool(tested_rows) and all(
+    # Rows that participate in ABI identity / validity. Infra oracle_error rows
+    # without evidence are counted in tested_rows but excluded from the all()
+    # valid check so one harness exception cannot sink publication.
+    identity_rows = [
+        row for row in tested_rows if not _row_is_oracle_infra_failure_without_evidence(row)
+    ]
+    evidence = [row.get("oracle_evidence") for row in identity_rows]
+    valid = bool(identity_rows) and all(
         isinstance(item, dict)
         and item.get("valid") is True
         and item.get("mode") == "differential"
@@ -481,7 +506,7 @@ def aggregate_oracle_evidence(rows: list[dict[str, Any]]) -> dict[str, Any]:
         and item.get("reference_binary_sha256")
     ]
     identity_evidence = []
-    for row, item in zip(tested_rows, valid_items, strict=True):
+    for row, item in zip(identity_rows, valid_items, strict=True):
         identity_evidence.append({
             "decompiler": row["decompiler"],
             "function_name": row["function_name"],
