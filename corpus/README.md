@@ -43,17 +43,20 @@ python scripts/build_matrix.py --split dev --profile core_c_pe
 
 - **Headline ranking** remains semantic pass rate on the **core C PE** cohort until other language oracles are measurement-valid.
 - Rows should carry `language`, `isa`, `format`, `abi_profile` for pivots.
-- **C++ (P1):** `source/cpp/patterns.cpp` — C++ features behind **`extern "C"`** (`--profile lang_cpp`).
-- **Rust (P2):** `source/rust/patterns.rs` — Rust body with **`#[no_mangle] pub extern "C"`** exports; built via `rustc --target x86_64-pc-windows-gnu` (`--profile lang_rust`).
-- Go native track is next (P3).
+- **C++ (P1):** `source/cpp/patterns.cpp` — C++ behind **`extern "C"`** (`lang_cpp`).
+- **Rust (P2):** `source/rust/patterns.rs` — **`#[no_mangle] extern "C"`** (`lang_rust`).
+- **Go (P3):** `source/go/patterns/` — CGO **`//export`** C ABI (`lang_go`); `go build` with
+  `GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc`.
 
 ```bash
-# C++ / Rust slices (fission+ghidra)
 python runner/runner.py --corpus dev --profile lang_cpp --decompilers fission,ghidra
 python runner/runner.py --corpus dev --profile lang_rust --decompilers fission,ghidra
+python runner/runner.py --corpus dev --profile lang_go --decompilers fission,ghidra
 
-CORPUS_TARGET=windows-x86_64 python scripts/build_matrix.py --split dev --languages rust
+CORPUS_TARGET=windows-x86_64 python scripts/build_matrix.py --split dev --languages go
 ```
+
+Also fix go cstr_len - need C.free which needs stdlib.h
 
 ## Build
 

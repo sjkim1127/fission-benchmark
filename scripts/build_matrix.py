@@ -204,6 +204,55 @@ def _rust_opt_level(opt: str) -> str:
     return mapping.get(o, "0")
 
 
+def compile_go(opt: str, source: Path, output: Path) -> None:
+    """Compile a Go CGO package directory (or main.go parent) for CORPUS_TARGET."""
+    go = shutil.which("go")
+    if not go:
+        raise SystemExit("go not found on PATH")
+    # source may be a directory (module) or a .go file
+    if source.is_file():
+        pkg_dir = source.parent
+    else:
+        pkg_dir = source
+    if not (pkg_dir / "go.mod").is_file() and not list(pkg_dir.glob("*.go")):
+        raise SystemExit(f"Go package not found at {pkg_dir}")
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env["CGO_ENABLED"] = "1"
+    cmd = [go, "build", "-o", str(output)]
+    o = (opt or "default").strip()
+    if o in {"noopt", "-N", "-N -l", "-O0", "0"}:
+        # Disable optimizations / inlining for a clearer decomp surface.
+        cmd.extend(["-gcflags=all=-N -l"])
+    if CORPUS_TARGET == "windows-x86_64":
+        cc = shutil.which("x86_64-w64-mingw32-gcc")
+        if not cc:
+            raise SystemExit(
+                "x86_64-w64-mingw32-gcc required for CGO windows PE (GOOS=windows)"
+            )
+        env["GOOS"] = "windows"
+        env["GOARCH"] = "amd64"
+        env["CC"] = cc
+        # Help cgo find mingw headers/libs on some hosts.
+        env.setdefault("CGO_CFLAGS", "-O2")
+        env.setdefault("CGO_LDFLAGS", "-static-libgcc")
+    cmd.append(".")
+    try:
+        subprocess.run(
+            cmd,
+            check=True,
+            capture_output=True,
+            text=True,
+            cwd=str(pkg_dir),
+            env=env,
+        )
+    except subprocess.CalledProcessError as e:
+        detail = e.stderr or e.stdout or str(e)
+        print(f"Go compilation error ({pkg_dir.name}): {detail}", file=sys.stderr)
+        raise
+
+
 def compile_rust(opt: str, source: Path, output: Path) -> None:
     """Compile a Rust bin crate (single .rs with main) for CORPUS_TARGET."""
     rustc = shutil.which("rustc")
@@ -252,7 +301,9 @@ def _compile_one(
     source: Path,
     output: Path,
 ) -> None:
-    if language == "rust" or compiler == "rustc":
+    if language == "go" or compiler == "go":
+        compile_go(opt, source, output)
+    elif language == "rust" or compiler == "rustc":
         compile_rust(opt, source, output)
     elif language in {"c", "cpp"} or compiler in {
         "gcc",
@@ -276,7 +327,7 @@ def _compile_one(
 def build_manifest(manifest_path: Path, split: str, languages: set[str] | None) -> None:
     data = json.loads(manifest_path.read_text())
     built: set[tuple[str, str, str, str]] = set()
-    supported = {"c", "cpp", "rust"}
+    supported = {"c", "cpp", "rust", "go"}
 
     for fn in data["functions"]:
         language = fn.get("language") or "c"
@@ -294,9 +345,9 @@ def build_manifest(manifest_path: Path, split: str, languages: set[str] | None) 
             continue
 
         source = CORPUS_ROOT / split / fn["source"]
-        if not source.is_file():
+        if not source.is_file() and not source.is_dir():
             alt = CORPUS_ROOT / split / "source" / language / Path(fn["source"]).name
-            if alt.is_file():
+            if alt.is_file() or alt.is_dir():
                 fn["source"] = str(Path("source") / language / alt.name)
                 source = alt
             else:
@@ -380,8 +431,8 @@ def main() -> None:
     parser.add_argument("--split", default="dev", choices=["dev", "holdout"])
     parser.add_argument(
         "--languages",
-        default="c,cpp,rust",
-        help="Comma-separated languages to build (default: c,cpp,rust)",
+        default="c,cpp,rust,go",
+        help="Comma-separated languages to build (default: c,cpp,rust,go)",
     )
     parser.add_argument(
         "--profile",

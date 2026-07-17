@@ -1,0 +1,246 @@
+{
+  "_comment": "Go PE family \u2014 CGO //export C ABI, go build windows/amd64 O0-ish vs default",
+  "functions": [
+    {
+      "name": "go_add_ints",
+      "language": "go",
+      "source": "source/go/patterns",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "go_add_ints",
+        "oracle": "pe_wine",
+        "note": "CGO //export; Go body"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "go",
+          "opt": "noopt",
+          "binary": "binaries/go/patterns_go_noopt.exe",
+          "addr": "0x140083a80",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "go",
+          "opt": "default",
+          "binary": "binaries/go/patterns_go_default.exe",
+          "addr": "0x140077320",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "go_clamp_int",
+      "language": "go",
+      "source": "source/go/patterns",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "go_clamp_int",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "go",
+          "opt": "noopt",
+          "binary": "binaries/go/patterns_go_noopt.exe",
+          "addr": "0x140083ae0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "go",
+          "opt": "default",
+          "binary": "binaries/go/patterns_go_default.exe",
+          "addr": "0x140077380",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "go_max3",
+      "language": "go",
+      "source": "source/go/patterns",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "go_max3",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "go",
+          "opt": "noopt",
+          "binary": "binaries/go/patterns_go_noopt.exe",
+          "addr": "0x140083b40",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "go",
+          "opt": "default",
+          "binary": "binaries/go/patterns_go_default.exe",
+          "addr": "0x1400773e0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "go_count_bits",
+      "language": "go",
+      "source": "source/go/patterns",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "go_count_bits",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "go",
+          "opt": "noopt",
+          "binary": "binaries/go/patterns_go_noopt.exe",
+          "addr": "0x140083ba0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "go",
+          "opt": "default",
+          "binary": "binaries/go/patterns_go_default.exe",
+          "addr": "0x140077440",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "go_dot_product",
+      "language": "go",
+      "source": "source/go/patterns",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "go_dot_product",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "go",
+          "opt": "noopt",
+          "binary": "binaries/go/patterns_go_noopt.exe",
+          "addr": "0x140083bf0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "go",
+          "opt": "default",
+          "binary": "binaries/go/patterns_go_default.exe",
+          "addr": "0x140077490",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "go_cstr_len",
+      "language": "go",
+      "source": "source/go/patterns",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "go_cstr_len",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "go",
+          "opt": "noopt",
+          "binary": "binaries/go/patterns_go_noopt.exe",
+          "addr": "0x140083c60",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "go",
+          "opt": "default",
+          "binary": "binaries/go/patterns_go_default.exe",
+          "addr": "0x140077500",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "go_sum_range",
+      "language": "go",
+      "source": "source/go/patterns",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "go_sum_range",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "go",
+          "opt": "noopt",
+          "binary": "binaries/go/patterns_go_noopt.exe",
+          "addr": "0x140083cc0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "go",
+          "opt": "default",
+          "binary": "binaries/go/patterns_go_default.exe",
+          "addr": "0x140077560",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "go_saturating_add",
+      "language": "go",
+      "source": "source/go/patterns",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "go_saturating_add",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "go",
+          "opt": "noopt",
+          "binary": "binaries/go/patterns_go_noopt.exe",
+          "addr": "0x140083d20",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "go",
+          "opt": "default",
+          "binary": "binaries/go/patterns_go_default.exe",
+          "addr": "0x1400775c0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    }
+  ]
+}

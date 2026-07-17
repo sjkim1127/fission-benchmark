@@ -110,12 +110,21 @@ profiles:
     timeout_minutes: 60
 
   lang_go:
-    description: "Go PE/ELF subset"
+    description: "Go PE subset (CGO //export, go noopt/default)"
     languages: [go]
-    formats: [pe, elf]
+    formats: [pe]
     isas: [x86_64]
     opts: ["default", "noopt", "-O0", "-O2"]
     compilers: [go]
+    function_allowlist:
+      - go_add_ints
+      - go_clamp_int
+      - go_max3
+      - go_count_bits
+      - go_dot_product
+      - go_cstr_len
+      - go_sum_range
+      - go_saturating_add
     max_functions: 0
     max_variants_per_function: 0
     decompilers_default: fission,ghidra
