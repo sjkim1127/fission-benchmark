@@ -2,12 +2,13 @@ FROM debian:bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# C/C++ mingw toolchains for primary PE semantic cohort.
+# C/C++ mingw (PE) + host gcc (ELF x64) + aarch64 cross (ELF arm64).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         binutils \
         binutils-mingw-w64-x86-64 \
         binutils-mingw-w64-i686 \
+        binutils-aarch64-linux-gnu \
         ca-certificates \
         curl \
         gcc \
@@ -15,7 +16,11 @@ RUN apt-get update \
         gcc-mingw-w64-x86-64 \
         g++-mingw-w64-x86-64 \
         gcc-mingw-w64-i686 \
+        gcc-aarch64-linux-gnu \
+        g++-aarch64-linux-gnu \
         libc6-dev \
+        libc6-dev-arm64-cross \
+        qemu-user-static \
         python3 \
         python3-yaml \
         clang \

@@ -54,6 +54,11 @@ python runner/runner.py --corpus dev --profile lang_rust --decompilers fission,g
 python runner/runner.py --corpus dev --profile lang_go --decompilers fission,ghidra
 
 CORPUS_TARGET=windows-x86_64 python scripts/build_matrix.py --split dev --languages go
+
+# Multi-ISA (ELF x64 + aarch64) — use docker corpus-builder on macOS
+docker compose --profile tools run --rm --build corpus-builder \
+  python3 scripts/build_matrix.py --split dev --languages c
+python runner/runner.py --corpus dev --profile multi_isa --decompilers fission,ghidra
 ```
 
 Also fix go cstr_len - need C.free which needs stdlib.h

@@ -131,13 +131,17 @@ profiles:
     timeout_minutes: 60
 
   multi_isa:
-    description: "C multi-format / multi-isa structural + limited semantic"
+    description: "C PE + ELF x64/aarch64 structural slice (control_flow)"
     languages: [c]
     formats: [pe, elf]
     isas: [x86_64, x86_32, aarch64]
     opts: ["-O0", "-O2"]
-    compilers: [gcc, gcc-m32, gcc-elf]
-    max_functions: 8
+    compilers: [gcc, gcc-m32, clang, gcc-elf, gcc-aarch64]
+    function_allowlist:
+      - count_bits
+      - clamp
+      - signum
+    max_functions: 0
     max_variants_per_function: 0
     decompilers_default: fission,ghidra
     timeout_minutes: 60

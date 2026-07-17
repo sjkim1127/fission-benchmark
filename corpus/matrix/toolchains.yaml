@@ -70,6 +70,17 @@ recipes:
     flags: ["-g", "-fno-inline", "-fno-omit-frame-pointer", "-fno-pie", "-no-pie"]
     opts: ["-O0", "-O2"]
 
+  c_gcc_elf_aarch64:
+    language: c
+    compiler_id: gcc-aarch64
+    format: elf
+    isa: aarch64
+    abi_profile: linux-aarch64
+    tool: aarch64-linux-gnu-gcc
+    nm: aarch64-linux-gnu-nm
+    flags: ["-g", "-fno-inline", "-fno-omit-frame-pointer", "-static", "-fno-pie", "-no-pie"]
+    opts: ["-O0", "-O2"]
+
   # Placeholders for later languages (builder skips if tool missing unless --require).
   cpp_gxx_pe_x64:
     language: cpp

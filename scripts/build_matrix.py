@@ -48,7 +48,10 @@ def target_tool(compiler: str, tool: str) -> str:
 
 
 def target_binary(binary: str, fmt: str = "") -> str:
-    if CORPUS_TARGET == "windows-x86_64" or fmt == "pe":
+    # ELF / non-PE must never get a forced .exe suffix.
+    if fmt == "elf":
+        return binary
+    if fmt == "pe" or CORPUS_TARGET == "windows-x86_64":
         if not binary.endswith(".exe") and not binary.endswith(".dll"):
             return f"{binary}.exe"
     return binary
@@ -61,6 +64,31 @@ def compiler_binary(name: str) -> str:
     return binary
 
 
+def _select_c_tool(compiler: str, *, language: str, fmt: str, isa: str) -> str:
+    """Pick the actual compiler binary for a C/C++ variant."""
+    is_cpp = language == "cpp" or compiler in {"g++", "cpp", "cxx", "clang++"}
+    if fmt == "elf":
+        if isa == "aarch64" or compiler in {"gcc-aarch64", "aarch64"}:
+            return "aarch64-linux-gnu-g++" if is_cpp else "aarch64-linux-gnu-gcc"
+        # Host Linux ELF x86_64 (docker corpus-builder). On macOS this is usually
+        # unavailable; build will fail with a clear missing-tool message.
+        if is_cpp:
+            return "g++"
+        if compiler in {"gcc-elf", "gcc"}:
+            return "gcc"
+        if compiler == "clang":
+            return "clang"
+        return "gcc"
+    # PE / windows path (existing)
+    if is_cpp:
+        return (
+            "x86_64-w64-mingw32-g++"
+            if CORPUS_TARGET == "windows-x86_64"
+            else "g++"
+        )
+    return target_tool(compiler, "gcc")
+
+
 def compile_c_family(
     compiler: str,
     opt: str,
@@ -68,16 +96,18 @@ def compile_c_family(
     output: Path,
     *,
     language: str = "c",
+    fmt: str = "",
+    isa: str = "",
 ) -> None:
-    """Compile C or C++ source for CORPUS_TARGET."""
+    """Compile C or C++ for PE (mingw) or ELF (host / aarch64 cross)."""
     is_cpp = language == "cpp" or compiler in {"g++", "cpp", "cxx", "clang++"}
-    if is_cpp:
-        if CORPUS_TARGET == "windows-x86_64":
-            selected = "x86_64-w64-mingw32-g++"
-        else:
-            selected = "g++"
-    else:
-        selected = target_tool(compiler, "gcc")
+    fmt = fmt or ("pe" if CORPUS_TARGET == "windows-x86_64" else "elf")
+    isa = isa or (
+        "x86_32"
+        if compiler in {"gcc-m32", "clang-m32"}
+        else ("aarch64" if compiler in {"gcc-aarch64", "aarch64"} else "x86_64")
+    )
+    selected = _select_c_tool(compiler, language=language, fmt=fmt, isa=isa)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
@@ -91,39 +121,37 @@ def compile_c_family(
         str(source),
     ]
     if is_cpp:
-        # After the tool name: insert language flags before opt.
         cmd[1:1] = ["-std=c++17", "-fno-exceptions"]
 
-    if not is_cpp and compiler == "clang" and CORPUS_TARGET == "windows-x86_64":
-        cmd.insert(1, "-target")
-        cmd.insert(2, "x86_64-w64-mingw32")
-        cmd.append("-L/usr/lib/gcc/x86_64-w64-mingw32/12-posix/")
-    elif not is_cpp and compiler == "clang-m32" and CORPUS_TARGET == "windows-x86_64":
-        cmd.insert(1, "-target")
-        cmd.insert(2, "i686-w64-mingw32")
-        cmd.append("-L/usr/lib/gcc/i686-w64-mingw32/12-posix/")
-
-    if compiler in {"gcc", "clang", "g++", "clang++"} and CORPUS_TARGET != "windows-x86_64":
-        # Insert after tool name / any -std flags.
-        insert_at = 1
-        while insert_at < len(cmd) and str(cmd[insert_at]).startswith("-"):
-            if cmd[insert_at] in {"-o"}:
-                break
-            insert_at += 1
-            if insert_at > 6:
-                break
-        # Simpler: after tool, before opt.
+    if fmt == "elf":
+        # Static aarch64 helps qemu-user; x64 static optional.
+        if isa == "aarch64":
+            cmd.insert(1, "-static")
         if "-fno-pie" not in cmd:
             cmd[1:1] = ["-fno-pie", "-no-pie"]
+    else:
+        # PE / mingw clang cross
+        if not is_cpp and compiler == "clang" and CORPUS_TARGET == "windows-x86_64":
+            cmd.insert(1, "-target")
+            cmd.insert(2, "x86_64-w64-mingw32")
+            cmd.append("-L/usr/lib/gcc/x86_64-w64-mingw32/12-posix/")
+        elif not is_cpp and compiler == "clang-m32" and CORPUS_TARGET == "windows-x86_64":
+            cmd.insert(1, "-target")
+            cmd.insert(2, "i686-w64-mingw32")
+            cmd.append("-L/usr/lib/gcc/i686-w64-mingw32/12-posix/")
 
     try:
         subprocess.run(cmd, check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as e:
-        if "-no-pie" not in cmd:
+        if "-no-pie" not in cmd and "-static" not in cmd:
             print(f"Compilation error ({source.name}): {e.stderr}", file=sys.stderr)
             raise
-        fallback = [part for part in cmd if part not in {"-fno-pie", "-no-pie"}]
-        subprocess.run(fallback, check=True, capture_output=True, text=True)
+        fallback = [part for part in cmd if part not in {"-fno-pie", "-no-pie", "-static"}]
+        try:
+            subprocess.run(fallback, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as e2:
+            print(f"Compilation error ({source.name}): {e2.stderr}", file=sys.stderr)
+            raise
 
 
 def symbol_addresses(binary: Path, compiler: str) -> dict[str, str]:
@@ -180,6 +208,10 @@ def _tag_variant(variant: dict[str, Any], compiler: str) -> None:
 
 
 def _nm_for_compiler(compiler: str) -> str:
+    if compiler in {"gcc-aarch64", "aarch64"}:
+        return "aarch64-linux-gnu-nm"
+    if compiler in {"gcc-elf"}:
+        return "nm"
     if CORPUS_TARGET == "windows-x86_64":
         if compiler in {"gcc-m32", "clang-m32"}:
             return "i686-w64-mingw32-nm"
@@ -300,6 +332,9 @@ def _compile_one(
     opt: str,
     source: Path,
     output: Path,
+    *,
+    fmt: str = "",
+    isa: str = "",
 ) -> None:
     if language == "go" or compiler == "go":
         compile_go(opt, source, output)
@@ -312,6 +347,9 @@ def _compile_one(
         "clang-m32",
         "g++",
         "clang++",
+        "gcc-elf",
+        "gcc-aarch64",
+        "aarch64",
     }:
         compile_c_family(
             compiler,
@@ -319,6 +357,8 @@ def _compile_one(
             source,
             output,
             language="cpp" if language == "cpp" or compiler in {"g++", "clang++"} else "c",
+            fmt=fmt,
+            isa=isa,
         )
     else:
         raise SystemExit(f"Unsupported language/compiler: {language}/{compiler}")
@@ -378,7 +418,15 @@ def build_manifest(manifest_path: Path, split: str, languages: set[str] | None) 
             if key in built:
                 continue
             out = CORPUS_ROOT / split / variant["binary"]
-            _compile_one(language, compiler, variant["opt"], source, out)
+            _compile_one(
+                language,
+                compiler,
+                variant["opt"],
+                source,
+                out,
+                fmt=str(variant.get("format") or ""),
+                isa=str(variant.get("isa") or ""),
+            )
             built.add(key)
 
     addr_cache: dict[str, dict[str, str]] = {}
