@@ -90,6 +90,15 @@ export default function Home() {
           </p>
           <div className={styles.cardCta}>Open grid →</div>
         </Link>
+        <Link href="/nir-vs-hir" className={styles.card}>
+          <div className={styles.cardKicker}>Fission layers</div>
+          <div className={styles.cardTitle}>Source · NIR · HIR</div>
+          <p className={styles.cardBody}>
+            Original C next to Fission NIR (semantic) and HIR (readability) —
+            dual-layer diagnostic, not ranking.
+          </p>
+          <div className={styles.cardCta}>Open comparison →</div>
+        </Link>
         <Link href="/variants" className={styles.card}>
           <div className={styles.cardKicker}>Extension</div>
           <div className={styles.cardTitle}>Compiler × opt</div>

@@ -5,6 +5,7 @@ export type DashboardPage =
   | "overview"
   | "same-function"
   | "functions"
+  | "nir-hir"
   | "variants"
   | "quality"
   | "parity";
@@ -32,6 +33,12 @@ const NAV: {
     href: "/functions",
     label: "Functions",
     blurb: "Code grid",
+  },
+  {
+    id: "nir-hir",
+    href: "/nir-vs-hir",
+    label: "NIR vs HIR",
+    blurb: "Source · dual layer",
   },
   {
     id: "variants",
@@ -102,8 +109,8 @@ export function SiteChrome({
       <main className={styles.main}>{children}</main>
       <footer className={styles.footer}>
         <span>
-          Fission Benchmark · Overview · Same-function · Functions · Variants ·
-          Quality EXT · IR parity · ISR 15 min
+          Fission Benchmark · Overview · Functions · NIR vs HIR · Quality EXT ·
+          IR parity · ISR 15 min
         </span>
         <a
           href="https://github.com/sjkim1127/fission-benchmark"
