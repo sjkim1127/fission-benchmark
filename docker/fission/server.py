@@ -19,7 +19,9 @@ FISSION_BIN = Path("/usr/local/bin/fission_cli")
 SLEIGH_SPEC_DIR = os.environ.get("FISSION_SLEIGH_SPEC_DIR", "/sleigh-specs")
 RESOURCE_ROOT = os.environ.get("FISSION_RESOURCE_ROOT", "/opt/fission-utils/utils")
 GHIDRA_DATA_DIR = os.environ.get("FISSION_GHIDRA_DATA_DIR", "/opt/fission-utils/utils/ghidra-data")
-DECOMP_TIMEOUT_MS = os.environ.get("FISSION_DECOMP_TIMEOUT_MS", "30000")
+# Core_c_pe hard functions under CI load routinely exceed 30s; 120s is the
+# benchmark default (override via FISSION_DECOMP_TIMEOUT_MS).
+DECOMP_TIMEOUT_MS = os.environ.get("FISSION_DECOMP_TIMEOUT_MS", "120000")
 RELEASE_VERSION_FILE = Path("/opt/fission-release-version")
 SOURCE_FILE = Path("/opt/fission-source")
 GIT_SHA_FILE = Path("/opt/fission-git-sha")
@@ -1191,20 +1193,37 @@ def decompile_batch(req: BatchDecompileRequest):
         "FISSION_GHIDRA_DATA_DIR": GHIDRA_DATA_DIR,
     }
     start = time.monotonic()
+    # Outer process budget must exceed per-function CLI --timeout-ms × N addrs.
+    # Fallback uses a single-addr budget slightly above DECOMP_TIMEOUT_MS.
+    try:
+        timeout_ms = int(DECOMP_TIMEOUT_MS)
+    except ValueError:
+        timeout_ms = 120_000
+    batch_proc_timeout = max(180.0, (timeout_ms / 1000.0) * max(len(req.addresses), 1) + 60.0)
+    single_proc_timeout = max(90.0, timeout_ms / 1000.0 + 30.0)
     try:
         batch_failed = False
+        batch_err_detail = ""
         try:
             result = subprocess.run(
                 decompile_batch_command(tmp_bin_path, tmp_addrs_path),
-                env=env, capture_output=True, text=True, timeout=120
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=batch_proc_timeout,
             )
             if result.returncode != 0:
                 batch_failed = True
+                batch_err_detail = (
+                    f"batch exit {result.returncode}: "
+                    f"{(result.stderr or result.stdout or '')[:400]}"
+                )
             else:
                 res_list = normalize_decompile_results(json.loads(result.stdout))
                 results = [decompile_result_from_cli_item(item) for item in res_list]
-        except Exception:
+        except Exception as exc:  # noqa: BLE001
             batch_failed = True
+            batch_err_detail = f"{type(exc).__name__}: {exc}"
 
         if batch_failed:
             results = []
@@ -1215,12 +1234,19 @@ def decompile_batch(req: BatchDecompileRequest):
                 try:
                     res_single = subprocess.run(
                         decompile_batch_command(tmp_bin_path, tmp_single_path),
-                        env=env, capture_output=True, text=True, timeout=60
+                        env=env,
+                        capture_output=True,
+                        text=True,
+                        timeout=single_proc_timeout,
                     )
                     if res_single.returncode != 0:
                         results.append(DecompileResultItem(
                             addr=addr,
-                            error=f"Batch fallback failed with exit code {res_single.returncode}: {res_single.stderr or res_single.stdout}"
+                            error=(
+                                f"Batch fallback failed with exit code {res_single.returncode}: "
+                                f"{(res_single.stderr or res_single.stdout or '')[:300]}"
+                                f" (batch: {batch_err_detail[:200]})"
+                            ),
                         ))
                     else:
                         res_list = normalize_decompile_results(json.loads(res_single.stdout))
@@ -1229,12 +1255,15 @@ def decompile_batch(req: BatchDecompileRequest):
                         else:
                             results.append(DecompileResultItem(
                                 addr=addr,
-                                error="No decompile result returned for address"
+                                error=f"No decompile result returned for address (batch: {batch_err_detail[:200]})",
                             ))
                 except Exception as e:
                     results.append(DecompileResultItem(
                         addr=addr,
-                        error=f"Batch fallback failed with exception: {str(e)}"
+                        error=(
+                            f"Batch fallback failed with exception: {type(e).__name__}: {e} "
+                            f"(batch: {batch_err_detail[:200]})"
+                        ),
                     ))
                 finally:
                     try:

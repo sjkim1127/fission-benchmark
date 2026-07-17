@@ -194,10 +194,16 @@ async def decompile_batch_and_score(
                 timeout=300.0,
             )
             if resp.status_code != 200:
-                raise Exception(f"HTTP status {resp.status_code}: {resp.text[:500]}")
+                raise RuntimeError(
+                    f"HTTP status {resp.status_code}: {resp.text[:500]}"
+                )
             data = resp.json()
             batch_results = data.get("results", [])
         except Exception as e:
+            detail = f"{type(e).__name__}: {e}".strip()
+            if detail in ("", ":", "Exception:", "Exception: "):
+                detail = repr(e)
+            err_msg = f"Batch decompile error: {detail}"
             return [
                 FunctionScore(
                     decompiler=dname,
@@ -207,8 +213,8 @@ async def decompile_batch_and_score(
                     goto_count=0,
                     nesting_depth=0,
                     time_ms=0,
-                    error=f"Batch decompile error: {e}",
-                    semantic_error=f"Batch decompile error: {e}",
+                    error=err_msg,
+                    semantic_error=err_msg,
                     fail_category="adapter_error",
                 ) for t in targets
             ]

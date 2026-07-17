@@ -57,7 +57,9 @@ services:
       - FISSION_RESOURCE_ROOT=/opt/fission-utils/utils
       - FISSION_GHIDRA_DATA_DIR=/opt/fission-utils/utils/ghidra-data
       # Cap concurrent fission_cli children for multi_bundle thrashing control.
-      - FISSION_CLI_WORKERS=${FISSION_CLI_WORKERS:-8}
+      - FISSION_CLI_WORKERS=${FISSION_CLI_WORKERS:-6}
+      # Hard functions under CI load exceed 30s; keep aligned with server default.
+      - FISSION_DECOMP_TIMEOUT_MS=${FISSION_DECOMP_TIMEOUT_MS:-120000}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
