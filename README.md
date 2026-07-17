@@ -276,7 +276,7 @@ fission-benchmark/
 
 ## Fission Release Tracking
 
-CI sets `FISSION_SOURCE=release` and pins `FISSION_VERSION=v0.1.3` by default.
+CI sets `FISSION_SOURCE=release` and pins `FISSION_VERSION=v0.1.4` by default.
 This keeps scheduled, push, and manual runs reproducible until the repository's
 declared baseline is deliberately advanced. The `/health` probe must report
 `"source": "release"` (CI fails on `local-*`). The benchmark workflow also
@@ -286,7 +286,7 @@ trigger a run immediately after publishing:
 ```bash
 gh api repos/sjkim1127/fission-benchmark/dispatches \
   -f event_type=fission-release \
-  -f client_payload='{"fission_version":"v0.1.3"}'
+  -f client_payload='{"fission_version":"v0.1.4"}'
 ```
 
 Manual workflow runs can override `fission_version` with another specific tag,
@@ -317,7 +317,7 @@ Response: { "status": "ok", "decompiler": "ghidra", "version": "12.0" }
 
 # Fission also reports provenance:
 # { "status": "ok", "decompiler": "fission", "version": "...",
-#   "release_version": "v0.1.3"|"local-<sha>",
+#   "release_version": "v0.1.4"|"local-<sha>",
 #   "source": "release"|"local", "git_sha": "<optional>" }
 ```
 
