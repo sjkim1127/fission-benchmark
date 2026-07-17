@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "run_id": "146888c6-5724-4690-9082-9d9031d4f070",
+  "source_envelope_sha256": "3140de13ca9b57ffcfb5780bda7b81fed577528dfe19d8e29986502060e848a0",
+  "generated_from": "results/dev_publish.json",
+  "files": {
+    "latest_json": {
+      "path": "results/latest.json",
+      "sha256": "aec1145b9056296f2208d44749fc681ff3a112d2b5e9279996f6a4b6479e1295"
+    },
+    "latest_markdown": {
+      "path": "results/latest.md",
+      "sha256": "fb0c65ecee61cb4082062adeb06aeb6bd3ca92adb0c7d763e581adc9de55af3c"
+    },
+    "latest_summary": {
+      "path": "results/latest-summary.json",
+      "sha256": "5fff7028abab2be745a7f53a5cc8d65012bf6707a4335c9c69ff38b75a6071d4"
+    },
+    "dashboard": {
+      "path": "docs/index.html",
+      "sha256": "1a44ed52c95b5ff2489edd95331ad8921b54b23039acc162b239d7f45cc8109f"
+    }
+  }
+}

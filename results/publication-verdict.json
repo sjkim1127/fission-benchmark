@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "publishable": true,
+  "reasons": [],
+  "dev": {
+    "run_id": "146888c6-5724-4690-9082-9d9031d4f070",
+    "envelope_sha256": "3140de13ca9b57ffcfb5780bda7b81fed577528dfe19d8e29986502060e848a0",
+    "manifest_sha256": "f1f4c55a2670d497c100defd10ce8687952f5acdcf33780738aea3943a1d17b6"
+  },
+  "holdout": {
+    "run_id": "febd50e0-3802-4f6a-b18e-5d36042db994",
+    "envelope_sha256": "a2a9145adcf985eecc6fa903b35f51b147cc07729bdfee42b63473b54e0415bd",
+    "manifest_sha256": "3f2983c36f1532783b29c50bc44ba4cf435b6e209c076eff55fe45c81d3f8a88"
+  },
+  "overfitting_sha256": "195d9333cf317fdbf6da90e9912020d447a2824024307da1702a9d6e63726756"
+}

@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "passed": true,
+  "threshold_pp": 10.0,
+  "dev_envelope_sha256": "3140de13ca9b57ffcfb5780bda7b81fed577528dfe19d8e29986502060e848a0",
+  "holdout_envelope_sha256": "a2a9145adcf985eecc6fa903b35f51b147cc07729bdfee42b63473b54e0415bd",
+  "flagged_decompilers": [],
+  "dev": {
+    "fission": {
+      "count": 200,
+      "correctness_tested": 200,
+      "semantic_tested": 200,
+      "avg_correctness": 0.58719,
+      "avg_similarity": 0.13167699999999993,
+      "avg_semantic": 0.5871904761904762
+    },
+    "ghidra": {
+      "count": 215,
+      "correctness_tested": 215,
+      "semantic_tested": 215,
+      "avg_correctness": 0.7725586046511628,
+      "avg_similarity": 0.3839911627906978,
+      "avg_semantic": 0.7725581395348836
+    }
+  },
+  "holdout": {
+    "fission": {
+      "count": 29,
+      "correctness_tested": 29,
+      "semantic_tested": 29,
+      "avg_correctness": 0.6045965517241378,
+      "avg_similarity": 0.1681689655172414,
+      "avg_semantic": 0.6045977011494253
+    },
+    "ghidra": {
+      "count": 30,
+      "correctness_tested": 30,
+      "semantic_tested": 30,
+      "avg_correctness": 0.75111,
+      "avg_similarity": 0.4316266666666667,
+      "avg_semantic": 0.7511111111111111
+    }
+  }
+}
