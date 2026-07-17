@@ -48,7 +48,11 @@ if [ "${bad_addrs}" -gt 50 ]; then
 fi
 
 # Holdout PE fixtures (official publication needs these).
-if find corpus/holdout/manifests -name '*.json' -print -quit 2>/dev/null | grep -q .; then
+# Avoid `find | grep -q` under `set -o pipefail` (SIGPIPE → pipeline failure).
+holdout_manifest_count="$(find corpus/holdout/manifests -name '*.json' -type f 2>/dev/null | wc -l | tr -d ' ')"
+holdout_manifest_count="${holdout_manifest_count:-0}"
+echo "[verify] holdout manifests: ${holdout_manifest_count}"
+if [ "${holdout_manifest_count}" -gt 0 ]; then
   hold_count="$(find corpus/holdout/binaries -type f 2>/dev/null | wc -l | tr -d ' ')"
   hold_count="${hold_count:-0}"
   echo "[verify] corpus/holdout/binaries files: ${hold_count}"
