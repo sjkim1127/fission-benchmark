@@ -149,11 +149,29 @@ def main(argv: list[str] | None = None) -> int:
             "Set to 8+ so fission+ghidra-only envelopes fail CI."
         ),
     )
+    parser.add_argument(
+        "--local-paths",
+        nargs="+",
+        default=None,
+        help=(
+            "Override local envelope paths (repo-relative). "
+            "Default: public/benchmark-latest.json results/latest.json results/dev_latest.json. "
+            "Pass only public/benchmark-latest.json for multi-decomp UI checks during ranking runs."
+        ),
+    )
+    parser.add_argument(
+        "--remote-paths",
+        nargs="+",
+        default=None,
+        help="Override remote URLs for --check-remote (default: main results/latest + dev_latest).",
+    )
     args = parser.parse_args(argv)
 
     root: Path = args.root
+    local_paths = tuple(args.local_paths) if args.local_paths else DEFAULT_LOCAL
+    remote_paths = tuple(args.remote_paths) if args.remote_paths else DEFAULT_REMOTE
     local_hits: list[tuple[str, dict[str, Any]]] = []
-    for rel in DEFAULT_LOCAL:
+    for rel in local_paths:
         path = root / rel
         data = _load_json_path(path)
         if data is None:
@@ -188,7 +206,7 @@ def main(argv: list[str] | None = None) -> int:
 
     remote_hits: list[tuple[str, dict[str, Any]]] = []
     if args.check_remote:
-        for url in DEFAULT_REMOTE:
+        for url in remote_paths:
             data = _load_json_url(url, args.remote_timeout)
             if data is None:
                 print(f"MISS remote {url}")
@@ -224,14 +242,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.require_local and not local_hits:
         hard.append(
             "no local displayable envelope "
-            f"(checked: {', '.join(DEFAULT_LOCAL)}). "
+            f"(checked: {', '.join(local_paths)}). "
             "Dashboard would be empty. Commit results/dev_latest.json or "
             "public/benchmark-latest.json with non-empty rows."
         )
     if args.check_remote and not remote_hits:
         hard.append(
             "no remote displayable envelope on main "
-            f"(checked: {', '.join(DEFAULT_REMOTE)}). "
+            f"(checked: {', '.join(remote_paths)}). "
             "Vercel fetch would show empty multi-decomp pages."
         )
 

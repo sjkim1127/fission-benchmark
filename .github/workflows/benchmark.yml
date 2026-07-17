@@ -30,12 +30,12 @@ env:
   # Conservative reliability: strict only, no leniency in CI.
   PARITY_CANONICALIZE_MODE: strict
   RELIABILITY_POLICY: conservative
-  PARITY_BINARY_WORKERS: "4"
-  GHIDRA_HEADLESS_WORKERS: "4"
-  FISSION_CLI_WORKERS: "8"
-  # I/O-bound HTTP batches across adapters (containers do the heavy work).
-  # Ranking (2 tools) can push harder; multi (9 tools) stays moderate.
-  BENCHMARK_HTTP_CONCURRENCY: "16"
+  PARITY_BINARY_WORKERS: "3"
+  GHIDRA_HEADLESS_WORKERS: "3"
+  FISSION_CLI_WORKERS: "6"
+  # I/O-bound HTTP batches. Keep moderate: too high floods fission/ghidra and
+  # produces batch adapter_error storms that drop coverage below 0.90.
+  BENCHMARK_HTTP_CONCURRENCY: "8"
   FANOUT_PARALLEL: "2"
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/fission-benchmark
@@ -666,15 +666,21 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
-          # Repo must always ship a displayable multi-decomp envelope for Vercel
-          # (historical / last multi run). Ranking-only runs do not replace it.
+          # Multi-decomp UI sources only (public/ + remote). Do NOT require
+          # results/dev_latest.json here: ranking runs write 2-tool envelopes that
+          # fail min_decompilers=8 and would false-negative this gate.
           python scripts/check_dashboard_data.py \
             --min-rows 1 \
             --min-decompilers 8 \
             --require-valid \
             --require-local \
-            --check-remote
-          # This-run output: ranking path (2 tools) is valid; multi path needs ≥8.
+            --check-remote \
+            --local-paths public/benchmark-latest.json \
+            --remote-paths \
+              https://raw.githubusercontent.com/sjkim1127/fission-benchmark/main/public/benchmark-latest.json \
+              https://raw.githubusercontent.com/sjkim1127/fission-benchmark/main/results/dev_latest.json
+          # This-run structural sanity (not the multi-decomp UI contract).
+          # Validity/publishability is owned by "Validate Fission coverage gate".
           if [ -f results/dev_latest.json ]; then
             python - <<'PY'
           import json, sys
@@ -688,18 +694,19 @@ jobs:
           if n < 1:
               print(f"FAIL this-run dev_latest has rows={n}", file=sys.stderr)
               sys.exit(1)
-          if valid is not True:
-              print(f"FAIL this-run dev_latest valid={valid}", file=sys.stderr)
-              sys.exit(1)
           if len(tools) < 2:
               print(f"FAIL this-run dev_latest tools={tools} (need ≥2)", file=sys.stderr)
               sys.exit(1)
           if len(tools) < 8:
               print(
-                  f"OK ranking-path this-run tools={tools} "
-                  f"(multi-decomp UI kept from last multi run; rows={n} valid={valid})"
+                  f"OK ranking-path this-run rows={n} tools={tools} valid={valid} "
+                  f"(multi-decomp UI is separate; validity is fission-gate owned)"
               )
           else:
+              # Multi-decomp this-run must be measurement-valid for the UI envelope path.
+              if valid is not True:
+                  print(f"FAIL multi-decomp this-run valid={valid}", file=sys.stderr)
+                  sys.exit(1)
               print(f"OK multi-decomp this-run rows={n} valid={valid} tools={tools}")
           PY
           fi

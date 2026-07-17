@@ -88,6 +88,63 @@ def test_main_fails_without_local_data(tmp_path: Path):
     assert rc == 1
 
 
+def test_main_local_paths_override_ignores_ranking_envelope(tmp_path: Path):
+    """Ranking 2-tool this-run must not poison multi-decomp UI gate."""
+    mod = _load_mod()
+    public = tmp_path / "public"
+    public.mkdir()
+    results = tmp_path / "results"
+    results.mkdir()
+    # Multi envelope in public/
+    multi = _envelope(9, True)
+    for i, tool in enumerate(
+        ["fission", "ghidra", "boomerang", "radare2", "angr", "snowman", "revng", "reko", "retdec"]
+    ):
+        multi["rows"].append(
+            {
+                "decompiler": tool,
+                "function_name": f"extra{i}",
+                "compiler_variant": "gcc -O0",
+                "semantic_score": 1.0,
+                "correctness_score": 1.0,
+                "source_similarity": 0.0,
+                "time_ms": 1,
+            }
+        )
+    (public / "benchmark-latest.json").write_text(json.dumps(multi), encoding="utf-8")
+    # Ranking-only invalid envelope would fail min_decompilers=8 if scanned.
+    ranking = _envelope(4, False)
+    ranking["rows"] = [
+        {
+            "decompiler": d,
+            "function_name": "fn0",
+            "compiler_variant": "gcc -O0",
+            "semantic_score": 0.0,
+            "correctness_score": 0.0,
+            "source_similarity": 0.0,
+            "time_ms": 1,
+            "error": "adapter",
+            "fail_category": "adapter_error",
+        }
+        for d in ("fission", "ghidra")
+    ]
+    (results / "dev_latest.json").write_text(json.dumps(ranking), encoding="utf-8")
+    rc = mod.main(
+        [
+            "--root",
+            str(tmp_path),
+            "--min-rows",
+            "1",
+            "--min-decompilers",
+            "8",
+            "--require-valid",
+            "--local-paths",
+            "public/benchmark-latest.json",
+        ]
+    )
+    assert rc == 0
+
+
 def test_main_ok_with_dev_latest(tmp_path: Path):
     mod = _load_mod()
     results = tmp_path / "results"
