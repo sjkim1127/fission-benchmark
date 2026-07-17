@@ -7,13 +7,14 @@ cd "$ROOT"
 
 echo "[verify] cwd=$ROOT"
 
-count="$(find corpus/dev/binaries -type f 2>/dev/null | wc -l | tr -d ' ')"
+# `find` exits 1 when the path is missing — neutralize under set -e.
+count="$(find corpus/dev/binaries -type f 2>/dev/null | wc -l | tr -d ' ' || true)"
 count="${count:-0}"
 echo "[verify] corpus/dev/binaries files: ${count}"
 if [ "${count}" -lt 1 ]; then
   echo "[verify] Cache empty — rebuilding dev corpus"
   docker compose --profile tools run --rm --build corpus-builder
-  count="$(find corpus/dev/binaries -type f 2>/dev/null | wc -l | tr -d ' ')"
+  count="$(find corpus/dev/binaries -type f 2>/dev/null | wc -l | tr -d ' ' || true)"
   count="${count:-0}"
   echo "[verify] after dev rebuild: ${count}"
 fi
@@ -49,11 +50,11 @@ fi
 
 # Holdout PE fixtures (official publication needs these).
 # Avoid `find | grep -q` under `set -o pipefail` (SIGPIPE → pipeline failure).
-holdout_manifest_count="$(find corpus/holdout/manifests -name '*.json' -type f 2>/dev/null | wc -l | tr -d ' ')"
+holdout_manifest_count="$(find corpus/holdout/manifests -name '*.json' -type f 2>/dev/null | wc -l | tr -d ' ' || true)"
 holdout_manifest_count="${holdout_manifest_count:-0}"
 echo "[verify] holdout manifests: ${holdout_manifest_count}"
 if [ "${holdout_manifest_count}" -gt 0 ]; then
-  hold_count="$(find corpus/holdout/binaries -type f 2>/dev/null | wc -l | tr -d ' ')"
+  hold_count="$(find corpus/holdout/binaries -type f 2>/dev/null | wc -l | tr -d ' ' || true)"
   hold_count="${hold_count:-0}"
   echo "[verify] corpus/holdout/binaries files: ${hold_count}"
 
@@ -95,8 +96,10 @@ PY
 
   if [ "${hold_count}" -lt 1 ] || [ "${missing}" -gt 0 ]; then
     echo "[verify] Building holdout corpus (CORPUS_SPLIT=holdout)"
-    CORPUS_SPLIT=holdout docker compose --profile tools run --rm --build corpus-builder
-    hold_count="$(find corpus/holdout/binaries -type f 2>/dev/null | wc -l | tr -d ' ')"
+    if ! CORPUS_SPLIT=holdout docker compose --profile tools run --rm --build corpus-builder; then
+      echo "[verify] WARN: holdout corpus-builder failed" >&2
+    fi
+    hold_count="$(find corpus/holdout/binaries -type f 2>/dev/null | wc -l | tr -d ' ' || true)"
     hold_count="${hold_count:-0}"
     echo "[verify] after holdout rebuild: ${hold_count}"
     if [ "${hold_count}" -lt 1 ]; then
