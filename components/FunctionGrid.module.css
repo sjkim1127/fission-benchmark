@@ -261,6 +261,25 @@
   font-size: 0.75rem;
 }
 
+.diagStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  padding: 0.45rem 0.75rem;
+  margin-bottom: 0.65rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.diagStrip strong {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
 .errorBox {
   background: var(--danger-bg);
   border: 1px solid var(--danger);

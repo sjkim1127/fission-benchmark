@@ -499,3 +499,201 @@ export function pct(rate: number | null | undefined, digits = 1): string {
   if (rate === null || rate === undefined || Number.isNaN(rate)) return "—";
   return `${(rate * 100).toFixed(digits)}%`;
 }
+
+export function meanFmt(value: number | null | undefined, digits = 3): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—";
+  return value.toFixed(digits);
+}
+
+/** Non-ranking readability / similarity diagnostic row (per decompiler). */
+export type ReadabilityDiagStats = {
+  decompiler: string;
+  rows: number;
+  meanSourceSimilarity: number | null;
+  meanAstSimilarity: number | null;
+  meanReadabilityProxy: number | null;
+  meanGotoCount: number | null;
+  meanNestingDepth: number | null;
+  meanTempLocRatio: number | null;
+  meanGnrNormalized: number | null;
+  meanFlagSoupPerLoc: number | null;
+};
+
+function meanOf(xs: number[]): number | null {
+  if (xs.length === 0) return null;
+  return xs.reduce((a, b) => a + b, 0) / xs.length;
+}
+
+function astControlFlowSimilarity(row: BenchmarkEnvelope["rows"][number]): number | null {
+  const ast = row.ast_similarity as
+    | {
+        available?: boolean;
+        control_flow_normalized?: { similarity?: number };
+        identifier_placeholder?: { similarity?: number };
+      }
+    | undefined;
+  if (!ast || ast.available === false) return null;
+  const cf = ast.control_flow_normalized?.similarity;
+  if (typeof cf === "number" && !Number.isNaN(cf)) return cf;
+  const id = ast.identifier_placeholder?.similarity;
+  if (typeof id === "number" && !Number.isNaN(id)) return id;
+  return null;
+}
+
+function gnrNormalized(row: BenchmarkEnvelope["rows"][number]): number | null {
+  const metrics = row.readability_metrics as
+    | { generic_naming_ratio?: { normalized?: number } }
+    | undefined;
+  const n = metrics?.generic_naming_ratio?.normalized;
+  return typeof n === "number" && !Number.isNaN(n) ? n : null;
+}
+
+function tempLocRatio(row: BenchmarkEnvelope["rows"][number]): number | null {
+  const metrics = row.readability_metrics as
+    | {
+        expression_complexity?: {
+          raw?: { temporary_identifier_loc_ratio?: number };
+        };
+      }
+    | undefined;
+  const n = metrics?.expression_complexity?.raw?.temporary_identifier_loc_ratio;
+  return typeof n === "number" && !Number.isNaN(n) ? n : null;
+}
+
+/**
+ * Build per-decompiler readability / similarity diagnostics.
+ * Prefer summary.extensions.readability_axis means when present; always
+ * enrich from rows for source similarity / AST / GNR.
+ * Sort is fission-first then alphabetical — never by proxy score (non-ranking).
+ */
+export function buildReadabilityDiagnostics(
+  data: BenchmarkEnvelope,
+): ReadabilityDiagStats[] {
+  const ext = extractQualityExtensions(data).readabilityByDecompiler;
+  const byTool = new Map<
+    string,
+    {
+      sim: number[];
+      ast: number[];
+      proxy: number[];
+      goto: number[];
+      nesting: number[];
+      temp: number[];
+      gnr: number[];
+      flag: number[];
+    }
+  >();
+
+  const ensure = (tool: string) => {
+    if (!byTool.has(tool)) {
+      byTool.set(tool, {
+        sim: [],
+        ast: [],
+        proxy: [],
+        goto: [],
+        nesting: [],
+        temp: [],
+        gnr: [],
+        flag: [],
+      });
+    }
+    return byTool.get(tool)!;
+  };
+
+  for (const tool of Object.keys(ext)) {
+    ensure(tool);
+  }
+
+  for (const row of data.rows) {
+    if (row.error) continue;
+    const code = (row.decompiled_code || "").trim();
+    if (!code && row.readability_proxy_score == null && !row.readability_metrics) {
+      continue;
+    }
+    const slot = ensure(row.decompiler);
+    if (typeof row.source_similarity === "number") {
+      slot.sim.push(row.source_similarity);
+    }
+    const ast = astControlFlowSimilarity(row);
+    if (ast != null) slot.ast.push(ast);
+    if (
+      row.readability_proxy_score != null &&
+      typeof row.readability_proxy_score === "number"
+    ) {
+      slot.proxy.push(row.readability_proxy_score);
+    }
+    if (typeof row.goto_count === "number") slot.goto.push(row.goto_count);
+    if (typeof row.nesting_depth === "number") {
+      slot.nesting.push(row.nesting_depth);
+    }
+    const temp = tempLocRatio(row);
+    if (temp != null) slot.temp.push(temp);
+    const gnr = gnrNormalized(row);
+    if (gnr != null) slot.gnr.push(gnr);
+    // Flag-soup density from decompiled text (matches runner aggregate).
+    if (code) {
+      const flags = (code.match(/\b(?:zf|sf|cf|of|pf|af)\b/gi) || []).length;
+      const loc = Math.max(code.split("\n").length, 1);
+      slot.flag.push(flags / loc);
+    }
+  }
+
+  const tools = new Set([...Object.keys(ext), ...byTool.keys()]);
+  const rows: ReadabilityDiagStats[] = [...tools].map((decompiler) => {
+    const fromExt = ext[decompiler] || {};
+    const slot = byTool.get(decompiler) || {
+      sim: [],
+      ast: [],
+      proxy: [],
+      goto: [],
+      nesting: [],
+      temp: [],
+      gnr: [],
+      flag: [],
+    };
+    const extProxy =
+      typeof fromExt.mean_readability_proxy === "number"
+        ? fromExt.mean_readability_proxy
+        : null;
+    const extGoto =
+      typeof fromExt.mean_goto_count === "number" ? fromExt.mean_goto_count : null;
+    const extNest =
+      typeof fromExt.mean_nesting_depth === "number"
+        ? fromExt.mean_nesting_depth
+        : null;
+    const extTemp =
+      typeof fromExt.mean_temp_loc_ratio === "number"
+        ? fromExt.mean_temp_loc_ratio
+        : null;
+    const extFlag =
+      typeof fromExt.mean_flag_soup_per_loc === "number"
+        ? fromExt.mean_flag_soup_per_loc
+        : null;
+    const rowCount = Math.max(
+      typeof fromExt.rows === "number" ? fromExt.rows : 0,
+      slot.sim.length,
+      slot.proxy.length,
+      slot.goto.length,
+    );
+    return {
+      decompiler,
+      rows: rowCount,
+      meanSourceSimilarity: meanOf(slot.sim),
+      meanAstSimilarity: meanOf(slot.ast),
+      meanReadabilityProxy: meanOf(slot.proxy) ?? extProxy,
+      meanGotoCount: meanOf(slot.goto) ?? extGoto,
+      meanNestingDepth: meanOf(slot.nesting) ?? extNest,
+      meanTempLocRatio: meanOf(slot.temp) ?? extTemp,
+      meanGnrNormalized: meanOf(slot.gnr),
+      meanFlagSoupPerLoc: meanOf(slot.flag) ?? extFlag,
+    };
+  });
+
+  return rows.sort((a, b) => {
+    if (a.decompiler === "fission") return -1;
+    if (b.decompiler === "fission") return 1;
+    if (a.decompiler === "ghidra") return -1;
+    if (b.decompiler === "ghidra") return 1;
+    return a.decompiler.localeCompare(b.decompiler);
+  });
+}

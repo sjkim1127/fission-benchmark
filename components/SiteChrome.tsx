@@ -103,7 +103,7 @@ export function SiteChrome({
       <footer className={styles.footer}>
         <span>
           Fission Benchmark · Overview · Same-function · Functions · Variants ·
-          IR parity · ISR 15 min
+          Quality EXT · IR parity · ISR 15 min
         </span>
         <a
           href="https://github.com/sjkim1127/fission-benchmark"

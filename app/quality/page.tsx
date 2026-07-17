@@ -10,7 +10,9 @@ import {
 import {
   getLatestBenchmarkOptional,
   extractQualityExtensions,
+  buildReadabilityDiagnostics,
 } from "@/lib/benchmark";
+import { ReadabilityDiagnosticsPanel } from "@/components/ReadabilityDiagnosticsPanel";
 import styles from "../dashboard.module.css";
 import tableStyles from "@/components/SummaryTable.module.css";
 
@@ -33,11 +35,6 @@ function RateCell({ value }: { value: number | null | undefined }) {
   return <span>{(value * 100).toFixed(1)}%</span>;
 }
 
-function MeanCell({ value }: { value: number | null | undefined }) {
-  if (value == null || Number.isNaN(value)) return <span>—</span>;
-  return <span>{value.toFixed(3)}</span>;
-}
-
 async function QualitySection() {
   const data = await getLatestBenchmarkOptional();
   if (!data) {
@@ -50,8 +47,14 @@ async function QualitySection() {
   }
 
   const ext = extractQualityExtensions(data);
-  const bareTools = Object.keys(ext.bareByDecompiler);
-  const readTools = Object.keys(ext.readabilityByDecompiler);
+  const bareTools = Object.keys(ext.bareByDecompiler).sort((a, b) => {
+    if (a === "fission") return -1;
+    if (b === "fission") return 1;
+    if (a === "ghidra") return -1;
+    if (b === "ghidra") return 1;
+    return a.localeCompare(b);
+  });
+  const readStats = buildReadabilityDiagnostics(data);
   const tracks = Object.keys(ext.byTrack);
   const isas = Object.keys(ext.byIsa);
   const formats = Object.keys(ext.byFormat);
@@ -63,15 +66,18 @@ async function QualitySection() {
         <p className={styles.sectionLead}>
           Semantic pass rate on the <strong>original_binary</strong> oracle
           remains the only ranking axis. The tables below are form quality,
-          readability proxies, and track pivots for investigation only.
+          readability proxies (including source similarity and AST), and track
+          pivots for investigation only.
         </p>
         <div className={styles.frame}>
           <div className={styles.frameTitle}>Policy</div>
           <p className={styles.frameBody}>
             Bare-compile uses minimal headers + <code>gcc -c</code>. Readability
-            reports goto density, temporary density, and flag-soup density.
-            Track / ISA pivots surface realworld and multi-ISA rows when present
-            in the envelope.
+            reports source similarity, AST tree-edit similarity, proxy score,
+            generic naming, goto / nest / temp / flag density. For Fission,
+            semantic rows use NIR; readability proxies prefer HIR when dual
+            layers are present. Study pack:{" "}
+            <code>benchmark/readability/</code>.
           </p>
         </div>
       </section>
@@ -99,7 +105,12 @@ async function QualitySection() {
                 {bareTools.map((tool) => {
                   const row = ext.bareByDecompiler[tool] || {};
                   return (
-                    <tr key={tool}>
+                    <tr
+                      key={tool}
+                      className={
+                        tool === "fission" ? tableStyles.fissionRow : undefined
+                      }
+                    >
                       <td>{tool}</td>
                       <td className={tableStyles.num}>{row.attempted ?? "—"}</td>
                       <td className={tableStyles.num}>{row.ok ?? "—"}</td>
@@ -117,60 +128,14 @@ async function QualitySection() {
       </section>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>EXT · Readability axis</h2>
-        {readTools.length === 0 ? (
-          <p className={styles.sectionLead}>
-            No readability axis aggregates on this envelope.
-          </p>
-        ) : (
-          <div className={tableStyles.wrap}>
-            <table className={tableStyles.table}>
-              <thead>
-                <tr>
-                  <th>Decompiler</th>
-                  <th>Mean goto</th>
-                  <th>Temp/LOC</th>
-                  <th>Flag soup/LOC</th>
-                  <th>Nesting</th>
-                  <th>Proxy</th>
-                </tr>
-              </thead>
-              <tbody>
-                {readTools.map((tool) => {
-                  const row = ext.readabilityByDecompiler[tool] || {};
-                  return (
-                    <tr key={tool}>
-                      <td>{tool}</td>
-                      <td className={tableStyles.num}>
-                        <MeanCell value={row.mean_goto_count as number | null} />
-                      </td>
-                      <td className={tableStyles.num}>
-                        <MeanCell
-                          value={row.mean_temp_loc_ratio as number | null}
-                        />
-                      </td>
-                      <td className={tableStyles.num}>
-                        <MeanCell
-                          value={row.mean_flag_soup_per_loc as number | null}
-                        />
-                      </td>
-                      <td className={tableStyles.num}>
-                        <MeanCell
-                          value={row.mean_nesting_depth as number | null}
-                        />
-                      </td>
-                      <td className={tableStyles.num}>
-                        <MeanCell
-                          value={row.mean_readability_proxy as number | null}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <h2 className={styles.sectionTitle}>
+          EXT · Readability · source sim · AST
+        </h2>
+        <ReadabilityDiagnosticsPanel
+          stats={readStats}
+          compact={false}
+          showStudyNote
+        />
       </section>
 
       <section className={styles.section}>

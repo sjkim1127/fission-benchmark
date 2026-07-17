@@ -68,34 +68,43 @@ export const OracleSchema = z.object({
   tested_rows: z.number().int().nonnegative().optional(),
 });
 
-export const RowSchema = z.object({
-  decompiler: z.string(),
-  function_name: z.string(),
-  compiler_variant: z.string().min(1),
-  binary: z.string().optional(),
-  addr: z.string().optional(),
-  source_similarity: z.number().default(0),
-  semantic_score: z.number().nullable().default(null),  // null = no_wrapper (untestable)
-  correctness_score: z.number().nullable().default(null),  // null = no_wrapper
-  correctness_rank: z.number().int().positive().nullable(),
-  goto_count: z.number().default(0),
-  nesting_depth: z.number().default(0),
-  time_ms: z.number().default(0),
-  error: z.string().nullable().optional(),
-  fail_category: z.string().nullable().optional(),
-  fail_taxonomy: z.string().optional(),
-  decompiled_code: z.string().optional(),
-  semantic_error: z.string().nullable().optional(),
-  uses_intrinsics: z.boolean().optional(),
-  oracle_evidence: z.record(z.string(), z.unknown()).optional(),
-  output_diagnostics: z.record(z.string(), z.unknown()).optional(),
-  bare_compile: z.record(z.string(), z.unknown()).optional(),
-  track: z.string().optional(),
-  isa_format: z.record(z.string(), z.string()).optional(),
-  corpus: z.string().optional(),
-  readability_metrics: z.record(z.string(), z.unknown()).optional(),
-  readability_proxy_score: z.number().nullable().optional(),
-});
+export const RowSchema = z
+  .object({
+    decompiler: z.string(),
+    function_name: z.string(),
+    compiler_variant: z.string().min(1),
+    binary: z.string().optional(),
+    addr: z.string().optional(),
+    source_similarity: z.number().default(0),
+    semantic_score: z.number().nullable().default(null), // null = no_wrapper (untestable)
+    correctness_score: z.number().nullable().default(null), // null = no_wrapper
+    correctness_rank: z.number().int().positive().nullable(),
+    goto_count: z.number().default(0),
+    nesting_depth: z.number().default(0),
+    time_ms: z.number().default(0),
+    error: z.string().nullable().optional(),
+    fail_category: z.string().nullable().optional(),
+    fail_taxonomy: z.string().optional(),
+    decompiled_code: z.string().optional(),
+    decompiled_code_nir: z.string().optional(),
+    decompiled_code_hir: z.string().optional(),
+    pseudocode_layer: z.string().optional(),
+    semantic_error: z.string().nullable().optional(),
+    uses_intrinsics: z.boolean().optional(),
+    oracle_evidence: z.record(z.string(), z.unknown()).optional(),
+    output_diagnostics: z.record(z.string(), z.unknown()).optional(),
+    bare_compile: z.record(z.string(), z.unknown()).optional(),
+    track: z.string().optional(),
+    isa_format: z.record(z.string(), z.string()).optional(),
+    corpus: z.string().optional(),
+    readability_metrics: z.record(z.string(), z.unknown()).optional(),
+    readability_metrics_hir: z.record(z.string(), z.unknown()).optional(),
+    readability_proxy_score: z.number().nullable().optional(),
+    readability_proxy_score_hir: z.number().nullable().optional(),
+    // Phase-2 AST similarity (corpus-only diagnostic; not ranking).
+    ast_similarity: z.record(z.string(), z.unknown()).optional(),
+  })
+  .passthrough();
 
 /** Optional standard-set summary block (schema standard-set-v1). */
 export const StandardSummarySchema = z

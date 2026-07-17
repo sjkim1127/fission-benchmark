@@ -3,11 +3,13 @@ import Link from "next/link";
 import {
   getLatestBenchmarkOptional,
   groupByDecompiler,
+  buildReadabilityDiagnostics,
 } from "@/lib/benchmark";
 import { SiteChrome } from "@/components/SiteChrome";
 import { ValidityBanner } from "@/components/ValidityBanner";
 import { SummaryTable } from "@/components/SummaryTable";
 import { UnavailableData } from "@/components/UnavailableData";
+import { ReadabilityDiagnosticsPanel } from "@/components/ReadabilityDiagnosticsPanel";
 import {
   MetaStrip,
   SameFunctionOverviewTiles,
@@ -139,13 +141,23 @@ export default function Home() {
       </section>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Diagnostics (non-ranking)</h2>
+        <h2 className={styles.sectionTitle}>Diagnostics · readability (non-ranking)</h2>
         <p className={styles.sectionLead}>
-          Source similarity, AST proxies, and readability stay on row detail.
-          They never rank tools. Study pack:{" "}
-          <code>benchmark/readability/</code>.
+          Source similarity, AST tree-edit proxies, and readability proxies are
+          shown here for investigation only — they never rank tools. Per-function
+          code detail remains on <Link href="/functions">Functions</Link>.
         </p>
+        <Suspense fallback={<SkeletonSection rows={6} />}>
+          <ReadabilityOverviewSection />
+        </Suspense>
       </section>
     </SiteChrome>
   );
+}
+
+async function ReadabilityOverviewSection() {
+  const data = await getLatestBenchmarkOptional();
+  if (!data) return <UnavailableData />;
+  const stats = buildReadabilityDiagnostics(data);
+  return <ReadabilityDiagnosticsPanel stats={stats} compact showStudyNote />;
 }

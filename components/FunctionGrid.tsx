@@ -26,6 +26,27 @@ function StatusIcon({ row }: { row: Row }) {
   return <span className={styles.statusPartial}>◐</span>;
 }
 
+function formatAstSim(ast: Row["ast_similarity"]): string {
+  if (!ast || typeof ast !== "object") return "—";
+  const rec = ast as {
+    available?: boolean;
+    control_flow_normalized?: { similarity?: number };
+    identifier_placeholder?: { similarity?: number };
+  };
+  if (rec.available === false) return "—";
+  const n =
+    rec.control_flow_normalized?.similarity ??
+    rec.identifier_placeholder?.similarity;
+  return typeof n === "number" && !Number.isNaN(n) ? n.toFixed(3) : "—";
+}
+
+function formatGnr(metrics: Row["readability_metrics"]): string {
+  if (!metrics || typeof metrics !== "object") return "—";
+  const n = (metrics as { generic_naming_ratio?: { normalized?: number } })
+    .generic_naming_ratio?.normalized;
+  return typeof n === "number" && !Number.isNaN(n) ? n.toFixed(3) : "—";
+}
+
 interface ModalProps {
   fnName: string;
   rows: Row[];
@@ -101,8 +122,52 @@ function CodeModal({ fnName, rows, onClose }: ModalProps) {
                 <strong>{activeRow.fail_taxonomy || activeRow.fail_category || "—"}</strong>
               </span>
               <span>{activeRow.time_ms}ms</span>
-              <span className={styles.diagMuted}>
-                Similarity (diagnostic): {activeRow.source_similarity.toFixed(3)}
+              {activeRow.pseudocode_layer ? (
+                <span className={styles.diagMuted}>
+                  Layer: {activeRow.pseudocode_layer}
+                </span>
+              ) : null}
+            </div>
+
+            <div className={styles.diagStrip} title="Non-ranking diagnostics only">
+              <span>
+                Src sim:{" "}
+                <strong>
+                  {typeof activeRow.source_similarity === "number"
+                    ? activeRow.source_similarity.toFixed(3)
+                    : "—"}
+                </strong>
+              </span>
+              <span>
+                AST:{" "}
+                <strong>{formatAstSim(activeRow.ast_similarity)}</strong>
+              </span>
+              <span>
+                Proxy:{" "}
+                <strong>
+                  {activeRow.readability_proxy_score == null
+                    ? "—"
+                    : activeRow.readability_proxy_score.toFixed(3)}
+                </strong>
+              </span>
+              {activeRow.readability_proxy_score_hir != null &&
+              activeRow.readability_proxy_score_hir !==
+                activeRow.readability_proxy_score ? (
+                <span>
+                  Proxy HIR:{" "}
+                  <strong>
+                    {Number(activeRow.readability_proxy_score_hir).toFixed(3)}
+                  </strong>
+                </span>
+              ) : null}
+              <span>
+                Goto: <strong>{activeRow.goto_count ?? "—"}</strong>
+              </span>
+              <span>
+                Nest: <strong>{activeRow.nesting_depth ?? "—"}</strong>
+              </span>
+              <span>
+                GNR↑: <strong>{formatGnr(activeRow.readability_metrics)}</strong>
               </span>
             </div>
 
