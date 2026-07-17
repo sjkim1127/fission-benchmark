@@ -21,15 +21,29 @@ Cartesian products must not run on every push.
 | Profile | Use |
 |---------|-----|
 | `smoke` | Push CI — small C PE `-O0` slice |
-| `core_c_pe` | Official default — C PE x64+m32, `-O0`/`-O2` |
+| `core_c_pe` | Official default — C PE x64+m32, `-O0`/`-O2` (ranking / publish) |
 | `opt_cliff` | Full opt ladder on stress functions |
-| `lang_cpp` / `lang_rust` / `lang_go` | Language tracks (rolling out) |
-| `multi_isa` / `full_matrix` | Multi-format / expensive fan-out |
+| `lang_cpp` / `lang_rust` / `lang_go` | Language tracks |
+| `multi_isa` | PE + ELF x64/aarch64 structural slice |
+| `full_matrix` | Fan-out: core + lang_* + multi_isa, then merge |
 
 ```bash
 python runner/runner.py --corpus dev --profile smoke --decompilers fission,ghidra
 export BENCHMARK_PROFILE=core_c_pe
+
+# Full multi-lang diagnostic merge (local)
+ORACLE_ENDPOINT=http://localhost:8010 ./scripts/run_matrix_fanout.sh dev results/dev_latest.json
+# → results/dev_core_c_pe.json  (ranking)
+# → results/dev_latest.json     (merged diagnostic)
+
+# Official helpers
+./scripts/run_official_profiles.sh core
+./scripts/run_official_profiles.sh full_matrix
 ```
+
+**Publication rule:** gates and Pages use the **core_c_pe** ranking slice
+(`results/dev_publish.json`). The merged full_matrix envelope is diagnostic
+only (`results/dev_full_matrix.json` when produced by CI).
 
 Build binaries:
 

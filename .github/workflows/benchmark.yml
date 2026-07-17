@@ -129,7 +129,8 @@ jobs:
       is_current: ${{ steps.current.outputs.is_current }}
       should_publish: ${{ steps.publish-mode.outputs.should_publish }}
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # full_matrix fan-out needs headroom; smoke/core stay well under this.
+    timeout-minutes: ${{ (github.event.inputs.matrix_profile == 'full_matrix' || github.event_name == 'schedule') && 360 || 150 }}
     steps:
       - id: current
         name: Export current-run state
@@ -334,24 +335,43 @@ jobs:
           '
 
       - name: Run dev benchmark
-        # smoke ~40m; core_c_pe / official need headroom (was 25m and timed out).
-        timeout-minutes: ${{ github.event_name == 'push' && 40 || 120 }}
+        # smoke ~40m; core_c_pe ~90–120m; full_matrix fan-out up to ~5h.
+        timeout-minutes: ${{ env.BENCHMARK_PROFILE == 'full_matrix' && 300 || (github.event_name == 'push' && 40 || 120) }}
         env:
           ORACLE_ENDPOINT: http://localhost:8010
           BENCHMARK_PROFILE: ${{ env.BENCHMARK_PROFILE }}
         run: |
-          EXTRA_ARGS=""
-          if [ -n "$BENCHMARK_LIMIT" ] && [ "$BENCHMARK_LIMIT" != "0" ]; then
-            EXTRA_ARGS="$EXTRA_ARGS --limit $BENCHMARK_LIMIT"
+          set -euo pipefail
+          if [ "${BENCHMARK_PROFILE:-}" = "full_matrix" ]; then
+            echo "full_matrix fan-out (core ranking + language/ISA slices)"
+            chmod +x scripts/run_matrix_fanout.sh
+            # Core slice keeps requested decompilers; language/ISA slices use fission+ghidra.
+            CORE_DECOMPILERS="$BENCHMARK_DECOMPILERS" \
+            SLICE_DECOMPILERS="fission,ghidra" \
+            RUN_MODE="$RUN_MODE" \
+            FANOUT_PROFILES="core_c_pe lang_cpp lang_rust lang_go multi_isa" \
+              ./scripts/run_matrix_fanout.sh dev results/dev_latest.json
+            # Publication ranking artifact: pure core_c_pe slice.
+            if [ -f results/dev_core_c_pe.json ]; then
+              cp results/dev_core_c_pe.json results/dev_publish.json
+            else
+              cp results/dev_latest.json results/dev_publish.json
+            fi
+          else
+            EXTRA_ARGS=""
+            if [ -n "$BENCHMARK_LIMIT" ] && [ "$BENCHMARK_LIMIT" != "0" ]; then
+              EXTRA_ARGS="$EXTRA_ARGS --limit $BENCHMARK_LIMIT"
+            fi
+            if [ -n "$BENCHMARK_VARIANT_LIMIT" ] && [ "$BENCHMARK_VARIANT_LIMIT" != "0" ]; then
+              EXTRA_ARGS="$EXTRA_ARGS --variant-limit $BENCHMARK_VARIANT_LIMIT"
+            fi
+            if [ -n "$BENCHMARK_PROFILE" ]; then
+              EXTRA_ARGS="$EXTRA_ARGS --profile $BENCHMARK_PROFILE"
+            fi
+            echo "Running with BENCHMARK_PROFILE=${BENCHMARK_PROFILE:-<none>} EXTRA_ARGS=$EXTRA_ARGS"
+            python runner/runner.py --corpus dev $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --run-mode "$RUN_MODE" --output results/dev_latest.json
+            cp results/dev_latest.json results/dev_publish.json
           fi
-          if [ -n "$BENCHMARK_VARIANT_LIMIT" ] && [ "$BENCHMARK_VARIANT_LIMIT" != "0" ]; then
-            EXTRA_ARGS="$EXTRA_ARGS --variant-limit $BENCHMARK_VARIANT_LIMIT"
-          fi
-          if [ -n "$BENCHMARK_PROFILE" ]; then
-            EXTRA_ARGS="$EXTRA_ARGS --profile $BENCHMARK_PROFILE"
-          fi
-          echo "Running with BENCHMARK_PROFILE=${BENCHMARK_PROFILE:-<none>} EXTRA_ARGS=$EXTRA_ARGS"
-          python runner/runner.py --corpus dev $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --run-mode "$RUN_MODE" --output results/dev_latest.json
 
       # -----------------------------------------------------------------------
       # Fission validity gate — abort the publish path when every Fission row
@@ -362,11 +382,21 @@ jobs:
       - name: Validate Fission coverage gate
         id: fission-gate
         run: |
-          python -m runner.run_validity results/dev_latest.json \
+          # Gate publication on the ranking slice (core_c_pe under full_matrix).
+          GATE_JSON=results/dev_publish.json
+          if [ ! -f "$GATE_JSON" ]; then
+            GATE_JSON=results/dev_latest.json
+          fi
+          python -m runner.run_validity "$GATE_JSON" \
             --github-env     "$GITHUB_ENV" \
             --github-summary "$GITHUB_STEP_SUMMARY"
           # Standard-set contract (summary + taxonomy denominators + semantic-only correctness)
-          python scripts/check_benchmark_path.py results/dev_latest.json
+          python scripts/check_benchmark_path.py "$GATE_JSON"
+          # Multi-lang merged envelope is diagnostic; still surface validity if present.
+          if [ -f results/dev_latest.json ] && [ "$(realpath results/dev_latest.json)" != "$(realpath "$GATE_JSON")" ]; then
+            echo "Merged full_matrix envelope present (diagnostic):"
+            python -m runner.run_validity results/dev_latest.json || true
+          fi
 
       - name: Run holdout benchmark
         # Skip if validity gate failed — holdout on an invalid run wastes CI time.
@@ -428,16 +458,23 @@ jobs:
           if [ -n "$BENCHMARK_VARIANT_LIMIT" ] && [ "$BENCHMARK_VARIANT_LIMIT" != "0" ]; then
             EXTRA_ARGS="$EXTRA_ARGS --variant-limit $BENCHMARK_VARIANT_LIMIT"
           fi
-          if [ -n "$BENCHMARK_PROFILE" ]; then
-            EXTRA_ARGS="$EXTRA_ARGS --profile $BENCHMARK_PROFILE"
+          # Holdout is C-centric; always use core ranking profile under full_matrix.
+          HOLD_PROFILE="${BENCHMARK_PROFILE:-}"
+          if [ "$HOLD_PROFILE" = "full_matrix" ]; then
+            HOLD_PROFILE="core_c_pe"
+          fi
+          if [ -n "$HOLD_PROFILE" ]; then
+            EXTRA_ARGS="$EXTRA_ARGS --profile $HOLD_PROFILE"
           fi
           python runner/runner.py --corpus holdout $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --run-mode "$RUN_MODE" --output results/holdout_latest.json
 
       - name: Run overfitting check
         if: ${{ steps.fission-gate.outcome == 'success' && env.PUBLISH_RESULTS == 'true' }}
         run: |
+          PUB_DEV=results/dev_publish.json
+          if [ ! -f "$PUB_DEV" ]; then PUB_DEV=results/dev_latest.json; fi
           python runner/holdout_report.py \
-            --dev results/dev_latest.json \
+            --dev "$PUB_DEV" \
             --holdout results/holdout_latest.json \
             --output results/overfitting_report.md \
             --json-output results/overfitting_report.json
@@ -447,14 +484,16 @@ jobs:
         run: |
           set -euo pipefail
           # Structural readiness (holdout manifests, non-empty rows, overfitting).
+          PUB_DEV=results/dev_publish.json
+          if [ ! -f "$PUB_DEV" ]; then PUB_DEV=results/dev_latest.json; fi
           python scripts/check_publication_ready.py \
-            --dev results/dev_latest.json \
+            --dev "$PUB_DEV" \
             --holdout results/holdout_latest.json \
             --overfitting results/overfitting_report.json \
             --require-official
-          # Full evidence-linked gate.
+          # Full evidence-linked gate (always on core ranking slice).
           python -m runner.publication_gate \
-            --dev results/dev_latest.json \
+            --dev "$PUB_DEV" \
             --holdout results/holdout_latest.json \
             --overfitting results/overfitting_report.json \
             --output results/publication-verdict.json \
@@ -474,11 +513,18 @@ jobs:
         # Only update latest.* when measurement is valid AND run is publishable.
         if: ${{ env.MEASUREMENT_VALID == 'true' && steps.publish-mode.outputs.should_publish == 'true' }}
         run: |
+          PUB_DEV=results/dev_publish.json
+          if [ ! -f "$PUB_DEV" ]; then PUB_DEV=results/dev_latest.json; fi
           python runner/render_report.py \
-            --input results/dev_latest.json \
+            --input "$PUB_DEV" \
             --corpus dev \
             --publication-verdict results/publication-verdict.json \
             --update-latest
+          # Keep multi-lang merged envelope on the side for dashboard consumers.
+          if [ -f results/dev_latest.json ] && [ "$(realpath results/dev_latest.json)" != "$(realpath "$PUB_DEV")" ]; then
+            cp results/dev_latest.json results/dev_full_matrix.json
+            echo "Preserved multi-lang merge as results/dev_full_matrix.json"
+          fi
           python -c 'from pathlib import Path; from runner.artifact_integrity import verify_artifact_manifest; verify_artifact_manifest(Path("."))'
 
       - name: Run parity benchmarks (Ghidra reference)

@@ -37,7 +37,13 @@ python scripts/build_matrix.py --split dev --profile core_c_pe
 | `opt_cliff` | Full opt ladder on stress functions |
 | `lang_cpp` / `lang_rust` / `lang_go` | Language tracks |
 | `multi_isa` | PE+ELF / multi-arch |
-| `full_matrix` | Everything present (manual / fan-out) |
+| `full_matrix` | Fan-out core + languages + multi_isa, merge for diagnostics |
+
+```bash
+# Fan-out + merge (needs decompilers + oracle up)
+./scripts/run_matrix_fanout.sh dev results/dev_latest.json
+python scripts/merge_envelopes.py results/slices/dev_*.json -o results/dev_merged.json
+```
 
 ## Semantic policy
 
