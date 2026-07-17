@@ -70,10 +70,15 @@ def compile_c_family(
     language: str = "c",
 ) -> None:
     """Compile C or C++ source for CORPUS_TARGET."""
-    if language == "cpp":
-        selected = target_tool("g++" if compiler in {"gcc", "g++"} else compiler, "gcc")
+    is_cpp = language == "cpp" or compiler in {"g++", "cpp", "cxx", "clang++"}
+    if is_cpp:
+        if CORPUS_TARGET == "windows-x86_64":
+            selected = "x86_64-w64-mingw32-g++"
+        else:
+            selected = "g++"
     else:
         selected = target_tool(compiler, "gcc")
+
     output.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         compiler_binary(selected),
@@ -85,20 +90,31 @@ def compile_c_family(
         str(output),
         str(source),
     ]
-    if language == "cpp":
-        cmd.insert(1, "-std=c++17")
+    if is_cpp:
+        # After the tool name: insert language flags before opt.
+        cmd[1:1] = ["-std=c++17", "-fno-exceptions"]
 
-    if compiler == "clang" and CORPUS_TARGET == "windows-x86_64":
+    if not is_cpp and compiler == "clang" and CORPUS_TARGET == "windows-x86_64":
         cmd.insert(1, "-target")
         cmd.insert(2, "x86_64-w64-mingw32")
         cmd.append("-L/usr/lib/gcc/x86_64-w64-mingw32/12-posix/")
-    elif compiler == "clang-m32" and CORPUS_TARGET == "windows-x86_64":
+    elif not is_cpp and compiler == "clang-m32" and CORPUS_TARGET == "windows-x86_64":
         cmd.insert(1, "-target")
         cmd.insert(2, "i686-w64-mingw32")
         cmd.append("-L/usr/lib/gcc/i686-w64-mingw32/12-posix/")
 
-    if compiler in {"gcc", "clang", "g++"} and CORPUS_TARGET != "windows-x86_64":
-        cmd[2:2] = ["-fno-pie", "-no-pie"]
+    if compiler in {"gcc", "clang", "g++", "clang++"} and CORPUS_TARGET != "windows-x86_64":
+        # Insert after tool name / any -std flags.
+        insert_at = 1
+        while insert_at < len(cmd) and str(cmd[insert_at]).startswith("-"):
+            if cmd[insert_at] in {"-o"}:
+                break
+            insert_at += 1
+            if insert_at > 6:
+                break
+        # Simpler: after tool, before opt.
+        if "-fno-pie" not in cmd:
+            cmd[1:1] = ["-fno-pie", "-no-pie"]
 
     try:
         subprocess.run(cmd, check=True, capture_output=True, text=True)
@@ -111,10 +127,7 @@ def compile_c_family(
 
 
 def symbol_addresses(binary: Path, compiler: str) -> dict[str, str]:
-    nm_name = target_tool(compiler if compiler not in {"g++"} else "gcc", "nm")
-    # g++ still uses mingw nm
-    if compiler in {"g++", "cpp", "cxx"} and CORPUS_TARGET == "windows-x86_64":
-        nm_name = "x86_64-w64-mingw32-nm"
+    nm_name = _nm_for_compiler(compiler)
     nm = shutil.which(nm_name) or shutil.which("nm")
     if not nm:
         raise SystemExit(f"{nm_name} not found on PATH")
@@ -164,6 +177,14 @@ def _tag_variant(variant: dict[str, Any], compiler: str) -> None:
             )
         else:
             variant["abi_profile"] = "linux-x86_64"
+
+
+def _nm_for_compiler(compiler: str) -> str:
+    if CORPUS_TARGET == "windows-x86_64":
+        if compiler in {"gcc-m32", "clang-m32"}:
+            return "i686-w64-mingw32-nm"
+        return "x86_64-w64-mingw32-nm"
+    return "nm"
 
 
 def build_manifest(manifest_path: Path, split: str, languages: set[str] | None) -> None:

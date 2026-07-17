@@ -43,7 +43,13 @@ python scripts/build_matrix.py --split dev --profile core_c_pe
 
 - **Headline ranking** remains semantic pass rate on the **core C PE** cohort until other language oracles are measurement-valid.
 - Rows should carry `language`, `isa`, `format`, `abi_profile` for pivots.
+- **C++ (P1):** `source/cpp/patterns.cpp` uses C++ features (namespace, templates, class) behind **`extern "C"`** exports so the existing PE wine + C harness path applies (`--profile lang_cpp`).
 - Rust/Go native semantic uses language drivers + declared export surfaces; see `docs/BENCHMARK_OPERATING.md`.
+
+```bash
+# C++-only slice (fission+ghidra)
+python runner/runner.py --corpus dev --profile lang_cpp --decompilers fission,ghidra
+```
 
 ## Build
 

@@ -69,12 +69,20 @@ profiles:
 
   # Language tracks (scaffold — empty until sources land).
   lang_cpp:
-    description: "C++ PE subset"
+    description: "C++ PE subset (extern C exports, g++ O0/O2)"
     languages: [cpp]
     formats: [pe]
     isas: [x86_64]
     opts: ["-O0", "-O2"]
     compilers: [g++]
+    function_allowlist:
+      - cpp_add_ints
+      - cpp_clamp_int
+      - cpp_max3
+      - cpp_count_bits
+      - cpp_dot_product
+      - cpp_cstr_len
+      - cpp_sum_range
     max_functions: 0
     max_variants_per_function: 0
     decompilers_default: fission,ghidra

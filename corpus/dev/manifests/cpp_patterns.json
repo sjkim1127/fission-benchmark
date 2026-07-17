@@ -1,0 +1,216 @@
+{
+  "_comment": "C++ PE family \u2014 extern C exports, g++/clang++ PE x64 O0/O2",
+  "functions": [
+    {
+      "name": "cpp_add_ints",
+      "language": "cpp",
+      "source": "source/cpp/patterns.cpp",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "cpp_add_ints",
+        "oracle": "pe_wine",
+        "note": "C ABI export; C++ body (namespace/templates)"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "g++",
+          "opt": "-O0",
+          "binary": "binaries/cpp/patterns_g++_O0.exe",
+          "addr": "0x1400015c5",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "g++",
+          "opt": "-O2",
+          "binary": "binaries/cpp/patterns_g++_O2.exe",
+          "addr": "0x140001560",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "cpp_clamp_int",
+      "language": "cpp",
+      "source": "source/cpp/patterns.cpp",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "cpp_clamp_int",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "g++",
+          "opt": "-O0",
+          "binary": "binaries/cpp/patterns_g++_O0.exe",
+          "addr": "0x1400015d9",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "g++",
+          "opt": "-O2",
+          "binary": "binaries/cpp/patterns_g++_O2.exe",
+          "addr": "0x140001620",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "cpp_max3",
+      "language": "cpp",
+      "source": "source/cpp/patterns.cpp",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "cpp_max3",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "g++",
+          "opt": "-O0",
+          "binary": "binaries/cpp/patterns_g++_O0.exe",
+          "addr": "0x140001604",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "g++",
+          "opt": "-O2",
+          "binary": "binaries/cpp/patterns_g++_O2.exe",
+          "addr": "0x140001610",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "cpp_count_bits",
+      "language": "cpp",
+      "source": "source/cpp/patterns.cpp",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "cpp_count_bits",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "g++",
+          "opt": "-O0",
+          "binary": "binaries/cpp/patterns_g++_O0.exe",
+          "addr": "0x14000162f",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "g++",
+          "opt": "-O2",
+          "binary": "binaries/cpp/patterns_g++_O2.exe",
+          "addr": "0x140001570",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "cpp_dot_product",
+      "language": "cpp",
+      "source": "source/cpp/patterns.cpp",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "cpp_dot_product",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "g++",
+          "opt": "-O0",
+          "binary": "binaries/cpp/patterns_g++_O0.exe",
+          "addr": "0x14000164a",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "g++",
+          "opt": "-O2",
+          "binary": "binaries/cpp/patterns_g++_O2.exe",
+          "addr": "0x140001580",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "cpp_cstr_len",
+      "language": "cpp",
+      "source": "source/cpp/patterns.cpp",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "cpp_cstr_len",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "g++",
+          "opt": "-O0",
+          "binary": "binaries/cpp/patterns_g++_O0.exe",
+          "addr": "0x140001691",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "g++",
+          "opt": "-O2",
+          "binary": "binaries/cpp/patterns_g++_O2.exe",
+          "addr": "0x1400015a0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    },
+    {
+      "name": "cpp_sum_range",
+      "language": "cpp",
+      "source": "source/cpp/patterns.cpp",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "cpp_sum_range",
+        "oracle": "pe_wine"
+      },
+      "compiler_variants": [
+        {
+          "compiler": "g++",
+          "opt": "-O0",
+          "binary": "binaries/cpp/patterns_g++_O0.exe",
+          "addr": "0x1400016af",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "g++",
+          "opt": "-O2",
+          "binary": "binaries/cpp/patterns_g++_O2.exe",
+          "addr": "0x1400015b0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        }
+      ]
+    }
+  ]
+}
