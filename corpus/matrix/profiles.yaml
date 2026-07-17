@@ -1,0 +1,130 @@
+# Benchmark execution profiles — select language / opt / isa slices.
+# Runner: --profile <name> or BENCHMARK_PROFILE=<name>
+# Build:  scripts/build_matrix.py --profile <name> (optional filter)
+
+version: 1
+
+profiles:
+  # Push CI — keep under ~25–40m with full decompiler set.
+  smoke:
+    description: "Push smoke: small C PE slice, one variant family"
+    languages: [c]
+    formats: [pe]
+    isas: [x86_64]
+    opts: ["-O0"]
+    compilers: [gcc]
+    # Prefer these function names when present; else first N from corpus order.
+    function_allowlist:
+      - count_bits
+      - clamp
+      - signum
+      - add_ints
+      - mul_ints
+      - list_sum
+      - apply_binop
+      - fibonacci
+      - saturating_add
+      - reverse_string
+    max_functions: 10
+    max_variants_per_function: 1
+    decompilers_default: fission,ghidra,boomerang,radare2,angr,snowman,revng,reko,retdec
+    timeout_minutes: 40
+
+  # Official publication-proven cohort (C PE semantic).
+  core_c_pe:
+    description: "Full C PE x64+m32, O0/O2 — core ranking cohort"
+    languages: [c]
+    formats: [pe]
+    isas: [x86_64, x86_32]
+    opts: ["-O0", "-O2"]
+    compilers: [gcc, gcc-m32, clang]
+    max_functions: 0          # 0 = all matching
+    max_variants_per_function: 0
+    decompilers_default: fission,ghidra
+    timeout_minutes: 90
+
+  # Optimization cliff for stress / advanced C functions.
+  opt_cliff:
+    description: "C PE x64 full opt ladder on stress + advanced patterns"
+    languages: [c]
+    formats: [pe]
+    isas: [x86_64]
+    opts: ["-O0", "-O1", "-O2", "-Os", "-O3"]
+    compilers: [gcc]
+    function_allowlist:
+      - list_sum
+      - kv_lookup
+      - apply_binop
+      - bounded_checksum
+      - rolling_hash32
+      - state_machine_score
+      - mixed_width_accumulate
+      - count_bits
+      - clamp
+      - matrix_multiply
+    max_functions: 0
+    max_variants_per_function: 0
+    decompilers_default: fission,ghidra
+    timeout_minutes: 60
+
+  # Language tracks (scaffold — empty until sources land).
+  lang_cpp:
+    description: "C++ PE subset"
+    languages: [cpp]
+    formats: [pe]
+    isas: [x86_64]
+    opts: ["-O0", "-O2"]
+    compilers: [g++]
+    max_functions: 0
+    max_variants_per_function: 0
+    decompilers_default: fission,ghidra
+    timeout_minutes: 60
+
+  lang_rust:
+    description: "Rust PE/ELF subset"
+    languages: [rust]
+    formats: [pe, elf]
+    isas: [x86_64]
+    opts: ["0", "2", "-O0", "-O2"]
+    compilers: [rustc]
+    max_functions: 0
+    max_variants_per_function: 0
+    decompilers_default: fission,ghidra
+    timeout_minutes: 60
+
+  lang_go:
+    description: "Go PE/ELF subset"
+    languages: [go]
+    formats: [pe, elf]
+    isas: [x86_64]
+    opts: ["default", "noopt", "-O0", "-O2"]
+    compilers: [go]
+    max_functions: 0
+    max_variants_per_function: 0
+    decompilers_default: fission,ghidra
+    timeout_minutes: 60
+
+  multi_isa:
+    description: "C multi-format / multi-isa structural + limited semantic"
+    languages: [c]
+    formats: [pe, elf]
+    isas: [x86_64, x86_32, aarch64]
+    opts: ["-O0", "-O2"]
+    compilers: [gcc, gcc-m32, gcc-elf]
+    max_functions: 8
+    max_variants_per_function: 0
+    decompilers_default: fission,ghidra
+    timeout_minutes: 60
+
+  # Manual / release — runner still applies filters; use job fan-out in CI.
+  full_matrix:
+    description: "All languages/formats present in corpus (expensive)"
+    languages: [c, cpp, rust, go]
+    formats: [pe, elf]
+    isas: [x86_64, x86_32, aarch64]
+    opts: []                  # empty = no opt filter
+    compilers: []             # empty = no compiler filter
+    max_functions: 0
+    max_variants_per_function: 0
+    decompilers_default: fission,ghidra,boomerang,radare2,angr,snowman,revng,reko,retdec
+    timeout_minutes: 180

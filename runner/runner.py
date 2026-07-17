@@ -492,6 +492,12 @@ def run(
     run_mode: str = typer.Option(
         "smoke", help="Execution mode: smoke, local, or official"
     ),
+    profile: str | None = typer.Option(
+        None,
+        "--profile",
+        help="Corpus matrix profile from corpus/matrix/profiles.yaml "
+        "(or set BENCHMARK_PROFILE). Filters language/opt/isa/function slices.",
+    ),
 ) -> None:
     """Run benchmark evaluation pipeline."""
     started_at = datetime.now(timezone.utc)
@@ -503,6 +509,16 @@ def run(
             "official runs cannot use --limit, --variant-limit, or --function"
         )
 
+    from matrix_profile import get_profile, resolve_profile_name
+
+    profile_name = resolve_profile_name(profile)
+    profile_cfg = None
+    if profile_name:
+        try:
+            profile_cfg = get_profile(profile_name)
+        except KeyError as exc:
+            raise typer.BadParameter(str(exc), param_hint="--profile") from exc
+
     # Select decompilers
     all_dec = configured_decompilers()
     if decompilers:
@@ -513,18 +529,32 @@ def run(
                 raise typer.BadParameter(f"Requested decompiler '{d}' is not configured or is skipped.")
             dec_map[d] = all_dec[d]
     else:
-        dec_map = all_dec
+        if profile_cfg and profile_cfg.get("decompilers_default"):
+            selected = [
+                d.strip()
+                for d in str(profile_cfg["decompilers_default"]).split(",")
+                if d.strip()
+            ]
+            dec_map = {d: all_dec[d] for d in selected if d in all_dec}
+            if not dec_map:
+                dec_map = all_dec
+        else:
+            dec_map = all_dec
 
     typer.echo(f"Using decompilers: {list(dec_map.keys())}")
+    if profile_name:
+        typer.echo(f"Corpus profile: {profile_name}")
 
-    # Load corpus using load_all
+    # Load corpus using load_all, then apply matrix profile filters.
     c = Corpus.load_all(corpus)
+    if profile_name:
+        c = c.apply_profile(profile_name)
     try:
         selected_functions = filter_functions(c.functions, function)
     except ValueError as exc:
         raise typer.BadParameter(str(exc), param_hint="--function") from exc
     typer.echo(f"Loading corpus: {corpus}")
-    typer.echo(f"  {len(c.functions)} functions loaded")
+    typer.echo(f"  {len(c.functions)} functions after profile filter")
     if function:
         typer.echo(
             "  focused functions: "
@@ -593,10 +623,12 @@ def run(
             "requested_run_mode": run_mode,
             # Official publication requires profile=realistic with no focus limits.
             "profile": "realistic" if run_mode == "official" else "diagnostic",
+            "matrix_profile": profile_name,
             "limits": {
                 "limit": limit,
                 "variant_limit": variant_limit,
-                "function": function
+                "function": function,
+                "matrix_profile": profile_name,
             }
         },
         toolchain={

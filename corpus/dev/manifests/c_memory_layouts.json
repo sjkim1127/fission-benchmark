@@ -3,111 +3,189 @@
   "functions": [
     {
       "name": "manipulate_bitfields",
-      "source": "source/memory_layouts.c",
+      "source": "source/c/memory_layouts.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/memory_layouts_gcc_O0.exe",
-          "addr": "0x140001530"
+          "binary": "binaries/c/memory_layouts_gcc_O0.exe",
+          "addr": "0x140001530",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/memory_layouts_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/memory_layouts_gcc_O2.exe",
-          "addr": "0x140001530"
+          "binary": "binaries/c/memory_layouts_gcc_O2.exe",
+          "addr": "0x140001530",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/memory_layouts_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/memory_layouts_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O0",
-          "binary": "binaries/memory_layouts_gcc-m32_O0.exe",
-          "addr": "0x4015b0"
+          "binary": "binaries/c/memory_layouts_gcc-m32_O0.exe",
+          "addr": "0x4015b0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/memory_layouts_gcc-m32_O2.exe",
-          "addr": "0x4015b0"
+          "binary": "binaries/c/memory_layouts_gcc-m32_O2.exe",
+          "addr": "0x4015b0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "clang",
           "opt": "-O0",
-          "binary": "binaries/memory_layouts_clang_O0.exe",
-          "addr": "0x140001510"
+          "binary": "binaries/c/memory_layouts_clang_O0.exe",
+          "addr": "0x140001510",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "clang",
           "opt": "-O2",
-          "binary": "binaries/memory_layouts_clang_O2.exe",
-          "addr": "0x140001510"
-        },
-        {
-          "compiler": "clang-m32",
-          "opt": "-O0",
-          "binary": "binaries/memory_layouts_clang-m32_O0.exe",
-          "addr": "0x4014e0"
-        },
-        {
-          "compiler": "clang-m32",
-          "opt": "-O2",
-          "binary": "binaries/memory_layouts_clang-m32_O2.exe",
-          "addr": "0x4014e0"
+          "binary": "binaries/c/memory_layouts_clang_O2.exe",
+          "addr": "0x140001510",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "manipulate_bitfields",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "matrix_multiply",
-      "source": "source/memory_layouts.c",
+      "source": "source/c/memory_layouts.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/memory_layouts_gcc_O0.exe",
-          "addr": "0x1400015b8"
+          "binary": "binaries/c/memory_layouts_gcc_O0.exe",
+          "addr": "0x1400015b8",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/memory_layouts_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/memory_layouts_gcc_O2.exe",
-          "addr": "0x140001570"
+          "binary": "binaries/c/memory_layouts_gcc_O2.exe",
+          "addr": "0x140001570",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/memory_layouts_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/memory_layouts_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O0",
-          "binary": "binaries/memory_layouts_gcc-m32_O0.exe",
-          "addr": "0x40162a"
+          "binary": "binaries/c/memory_layouts_gcc-m32_O0.exe",
+          "addr": "0x40162a",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/memory_layouts_gcc-m32_O2.exe",
-          "addr": "0x4015f0"
+          "binary": "binaries/c/memory_layouts_gcc-m32_O2.exe",
+          "addr": "0x4015f0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "clang",
           "opt": "-O0",
-          "binary": "binaries/memory_layouts_clang_O0.exe",
-          "addr": "0x1400015b0"
+          "binary": "binaries/c/memory_layouts_clang_O0.exe",
+          "addr": "0x1400015b0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "clang",
           "opt": "-O2",
-          "binary": "binaries/memory_layouts_clang_O2.exe",
-          "addr": "0x140001550"
-        },
-        {
-          "compiler": "clang-m32",
-          "opt": "-O0",
-          "binary": "binaries/memory_layouts_clang-m32_O0.exe",
-          "addr": "0x401560"
-        },
-        {
-          "compiler": "clang-m32",
-          "opt": "-O2",
-          "binary": "binaries/memory_layouts_clang-m32_O2.exe",
-          "addr": "0x401520"
+          "binary": "binaries/c/memory_layouts_clang_O2.exe",
+          "addr": "0x140001550",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "matrix_multiply",
+        "oracle": "pe_wine"
+      }
     }
   ]
 }

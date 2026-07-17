@@ -105,16 +105,29 @@ export async function loadFunctionSources(
   const fileCache = new Map<string, string>();
 
   for (const [functionName, relSource] of mapping) {
-    const abs = path.join(root, relSource);
+    const candidates = [
+      path.join(root, relSource),
+      path.join(root, "source", "c", path.basename(relSource)),
+      path.join(root, "source", "cpp", path.basename(relSource)),
+      path.join(root, "source", "rust", path.basename(relSource)),
+      path.join(root, "source", "go", path.basename(relSource)),
+    ];
+    let abs = candidates[0];
     let fileText = fileCache.get(abs);
     if (fileText === undefined) {
-      try {
-        fileText = await readFile(abs, "utf8");
-      } catch {
-        fileText = "";
+      fileText = "";
+      for (const cand of candidates) {
+        try {
+          fileText = await readFile(cand, "utf8");
+          abs = cand;
+          break;
+        } catch {
+          // try next
+        }
       }
       fileCache.set(abs, fileText);
     }
+    const displayPath = path.relative(root, abs) || relSource;
     if (!fileText) {
       result[functionName] = {
         functionName,
@@ -127,7 +140,7 @@ export async function loadFunctionSources(
     const extracted = extractFunctionSource(fileText, functionName);
     result[functionName] = {
       functionName,
-      sourcePath: relSource,
+      sourcePath: displayPath,
       code: extracted || fileText,
       extracted: Boolean(extracted),
     };

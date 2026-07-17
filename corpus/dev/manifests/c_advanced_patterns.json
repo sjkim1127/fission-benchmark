@@ -3,213 +3,654 @@
   "functions": [
     {
       "name": "list_sum",
-      "source": "source/advanced_patterns.c",
+      "source": "source/c/advanced_patterns.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc_O0.exe",
-          "addr": "0x140001450"
+          "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
+          "addr": "0x140001450",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc_O2.exe",
-          "addr": "0x140001480"
+          "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
+          "addr": "0x140001480",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x401460"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x401460",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x401480"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x401480",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/advanced_patterns_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/advanced_patterns_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "list_sum",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "kv_lookup",
-      "source": "source/advanced_patterns.c",
+      "source": "source/c/advanced_patterns.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc_O0.exe",
-          "addr": "0x140001492"
+          "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
+          "addr": "0x140001492",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc_O2.exe",
-          "addr": "0x1400014a0"
+          "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
+          "addr": "0x1400014a0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x401491"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x401491",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x4014a0"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x4014a0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/advanced_patterns_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/advanced_patterns_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "kv_lookup",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "apply_binop",
-      "source": "source/advanced_patterns.c",
+      "source": "source/c/advanced_patterns.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc_O0.exe",
-          "addr": "0x1400014fc"
+          "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
+          "addr": "0x1400014fc",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc_O2.exe",
-          "addr": "0x1400014f0"
+          "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
+          "addr": "0x1400014f0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x4014dd"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x4014dd",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x4014f0"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x4014f0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/advanced_patterns_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/advanced_patterns_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "apply_binop",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "add_ints",
-      "source": "source/advanced_patterns.c",
+      "source": "source/c/advanced_patterns.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc_O0.exe",
-          "addr": "0x140001532"
+          "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
+          "addr": "0x140001532",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc_O2.exe",
-          "addr": "0x140001460"
+          "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
+          "addr": "0x140001460",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x401504"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x401504",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x401460"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x401460",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/advanced_patterns_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/advanced_patterns_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "add_ints",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "mul_ints",
-      "source": "source/advanced_patterns.c",
+      "source": "source/c/advanced_patterns.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc_O0.exe",
-          "addr": "0x140001546"
+          "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
+          "addr": "0x140001546",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc_O2.exe",
-          "addr": "0x140001470"
+          "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
+          "addr": "0x140001470",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x401511"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x401511",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x401470"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x401470",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/advanced_patterns_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/advanced_patterns_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "mul_ints",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "dot_product_stride",
-      "source": "source/advanced_patterns.c",
+      "source": "source/c/advanced_patterns.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc_O0.exe",
-          "addr": "0x140001559"
+          "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
+          "addr": "0x140001559",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc_O2.exe",
-          "addr": "0x140001510"
+          "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
+          "addr": "0x140001510",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x40151d"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x40151d",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x401520"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x401520",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/advanced_patterns_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/advanced_patterns_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "dot_product_stride",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "bounded_checksum",
-      "source": "source/advanced_patterns.c",
+      "source": "source/c/advanced_patterns.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc_O0.exe",
-          "addr": "0x140001609"
+          "binary": "binaries/c/advanced_patterns_gcc_O0.exe",
+          "addr": "0x140001609",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/advanced_patterns_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc_O2.exe",
-          "addr": "0x1400015a0"
+          "binary": "binaries/c/advanced_patterns_gcc_O2.exe",
+          "addr": "0x1400015a0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/advanced_patterns_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/advanced_patterns_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O0",
-          "binary": "binaries/advanced_patterns_gcc-m32_O0.exe",
-          "addr": "0x40159f"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O0.exe",
+          "addr": "0x40159f",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/advanced_patterns_gcc-m32_O2.exe",
-          "addr": "0x4015c0"
+          "binary": "binaries/c/advanced_patterns_gcc-m32_O2.exe",
+          "addr": "0x4015c0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/advanced_patterns_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/advanced_patterns_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "bounded_checksum",
+        "oracle": "pe_wine"
+      }
     }
   ]
 }

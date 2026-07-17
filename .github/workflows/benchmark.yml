@@ -12,8 +12,11 @@ env:
   CORPUS_TARGET: windows-x86_64
   CORPUS_SPLIT: ${{ github.event.inputs.corpus || 'dev' }}
   BENCHMARK_DECOMPILERS: ${{ github.event.inputs.decompilers || 'fission,ghidra,boomerang,radare2,angr,snowman,revng,reko,retdec' }}
-  BENCHMARK_LIMIT: ${{ github.event.inputs.benchmark_limit || (github.event_name == 'push' && '10' || '0') }}
-  BENCHMARK_VARIANT_LIMIT: ${{ github.event.inputs.benchmark_variant_limit || (github.event_name == 'push' && '1' || '0') }}
+  # Prefer matrix profiles over raw limits. Push → smoke; schedule/dispatch → core_c_pe.
+  BENCHMARK_PROFILE: ${{ github.event.inputs.matrix_profile || (github.event_name == 'push' && 'smoke' || 'core_c_pe') }}
+  # Limits default to 0 when a profile selects the slice (smoke/core_c_pe).
+  BENCHMARK_LIMIT: ${{ github.event.inputs.benchmark_limit || '0' }}
+  BENCHMARK_VARIANT_LIMIT: ${{ github.event.inputs.benchmark_variant_limit || '0' }}
   RUN_MODE: ${{ github.event.inputs.run_mode || (github.event_name == 'push' && 'smoke' || 'official') }}
   PUBLISH_RESULTS: ${{ github.event.inputs.publish_results || (github.event_name == 'push' && 'false' || 'true') }}
   # Push smoke: cap parity subjects (gates need ≥5 comparable). Full (0) on
@@ -78,6 +81,11 @@ on:
         type: choice
         options: [smoke, local, official]
         default: smoke
+      matrix_profile:
+        description: "Corpus matrix profile (corpus/matrix/profiles.yaml)"
+        type: choice
+        options: [smoke, core_c_pe, opt_cliff, lang_cpp, lang_rust, lang_go, multi_isa, full_matrix]
+        default: core_c_pe
   repository_dispatch:
     types: [fission-release]
   schedule:
@@ -88,7 +96,8 @@ permissions:
   packages: read
 
 concurrency:
-  group: benchmark-${{ github.ref }}
+  # Include profile so official core_c_pe is not cancelled by push smoke.
+  group: benchmark-${{ github.ref }}-${{ github.event.inputs.matrix_profile || github.event_name }}
   cancel-in-progress: true
 
 jobs:
@@ -230,15 +239,16 @@ jobs:
         id: corpus-cache
         uses: actions/cache@v4
         with:
-          # build_corpus.py rewrites manifest addrs from nm. Caching binaries
-          # alone left committed addrs that can disagree with restored binaries
-          # (PE layout drift), producing "Address missing" / "no function at".
+          # build_matrix.py rewrites manifest addrs from nm. Cache binaries +
+          # manifests together so PE layout stays consistent after restore.
           path: |
             corpus/dev/binaries
             corpus/holdout/binaries
             corpus/dev/manifests
             corpus/holdout/manifests
-          key: corpus-bin-manifest-v2-${{ hashFiles('corpus/**/source/**', 'corpus/**/manifests/**', 'docker/corpus-builder/**', 'scripts/build_corpus.py') }}
+            corpus/dev/inventory.json
+            corpus/holdout/inventory.json
+          key: corpus-bin-manifest-v3-${{ hashFiles('corpus/**/source/**', 'corpus/**/manifests/**', 'corpus/matrix/**', 'docker/corpus-builder/**', 'scripts/build_matrix.py', 'scripts/build_corpus.py') }}
 
       - name: Build corpus binaries
         if: steps.corpus-cache.outputs.cache-hit != 'true'
@@ -324,9 +334,11 @@ jobs:
           '
 
       - name: Run dev benchmark
-        timeout-minutes: 25
+        # smoke ~40m; core_c_pe / official need headroom (was 25m and timed out).
+        timeout-minutes: ${{ github.event_name == 'push' && 40 || 120 }}
         env:
           ORACLE_ENDPOINT: http://localhost:8010
+          BENCHMARK_PROFILE: ${{ env.BENCHMARK_PROFILE }}
         run: |
           EXTRA_ARGS=""
           if [ -n "$BENCHMARK_LIMIT" ] && [ "$BENCHMARK_LIMIT" != "0" ]; then
@@ -335,6 +347,10 @@ jobs:
           if [ -n "$BENCHMARK_VARIANT_LIMIT" ] && [ "$BENCHMARK_VARIANT_LIMIT" != "0" ]; then
             EXTRA_ARGS="$EXTRA_ARGS --variant-limit $BENCHMARK_VARIANT_LIMIT"
           fi
+          if [ -n "$BENCHMARK_PROFILE" ]; then
+            EXTRA_ARGS="$EXTRA_ARGS --profile $BENCHMARK_PROFILE"
+          fi
+          echo "Running with BENCHMARK_PROFILE=${BENCHMARK_PROFILE:-<none>} EXTRA_ARGS=$EXTRA_ARGS"
           python runner/runner.py --corpus dev $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --run-mode "$RUN_MODE" --output results/dev_latest.json
 
       # -----------------------------------------------------------------------
@@ -355,9 +371,10 @@ jobs:
       - name: Run holdout benchmark
         # Skip if validity gate failed — holdout on an invalid run wastes CI time.
         if: steps.fission-gate.outcome == 'success'
-        timeout-minutes: 25
+        timeout-minutes: ${{ github.event_name == 'push' && 40 || 120 }}
         env:
           ORACLE_ENDPOINT: http://localhost:8010
+          BENCHMARK_PROFILE: ${{ env.BENCHMARK_PROFILE }}
         run: |
           if ! find corpus/holdout/manifests -name '*.json' -print -quit | grep -q .; then
             echo "No holdout manifests found; writing empty holdout result set."
@@ -410,6 +427,9 @@ jobs:
           fi
           if [ -n "$BENCHMARK_VARIANT_LIMIT" ] && [ "$BENCHMARK_VARIANT_LIMIT" != "0" ]; then
             EXTRA_ARGS="$EXTRA_ARGS --variant-limit $BENCHMARK_VARIANT_LIMIT"
+          fi
+          if [ -n "$BENCHMARK_PROFILE" ]; then
+            EXTRA_ARGS="$EXTRA_ARGS --profile $BENCHMARK_PROFILE"
           fi
           python runner/runner.py --corpus holdout $EXTRA_ARGS --decompilers "$BENCHMARK_DECOMPILERS" --run-mode "$RUN_MODE" --output results/holdout_latest.json
 

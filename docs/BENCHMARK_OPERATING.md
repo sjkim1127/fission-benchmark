@@ -13,6 +13,33 @@ quality. Fission product work is secondary to measurement honesty here.
 5. **CFG / runtime / extension tracks** are secondary analysis.
 6. Similarity / readability proxies are diagnostics only.
 
+## Multi-language matrix profiles
+
+Corpus breadth is growing toward C/C++/Rust/Go × multi-opt × multi-arch. Full
+Cartesian products must not run on every push.
+
+| Profile | Use |
+|---------|-----|
+| `smoke` | Push CI — small C PE `-O0` slice |
+| `core_c_pe` | Official default — C PE x64+m32, `-O0`/`-O2` |
+| `opt_cliff` | Full opt ladder on stress functions |
+| `lang_cpp` / `lang_rust` / `lang_go` | Language tracks (rolling out) |
+| `multi_isa` / `full_matrix` | Multi-format / expensive fan-out |
+
+```bash
+python runner/runner.py --corpus dev --profile smoke --decompilers fission,ghidra
+export BENCHMARK_PROFILE=core_c_pe
+```
+
+Build binaries:
+
+```bash
+CORPUS_TARGET=windows-x86_64 python scripts/build_matrix.py --split dev
+# or: docker compose --profile tools run --rm --build corpus-builder
+```
+
+See `corpus/README.md` and `corpus/matrix/{profiles,toolchains}.yaml`.
+
 ### Infra non-negotiables
 
 - Oracle rows that reach the harness must carry **`oracle_evidence.valid=true`**

@@ -3,153 +3,468 @@
   "functions": [
     {
       "name": "count_bits",
-      "source": "source/control_flow.c",
+      "source": "source/c/control_flow.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/control_flow_gcc_O0.exe",
-          "addr": "0x140001530"
+          "binary": "binaries/c/control_flow_gcc_O0.exe",
+          "addr": "0x140001530",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
-          "compiler": "gcc-m32",
-          "opt": "-O0",
-          "binary": "binaries/control_flow_gcc-m32_O0.exe",
-          "addr": "0x4015b0"
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/control_flow_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/control_flow_gcc_O2.exe",
-          "addr": "0x140001530"
+          "binary": "binaries/c/control_flow_gcc_O2.exe",
+          "addr": "0x140001530",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/control_flow_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/control_flow_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/c/control_flow_gcc-m32_O0.exe",
+          "addr": "0x4015b0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/control_flow_gcc-m32_O2.exe",
-          "addr": "0x4015b0"
+          "binary": "binaries/c/control_flow_gcc-m32_O2.exe",
+          "addr": "0x4015b0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/control_flow_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/control_flow_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "count_bits",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "clamp",
-      "source": "source/control_flow.c",
+      "source": "source/c/control_flow.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/control_flow_gcc_O0.exe",
-          "addr": "0x14000155f"
+          "binary": "binaries/c/control_flow_gcc_O0.exe",
+          "addr": "0x14000155f",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
-          "compiler": "gcc-m32",
-          "opt": "-O0",
-          "binary": "binaries/control_flow_gcc-m32_O0.exe",
-          "addr": "0x4015d6"
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/control_flow_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/control_flow_gcc_O2.exe",
-          "addr": "0x140001550"
+          "binary": "binaries/c/control_flow_gcc_O2.exe",
+          "addr": "0x140001550",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/control_flow_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/control_flow_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/c/control_flow_gcc-m32_O0.exe",
+          "addr": "0x4015d6",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/control_flow_gcc-m32_O2.exe",
-          "addr": "0x4015d0"
+          "binary": "binaries/c/control_flow_gcc-m32_O2.exe",
+          "addr": "0x4015d0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/control_flow_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/control_flow_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "clamp",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "signum",
-      "source": "source/control_flow.c",
+      "source": "source/c/control_flow.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/control_flow_gcc_O0.exe",
-          "addr": "0x14000158c"
+          "binary": "binaries/c/control_flow_gcc_O0.exe",
+          "addr": "0x14000158c",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
-          "compiler": "gcc-m32",
-          "opt": "-O0",
-          "binary": "binaries/control_flow_gcc-m32_O0.exe",
-          "addr": "0x4015f8"
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/control_flow_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/control_flow_gcc_O2.exe",
-          "addr": "0x140001560"
+          "binary": "binaries/c/control_flow_gcc_O2.exe",
+          "addr": "0x140001560",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/control_flow_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/control_flow_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/c/control_flow_gcc-m32_O0.exe",
+          "addr": "0x4015f8",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/control_flow_gcc-m32_O2.exe",
-          "addr": "0x4015f0"
+          "binary": "binaries/c/control_flow_gcc-m32_O2.exe",
+          "addr": "0x4015f0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/control_flow_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/control_flow_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "signum",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "checksum",
-      "source": "source/control_flow.c",
+      "source": "source/c/control_flow.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/control_flow_gcc_O0.exe",
-          "addr": "0x1400015b4"
+          "binary": "binaries/c/control_flow_gcc_O0.exe",
+          "addr": "0x1400015b4",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
-          "compiler": "gcc-m32",
-          "opt": "-O0",
-          "binary": "binaries/control_flow_gcc-m32_O0.exe",
-          "addr": "0x40161c"
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/control_flow_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/control_flow_gcc_O2.exe",
-          "addr": "0x140001580"
+          "binary": "binaries/c/control_flow_gcc_O2.exe",
+          "addr": "0x140001580",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/control_flow_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/control_flow_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/c/control_flow_gcc-m32_O0.exe",
+          "addr": "0x40161c",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/control_flow_gcc-m32_O2.exe",
-          "addr": "0x401610"
+          "binary": "binaries/c/control_flow_gcc-m32_O2.exe",
+          "addr": "0x401610",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/control_flow_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/control_flow_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "checksum",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "saturating_add",
-      "source": "source/control_flow.c",
+      "source": "source/c/control_flow.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/control_flow_gcc_O0.exe",
-          "addr": "0x140001660"
+          "binary": "binaries/c/control_flow_gcc_O0.exe",
+          "addr": "0x140001660",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
-          "compiler": "gcc-m32",
-          "opt": "-O0",
-          "binary": "binaries/control_flow_gcc-m32_O0.exe",
-          "addr": "0x4016af"
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/control_flow_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/control_flow_gcc_O2.exe",
-          "addr": "0x1400015e0"
+          "binary": "binaries/c/control_flow_gcc_O2.exe",
+          "addr": "0x1400015e0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/control_flow_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/control_flow_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/c/control_flow_gcc-m32_O0.exe",
+          "addr": "0x4016af",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/control_flow_gcc-m32_O2.exe",
-          "addr": "0x401680"
+          "binary": "binaries/c/control_flow_gcc-m32_O2.exe",
+          "addr": "0x401680",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/control_flow_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/control_flow_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "saturating_add",
+        "oracle": "pe_wine"
+      }
     }
   ]
 }

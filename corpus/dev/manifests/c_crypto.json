@@ -3,165 +3,282 @@
   "functions": [
     {
       "name": "rc4_init",
-      "source": "source/crypto.c",
+      "source": "source/c/crypto.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/crypto_gcc_O0.exe",
-          "addr": "0x140001530"
+          "binary": "binaries/c/crypto_gcc_O0.exe",
+          "addr": "0x140001530",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/crypto_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/crypto_gcc_O2.exe",
-          "addr": "0x140001530"
+          "binary": "binaries/c/crypto_gcc_O2.exe",
+          "addr": "0x140001530",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/crypto_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/crypto_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O0",
-          "binary": "binaries/crypto_gcc-m32_O0.exe",
-          "addr": "0x4015b0"
+          "binary": "binaries/c/crypto_gcc-m32_O0.exe",
+          "addr": "0x4015b0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/crypto_gcc-m32_O2.exe",
-          "addr": "0x4015b0"
+          "binary": "binaries/c/crypto_gcc-m32_O2.exe",
+          "addr": "0x4015b0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "clang",
           "opt": "-O0",
-          "binary": "binaries/crypto_clang_O0.exe",
-          "addr": "0x140001510"
+          "binary": "binaries/c/crypto_clang_O0.exe",
+          "addr": "0x140001510",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "clang",
           "opt": "-O2",
-          "binary": "binaries/crypto_clang_O2.exe",
-          "addr": "0x140001510"
-        },
-        {
-          "compiler": "clang-m32",
-          "opt": "-O0",
-          "binary": "binaries/crypto_clang-m32_O0.exe",
-          "addr": "0x4014e0"
-        },
-        {
-          "compiler": "clang-m32",
-          "opt": "-O2",
-          "binary": "binaries/crypto_clang-m32_O2.exe",
-          "addr": "0x4014e0"
+          "binary": "binaries/c/crypto_clang_O2.exe",
+          "addr": "0x140001510",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "rc4_init",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "rc4_crypt",
-      "source": "source/crypto.c",
+      "source": "source/c/crypto.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/crypto_gcc_O0.exe",
-          "addr": "0x140001624"
+          "binary": "binaries/c/crypto_gcc_O0.exe",
+          "addr": "0x140001624",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/crypto_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/crypto_gcc_O2.exe",
-          "addr": "0x140001670"
+          "binary": "binaries/c/crypto_gcc_O2.exe",
+          "addr": "0x140001670",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/crypto_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/crypto_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O0",
-          "binary": "binaries/crypto_gcc-m32_O0.exe",
-          "addr": "0x40166a"
+          "binary": "binaries/c/crypto_gcc-m32_O0.exe",
+          "addr": "0x40166a",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/crypto_gcc-m32_O2.exe",
-          "addr": "0x401620"
+          "binary": "binaries/c/crypto_gcc-m32_O2.exe",
+          "addr": "0x401620",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "clang",
           "opt": "-O0",
-          "binary": "binaries/crypto_clang_O0.exe",
-          "addr": "0x1400015f0"
+          "binary": "binaries/c/crypto_clang_O0.exe",
+          "addr": "0x1400015f0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "clang",
           "opt": "-O2",
-          "binary": "binaries/crypto_clang_O2.exe",
-          "addr": "0x140001640"
-        },
-        {
-          "compiler": "clang-m32",
-          "opt": "-O0",
-          "binary": "binaries/crypto_clang-m32_O0.exe",
-          "addr": "0x4015b0"
-        },
-        {
-          "compiler": "clang-m32",
-          "opt": "-O2",
-          "binary": "binaries/crypto_clang-m32_O2.exe",
-          "addr": "0x401590"
+          "binary": "binaries/c/crypto_clang_O2.exe",
+          "addr": "0x140001640",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "rc4_crypt",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "crc32",
-      "source": "source/crypto.c",
+      "source": "source/c/crypto.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/crypto_gcc_O0.exe",
-          "addr": "0x140001745"
+          "binary": "binaries/c/crypto_gcc_O0.exe",
+          "addr": "0x140001745",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/crypto_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/crypto_gcc_O2.exe",
-          "addr": "0x1400016e0"
+          "binary": "binaries/c/crypto_gcc_O2.exe",
+          "addr": "0x1400016e0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/crypto_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/crypto_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O0",
-          "binary": "binaries/crypto_gcc-m32_O0.exe",
-          "addr": "0x40174c"
+          "binary": "binaries/c/crypto_gcc-m32_O0.exe",
+          "addr": "0x40174c",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/crypto_gcc-m32_O2.exe",
-          "addr": "0x401690"
+          "binary": "binaries/c/crypto_gcc-m32_O2.exe",
+          "addr": "0x401690",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "clang",
           "opt": "-O0",
-          "binary": "binaries/crypto_clang_O0.exe",
-          "addr": "0x1400016f0"
+          "binary": "binaries/c/crypto_clang_O0.exe",
+          "addr": "0x1400016f0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "clang",
           "opt": "-O2",
-          "binary": "binaries/crypto_clang_O2.exe",
-          "addr": "0x1400016e0"
-        },
-        {
-          "compiler": "clang-m32",
-          "opt": "-O0",
-          "binary": "binaries/crypto_clang-m32_O0.exe",
-          "addr": "0x401690"
-        },
-        {
-          "compiler": "clang-m32",
-          "opt": "-O2",
-          "binary": "binaries/crypto_clang-m32_O2.exe",
-          "addr": "0x401620"
+          "binary": "binaries/c/crypto_clang_O2.exe",
+          "addr": "0x1400016e0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "crc32",
+        "oracle": "pe_wine"
+      }
     }
   ]
 }

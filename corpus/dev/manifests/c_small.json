@@ -3,183 +3,561 @@
   "functions": [
     {
       "name": "fibonacci",
-      "source": "source/math.c",
+      "source": "source/c/math.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x140001530"
+          "binary": "binaries/c/math_gcc_O0.exe",
+          "addr": "0x140001530",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
-          "compiler": "gcc-m32",
-          "opt": "-O0",
-          "binary": "binaries/math_gcc-m32_O0.exe",
-          "addr": "0x4015b0"
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/math_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x140001530"
+          "binary": "binaries/c/math_gcc_O2.exe",
+          "addr": "0x140001530",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/math_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/math_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/c/math_gcc-m32_O0.exe",
+          "addr": "0x4015b0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/math_gcc-m32_O2.exe",
-          "addr": "0x4015b0"
+          "binary": "binaries/c/math_gcc-m32_O2.exe",
+          "addr": "0x4015b0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/math_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/math_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "fibonacci",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "bubble_sort",
-      "source": "source/math.c",
+      "source": "source/c/math.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x1400015de"
+          "binary": "binaries/c/math_gcc_O0.exe",
+          "addr": "0x1400015de",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
-          "compiler": "gcc-m32",
-          "opt": "-O0",
-          "binary": "binaries/math_gcc-m32_O0.exe",
-          "addr": "0x401647"
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/math_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x1400015d0"
+          "binary": "binaries/c/math_gcc_O2.exe",
+          "addr": "0x1400015d0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/math_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/math_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/c/math_gcc-m32_O0.exe",
+          "addr": "0x401647",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/math_gcc-m32_O2.exe",
-          "addr": "0x401640"
+          "binary": "binaries/c/math_gcc-m32_O2.exe",
+          "addr": "0x401640",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/math_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/math_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "bubble_sort",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "linear_search",
-      "source": "source/math.c",
+      "source": "source/c/math.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x1400016d1"
+          "binary": "binaries/c/math_gcc_O0.exe",
+          "addr": "0x1400016d1",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
-          "compiler": "gcc-m32",
-          "opt": "-O0",
-          "binary": "binaries/math_gcc-m32_O0.exe",
-          "addr": "0x401708"
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/math_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x140001630"
+          "binary": "binaries/c/math_gcc_O2.exe",
+          "addr": "0x140001630",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/math_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/math_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/c/math_gcc-m32_O0.exe",
+          "addr": "0x401708",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/math_gcc-m32_O2.exe",
-          "addr": "0x401690"
+          "binary": "binaries/c/math_gcc-m32_O2.exe",
+          "addr": "0x401690",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/math_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/math_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "linear_search",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "factorial",
-      "source": "source/math.c",
+      "source": "source/c/math.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x1400017c4"
+          "binary": "binaries/c/math_gcc_O0.exe",
+          "addr": "0x1400017c4",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
-          "compiler": "gcc-m32",
-          "opt": "-O0",
-          "binary": "binaries/math_gcc-m32_O0.exe",
-          "addr": "0x4017ca"
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/math_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x1400016a0"
+          "binary": "binaries/c/math_gcc_O2.exe",
+          "addr": "0x1400016a0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/math_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/math_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/c/math_gcc-m32_O0.exe",
+          "addr": "0x4017ca",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/math_gcc-m32_O2.exe",
-          "addr": "0x401720"
+          "binary": "binaries/c/math_gcc-m32_O2.exe",
+          "addr": "0x401720",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/math_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/math_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "factorial",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "power",
-      "source": "source/math.c",
+      "source": "source/c/math.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x140001832"
+          "binary": "binaries/c/math_gcc_O0.exe",
+          "addr": "0x140001832",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
-          "compiler": "gcc-m32",
-          "opt": "-O0",
-          "binary": "binaries/math_gcc-m32_O0.exe",
-          "addr": "0x401840"
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/math_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x140001700"
+          "binary": "binaries/c/math_gcc_O2.exe",
+          "addr": "0x140001700",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/math_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/math_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/c/math_gcc-m32_O0.exe",
+          "addr": "0x401840",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/math_gcc-m32_O2.exe",
-          "addr": "0x4017e0"
+          "binary": "binaries/c/math_gcc-m32_O2.exe",
+          "addr": "0x4017e0",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/math_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/math_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "power",
+        "oracle": "pe_wine"
+      }
     },
     {
       "name": "process_code",
-      "source": "source/math.c",
+      "source": "source/c/math.c",
       "compiler_variants": [
         {
           "compiler": "gcc",
           "opt": "-O0",
-          "binary": "binaries/math_gcc_O0.exe",
-          "addr": "0x140001881"
+          "binary": "binaries/c/math_gcc_O0.exe",
+          "addr": "0x140001881",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
-          "compiler": "gcc-m32",
-          "opt": "-O0",
-          "binary": "binaries/math_gcc-m32_O0.exe",
-          "addr": "0x4018cf"
+          "compiler": "gcc",
+          "opt": "-O1",
+          "binary": "binaries/c/math_gcc_O1.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         },
         {
           "compiler": "gcc",
           "opt": "-O2",
-          "binary": "binaries/math_gcc_O2.exe",
-          "addr": "0x140001730"
+          "binary": "binaries/c/math_gcc_O2.exe",
+          "addr": "0x140001730",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-Os",
+          "binary": "binaries/c/math_gcc_Os.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc",
+          "opt": "-O3",
+          "binary": "binaries/c/math_gcc_O3.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "gcc-m32",
+          "opt": "-O0",
+          "binary": "binaries/c/math_gcc-m32_O0.exe",
+          "addr": "0x4018cf",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
         },
         {
           "compiler": "gcc-m32",
           "opt": "-O2",
-          "binary": "binaries/math_gcc-m32_O2.exe",
-          "addr": "0x401850"
+          "binary": "binaries/c/math_gcc-m32_O2.exe",
+          "addr": "0x401850",
+          "isa": "x86_32",
+          "format": "pe",
+          "abi_profile": "windows-x86"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O0",
+          "binary": "binaries/c/math_clang_O0.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
+        },
+        {
+          "compiler": "clang",
+          "opt": "-O2",
+          "binary": "binaries/c/math_clang_O2.exe",
+          "addr": "0x0",
+          "isa": "x86_64",
+          "format": "pe",
+          "abi_profile": "windows-x86_64"
         }
-      ]
+      ],
+      "language": "c",
+      "semantic": {
+        "mode": "c_wrapper",
+        "wrapper_id": "process_code",
+        "oracle": "pe_wine"
+      }
     }
   ]
 }
