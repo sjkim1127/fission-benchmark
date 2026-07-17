@@ -42,6 +42,11 @@ except ImportError:
         aggregate_track_taxonomy,
     )
 
+try:
+    from .speed_summary import build_speed_extension
+except ImportError:
+    from speed_summary import build_speed_extension
+
 SUMMARY_SCHEMA = "standard-set-v1"
 
 # Exclusive fail taxonomy buckets (each row maps to exactly one).
@@ -340,6 +345,7 @@ def build_standard_summary(
     cfg_jsonl: Path | None = None,
     holdout_status: str = "absent",
     oracle_subject: str | None = None,
+    microbench: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build the standard-set summary block for an envelope."""
     annotated = annotate_rows_with_taxonomy(rows)
@@ -373,6 +379,7 @@ def build_standard_summary(
     bare = aggregate_bare_compile(annotated)
     readability_axis = aggregate_readability_axis(annotated)
     tracks = aggregate_track_taxonomy(annotated)
+    speed = build_speed_extension(annotated, microbench=microbench)
 
     return {
         "schema": SUMMARY_SCHEMA,
@@ -390,18 +397,21 @@ def build_standard_summary(
             "readability_axis": readability_axis,
             # EXT-12: realworld / multi-ISA / track pivots + fail taxonomy
             "tracks": tracks,
+            # EXT-13: decompile latency (row time_ms + optional microbench)
+            "speed": speed,
         },
         "diagnostics": {
             "note": (
                 "source_similarity, ast_similarity, readability_proxy, bare_compile, "
-                "and track/ISA pivots are non-ranking diagnostic axes; correctness "
-                "uses semantic evidence only (original_binary oracle). "
+                "track/ISA pivots, and speed are non-ranking diagnostic axes; "
+                "correctness uses semantic evidence only (original_binary oracle). "
                 "mvp.same_function is the infra honesty axis (requested function "
                 "boundary), not a semantic ranking substitute."
             ),
             "bare_compile": bare,
             "readability_axis": readability_axis,
             "tracks": tracks,
+            "speed": speed,
         },
     }
 
@@ -411,6 +421,7 @@ def attach_summary_to_envelope(
     *,
     cfg_jsonl: Path | None = None,
     holdout_status: str | None = None,
+    microbench: Mapping[str, Any] | Path | None = None,
 ) -> dict[str, Any]:
     """Mutate/return envelope with annotated rows and summary block."""
     rows = list(envelope.get("rows") or [])
@@ -423,11 +434,39 @@ def attach_summary_to_envelope(
         corpus = (envelope.get("run") or {}).get("corpus")
         holdout_status = "linked" if corpus == "holdout" else "absent"
 
+    micro_doc: Mapping[str, Any] | None = None
+    if isinstance(microbench, Path):
+        if microbench.is_file():
+            try:
+                loaded = json.loads(microbench.read_text(encoding="utf-8"))
+                if isinstance(loaded, dict):
+                    micro_doc = loaded
+            except (OSError, json.JSONDecodeError):
+                micro_doc = None
+    elif isinstance(microbench, Mapping):
+        micro_doc = microbench
+    else:
+        # Auto-attach latest microbench when present next to results/.
+        default_micro = (
+            Path(__file__).resolve().parent.parent
+            / "results"
+            / "speed"
+            / "microbench_latest.json"
+        )
+        if default_micro.is_file():
+            try:
+                loaded = json.loads(default_micro.read_text(encoding="utf-8"))
+                if isinstance(loaded, dict):
+                    micro_doc = loaded
+            except (OSError, json.JSONDecodeError):
+                micro_doc = None
+
     default_cfg = Path(__file__).resolve().parent.parent / "results" / "cfg_parity" / "latest.jsonl"
     envelope["summary"] = build_standard_summary(
         annotated,
         cfg_jsonl=cfg_jsonl if cfg_jsonl is not None else default_cfg,
         holdout_status=holdout_status,
         oracle_subject=oracle_subject if isinstance(oracle_subject, str) else None,
+        microbench=micro_doc,
     )
     return envelope

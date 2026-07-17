@@ -9,6 +9,7 @@ import {
 } from "@/components/DashboardShared";
 import { getLatestBenchmarkOptional } from "@/lib/benchmark";
 import {
+  extractSpeedExtension,
   fissionByVariant,
   fissionSlowestFunctions,
   fissionVsGhidraPaired,
@@ -21,6 +22,7 @@ import {
   SlowestFunctionsTable,
   VariantSpeedTable,
 } from "@/components/SpeedPanel";
+import tableStyles from "@/components/SummaryTable.module.css";
 import styles from "../dashboard.module.css";
 
 export const revalidate = 900;
@@ -90,6 +92,14 @@ async function SpeedBody() {
   const pair = pairSummary(pairs);
   const slowest = fissionSlowestFunctions(data, 30);
   const variants = fissionByVariant(data);
+  const ext = extractSpeedExtension(data);
+  const micro = ext?.microbench;
+  const microBy = micro?.by_decompiler ?? {};
+  const microNames = Object.keys(microBy).sort((a, b) => {
+    if (a === "fission") return -1;
+    if (b === "fission") return 1;
+    return a.localeCompare(b);
+  });
 
   return (
     <>
@@ -100,7 +110,9 @@ async function SpeedBody() {
           row) — typically one binary batch decompile, amortized per function.
           Semantic / wine / oracle time is <strong>not</strong> included. This
           page is a <strong>non-ranking</strong> practicality diagnostic (same
-          policy as Quality EXT).
+          policy as Quality EXT). Optional{" "}
+          <code>summary.extensions.speed.microbench</code> cold/warm trials come
+          from the isolated <strong>Speed Smoke</strong> CI job.
         </p>
         <div
           style={{
@@ -146,8 +158,75 @@ async function SpeedBody() {
         </div>
       </section>
 
+      {microNames.length > 0 ? (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Micro-bench (cold vs warm)</h2>
+          <p className={styles.sectionLead}>
+            Same binary × addresses, N timed <code>/decompile_batch</code>{" "}
+            requests. Cold = trial 0; warm = trials 1..N−1 (no container
+            restart). Schema:{" "}
+            <code>{micro?.schema ?? "speed-microbench-v1"}</code>
+            {micro?.notes ? ` — ${micro.notes}` : ""}
+          </p>
+          <div className={styles.frame}>
+            <div className={tableStyles.wrap}>
+              <table className={tableStyles.table}>
+                <thead>
+                  <tr>
+                    <th>Decompiler</th>
+                    <th className={tableStyles.num}>Cold mean</th>
+                    <th className={tableStyles.num}>Cold p50</th>
+                    <th className={tableStyles.num}>Cold n</th>
+                    <th className={tableStyles.num}>Warm mean</th>
+                    <th className={tableStyles.num}>Warm p50</th>
+                    <th className={tableStyles.num}>Warm n</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {microNames.map((name) => {
+                    const s = microBy[name] || {};
+                    const cold = s.cold || {};
+                    const warm = s.warm || {};
+                    return (
+                      <tr
+                        key={name}
+                        className={
+                          name === "fission" ? tableStyles.fissionRow : undefined
+                        }
+                      >
+                        <td>
+                          <strong>{name}</strong>
+                        </td>
+                        <td className={tableStyles.num}>{fmtMs(cold.mean_ms)}</td>
+                        <td className={tableStyles.num}>{fmtMs(cold.p50_ms)}</td>
+                        <td className={tableStyles.num}>{cold.n ?? "—"}</td>
+                        <td className={tableStyles.num}>{fmtMs(warm.mean_ms)}</td>
+                        <td className={tableStyles.num}>{fmtMs(warm.p50_ms)}</td>
+                        <td className={tableStyles.num}>{warm.n ?? "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Micro-bench (cold vs warm)</h2>
+          <p className={styles.sectionLead}>
+            No <code>summary.extensions.speed.microbench</code> attached yet.
+            Run{" "}
+            <code>python -m runner.speed_microbench …</code> or the{" "}
+            <strong>Speed Smoke</strong> GitHub Action; attach via{" "}
+            <code>attach_summary_to_envelope</code> (auto-loads{" "}
+            <code>results/speed/microbench_latest.json</code>).
+          </p>
+        </section>
+      )}
+
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>By decompiler</h2>
+        <h2 className={styles.sectionTitle}>By decompiler (envelope rows)</h2>
         <div className={styles.frame}>
           <DecompilerSpeedTable rows={byDec} />
         </div>

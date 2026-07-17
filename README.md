@@ -10,7 +10,7 @@ Fission · Ghidra · Radare2+r2ghidra · angr · Snowman · rev.ng · Boomerang 
 [![Docker Build](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml/badge.svg)](https://github.com/sjkim1127/fission-benchmark/actions/workflows/build-check.yml)
 
 📊 **[Live Dashboard →](https://fission-benchmark.vercel.app)**  
-⏱️ **Speed tab** (`/speed`): decompile latency (`time_ms`) — Fission vs others, non-ranking
+⏱️ **Speed tab** (`/speed`): decompile latency (`time_ms`) + optional cold/warm micro-bench — non-ranking
 
 </div>
 
@@ -559,3 +559,28 @@ Legacy flat-list files are supported for rendering but are always marked `publis
 ## License
 
 AGPL-3.0-or-later
+
+### Speed micro-bench (non-ranking)
+
+Dedicated cold/warm decompile timing (does **not** update semantic ranking or Pages):
+
+```bash
+# Local (adapters already up)
+python -m runner.speed_microbench \
+  --endpoint fission=http://localhost:8000 \
+  --endpoint ghidra=http://localhost:8001 \
+  --binary corpus/dev/binaries/c/SOME_gcc_O0.exe \
+  --addr 0x140001000 --addr 0x140001050 \
+  --trials 5 \
+  --output results/speed/microbench_latest.json
+
+# CI
+gh workflow run "Speed Smoke" --repo sjkim1127/fission-benchmark \
+  -f fission_version=v0.1.4 \
+  -f trials=5 \
+  -f decompilers=fission,ghidra
+```
+
+Envelope attachment: `attach_summary_to_envelope` writes
+`summary.extensions.speed` (row `time_ms` aggregate + optional microbench from
+`results/speed/microbench_latest.json`). Dashboard `/speed` shows both.

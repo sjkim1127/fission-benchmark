@@ -1,10 +1,60 @@
 /**
- * Decompiler speed diagnostics from envelope rows.
+ * Decompiler speed diagnostics from envelope rows and optional
+ * summary.extensions.speed (row aggregate + microbench cold/warm).
  *
  * Metric: row.time_ms — adapter decompile wall time (not semantic/oracle).
  * Non-ranking: never mix into semantic MVP ranking.
  */
 import type { BenchmarkEnvelope } from "./schemas";
+
+export type SpeedExtension = {
+  schema?: string;
+  ranking?: boolean;
+  note?: string;
+  from_rows?: {
+    by_decompiler?: Record<
+      string,
+      {
+        n?: number;
+        mean_ms?: number | null;
+        p50_ms?: number | null;
+        p95_ms?: number | null;
+        min_ms?: number | null;
+        max_ms?: number | null;
+        sum_ms?: number | null;
+      }
+    >;
+    fission_vs_ghidra?: {
+      paired_n?: number;
+      median_speedup?: number | null;
+      geometric_mean_speedup?: number | null;
+      fission_faster_share?: number | null;
+    };
+  };
+  microbench?: {
+    schema?: string;
+    by_decompiler?: Record<
+      string,
+      {
+        cold?: { n?: number; mean_ms?: number | null; p50_ms?: number | null };
+        warm?: { n?: number; mean_ms?: number | null; p50_ms?: number | null };
+        all?: { n?: number; mean_ms?: number | null };
+      }
+    >;
+    config?: Record<string, unknown>;
+    notes?: string;
+  } | null;
+};
+
+export function extractSpeedExtension(
+  data: BenchmarkEnvelope,
+): SpeedExtension | null {
+  const summary = (data as { summary?: { extensions?: { speed?: unknown } } })
+    .summary;
+  const speed = summary?.extensions?.speed;
+  if (!speed || typeof speed !== "object") return null;
+  return speed as SpeedExtension;
+}
 
 export type TimingStats = {
   n: number;
