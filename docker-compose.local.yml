@@ -19,7 +19,7 @@ services:
       args:
         FISSION_SOURCE: local
         # unused when FISSION_SOURCE=local, kept for cache stability
-        FISSION_VERSION: ${FISSION_VERSION:-v0.1.3}
+        FISSION_VERSION: ${FISSION_VERSION:-v0.1.5}
     environment:
       FISSION_SOURCE: local
       FISSION_LOCAL_ROOT: /opt/fission-local
