@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
   "run": {
-    "run_id": "ece9218d-8273-4c0c-ac51-97aae909a1b2",
-    "started_at": "2026-07-21T19:00:35.435810Z",
-    "finished_at": "2026-07-21T19:05:28.100128Z",
-    "duration_ms": 292664,
-    "runner_commit": "216ae0a8326b58f46f39d5d1e2f612cd8a1d4018",
+    "run_id": "6c21a7b5-d3c3-4cc1-8132-c742e99689b8",
+    "started_at": "2026-07-21T20:20:46.592433Z",
+    "finished_at": "2026-07-21T20:25:35.166421Z",
+    "duration_ms": 288574,
+    "runner_commit": "499c2ec63b382f54acee54422a37e7261b40cd11",
     "corpus": "dev",
     "corpus_manifest_sha256": "f1f4c55a2670d497c100defd10ce8687952f5acdcf33780738aea3943a1d17b6",
     "official": false,
@@ -24,11 +24,11 @@
     "fission_git_sha": "",
     "fission_source": "release",
     "fission_source_fingerprint": "",
-    "runner_commit": "216ae0a8326b58f46f39d5d1e2f612cd8a1d4018",
+    "runner_commit": "499c2ec63b382f54acee54422a37e7261b40cd11",
     "runner_os": "linux",
     "python_version": "3.11.15",
     "ci": "true",
-    "github_run_id": "29858991327",
+    "github_run_id": "29865179679",
     "github_actor": "sjkim1127"
   },
   "matrix": {
@@ -520,7 +520,7 @@
       "source_similarity": 0.3361,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 8491,
+      "time_ms": 8651,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -730,7 +730,7 @@
       "source_similarity": 0.6875,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 21591,
+      "time_ms": 19202,
       "error": null,
       "semantic_score": 0.16666666666666666,
       "semantic_error": "candidate passed 1/6 cases",
@@ -889,10 +889,10 @@
       "source_similarity": 0.28,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 102,
+      "time_ms": 55,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-09drwwg_/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-09drwwg_/oracle.c:323:48: error: void value not ignored as it ought to be\n  323 | static int oracle_case_candidate_0(void) { if (oracle_candidate_count_bits(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-09drwwg_/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-09drwwg_/oracle.c:329:48: error: void value not ignored as it ought to be\n  329 | static int oracle_case_candidate_1(void) { if (oracle_candidate_count_bits(7) != 3) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-09drwwg_/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-09drwwg_/oracle.c:335:48: error: void value not ignored as it ought to be\n  335 | static int oracle_case_candidate_2(void) { if (oracle_candidate_count_bits(10) != 2) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-09drwwg_/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-09drwwg_/oracle.c:341:48: error: void value not ignored as it ought to be\n  341 | static int oracle_case_candidate_3(void) { if (oracle_candidate_count_bits(1) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-09drwwg_/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-09drwwg_/oracle.c:347:48: error: void value not ignored as it ought to be\n  347 | static int oracle_case_candidate_4(void) { if (oracle_candidate_count_bits(255) != 8) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-09drwwg_/oracle.c: In function \u2018oracle_case_candidate_5\u2019:\n/tmp/fission-oracle-09drwwg_/oracle.c:353:48: error: void value not ignored as it ought to be\n  353 | static int oracle_case_candidate_5(void) { if (oracle_candidate_count_bits(0xFFFFFFFF) != 32) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-gvzu0odd/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-gvzu0odd/oracle.c:323:48: error: void value not ignored as it ought to be\n  323 | static int oracle_case_candidate_0(void) { if (oracle_candidate_count_bits(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-gvzu0odd/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-gvzu0odd/oracle.c:329:48: error: void value not ignored as it ought to be\n  329 | static int oracle_case_candidate_1(void) { if (oracle_candidate_count_bits(7) != 3) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-gvzu0odd/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-gvzu0odd/oracle.c:335:48: error: void value not ignored as it ought to be\n  335 | static int oracle_case_candidate_2(void) { if (oracle_candidate_count_bits(10) != 2) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-gvzu0odd/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-gvzu0odd/oracle.c:341:48: error: void value not ignored as it ought to be\n  341 | static int oracle_case_candidate_3(void) { if (oracle_candidate_count_bits(1) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-gvzu0odd/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-gvzu0odd/oracle.c:347:48: error: void value not ignored as it ought to be\n  347 | static int oracle_case_candidate_4(void) { if (oracle_candidate_count_bits(255) != 8) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-gvzu0odd/oracle.c: In function \u2018oracle_case_candidate_5\u2019:\n/tmp/fission-oracle-gvzu0odd/oracle.c:353:48: error: void value not ignored as it ought to be\n  353 | static int oracle_case_candidate_5(void) { if (oracle_candidate_count_bits(0xFFFFFFFF) != 32) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 6,
@@ -1012,7 +1012,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpcdlhc5fu/bare.c: In function \u2018proc_140001530\u2019: /tmp/tmpcdlhc5fu/bare.c:31:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019? 31 | __size32 local1; // m[esp - 8] | ^~~~~~~~ | __ssize_t",
+        "error": "/tmp/tmpsymjthbt/bare.c: In function \u2018proc_140001530\u2019: /tmp/tmpsymjthbt/bare.c:31:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019? 31 | __size32 local1; // m[esp - 8] | ^~~~~~~~ | __ssize_t",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -1032,7 +1032,7 @@
       "source_similarity": 0.5926,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 318,
+      "time_ms": 279,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -1184,7 +1184,7 @@
       "source_similarity": 0.6087,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 1291,
+      "time_ms": 946,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -1338,7 +1338,7 @@
       "source_similarity": 0.556,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 1122,
+      "time_ms": 1236,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -1492,10 +1492,10 @@
       "source_similarity": 0.1517,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 36781,
+      "time_ms": 34435,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-rfwuzfl9/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-rfwuzfl9/oracle.c:311:48: error: too many arguments to function \u2018oracle_candidate_count_bits\u2019\n  311 | static int oracle_case_candidate_0(void) { if (oracle_candidate_count_bits(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-rfwuzfl9/oracle.c:305:1: note: declared here\n  305 | oracle_candidate_count_bits(void) {\n      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-rfwuzfl9/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-rfwuzfl9/oracle.c:317:48: error: too many arguments to function \u2018oracle_candidate_count_bits\u2019\n  317 | static int oracle_case_candidate_1(void) { if (oracle_candidate_count_bits(7) != 3) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-rfwuzfl9/oracle.c:305:1: note: declared here\n  305 | oracle_candidate_count_bits(void) {\n      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-rfwuzfl9/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-rfwuzfl9/oracle.c:323:48: error: too many arguments to function \u2018oracle_candidate_count_bits\u2019\n  323 | static int oracle_case_candidate_2(void) { if (oracle_candidate_count_bits(10) != 2) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-rfwuzfl9/oracle.c:305:1: note: declared here\n  305 | oracle_candidate_count_bits(void) {\n      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-rfwuzfl9/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-rfwuzfl9/oracle.c:329:48: error: too many arguments to function \u2018oracle_candidate_count_bits\u2019\n  329 | static int oracle_case_candidate_3(void) { if (oracle_candidate_count_bits(1) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-rfwuzfl9/oracle.c:305:1: note: declared here\n  305 | oracle_candidate_count_bits(void) {\n      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-rfwuzfl9/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-rfwuzfl9/oracle.c:335:48: error: too many arguments to function \u2018oracle_candidate_count_bits\u2019\n  335 | static int oracle_case_candidate_4(void) { if (oracle_candidate_count_bits(255) != 8) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-rfwuzfl9/oracle.c:305:1: note: declared here\n  305 | oracle_candidate_count_bits(void) {\n      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-rfwuzfl9/oracle.c: In function \u2018oracle_case_candidate_5\u2019:\n/tmp/fission-oracle-rfwuzfl9/oracle.c:341:48: error: too many arguments to function \u2018oracle_candidate_count_bits\u2019\n  341 | static int oracle_case_candidate_5(void) { if (oracle_candidate_count_bits(0xFFFFFFFF) != 32) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-rfwuzfl9/oracle.c:305:1: note: declared here\n  305 | oracle_candidate_count_bits(void) {\n      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-h0e9rn37/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-h0e9rn37/oracle.c:311:48: error: too many arguments to function \u2018oracle_candidate_count_bits\u2019\n  311 | static int oracle_case_candidate_0(void) { if (oracle_candidate_count_bits(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-h0e9rn37/oracle.c:305:1: note: declared here\n  305 | oracle_candidate_count_bits(void) {\n      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-h0e9rn37/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-h0e9rn37/oracle.c:317:48: error: too many arguments to function \u2018oracle_candidate_count_bits\u2019\n  317 | static int oracle_case_candidate_1(void) { if (oracle_candidate_count_bits(7) != 3) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-h0e9rn37/oracle.c:305:1: note: declared here\n  305 | oracle_candidate_count_bits(void) {\n      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-h0e9rn37/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-h0e9rn37/oracle.c:323:48: error: too many arguments to function \u2018oracle_candidate_count_bits\u2019\n  323 | static int oracle_case_candidate_2(void) { if (oracle_candidate_count_bits(10) != 2) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-h0e9rn37/oracle.c:305:1: note: declared here\n  305 | oracle_candidate_count_bits(void) {\n      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-h0e9rn37/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-h0e9rn37/oracle.c:329:48: error: too many arguments to function \u2018oracle_candidate_count_bits\u2019\n  329 | static int oracle_case_candidate_3(void) { if (oracle_candidate_count_bits(1) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-h0e9rn37/oracle.c:305:1: note: declared here\n  305 | oracle_candidate_count_bits(void) {\n      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-h0e9rn37/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-h0e9rn37/oracle.c:335:48: error: too many arguments to function \u2018oracle_candidate_count_bits\u2019\n  335 | static int oracle_case_candidate_4(void) { if (oracle_candidate_count_bits(255) != 8) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-h0e9rn37/oracle.c:305:1: note: declared here\n  305 | oracle_candidate_count_bits(void) {\n      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-h0e9rn37/oracle.c: In function \u2018oracle_case_candidate_5\u2019:\n/tmp/fission-oracle-h0e9rn37/oracle.c:341:48: error: too many arguments to function \u2018oracle_candidate_count_bits\u2019\n  341 | static int oracle_case_candidate_5(void) { if (oracle_candidate_count_bits(0xFFFFFFFF) != 32) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-h0e9rn37/oracle.c:305:1: note: declared here\n  305 | oracle_candidate_count_bits(void) {\n      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 6,
@@ -1646,7 +1646,7 @@
       "source_similarity": 0.4078,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 1620,
+      "time_ms": 1712,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -1769,7 +1769,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmp4gome6za/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 count_bits(uint32 ecx) | ^~~~~~ | word /tmp/tmp4gome6za/bare.c:26:19: error: unknown type name \u2018uint32\u2019; did you mean \u2018uint\u2019? 26 | word32 count_bits(uint32 ecx) | ^~~~~~ | uint",
+        "error": "/tmp/tmpe50apcc2/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 count_bits(uint32 ecx) | ^~~~~~ | word /tmp/tmpe50apcc2/bare.c:26:19: error: unknown type name \u2018uint32\u2019; did you mean \u2018uint\u2019? 26 | word32 count_bits(uint32 ecx) | ^~~~~~ | uint",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -1789,7 +1789,7 @@
       "source_similarity": 0.2866,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 514,
+      "time_ms": 504,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -1943,7 +1943,7 @@
       "source_similarity": 0.1443,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 8491,
+      "time_ms": 8651,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -2153,7 +2153,7 @@
       "source_similarity": 0.4214,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 21591,
+      "time_ms": 19202,
       "error": null,
       "semantic_score": 0.0,
       "semantic_error": "candidate passed 0/6 cases",
@@ -2314,10 +2314,10 @@
       "source_similarity": 0.2411,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 102,
+      "time_ms": 55,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-bzzd8h0_/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-bzzd8h0_/oracle.c:314:48: error: void value not ignored as it ought to be\n  314 | static int oracle_case_candidate_0(void) { if (oracle_candidate_clamp(5, 10, 20) != 10) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-bzzd8h0_/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-bzzd8h0_/oracle.c:320:48: error: void value not ignored as it ought to be\n  320 | static int oracle_case_candidate_1(void) { if (oracle_candidate_clamp(25, 10, 20) != 20) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-bzzd8h0_/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-bzzd8h0_/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_2(void) { if (oracle_candidate_clamp(15, 10, 20) != 15) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-bzzd8h0_/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-bzzd8h0_/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_3(void) { if (oracle_candidate_clamp(10, 10, 20) != 10) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-bzzd8h0_/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-bzzd8h0_/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_4(void) { if (oracle_candidate_clamp(20, 10, 20) != 20) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-bzzd8h0_/oracle.c: In function \u2018oracle_case_candidate_5\u2019:\n/tmp/fission-oracle-bzzd8h0_/oracle.c:344:48: error: void value not ignored as it ought to be\n  344 | static int oracle_case_candidate_5(void) { if (oracle_candidate_clamp(-5, -10, 0) != -5) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-3vs4cmxn/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-3vs4cmxn/oracle.c:314:48: error: void value not ignored as it ought to be\n  314 | static int oracle_case_candidate_0(void) { if (oracle_candidate_clamp(5, 10, 20) != 10) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-3vs4cmxn/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-3vs4cmxn/oracle.c:320:48: error: void value not ignored as it ought to be\n  320 | static int oracle_case_candidate_1(void) { if (oracle_candidate_clamp(25, 10, 20) != 20) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-3vs4cmxn/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-3vs4cmxn/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_2(void) { if (oracle_candidate_clamp(15, 10, 20) != 15) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-3vs4cmxn/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-3vs4cmxn/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_3(void) { if (oracle_candidate_clamp(10, 10, 20) != 10) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-3vs4cmxn/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-3vs4cmxn/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_4(void) { if (oracle_candidate_clamp(20, 10, 20) != 20) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-3vs4cmxn/oracle.c: In function \u2018oracle_case_candidate_5\u2019:\n/tmp/fission-oracle-3vs4cmxn/oracle.c:344:48: error: void value not ignored as it ought to be\n  344 | static int oracle_case_candidate_5(void) { if (oracle_candidate_clamp(-5, -10, 0) != -5) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 6,
@@ -2468,7 +2468,7 @@
       "source_similarity": 0.4478,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 318,
+      "time_ms": 279,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -2620,7 +2620,7 @@
       "source_similarity": 0.708,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 1291,
+      "time_ms": 946,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -2774,7 +2774,7 @@
       "source_similarity": 0.0099,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 1122,
+      "time_ms": 1236,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -2897,7 +2897,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpzfkjf45q/bare.c: In function \u2018fun_14000155f\u2019: /tmp/tmpzfkjf45q/bare.c:30:9: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function) 30 | if (reinterpret_cast<int32_t>(ecx) >= reinterpret_cast<int32_t>(edx)) { | ^~~~~~~~~~~~~~~~ /tmp/tmpzfkjf45q/bare.c:30:9: note: each undeclared identifier is reported only once for each function it appears in /tmp/tmpzfkjf45q/bare.c:30:26: error:",
+        "error": "/tmp/tmpv5wz62es/bare.c: In function \u2018fun_14000155f\u2019: /tmp/tmpv5wz62es/bare.c:30:9: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function) 30 | if (reinterpret_cast<int32_t>(ecx) >= reinterpret_cast<int32_t>(edx)) { | ^~~~~~~~~~~~~~~~ /tmp/tmpv5wz62es/bare.c:30:9: note: each undeclared identifier is reported only once for each function it appears in /tmp/tmpv5wz62es/bare.c:30:26: error:",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -2917,10 +2917,10 @@
       "source_similarity": 0.0422,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 36781,
+      "time_ms": 34435,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-_l7860d8/oracle.c:305:101: error: unknown type name \u2018struct_218\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_clamp(generic64_t register_rcx, generic64_t register_rdx, generic64_t register_r8, struct_218 stack_arguments /**/) {\n      |                                                                                                     ^~~~~~~~~~\n      |                                                                                                     struct\n",
+      "semantic_error": "/tmp/fission-oracle-sl7lor9i/oracle.c:305:101: error: unknown type name \u2018struct_218\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_clamp(generic64_t register_rcx, generic64_t register_rdx, generic64_t register_r8, struct_218 stack_arguments /**/) {\n      |                                                                                                     ^~~~~~~~~~\n      |                                                                                                     struct\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 6,
@@ -3043,7 +3043,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmp0t15opx8/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x14000155f(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_218 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmp0t15opx8/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x14000155f(generic64_t register_rcx _",
+        "error": "/tmp/tmpztg9f4n7/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x14000155f(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_218 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmpztg9f4n7/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x14000155f(generic64_t register_rcx _",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -3063,7 +3063,7 @@
       "source_similarity": 0.4066,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 1620,
+      "time_ms": 1712,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -3186,7 +3186,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmp5ei8pli5/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 clamp(int32 ecx, int32 edx, int32 r8d) | ^~~~~~ | word /tmp/tmp5ei8pli5/bare.c:26:14: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019? 26 | word32 clamp(int32 ecx, int32 edx, int32 r8d) | ^~~~~ | int32_t /tmp/tmp5ei8pli5/bare.c:26:25: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019? ",
+        "error": "/tmp/tmpltx9vgvg/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 clamp(int32 ecx, int32 edx, int32 r8d) | ^~~~~~ | word /tmp/tmpltx9vgvg/bare.c:26:14: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019? 26 | word32 clamp(int32 ecx, int32 edx, int32 r8d) | ^~~~~ | int32_t /tmp/tmpltx9vgvg/bare.c:26:25: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019? ",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -3206,7 +3206,7 @@
       "source_similarity": 0.4414,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 514,
+      "time_ms": 504,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -3360,7 +3360,7 @@
       "source_similarity": 0.3347,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 8491,
+      "time_ms": 8651,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -3570,7 +3570,7 @@
       "source_similarity": 0.375,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 21591,
+      "time_ms": 19202,
       "error": null,
       "semantic_score": 0.4,
       "semantic_error": "candidate passed 2/5 cases",
@@ -3729,10 +3729,10 @@
       "source_similarity": 0.2689,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 102,
+      "time_ms": 55,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-bfx87xjk/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-bfx87xjk/oracle.c:314:48: error: void value not ignored as it ought to be\n  314 | static int oracle_case_candidate_0(void) { if (oracle_candidate_signum(5) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-bfx87xjk/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-bfx87xjk/oracle.c:320:48: error: void value not ignored as it ought to be\n  320 | static int oracle_case_candidate_1(void) { if (oracle_candidate_signum(-5) != -1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-bfx87xjk/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-bfx87xjk/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_2(void) { if (oracle_candidate_signum(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-bfx87xjk/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-bfx87xjk/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_3(void) { if (oracle_candidate_signum(1000) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-bfx87xjk/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-bfx87xjk/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_4(void) { if (oracle_candidate_signum(-1000) != -1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-7ceo5cq2/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-7ceo5cq2/oracle.c:314:48: error: void value not ignored as it ought to be\n  314 | static int oracle_case_candidate_0(void) { if (oracle_candidate_signum(5) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-7ceo5cq2/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-7ceo5cq2/oracle.c:320:48: error: void value not ignored as it ought to be\n  320 | static int oracle_case_candidate_1(void) { if (oracle_candidate_signum(-5) != -1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-7ceo5cq2/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-7ceo5cq2/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_2(void) { if (oracle_candidate_signum(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-7ceo5cq2/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-7ceo5cq2/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_3(void) { if (oracle_candidate_signum(1000) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-7ceo5cq2/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-7ceo5cq2/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_4(void) { if (oracle_candidate_signum(-1000) != -1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -3883,7 +3883,7 @@
       "source_similarity": 0.4961,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 318,
+      "time_ms": 279,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -4035,7 +4035,7 @@
       "source_similarity": 0.503,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 1291,
+      "time_ms": 946,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -4189,10 +4189,10 @@
       "source_similarity": 0.2912,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 1122,
+      "time_ms": 1236,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-xgcepem6/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-xgcepem6/oracle.c:323:48: error: too few arguments to function \u2018oracle_candidate_signum\u2019\n  323 | static int oracle_case_candidate_0(void) { if (oracle_candidate_signum(5) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xgcepem6/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_signum(int32_t ecx, int64_t rdx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xgcepem6/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-xgcepem6/oracle.c:329:48: error: too few arguments to function \u2018oracle_candidate_signum\u2019\n  329 | static int oracle_case_candidate_1(void) { if (oracle_candidate_signum(-5) != -1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xgcepem6/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_signum(int32_t ecx, int64_t rdx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xgcepem6/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-xgcepem6/oracle.c:335:48: error: too few arguments to function \u2018oracle_candidate_signum\u2019\n  335 | static int oracle_case_candidate_2(void) { if (oracle_candidate_signum(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xgcepem6/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_signum(int32_t ecx, int64_t rdx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xgcepem6/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-xgcepem6/oracle.c:341:48: error: too few arguments to function \u2018oracle_candidate_signum\u2019\n  341 | static int oracle_case_candidate_3(void) { if (oracle_candidate_signum(1000) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xgcepem6/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_signum(int32_t ecx, int64_t rdx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xgcepem6/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-xgcepem6/oracle.c:347:48: error: too few arguments to function \u2018oracle_candidate_signum\u2019\n  347 | static int oracle_case_candidate_4(void) { if (oracle_candidate_signum(-1000) != -1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xgcepem6/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_signum(int32_t ecx, int64_t rdx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-cx1vmgyz/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-cx1vmgyz/oracle.c:323:48: error: too few arguments to function \u2018oracle_candidate_signum\u2019\n  323 | static int oracle_case_candidate_0(void) { if (oracle_candidate_signum(5) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-cx1vmgyz/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_signum(int32_t ecx, int64_t rdx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-cx1vmgyz/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-cx1vmgyz/oracle.c:329:48: error: too few arguments to function \u2018oracle_candidate_signum\u2019\n  329 | static int oracle_case_candidate_1(void) { if (oracle_candidate_signum(-5) != -1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-cx1vmgyz/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_signum(int32_t ecx, int64_t rdx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-cx1vmgyz/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-cx1vmgyz/oracle.c:335:48: error: too few arguments to function \u2018oracle_candidate_signum\u2019\n  335 | static int oracle_case_candidate_2(void) { if (oracle_candidate_signum(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-cx1vmgyz/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_signum(int32_t ecx, int64_t rdx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-cx1vmgyz/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-cx1vmgyz/oracle.c:341:48: error: too few arguments to function \u2018oracle_candidate_signum\u2019\n  341 | static int oracle_case_candidate_3(void) { if (oracle_candidate_signum(1000) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-cx1vmgyz/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_signum(int32_t ecx, int64_t rdx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-cx1vmgyz/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-cx1vmgyz/oracle.c:347:48: error: too few arguments to function \u2018oracle_candidate_signum\u2019\n  347 | static int oracle_case_candidate_4(void) { if (oracle_candidate_signum(-1000) != -1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-cx1vmgyz/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_signum(int32_t ecx, int64_t rdx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -4343,10 +4343,10 @@
       "source_similarity": 0.1007,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 36781,
+      "time_ms": 34435,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-8uny1kcu/oracle.c:305:51: error: unknown type name \u2018struct_217\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_signum(generic64_t register_rcx, struct_217 stack_arguments /**/) {\n      |                                                   ^~~~~~~~~~\n      |                                                   struct\n",
+      "semantic_error": "/tmp/fission-oracle-3qr0n7ek/oracle.c:305:51: error: unknown type name \u2018struct_217\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_signum(generic64_t register_rcx, struct_217 stack_arguments /**/) {\n      |                                                   ^~~~~~~~~~\n      |                                                   struct\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -4469,7 +4469,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpnaf0l2gf/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x14000158c(generic64_t register_rcx _REG(rcx_x86_64), struct_217 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmpnaf0l2gf/bare.c:27:65: error: unknown type name \u2018struct_217\u2019; did you mean \u2018struct\u2019? 27 | function_0x14000158c(generic64_t register_rcx _REG(rcx_x86_64), struct_217 stack_arguments /*_STACK*/) { | ^",
+        "error": "/tmp/tmpen326lvr/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x14000158c(generic64_t register_rcx _REG(rcx_x86_64), struct_217 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmpen326lvr/bare.c:27:65: error: unknown type name \u2018struct_217\u2019; did you mean \u2018struct\u2019? 27 | function_0x14000158c(generic64_t register_rcx _REG(rcx_x86_64), struct_217 stack_arguments /*_STACK*/) { | ^",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -4489,7 +4489,7 @@
       "source_similarity": 0.4228,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 1620,
+      "time_ms": 1712,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -4612,7 +4612,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpeydnj8y1/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 signum(int32 ecx) | ^~~~~~ | word /tmp/tmpeydnj8y1/bare.c:26:15: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019? 26 | word32 signum(int32 ecx) | ^~~~~ | int32_t",
+        "error": "/tmp/tmpmxqx3_3t/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 signum(int32 ecx) | ^~~~~~ | word /tmp/tmpmxqx3_3t/bare.c:26:15: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019? 26 | word32 signum(int32 ecx) | ^~~~~ | int32_t",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -4632,7 +4632,7 @@
       "source_similarity": 0.4884,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 514,
+      "time_ms": 504,
       "error": null,
       "semantic_score": 0.6,
       "semantic_error": "candidate passed 3/5 cases",
@@ -4786,7 +4786,7 @@
       "source_similarity": 0.1371,
       "goto_count": 0,
       "nesting_depth": 5,
-      "time_ms": 8491,
+      "time_ms": 8651,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -4996,7 +4996,7 @@
       "source_similarity": 0.2524,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 21591,
+      "time_ms": 19202,
       "error": null,
       "semantic_score": 0.0,
       "semantic_error": "candidate passed 0/5 cases",
@@ -5156,10 +5156,10 @@
       "source_similarity": 0.1827,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 102,
+      "time_ms": 55,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-3h3of0pu/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-3h3of0pu/oracle.c:314:48: error: void value not ignored as it ought to be\n  314 | static int oracle_case_candidate_0(void) { if (oracle_candidate_saturating_add(10, 20) != 30) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-3h3of0pu/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-3h3of0pu/oracle.c:320:48: error: void value not ignored as it ought to be\n  320 | static int oracle_case_candidate_1(void) { if (oracle_candidate_saturating_add(2147483640, 10) != 2147483647) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-3h3of0pu/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-3h3of0pu/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_2(void) { if (oracle_candidate_saturating_add(-2147483640, -10) != -2147483648) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-3h3of0pu/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-3h3of0pu/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_3(void) { if (oracle_candidate_saturating_add(0, 0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-3h3of0pu/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-3h3of0pu/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_4(void) { if (oracle_candidate_saturating_add(1, -1) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-2kodhpe0/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-2kodhpe0/oracle.c:314:48: error: void value not ignored as it ought to be\n  314 | static int oracle_case_candidate_0(void) { if (oracle_candidate_saturating_add(10, 20) != 30) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-2kodhpe0/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-2kodhpe0/oracle.c:320:48: error: void value not ignored as it ought to be\n  320 | static int oracle_case_candidate_1(void) { if (oracle_candidate_saturating_add(2147483640, 10) != 2147483647) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-2kodhpe0/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-2kodhpe0/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_2(void) { if (oracle_candidate_saturating_add(-2147483640, -10) != -2147483648) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-2kodhpe0/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-2kodhpe0/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_3(void) { if (oracle_candidate_saturating_add(0, 0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-2kodhpe0/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-2kodhpe0/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_4(void) { if (oracle_candidate_saturating_add(1, -1) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -5310,7 +5310,7 @@
       "source_similarity": 0.1637,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 318,
+      "time_ms": 279,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -5462,7 +5462,7 @@
       "source_similarity": 0.7688,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 1291,
+      "time_ms": 946,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -5616,10 +5616,10 @@
       "source_similarity": 0.0347,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 1122,
+      "time_ms": 1236,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-xc38zoqz/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-xc38zoqz/oracle.c:323:48: error: too few arguments to function \u2018oracle_candidate_saturating_add\u2019\n  323 | static int oracle_case_candidate_0(void) { if (oracle_candidate_saturating_add(10, 20) != 30) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xc38zoqz/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_saturating_add(int32_t ecx, int32_t edx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xc38zoqz/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-xc38zoqz/oracle.c:329:48: error: too few arguments to function \u2018oracle_candidate_saturating_add\u2019\n  329 | static int oracle_case_candidate_1(void) { if (oracle_candidate_saturating_add(2147483640, 10) != 2147483647) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xc38zoqz/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_saturating_add(int32_t ecx, int32_t edx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xc38zoqz/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-xc38zoqz/oracle.c:335:48: error: too few arguments to function \u2018oracle_candidate_saturating_add\u2019\n  335 | static int oracle_case_candidate_2(void) { if (oracle_candidate_saturating_add(-2147483640, -10) != -2147483648) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xc38zoqz/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_saturating_add(int32_t ecx, int32_t edx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xc38zoqz/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-xc38zoqz/oracle.c:341:48: error: too few arguments to function \u2018oracle_candidate_saturating_add\u2019\n  341 | static int oracle_case_candidate_3(void) { if (oracle_candidate_saturating_add(0, 0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xc38zoqz/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_saturating_add(int32_t ecx, int32_t edx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xc38zoqz/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-xc38zoqz/oracle.c:347:48: error: too few arguments to function \u2018oracle_candidate_saturating_add\u2019\n  347 | static int oracle_case_candidate_4(void) { if (oracle_candidate_saturating_add(1, -1) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-xc38zoqz/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_saturating_add(int32_t ecx, int32_t edx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-hzvh_q3b/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-hzvh_q3b/oracle.c:323:48: error: too few arguments to function \u2018oracle_candidate_saturating_add\u2019\n  323 | static int oracle_case_candidate_0(void) { if (oracle_candidate_saturating_add(10, 20) != 30) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-hzvh_q3b/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_saturating_add(int32_t ecx, int32_t edx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-hzvh_q3b/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-hzvh_q3b/oracle.c:329:48: error: too few arguments to function \u2018oracle_candidate_saturating_add\u2019\n  329 | static int oracle_case_candidate_1(void) { if (oracle_candidate_saturating_add(2147483640, 10) != 2147483647) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-hzvh_q3b/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_saturating_add(int32_t ecx, int32_t edx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-hzvh_q3b/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-hzvh_q3b/oracle.c:335:48: error: too few arguments to function \u2018oracle_candidate_saturating_add\u2019\n  335 | static int oracle_case_candidate_2(void) { if (oracle_candidate_saturating_add(-2147483640, -10) != -2147483648) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-hzvh_q3b/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_saturating_add(int32_t ecx, int32_t edx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-hzvh_q3b/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-hzvh_q3b/oracle.c:341:48: error: too few arguments to function \u2018oracle_candidate_saturating_add\u2019\n  341 | static int oracle_case_candidate_3(void) { if (oracle_candidate_saturating_add(0, 0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-hzvh_q3b/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_saturating_add(int32_t ecx, int32_t edx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-hzvh_q3b/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-hzvh_q3b/oracle.c:347:48: error: too few arguments to function \u2018oracle_candidate_saturating_add\u2019\n  347 | static int oracle_case_candidate_4(void) { if (oracle_candidate_saturating_add(1, -1) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-hzvh_q3b/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_saturating_add(int32_t ecx, int32_t edx, int64_t r8) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -5770,10 +5770,10 @@
       "source_similarity": 0.036,
       "goto_count": 2,
       "nesting_depth": 3,
-      "time_ms": 36781,
+      "time_ms": 34435,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-25mgidyd/oracle.c:305:85: error: unknown type name \u2018struct_214\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_saturating_add(generic64_t register_rcx, generic64_t register_rdx, struct_214 stack_arguments /**/) {\n      |                                                                                     ^~~~~~~~~~\n      |                                                                                     struct\n",
+      "semantic_error": "/tmp/fission-oracle-_ybxgrxe/oracle.c:305:85: error: unknown type name \u2018struct_214\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_saturating_add(generic64_t register_rcx, generic64_t register_rdx, struct_214 stack_arguments /**/) {\n      |                                                                                     ^~~~~~~~~~\n      |                                                                                     struct\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -5896,7 +5896,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpic73zbfh/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001660(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_214 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmpic73zbfh/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001660(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx",
+        "error": "/tmp/tmpa_qrxu34/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001660(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_214 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmpa_qrxu34/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001660(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -5916,7 +5916,7 @@
       "source_similarity": 0.1866,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 1620,
+      "time_ms": 1712,
       "error": null,
       "semantic_score": 0.8,
       "semantic_error": "candidate passed 4/5 cases",
@@ -6039,7 +6039,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpp4cqb9u7/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 saturating_add(int32 ecx, int32 edx) | ^~~~~~ | word /tmp/tmpp4cqb9u7/bare.c:26:23: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019? 26 | word32 saturating_add(int32 ecx, int32 edx) | ^~~~~ | int32_t /tmp/tmpp4cqb9u7/bare.c:26:34: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019? 26 |",
+        "error": "/tmp/tmp23tq35oq/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 saturating_add(int32 ecx, int32 edx) | ^~~~~~ | word /tmp/tmp23tq35oq/bare.c:26:23: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019? 26 | word32 saturating_add(int32 ecx, int32 edx) | ^~~~~ | int32_t /tmp/tmp23tq35oq/bare.c:26:34: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019? 26 |",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -6059,7 +6059,7 @@
       "source_similarity": 0.4969,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 514,
+      "time_ms": 504,
       "error": null,
       "semantic_score": 0.6,
       "semantic_error": "candidate passed 3/5 cases",
@@ -6213,7 +6213,7 @@
       "source_similarity": 0.3333,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 7050,
+      "time_ms": 6916,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -6423,7 +6423,7 @@
       "source_similarity": 0.6777,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 18643,
+      "time_ms": 16672,
       "error": null,
       "semantic_score": 0.0,
       "semantic_error": "candidate passed 0/5 cases",
@@ -6583,10 +6583,10 @@
       "source_similarity": 0.4416,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 68,
+      "time_ms": 45,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-5gq1i_3i/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-5gq1i_3i/oracle.c:314:48: error: void value not ignored as it ought to be\n  314 | static int oracle_case_candidate_0(void) { if (oracle_candidate_add_ints(1, 2) != 3) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-5gq1i_3i/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-5gq1i_3i/oracle.c:320:48: error: void value not ignored as it ought to be\n  320 | static int oracle_case_candidate_1(void) { if (oracle_candidate_add_ints(-1, 1) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-5gq1i_3i/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-5gq1i_3i/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_2(void) { if (oracle_candidate_add_ints(100, 200) != 300) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-5gq1i_3i/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-5gq1i_3i/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_3(void) { if (oracle_candidate_add_ints(0, 0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-5gq1i_3i/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-5gq1i_3i/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_4(void) { if (oracle_candidate_add_ints(-5, -7) != -12) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-561bh1kr/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-561bh1kr/oracle.c:314:48: error: void value not ignored as it ought to be\n  314 | static int oracle_case_candidate_0(void) { if (oracle_candidate_add_ints(1, 2) != 3) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-561bh1kr/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-561bh1kr/oracle.c:320:48: error: void value not ignored as it ought to be\n  320 | static int oracle_case_candidate_1(void) { if (oracle_candidate_add_ints(-1, 1) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-561bh1kr/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-561bh1kr/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_2(void) { if (oracle_candidate_add_ints(100, 200) != 300) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-561bh1kr/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-561bh1kr/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_3(void) { if (oracle_candidate_add_ints(0, 0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-561bh1kr/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-561bh1kr/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_4(void) { if (oracle_candidate_add_ints(-5, -7) != -12) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -6737,7 +6737,7 @@
       "source_similarity": 0.5397,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 721,
+      "time_ms": 662,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -6889,7 +6889,7 @@
       "source_similarity": 0.7636,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 719,
+      "time_ms": 660,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -7043,10 +7043,10 @@
       "source_similarity": 0.2573,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 1053,
+      "time_ms": 948,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-229s_qr5/oracle.c: In function \u2018oracle_candidate_add_ints\u2019:\n/tmp/fission-oracle-229s_qr5/oracle.c:309:18: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n  309 |     *((int32_t*)(reinterpret_cast<int64_t>(&rax3)) + 4) = 0;\n      |                  ^~~~~~~~~~~~~~~~\n/tmp/fission-oracle-229s_qr5/oracle.c:309:18: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-229s_qr5/oracle.c:309:35: error: expected expression before \u2018int64_t\u2019\n  309 |     *((int32_t*)(reinterpret_cast<int64_t>(&rax3)) + 4) = 0;\n      |                                   ^~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-8j2fctku/oracle.c: In function \u2018oracle_candidate_add_ints\u2019:\n/tmp/fission-oracle-8j2fctku/oracle.c:309:18: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n  309 |     *((int32_t*)(reinterpret_cast<int64_t>(&rax3)) + 4) = 0;\n      |                  ^~~~~~~~~~~~~~~~\n/tmp/fission-oracle-8j2fctku/oracle.c:309:18: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-8j2fctku/oracle.c:309:35: error: expected expression before \u2018int64_t\u2019\n  309 |     *((int32_t*)(reinterpret_cast<int64_t>(&rax3)) + 4) = 0;\n      |                                   ^~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -7166,7 +7166,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmp0abw2vas/bare.c: In function \u2018fun_140001612\u2019: /tmp/tmp0abw2vas/bare.c:30:6: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function) 30 | *reinterpret_cast<int32_t*>(&rax3) = edx + ecx; | ^~~~~~~~~~~~~~~~ /tmp/tmp0abw2vas/bare.c:30:6: note: each undeclared identifier is reported only once for each function it appears in /tmp/tmp0abw2vas/bare.c:30:23: error: expected expression bef",
+        "error": "/tmp/tmp_26s6uvf/bare.c: In function \u2018fun_140001612\u2019: /tmp/tmp_26s6uvf/bare.c:30:6: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function) 30 | *reinterpret_cast<int32_t*>(&rax3) = edx + ecx; | ^~~~~~~~~~~~~~~~ /tmp/tmp_26s6uvf/bare.c:30:6: note: each undeclared identifier is reported only once for each function it appears in /tmp/tmp_26s6uvf/bare.c:30:23: error: expected expression bef",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -7186,10 +7186,10 @@
       "source_similarity": 0.0734,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 33613,
+      "time_ms": 31694,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-whi519y6/oracle.c:305:79: error: unknown type name \u2018struct_205\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_add_ints(generic64_t register_rcx, generic64_t register_rdx, struct_205 stack_arguments /**/) {\n      |                                                                               ^~~~~~~~~~\n      |                                                                               struct\n",
+      "semantic_error": "/tmp/fission-oracle-_2k7j30m/oracle.c:305:79: error: unknown type name \u2018struct_205\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_add_ints(generic64_t register_rcx, generic64_t register_rdx, struct_205 stack_arguments /**/) {\n      |                                                                               ^~~~~~~~~~\n      |                                                                               struct\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -7312,7 +7312,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmp5ty8e1c_/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001612(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_205 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmp5ty8e1c_/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001612(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx",
+        "error": "/tmp/tmpjujoc7hs/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001612(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_205 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmpjujoc7hs/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001612(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -7332,7 +7332,7 @@
       "source_similarity": 0.5905,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 1251,
+      "time_ms": 1123,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -7455,7 +7455,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmp5lifuz7p/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 add_ints(word32 ecx, word32 edx) | ^~~~~~ | word /tmp/tmp5lifuz7p/bare.c:26:17: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 add_ints(word32 ecx, word32 edx) | ^~~~~~ | word /tmp/tmp5lifuz7p/bare.c:26:29: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 add_in",
+        "error": "/tmp/tmp_c5gti8x/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 add_ints(word32 ecx, word32 edx) | ^~~~~~ | word /tmp/tmp_c5gti8x/bare.c:26:17: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 add_ints(word32 ecx, word32 edx) | ^~~~~~ | word /tmp/tmp_c5gti8x/bare.c:26:29: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 add_in",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -7475,10 +7475,10 @@
       "source_similarity": 0.5033,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 291,
+      "time_ms": 266,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-co6btw4k/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-co6btw4k/oracle.c:313:48: error: too few arguments to function \u2018oracle_candidate_add_ints\u2019\n  313 | static int oracle_case_candidate_0(void) { if (oracle_candidate_add_ints(1, 2) != 3) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-co6btw4k/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_add_ints(int32_t (*op)(int32_t, int32_t), int32_t a, int32_t b) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-co6btw4k/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-co6btw4k/oracle.c:319:48: error: too few arguments to function \u2018oracle_candidate_add_ints\u2019\n  319 | static int oracle_case_candidate_1(void) { if (oracle_candidate_add_ints(-1, 1) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-co6btw4k/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_add_ints(int32_t (*op)(int32_t, int32_t), int32_t a, int32_t b) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-co6btw4k/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-co6btw4k/oracle.c:325:48: error: too few arguments to function \u2018oracle_candidate_add_ints\u2019\n  325 | static int oracle_case_candidate_2(void) { if (oracle_candidate_add_ints(100, 200) != 300) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-co6btw4k/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_add_ints(int32_t (*op)(int32_t, int32_t), int32_t a, int32_t b) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-co6btw4k/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-co6btw4k/oracle.c:331:48: error: too few arguments to function \u2018oracle_candidate_add_ints\u2019\n  331 | static int oracle_case_candidate_3(void) { if (oracle_candidate_add_ints(0, 0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-co6btw4k/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_add_ints(int32_t (*op)(int32_t, int32_t), int32_t a, int32_t b) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-co6btw4k/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-co6btw4k/oracle.c:337:48: error: too few arguments to function \u2018oracle_candidate_add_ints\u2019\n  337 | static int oracle_case_candidate_4(void) { if (oracle_candidate_add_ints(-5, -7) != -12) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-co6btw4k/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_add_ints(int32_t (*op)(int32_t, int32_t), int32_t a, int32_t b) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-4d6xdjgl/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-4d6xdjgl/oracle.c:313:48: error: too few arguments to function \u2018oracle_candidate_add_ints\u2019\n  313 | static int oracle_case_candidate_0(void) { if (oracle_candidate_add_ints(1, 2) != 3) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-4d6xdjgl/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_add_ints(int32_t (*op)(int32_t, int32_t), int32_t a, int32_t b) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-4d6xdjgl/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-4d6xdjgl/oracle.c:319:48: error: too few arguments to function \u2018oracle_candidate_add_ints\u2019\n  319 | static int oracle_case_candidate_1(void) { if (oracle_candidate_add_ints(-1, 1) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-4d6xdjgl/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_add_ints(int32_t (*op)(int32_t, int32_t), int32_t a, int32_t b) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-4d6xdjgl/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-4d6xdjgl/oracle.c:325:48: error: too few arguments to function \u2018oracle_candidate_add_ints\u2019\n  325 | static int oracle_case_candidate_2(void) { if (oracle_candidate_add_ints(100, 200) != 300) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-4d6xdjgl/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_add_ints(int32_t (*op)(int32_t, int32_t), int32_t a, int32_t b) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-4d6xdjgl/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-4d6xdjgl/oracle.c:331:48: error: too few arguments to function \u2018oracle_candidate_add_ints\u2019\n  331 | static int oracle_case_candidate_3(void) { if (oracle_candidate_add_ints(0, 0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-4d6xdjgl/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_add_ints(int32_t (*op)(int32_t, int32_t), int32_t a, int32_t b) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-4d6xdjgl/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-4d6xdjgl/oracle.c:337:48: error: too few arguments to function \u2018oracle_candidate_add_ints\u2019\n  337 | static int oracle_case_candidate_4(void) { if (oracle_candidate_add_ints(-5, -7) != -12) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-4d6xdjgl/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_add_ints(int32_t (*op)(int32_t, int32_t), int32_t a, int32_t b) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -7629,7 +7629,7 @@
       "source_similarity": 0.2031,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 7050,
+      "time_ms": 6916,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -7828,7 +7828,7 @@
       "source_similarity": 0.6777,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 18643,
+      "time_ms": 16672,
       "error": null,
       "semantic_score": 0.2,
       "semantic_error": "candidate passed 1/5 cases",
@@ -7988,10 +7988,10 @@
       "source_similarity": 0.4416,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 68,
+      "time_ms": 45,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-a9tp82i8/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-a9tp82i8/oracle.c:314:48: error: void value not ignored as it ought to be\n  314 | static int oracle_case_candidate_0(void) { if (oracle_candidate_mul_ints(2, 3) != 6) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-a9tp82i8/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-a9tp82i8/oracle.c:320:48: error: void value not ignored as it ought to be\n  320 | static int oracle_case_candidate_1(void) { if (oracle_candidate_mul_ints(-2, 3) != -6) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-a9tp82i8/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-a9tp82i8/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_2(void) { if (oracle_candidate_mul_ints(0, 99) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-a9tp82i8/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-a9tp82i8/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_3(void) { if (oracle_candidate_mul_ints(7, 1) != 7) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-a9tp82i8/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-a9tp82i8/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_4(void) { if (oracle_candidate_mul_ints(-4, -5) != 20) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-mb8ykz9g/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-mb8ykz9g/oracle.c:314:48: error: void value not ignored as it ought to be\n  314 | static int oracle_case_candidate_0(void) { if (oracle_candidate_mul_ints(2, 3) != 6) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-mb8ykz9g/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-mb8ykz9g/oracle.c:320:48: error: void value not ignored as it ought to be\n  320 | static int oracle_case_candidate_1(void) { if (oracle_candidate_mul_ints(-2, 3) != -6) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-mb8ykz9g/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-mb8ykz9g/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_2(void) { if (oracle_candidate_mul_ints(0, 99) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-mb8ykz9g/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-mb8ykz9g/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_3(void) { if (oracle_candidate_mul_ints(7, 1) != 7) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-mb8ykz9g/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-mb8ykz9g/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_4(void) { if (oracle_candidate_mul_ints(-4, -5) != 20) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -8142,7 +8142,7 @@
       "source_similarity": 0.5902,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 721,
+      "time_ms": 662,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -8294,7 +8294,7 @@
       "source_similarity": 0.7636,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 719,
+      "time_ms": 660,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -8448,10 +8448,10 @@
       "source_similarity": 0.2656,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 1053,
+      "time_ms": 948,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-q0tkezho/oracle.c: In function \u2018oracle_candidate_mul_ints\u2019:\n/tmp/fission-oracle-q0tkezho/oracle.c:309:18: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n  309 |     *((int32_t*)(reinterpret_cast<int64_t>(&rax3)) + 4) = 0;\n      |                  ^~~~~~~~~~~~~~~~\n/tmp/fission-oracle-q0tkezho/oracle.c:309:18: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-q0tkezho/oracle.c:309:35: error: expected expression before \u2018int64_t\u2019\n  309 |     *((int32_t*)(reinterpret_cast<int64_t>(&rax3)) + 4) = 0;\n      |                                   ^~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-zhe3p5ef/oracle.c: In function \u2018oracle_candidate_mul_ints\u2019:\n/tmp/fission-oracle-zhe3p5ef/oracle.c:309:18: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n  309 |     *((int32_t*)(reinterpret_cast<int64_t>(&rax3)) + 4) = 0;\n      |                  ^~~~~~~~~~~~~~~~\n/tmp/fission-oracle-zhe3p5ef/oracle.c:309:18: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-zhe3p5ef/oracle.c:309:35: error: expected expression before \u2018int64_t\u2019\n  309 |     *((int32_t*)(reinterpret_cast<int64_t>(&rax3)) + 4) = 0;\n      |                                   ^~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -8571,7 +8571,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpqthylrej/bare.c: In function \u2018fun_140001626\u2019: /tmp/tmpqthylrej/bare.c:30:6: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function) 30 | *reinterpret_cast<int32_t*>(&rax3) = ecx * edx; | ^~~~~~~~~~~~~~~~ /tmp/tmpqthylrej/bare.c:30:6: note: each undeclared identifier is reported only once for each function it appears in /tmp/tmpqthylrej/bare.c:30:23: error: expected expression bef",
+        "error": "/tmp/tmpnrwxt93n/bare.c: In function \u2018fun_140001626\u2019: /tmp/tmpnrwxt93n/bare.c:30:6: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function) 30 | *reinterpret_cast<int32_t*>(&rax3) = ecx * edx; | ^~~~~~~~~~~~~~~~ /tmp/tmpnrwxt93n/bare.c:30:6: note: each undeclared identifier is reported only once for each function it appears in /tmp/tmpnrwxt93n/bare.c:30:23: error: expected expression bef",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -8591,10 +8591,10 @@
       "source_similarity": 0.0734,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 33613,
+      "time_ms": 31694,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-2vw96cr9/oracle.c:305:79: error: unknown type name \u2018struct_204\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_mul_ints(generic64_t register_rcx, generic64_t register_rdx, struct_204 stack_arguments /**/) {\n      |                                                                               ^~~~~~~~~~\n      |                                                                               struct\n",
+      "semantic_error": "/tmp/fission-oracle-jjvhksh4/oracle.c:305:79: error: unknown type name \u2018struct_204\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_mul_ints(generic64_t register_rcx, generic64_t register_rdx, struct_204 stack_arguments /**/) {\n      |                                                                               ^~~~~~~~~~\n      |                                                                               struct\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -8717,7 +8717,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpay1ajep5/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001626(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_204 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmpay1ajep5/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001626(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx",
+        "error": "/tmp/tmpb6_7mih2/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001626(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_204 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmpb6_7mih2/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001626(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -8737,10 +8737,10 @@
       "source_similarity": 0.1607,
       "goto_count": 0,
       "nesting_depth": 0,
-      "time_ms": 1251,
+      "time_ms": 1123,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-yme8c8fn/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-yme8c8fn/oracle.c:318:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  318 | static int oracle_case_candidate_0(void) { if (oracle_candidate_mul_ints(2, 3) != 6) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-yme8c8fn/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-yme8c8fn/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-yme8c8fn/oracle.c:324:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  324 | static int oracle_case_candidate_1(void) { if (oracle_candidate_mul_ints(-2, 3) != -6) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-yme8c8fn/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-yme8c8fn/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-yme8c8fn/oracle.c:330:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  330 | static int oracle_case_candidate_2(void) { if (oracle_candidate_mul_ints(0, 99) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-yme8c8fn/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-yme8c8fn/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-yme8c8fn/oracle.c:336:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  336 | static int oracle_case_candidate_3(void) { if (oracle_candidate_mul_ints(7, 1) != 7) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-yme8c8fn/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-yme8c8fn/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-yme8c8fn/oracle.c:342:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  342 | static int oracle_case_candidate_4(void) { if (oracle_candidate_mul_ints(-4, -5) != 20) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-yme8c8fn/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-5vffrv8b/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-5vffrv8b/oracle.c:318:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  318 | static int oracle_case_candidate_0(void) { if (oracle_candidate_mul_ints(2, 3) != 6) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-5vffrv8b/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-5vffrv8b/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-5vffrv8b/oracle.c:324:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  324 | static int oracle_case_candidate_1(void) { if (oracle_candidate_mul_ints(-2, 3) != -6) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-5vffrv8b/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-5vffrv8b/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-5vffrv8b/oracle.c:330:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  330 | static int oracle_case_candidate_2(void) { if (oracle_candidate_mul_ints(0, 99) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-5vffrv8b/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-5vffrv8b/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-5vffrv8b/oracle.c:336:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  336 | static int oracle_case_candidate_3(void) { if (oracle_candidate_mul_ints(7, 1) != 7) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-5vffrv8b/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-5vffrv8b/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-5vffrv8b/oracle.c:342:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  342 | static int oracle_case_candidate_4(void) { if (oracle_candidate_mul_ints(-4, -5) != 20) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-5vffrv8b/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -8858,7 +8858,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpm27v22as/bare.c:26:1: error: unknown type name \u2018Function\u2019; did you mean \u2018union\u2019? 26 | Function at address 0x140001626 not matched in Reko address comments | ^~~~~~~~ | union /tmp/tmpm27v22as/bare.c:26:13: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018address\u2019 26 | Function at address 0x140001626 not matched in Reko address comments | ^~~~~~~",
+        "error": "/tmp/tmpc0v6mk0v/bare.c:26:1: error: unknown type name \u2018Function\u2019; did you mean \u2018union\u2019? 26 | Function at address 0x140001626 not matched in Reko address comments | ^~~~~~~~ | union /tmp/tmpc0v6mk0v/bare.c:26:13: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before \u2018address\u2019 26 | Function at address 0x140001626 not matched in Reko address comments | ^~~~~~~",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -8878,10 +8878,10 @@
       "source_similarity": 0.3148,
       "goto_count": 0,
       "nesting_depth": 0,
-      "time_ms": 291,
+      "time_ms": 266,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-anahltwr/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-anahltwr/oracle.c:319:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  319 | static int oracle_case_candidate_0(void) { if (oracle_candidate_mul_ints(2, 3) != 6) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-anahltwr/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-anahltwr/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-anahltwr/oracle.c:325:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  325 | static int oracle_case_candidate_1(void) { if (oracle_candidate_mul_ints(-2, 3) != -6) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-anahltwr/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-anahltwr/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-anahltwr/oracle.c:331:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  331 | static int oracle_case_candidate_2(void) { if (oracle_candidate_mul_ints(0, 99) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-anahltwr/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-anahltwr/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-anahltwr/oracle.c:337:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  337 | static int oracle_case_candidate_3(void) { if (oracle_candidate_mul_ints(7, 1) != 7) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-anahltwr/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-anahltwr/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-anahltwr/oracle.c:343:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  343 | static int oracle_case_candidate_4(void) { if (oracle_candidate_mul_ints(-4, -5) != 20) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-anahltwr/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-uthdlvxj/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-uthdlvxj/oracle.c:319:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  319 | static int oracle_case_candidate_0(void) { if (oracle_candidate_mul_ints(2, 3) != 6) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-uthdlvxj/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-uthdlvxj/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-uthdlvxj/oracle.c:325:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  325 | static int oracle_case_candidate_1(void) { if (oracle_candidate_mul_ints(-2, 3) != -6) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-uthdlvxj/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-uthdlvxj/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-uthdlvxj/oracle.c:331:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  331 | static int oracle_case_candidate_2(void) { if (oracle_candidate_mul_ints(0, 99) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-uthdlvxj/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-uthdlvxj/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-uthdlvxj/oracle.c:337:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  337 | static int oracle_case_candidate_3(void) { if (oracle_candidate_mul_ints(7, 1) != 7) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-uthdlvxj/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-uthdlvxj/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-uthdlvxj/oracle.c:343:48: error: too many arguments to function \u2018oracle_candidate_mul_ints\u2019\n  343 | static int oracle_case_candidate_4(void) { if (oracle_candidate_mul_ints(-4, -5) != 20) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-uthdlvxj/oracle.c:305:12: note: declared here\n  305 | static int oracle_candidate_mul_ints(void) {\n      |            ^~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -8999,7 +8999,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpu7t9qps2/bare.c:27:1: error: unknown type name \u2018Function\u2019; did you mean \u2018union\u2019? 27 | Function at 0x140001626 not found in RetDec address-range output | ^~~~~~~~ | union /tmp/tmpu7t9qps2/bare.c:27:13: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before numeric constant 27 | Function at 0x140001626 not found in RetDec address-range output | ^~~~~~~~~~~",
+        "error": "/tmp/tmp24q01csn/bare.c:27:1: error: unknown type name \u2018Function\u2019; did you mean \u2018union\u2019? 27 | Function at 0x140001626 not found in RetDec address-range output | ^~~~~~~~ | union /tmp/tmp24q01csn/bare.c:27:13: error: expected \u2018=\u2019, \u2018,\u2019, \u2018;\u2019, \u2018asm\u2019 or \u2018__attribute__\u2019 before numeric constant 27 | Function at 0x140001626 not found in RetDec address-range output | ^~~~~~~~~~~",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -9019,7 +9019,7 @@
       "source_similarity": 0.1713,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 7050,
+      "time_ms": 6916,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -9218,10 +9218,10 @@
       "source_similarity": 0.5951,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 18643,
+      "time_ms": 16672,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "wine: Unhandled page fault on read access to 0000100000001B18 at address 0000000140001F11 (thread 0108), starting debugger...\n",
+      "semantic_error": "wine: Unhandled page fault on read access to 0000100000001B18 at address 0000000140001F11 (thread 0104), starting debugger...\n",
       "fail_category": "runtime_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -9346,7 +9346,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpm2g3j61y/bare.c:29:14: error: unknown type name \u2018Node\u2019 29 | int list_sum(Node *head) | ^~~~",
+        "error": "/tmp/tmpx7928by1/bare.c:29:14: error: unknown type name \u2018Node\u2019 29 | int list_sum(Node *head) | ^~~~",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -9366,10 +9366,10 @@
       "source_similarity": 0.2114,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 68,
+      "time_ms": 45,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-6fj7aypg/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-6fj7aypg/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_0(void) { if (oracle_candidate_list_sum(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-6fj7aypg/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-6fj7aypg/oracle.c:332:92: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_1(void) { Node c={3,0}; Node b={2,&c}; Node a={1,&b}; if (oracle_candidate_list_sum(&a) != 6) return 1; return 0; }\n      |                                                                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-6fj7aypg/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-6fj7aypg/oracle.c:338:63: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_2(void) { Node a={-5,0}; if (oracle_candidate_list_sum(&a) != -5) return 1; return 0; }\n      |                                                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-6fj7aypg/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-6fj7aypg/oracle.c:344:107: error: void value not ignored as it ought to be\n  344 | static int oracle_case_candidate_3(void) { Node d={4,0}; Node c={3,&d}; Node b={2,&c}; Node a={1,&b}; if (oracle_candidate_list_sum(&a) != 10) return 1; return 0; }\n      |                                                                                                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-6fj7aypg/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-6fj7aypg/oracle.c:350:77: error: void value not ignored as it ought to be\n  350 | static int oracle_case_candidate_4(void) { Node b={0,0}; Node a={0,&b}; if (oracle_candidate_list_sum(&a) != 0) return 1; return 0; }\n      |                                                                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-fwno44ui/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-fwno44ui/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_0(void) { if (oracle_candidate_list_sum(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-fwno44ui/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-fwno44ui/oracle.c:332:92: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_1(void) { Node c={3,0}; Node b={2,&c}; Node a={1,&b}; if (oracle_candidate_list_sum(&a) != 6) return 1; return 0; }\n      |                                                                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-fwno44ui/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-fwno44ui/oracle.c:338:63: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_2(void) { Node a={-5,0}; if (oracle_candidate_list_sum(&a) != -5) return 1; return 0; }\n      |                                                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-fwno44ui/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-fwno44ui/oracle.c:344:107: error: void value not ignored as it ought to be\n  344 | static int oracle_case_candidate_3(void) { Node d={4,0}; Node c={3,&d}; Node b={2,&c}; Node a={1,&b}; if (oracle_candidate_list_sum(&a) != 10) return 1; return 0; }\n      |                                                                                                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-fwno44ui/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-fwno44ui/oracle.c:350:77: error: void value not ignored as it ought to be\n  350 | static int oracle_case_candidate_4(void) { Node b={0,0}; Node a={0,&b}; if (oracle_candidate_list_sum(&a) != 0) return 1; return 0; }\n      |                                                                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -9489,7 +9489,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpy6ydrr9x/bare.c: In function \u2018proc_140001530\u2019: /tmp/tmpy6ydrr9x/bare.c:30:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019? 30 | __size32 eax; // r24 | ^~~~~~~~ | __ssize_t /tmp/tmpy6ydrr9x/bare.c:31:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019? 31 | __size32 local0; // m[esp - 8] | ^~~~~~~~ | __ssize_t /tmp/tmpy6ydrr9x/bare.c:32:5: error: unknown type n",
+        "error": "/tmp/tmpnndi02mw/bare.c: In function \u2018proc_140001530\u2019: /tmp/tmpnndi02mw/bare.c:30:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019? 30 | __size32 eax; // r24 | ^~~~~~~~ | __ssize_t /tmp/tmpnndi02mw/bare.c:31:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019? 31 | __size32 local0; // m[esp - 8] | ^~~~~~~~ | __ssize_t /tmp/tmpnndi02mw/bare.c:32:5: error: unknown type n",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -9509,7 +9509,7 @@
       "source_similarity": 0.5714,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 721,
+      "time_ms": 662,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -9650,7 +9650,7 @@
       "source_similarity": 0.2353,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 719,
+      "time_ms": 660,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -9793,10 +9793,10 @@
       "source_similarity": 0.4286,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 1053,
+      "time_ms": 948,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-3bcjd1n4/oracle.c: In function \u2018oracle_candidate_list_sum\u2019:\n/tmp/fission-oracle-3bcjd1n4/oracle.c:312:21: error: invalid use of undefined type \u2018struct s1\u2019\n  312 |         v2 = v2 + v3->f0;\n      |                     ^~\n/tmp/fission-oracle-3bcjd1n4/oracle.c:313:16: error: invalid use of undefined type \u2018struct s1\u2019\n  313 |         v3 = v3->f8;\n      |                ^~\n",
+      "semantic_error": "/tmp/fission-oracle-cmrt8jie/oracle.c: In function \u2018oracle_candidate_list_sum\u2019:\n/tmp/fission-oracle-cmrt8jie/oracle.c:312:21: error: invalid use of undefined type \u2018struct s1\u2019\n  312 |         v2 = v2 + v3->f0;\n      |                     ^~\n/tmp/fission-oracle-cmrt8jie/oracle.c:313:16: error: invalid use of undefined type \u2018struct s1\u2019\n  313 |         v3 = v3->f8;\n      |                ^~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -9916,7 +9916,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmppr3b1l30/bare.c: In function \u2018fun_140001530\u2019: /tmp/tmppr3b1l30/bare.c:34:21: error: invalid use of undefined type \u2018struct s1\u2019 34 | v2 = v2 + v3->f0; | ^~ /tmp/tmppr3b1l30/bare.c:35:16: error: invalid use of undefined type \u2018struct s1\u2019 35 | v3 = v3->f8; | ^~",
+        "error": "/tmp/tmpyo_h5c4l/bare.c: In function \u2018fun_140001530\u2019: /tmp/tmpyo_h5c4l/bare.c:34:21: error: invalid use of undefined type \u2018struct s1\u2019 34 | v2 = v2 + v3->f0; | ^~ /tmp/tmpyo_h5c4l/bare.c:35:16: error: invalid use of undefined type \u2018struct s1\u2019 35 | v3 = v3->f8; | ^~",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -9936,10 +9936,10 @@
       "source_similarity": 0.0914,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 33613,
+      "time_ms": 31694,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-7ls_8nm2/oracle.c:305:104: error: unknown type name \u2018struct_210\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_list_sum(generic64_t register_rcx, generic64_t register_rdx, generic64_t register_r8, struct_210 stack_arguments /**/) {\n      |                                                                                                        ^~~~~~~~~~\n      |                                                                                                        struct\n",
+      "semantic_error": "/tmp/fission-oracle-2x34je_0/oracle.c:305:104: error: unknown type name \u2018struct_210\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_list_sum(generic64_t register_rcx, generic64_t register_rdx, generic64_t register_r8, struct_210 stack_arguments /**/) {\n      |                                                                                                        ^~~~~~~~~~\n      |                                                                                                        struct\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -10062,7 +10062,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmphzzlggc9/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001530(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_210 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmphzzlggc9/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001530(generic64_t register_rcx _",
+        "error": "/tmp/tmpishl627p/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001530(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_210 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmpishl627p/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001530(generic64_t register_rcx _",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -10082,10 +10082,10 @@
       "source_similarity": 0.1019,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 1251,
+      "time_ms": 1123,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-7lgi86d4/oracle.c: In function \u2018oracle_candidate_list_sum\u2019:\n/tmp/fission-oracle-7lgi86d4/oracle.c:308:46: error: \u2018null\u2019 undeclared (first use in this function)\n  308 |         for (qwLoc18_38 = rcx; qwLoc18_38 != null; qwLoc18_38 = qwLoc18_38->ptr0008)\n      |                                              ^~~~\n/tmp/fission-oracle-7lgi86d4/oracle.c:308:46: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-7lgi86d4/oracle.c:308:75: error: invalid use of undefined type \u2018struct Eq_518\u2019\n  308 |         for (qwLoc18_38 = rcx; qwLoc18_38 != null; qwLoc18_38 = qwLoc18_38->ptr0008)\n      |                                                                           ^~\n/tmp/fission-oracle-7lgi86d4/oracle.c:309:41: error: invalid use of undefined type \u2018struct Eq_518\u2019\n  309 |                 dwLoc0C_37 += qwLoc18_38->dw0000;\n      |                                         ^~\n",
+      "semantic_error": "/tmp/fission-oracle-0pzl6m3d/oracle.c: In function \u2018oracle_candidate_list_sum\u2019:\n/tmp/fission-oracle-0pzl6m3d/oracle.c:308:46: error: \u2018null\u2019 undeclared (first use in this function)\n  308 |         for (qwLoc18_38 = rcx; qwLoc18_38 != null; qwLoc18_38 = qwLoc18_38->ptr0008)\n      |                                              ^~~~\n/tmp/fission-oracle-0pzl6m3d/oracle.c:308:46: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-0pzl6m3d/oracle.c:308:75: error: invalid use of undefined type \u2018struct Eq_518\u2019\n  308 |         for (qwLoc18_38 = rcx; qwLoc18_38 != null; qwLoc18_38 = qwLoc18_38->ptr0008)\n      |                                                                           ^~\n/tmp/fission-oracle-0pzl6m3d/oracle.c:309:41: error: invalid use of undefined type \u2018struct Eq_518\u2019\n  309 |                 dwLoc0C_37 += qwLoc18_38->dw0000;\n      |                                         ^~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -10205,7 +10205,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmp9lkjojfw/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 list_sum(struct Eq_518 * rcx) | ^~~~~~ | word /tmp/tmp9lkjojfw/bare.c: In function \u2018list_sum\u2019: /tmp/tmp9lkjojfw/bare.c:28:9: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 28 | word32 dwLoc0C_37 = 0x00; | ^~~~~~ | word /tmp/tmp9lkjojfw/bare.c:30:46: error: \u2018null\u2019 undeclared (first use in this",
+        "error": "/tmp/tmpenim5yqy/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 list_sum(struct Eq_518 * rcx) | ^~~~~~ | word /tmp/tmpenim5yqy/bare.c: In function \u2018list_sum\u2019: /tmp/tmpenim5yqy/bare.c:28:9: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 28 | word32 dwLoc0C_37 = 0x00; | ^~~~~~ | word /tmp/tmpenim5yqy/bare.c:30:46: error: \u2018null\u2019 undeclared (first use in this",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -10225,7 +10225,7 @@
       "source_similarity": 0.195,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 291,
+      "time_ms": 266,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -10368,7 +10368,7 @@
       "source_similarity": 0.0983,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 7050,
+      "time_ms": 6916,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -10567,10 +10567,10 @@
       "source_similarity": 0.3946,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 18643,
+      "time_ms": 16672,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-u7sqy7j9/oracle.c: In function \u2018oracle_candidate_apply_binop\u2019:\n/tmp/fission-oracle-u7sqy7j9/oracle.c:311:3: error: unknown type name \u2018code\u2019; did you mean \u2018Node\u2019?\n  311 |   code *in_RCX;\n      |   ^~~~\n      |   Node\n/tmp/fission-oracle-u7sqy7j9/oracle.c:315:18: error: \u2018code\u2019 undeclared (first use in this function); did you mean \u2018Node\u2019?\n  315 |   if (in_RCX == (code *)0x0) {\n      |                  ^~~~\n      |                  Node\n/tmp/fission-oracle-u7sqy7j9/oracle.c:315:18: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-u7sqy7j9/oracle.c:315:24: error: expected expression before \u2018)\u2019 token\n  315 |   if (in_RCX == (code *)0x0) {\n      |                        ^\n/tmp/fission-oracle-u7sqy7j9/oracle.c:319:14: error: called object is not a function or function pointer\n  319 |     iVar1 = (*in_RCX)(in_EDX,in_R8D);\n      |             ~^~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-cyrdcwog/oracle.c: In function \u2018oracle_candidate_apply_binop\u2019:\n/tmp/fission-oracle-cyrdcwog/oracle.c:311:3: error: unknown type name \u2018code\u2019; did you mean \u2018Node\u2019?\n  311 |   code *in_RCX;\n      |   ^~~~\n      |   Node\n/tmp/fission-oracle-cyrdcwog/oracle.c:315:18: error: \u2018code\u2019 undeclared (first use in this function); did you mean \u2018Node\u2019?\n  315 |   if (in_RCX == (code *)0x0) {\n      |                  ^~~~\n      |                  Node\n/tmp/fission-oracle-cyrdcwog/oracle.c:315:18: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-cyrdcwog/oracle.c:315:24: error: expected expression before \u2018)\u2019 token\n  315 |   if (in_RCX == (code *)0x0) {\n      |                        ^\n/tmp/fission-oracle-cyrdcwog/oracle.c:319:14: error: called object is not a function or function pointer\n  319 |     iVar1 = (*in_RCX)(in_EDX,in_R8D);\n      |             ~^~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 6,
@@ -10697,7 +10697,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpho0o_1sl/bare.c:29:17: error: unknown type name \u2018binop_fn\u2019 29 | int apply_binop(binop_fn op,int a,int b) | ^~~~~~~~",
+        "error": "/tmp/tmpuhmscxbz/bare.c:29:17: error: unknown type name \u2018binop_fn\u2019 29 | int apply_binop(binop_fn op,int a,int b) | ^~~~~~~~",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -10717,10 +10717,10 @@
       "source_similarity": 0.2857,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 68,
+      "time_ms": 45,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-_zb_9zp5/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-_zb_9zp5/oracle.c:314:48: error: void value not ignored as it ought to be\n  314 | static int oracle_case_candidate_0(void) { if (oracle_candidate_apply_binop(0, 3, 4) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-_zb_9zp5/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-_zb_9zp5/oracle.c:320:48: error: void value not ignored as it ought to be\n  320 | static int oracle_case_candidate_1(void) { if (oracle_candidate_apply_binop((ulonglong)(uintptr_t)bench_add_ints, 3, 4) != 7) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-_zb_9zp5/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-_zb_9zp5/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_2(void) { if (oracle_candidate_apply_binop((ulonglong)(uintptr_t)bench_mul_ints, 2, 5) != 10) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-_zb_9zp5/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-_zb_9zp5/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_3(void) { if (oracle_candidate_apply_binop((ulonglong)(uintptr_t)bench_add_ints, -3, 8) != 5) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-_zb_9zp5/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-_zb_9zp5/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_4(void) { if (oracle_candidate_apply_binop((ulonglong)(uintptr_t)bench_mul_ints, -2, -4) != 8) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-_zb_9zp5/oracle.c: In function \u2018oracle_case_candidate_5\u2019:\n/tmp/fission-oracle-_zb_9zp5/oracle.c:344:48: error: void value not ignored as it ought to be\n  344 | static int oracle_case_candidate_5(void) { if (oracle_candidate_apply_binop((ulonglong)(uintptr_t)bench_add_ints, 0, 0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-i4g21i3d/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-i4g21i3d/oracle.c:314:48: error: void value not ignored as it ought to be\n  314 | static int oracle_case_candidate_0(void) { if (oracle_candidate_apply_binop(0, 3, 4) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-i4g21i3d/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-i4g21i3d/oracle.c:320:48: error: void value not ignored as it ought to be\n  320 | static int oracle_case_candidate_1(void) { if (oracle_candidate_apply_binop((ulonglong)(uintptr_t)bench_add_ints, 3, 4) != 7) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-i4g21i3d/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-i4g21i3d/oracle.c:326:48: error: void value not ignored as it ought to be\n  326 | static int oracle_case_candidate_2(void) { if (oracle_candidate_apply_binop((ulonglong)(uintptr_t)bench_mul_ints, 2, 5) != 10) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-i4g21i3d/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-i4g21i3d/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_3(void) { if (oracle_candidate_apply_binop((ulonglong)(uintptr_t)bench_add_ints, -3, 8) != 5) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-i4g21i3d/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-i4g21i3d/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_4(void) { if (oracle_candidate_apply_binop((ulonglong)(uintptr_t)bench_mul_ints, -2, -4) != 8) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-i4g21i3d/oracle.c: In function \u2018oracle_case_candidate_5\u2019:\n/tmp/fission-oracle-i4g21i3d/oracle.c:344:48: error: void value not ignored as it ought to be\n  344 | static int oracle_case_candidate_5(void) { if (oracle_candidate_apply_binop((ulonglong)(uintptr_t)bench_add_ints, 0, 0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 6,
@@ -10860,10 +10860,10 @@
       "source_similarity": 0.0,
       "goto_count": 0,
       "nesting_depth": 0,
-      "time_ms": 721,
-      "error": "Process terminated unexpectedly trying to run the command pdg @ 0x1400015dc\n<Popen: returncode: -11 args: ['radare2', '-q0', '/tmp/tmp94g7uwvd.bin']>",
+      "time_ms": 662,
+      "error": "Process terminated unexpectedly trying to run the command pdg @ 0x1400015dc\n<Popen: returncode: -11 args: ['radare2', '-q0', '/tmp/tmpp6d80cbt.bin']>",
       "semantic_score": 0.0,
-      "semantic_error": "Process terminated unexpectedly trying to run the command pdg @ 0x1400015dc\n<Popen: returncode: -11 args: ['radare2', '-q0', '/tmp/tmp94g7uwvd.bin']>",
+      "semantic_error": "Process terminated unexpectedly trying to run the command pdg @ 0x1400015dc\n<Popen: returncode: -11 args: ['radare2', '-q0', '/tmp/tmpp6d80cbt.bin']>",
       "fail_category": "adapter_error",
       "cases_passed": 0,
       "cases_total": 0,
@@ -10888,7 +10888,7 @@
       "bare_compile": {
         "ok": false,
         "category": "empty",
-        "error": "Process terminated unexpectedly trying to run the command pdg @ 0x1400015dc\n<Popen: returncode: -11 args: ['radare2', '-q0', '/tmp/tmp94g7uwvd.bin']>"
+        "error": "Process terminated unexpectedly trying to run the command pdg @ 0x1400015dc\n<Popen: returncode: -11 args: ['radare2', '-q0', '/tmp/tmpp6d80cbt.bin']>"
       },
       "track": "dev",
       "language": "c",
@@ -10906,10 +10906,10 @@
       "source_similarity": 0.5175,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 719,
+      "time_ms": 660,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-hccg3zug/oracle.c: In function \u2018oracle_candidate_apply_binop\u2019:\n/tmp/fission-oracle-hccg3zug/oracle.c:306:37: error: called object \u2018a0\u2019 is not a function or function pointer\n  306 |     return (!a0 ? 0 : (unsigned int)a0(a1, a2, a0));\n      |                                     ^~\n/tmp/fission-oracle-hccg3zug/oracle.c:304:63: note: declared here\n  304 | unsigned int oracle_candidate_apply_binop(unsigned long long *a0, unsigned int a1, unsigned int a2)\n      |                                           ~~~~~~~~~~~~~~~~~~~~^~\n",
+      "semantic_error": "/tmp/fission-oracle-sd5swns7/oracle.c: In function \u2018oracle_candidate_apply_binop\u2019:\n/tmp/fission-oracle-sd5swns7/oracle.c:306:37: error: called object \u2018a0\u2019 is not a function or function pointer\n  306 |     return (!a0 ? 0 : (unsigned int)a0(a1, a2, a0));\n      |                                     ^~\n/tmp/fission-oracle-sd5swns7/oracle.c:304:63: note: declared here\n  304 | unsigned int oracle_candidate_apply_binop(unsigned long long *a0, unsigned int a1, unsigned int a2)\n      |                                           ~~~~~~~~~~~~~~~~~~~~^~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 6,
@@ -11029,7 +11029,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmppz0ru34j/bare.c: In function \u2018apply_binop\u2019: /tmp/tmppz0ru34j/bare.c:28:37: error: called object \u2018a0\u2019 is not a function or function pointer 28 | return (!a0 ? 0 : (unsigned int)a0(a1, a2, a0)); | ^~ /tmp/tmppz0ru34j/bare.c:26:46: note: declared here 26 | unsigned int apply_binop(unsigned long long *a0, unsigned int a1, unsigned int a2) | ~~~~~~~~~~~~~~~~~~~~^~",
+        "error": "/tmp/tmpj33iyndc/bare.c: In function \u2018apply_binop\u2019: /tmp/tmpj33iyndc/bare.c:28:37: error: called object \u2018a0\u2019 is not a function or function pointer 28 | return (!a0 ? 0 : (unsigned int)a0(a1, a2, a0)); | ^~ /tmp/tmpj33iyndc/bare.c:26:46: note: declared here 26 | unsigned int apply_binop(unsigned long long *a0, unsigned int a1, unsigned int a2) | ~~~~~~~~~~~~~~~~~~~~^~",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -11049,10 +11049,10 @@
       "source_similarity": 0.0305,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 1053,
+      "time_ms": 948,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-uw_hn2u9/oracle.c: In function \u2018oracle_candidate_apply_binop\u2019:\n/tmp/fission-oracle-uw_hn2u9/oracle.c:312:22: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n  312 |         *((int32_t*)(reinterpret_cast<int64_t>(&rdx4)) + 4) = 0;\n      |                      ^~~~~~~~~~~~~~~~\n/tmp/fission-oracle-uw_hn2u9/oracle.c:312:22: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-uw_hn2u9/oracle.c:312:39: error: expected expression before \u2018int64_t\u2019\n  312 |         *((int32_t*)(reinterpret_cast<int64_t>(&rdx4)) + 4) = 0;\n      |                                       ^~~~~~~\n/tmp/fission-oracle-uw_hn2u9/oracle.c:314:39: error: expected expression before \u2018int64_t\u2019\n  314 |         *((int32_t*)(reinterpret_cast<int64_t>(&rcx5)) + 4) = 0;\n      |                                       ^~~~~~~\n/tmp/fission-oracle-uw_hn2u9/oracle.c:315:28: error: called object \u2018rcx\u2019 is not a function or function pointer\n  315 |         eax6 = ((uint32_t)(rcx(rcx5, rdx4)));\n      |                            ^~~\n/tmp/fission-oracle-uw_hn2u9/oracle.c:305:47: note: declared here\n  305 | uint32_t oracle_candidate_apply_binop(int64_t rcx, int32_t edx, int32_t r8d) {\n      |                                       ~~~~~~~~^~~\n",
+      "semantic_error": "/tmp/fission-oracle-age5ehrg/oracle.c: In function \u2018oracle_candidate_apply_binop\u2019:\n/tmp/fission-oracle-age5ehrg/oracle.c:312:22: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n  312 |         *((int32_t*)(reinterpret_cast<int64_t>(&rdx4)) + 4) = 0;\n      |                      ^~~~~~~~~~~~~~~~\n/tmp/fission-oracle-age5ehrg/oracle.c:312:22: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-age5ehrg/oracle.c:312:39: error: expected expression before \u2018int64_t\u2019\n  312 |         *((int32_t*)(reinterpret_cast<int64_t>(&rdx4)) + 4) = 0;\n      |                                       ^~~~~~~\n/tmp/fission-oracle-age5ehrg/oracle.c:314:39: error: expected expression before \u2018int64_t\u2019\n  314 |         *((int32_t*)(reinterpret_cast<int64_t>(&rcx5)) + 4) = 0;\n      |                                       ^~~~~~~\n/tmp/fission-oracle-age5ehrg/oracle.c:315:28: error: called object \u2018rcx\u2019 is not a function or function pointer\n  315 |         eax6 = ((uint32_t)(rcx(rcx5, rdx4)));\n      |                            ^~~\n/tmp/fission-oracle-age5ehrg/oracle.c:305:47: note: declared here\n  305 | uint32_t oracle_candidate_apply_binop(int64_t rcx, int32_t edx, int32_t r8d) {\n      |                                       ~~~~~~~~^~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 6,
@@ -11172,7 +11172,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpa86hky5i/bare.c: In function \u2018fun_1400015dc\u2019: /tmp/tmpa86hky5i/bare.c:33:10: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function) 33 | *reinterpret_cast<int32_t*>(&rdx4) = r8d; | ^~~~~~~~~~~~~~~~ /tmp/tmpa86hky5i/bare.c:33:10: note: each undeclared identifier is reported only once for each function it appears in /tmp/tmpa86hky5i/bare.c:33:27: error: expected expression before ",
+        "error": "/tmp/tmpy2gqpjqw/bare.c: In function \u2018fun_1400015dc\u2019: /tmp/tmpy2gqpjqw/bare.c:33:10: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function) 33 | *reinterpret_cast<int32_t*>(&rdx4) = r8d; | ^~~~~~~~~~~~~~~~ /tmp/tmpy2gqpjqw/bare.c:33:10: note: each undeclared identifier is reported only once for each function it appears in /tmp/tmpy2gqpjqw/bare.c:33:27: error: expected expression before ",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -11192,10 +11192,10 @@
       "source_similarity": 0.1121,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 33613,
+      "time_ms": 31694,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-zlxj1spc/oracle.c:305:107: error: unknown type name \u2018struct_209\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_apply_binop(generic64_t register_rcx, generic64_t register_rdx, generic64_t register_r8, struct_209 stack_arguments /**/) {\n      |                                                                                                           ^~~~~~~~~~\n      |                                                                                                           struct\n",
+      "semantic_error": "/tmp/fission-oracle-50gb0tg_/oracle.c:305:107: error: unknown type name \u2018struct_209\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_apply_binop(generic64_t register_rcx, generic64_t register_rdx, generic64_t register_r8, struct_209 stack_arguments /**/) {\n      |                                                                                                           ^~~~~~~~~~\n      |                                                                                                           struct\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 6,
@@ -11318,7 +11318,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmptwk7362q/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x1400015dc(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_209 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmptwk7362q/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x1400015dc(generic64_t register_rcx _",
+        "error": "/tmp/tmpmxgy7yh4/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x1400015dc(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), generic64_t register_r8 _REG(r8_x86_64), struct_209 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmpmxgy7yh4/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x1400015dc(generic64_t register_rcx _",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -11338,10 +11338,10 @@
       "source_similarity": 0.1166,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 1251,
+      "time_ms": 1123,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-a5lrbon7/oracle.c:304:37: error: unknown type name \u2018ptr64\u2019\n  304 | word32 oracle_candidate_apply_binop(ptr64 rcx, word32 edx, word32 r8d)\n      |                                     ^~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-ys4xsaqj/oracle.c:304:37: error: unknown type name \u2018ptr64\u2019\n  304 | word32 oracle_candidate_apply_binop(ptr64 rcx, word32 edx, word32 r8d)\n      |                                     ^~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 6,
@@ -11461,7 +11461,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmp2pfj45qm/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 apply_binop(ptr64 rcx, word32 edx, word32 r8d) | ^~~~~~ | word /tmp/tmp2pfj45qm/bare.c:26:20: error: unknown type name \u2018ptr64\u2019 26 | word32 apply_binop(ptr64 rcx, word32 edx, word32 r8d) | ^~~~~ /tmp/tmp2pfj45qm/bare.c:26:31: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 apply_bin",
+        "error": "/tmp/tmprrfhziy4/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 apply_binop(ptr64 rcx, word32 edx, word32 r8d) | ^~~~~~ | word /tmp/tmprrfhziy4/bare.c:26:20: error: unknown type name \u2018ptr64\u2019 26 | word32 apply_binop(ptr64 rcx, word32 edx, word32 r8d) | ^~~~~ /tmp/tmprrfhziy4/bare.c:26:31: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 apply_bin",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -11481,7 +11481,7 @@
       "source_similarity": 0.42,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 291,
+      "time_ms": 266,
       "error": null,
       "semantic_score": 0.3333333333333333,
       "semantic_error": "candidate passed 2/6 cases",
@@ -11624,7 +11624,7 @@
       "source_similarity": 0.2222,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 5495,
+      "time_ms": 5603,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -11834,7 +11834,7 @@
       "source_similarity": 0.3212,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 56008,
+      "time_ms": 54121,
       "error": null,
       "semantic_score": 0.16666666666666666,
       "semantic_error": "candidate passed 1/6 cases",
@@ -11993,10 +11993,10 @@
       "source_similarity": 0.0415,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 266,
+      "time_ms": 153,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "on { int; void *; } esp;                 // r28\n      |                        ^\n/tmp/fission-oracle-q0_4h277/oracle.c:322:62: error: invalid operands to binary - (have \u2018union <anonymous>\u2019 and \u2018int\u2019)\n  322 |         eax_1 = proc_0x00001531(param1 - 1, param1 - 1, (esp - 16), SUBFLAGS32(param1, 1, param1 - 1), param1 == 1, param1 < 1, (int)param1 < 1, (int)param1 < 0 && (int)param1 >= 1, ebx, param1, ebp, ebx, pc); /* Warning: also results in esp_1, ebp */\n      |                                                              ^\n/tmp/fission-oracle-q0_4h277/oracle.c:322:206: error: \u2018pc\u2019 undeclared (first use in this function)\n  322 |         eax_1 = proc_0x00001531(param1 - 1, param1 - 1, (esp - 16), SUBFLAGS32(param1, 1, param1 - 1), param1 == 1, param1 < 1, (int)param1 < 1, (int)param1 < 0 && (int)param1 >= 1, ebx, param1, ebp, ebx, pc); /* Warning: also results in esp_1, ebp */\n      |                                                                                                                                                                                                              ^~\n/tmp/fission-oracle-q0_4h277/oracle.c:322:206: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-q0_4h277/oracle.c:323:21: error: invalid operands to binary + (have \u2018union <anonymous>\u2019 and \u2018int\u2019)\n  323 |         eax = *(ebp + 32);\n      |                     ^\n/tmp/fission-oracle-q0_4h277/oracle.c:324:55: error: expected expression before \u2018<\u2019 token\n  324 |         proc_0x00001531(eax - 2, eax - 2, eax_1, ebp, <all>, SUBFLAGS32(eax, 2, eax - 2), eax == 2, eax < 2, (int)eax < 2, (int)eax < 0 && (int)eax >= 2, local0, local1, local2, local3);\n      |                                                       ^\n/tmp/fission-oracle-q0_4h277/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-q0_4h277/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_0(void) { if (oracle_candidate_fibonacci(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-q0_4h277/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-q0_4h277/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_1(void) { if (oracle_candidate_fibonacci(1) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-q0_4h277/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-q0_4h277/oracle.c:344:48: error: void value not ignored as it ought to be\n  344 | static int oracle_case_candidate_2(void) { if (oracle_candidate_fibonacci(5) != 5) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-q0_4h277/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-q0_4h277/oracle.c:350:48: error: void value not ignored as it ought to be\n  350 | static int oracle_case_candidate_3(void) { if (oracle_candidate_fibonacci(10) != 55) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-q0_4h277/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-q0_4h277/oracle.c:356:48: error: void value not ignored as it ought to be\n  356 | static int oracle_case_candidate_4(void) { if (oracle_candidate_fibonacci(2) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-q0_4h277/oracle.c: In function \u2018oracle_case_candidate_5\u2019:\n/tmp/fission-oracle-q0_4h277/oracle.c:362:48: error: void value not ignored as it ought to be\n  362 | static int oracle_case_candidate_5(void) { if (oracle_candidate_fibonacci(15) != 610) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "on { int; void *; } esp;                 // r28\n      |                        ^\n/tmp/fission-oracle-2ztg4vg0/oracle.c:322:62: error: invalid operands to binary - (have \u2018union <anonymous>\u2019 and \u2018int\u2019)\n  322 |         eax_1 = proc_0x00001531(param1 - 1, param1 - 1, (esp - 16), SUBFLAGS32(param1, 1, param1 - 1), param1 == 1, param1 < 1, (int)param1 < 1, (int)param1 < 0 && (int)param1 >= 1, ebx, param1, ebp, ebx, pc); /* Warning: also results in esp_1, ebp */\n      |                                                              ^\n/tmp/fission-oracle-2ztg4vg0/oracle.c:322:206: error: \u2018pc\u2019 undeclared (first use in this function)\n  322 |         eax_1 = proc_0x00001531(param1 - 1, param1 - 1, (esp - 16), SUBFLAGS32(param1, 1, param1 - 1), param1 == 1, param1 < 1, (int)param1 < 1, (int)param1 < 0 && (int)param1 >= 1, ebx, param1, ebp, ebx, pc); /* Warning: also results in esp_1, ebp */\n      |                                                                                                                                                                                                              ^~\n/tmp/fission-oracle-2ztg4vg0/oracle.c:322:206: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-2ztg4vg0/oracle.c:323:21: error: invalid operands to binary + (have \u2018union <anonymous>\u2019 and \u2018int\u2019)\n  323 |         eax = *(ebp + 32);\n      |                     ^\n/tmp/fission-oracle-2ztg4vg0/oracle.c:324:55: error: expected expression before \u2018<\u2019 token\n  324 |         proc_0x00001531(eax - 2, eax - 2, eax_1, ebp, <all>, SUBFLAGS32(eax, 2, eax - 2), eax == 2, eax < 2, (int)eax < 2, (int)eax < 0 && (int)eax >= 2, local0, local1, local2, local3);\n      |                                                       ^\n/tmp/fission-oracle-2ztg4vg0/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-2ztg4vg0/oracle.c:332:48: error: void value not ignored as it ought to be\n  332 | static int oracle_case_candidate_0(void) { if (oracle_candidate_fibonacci(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-2ztg4vg0/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-2ztg4vg0/oracle.c:338:48: error: void value not ignored as it ought to be\n  338 | static int oracle_case_candidate_1(void) { if (oracle_candidate_fibonacci(1) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-2ztg4vg0/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-2ztg4vg0/oracle.c:344:48: error: void value not ignored as it ought to be\n  344 | static int oracle_case_candidate_2(void) { if (oracle_candidate_fibonacci(5) != 5) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-2ztg4vg0/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-2ztg4vg0/oracle.c:350:48: error: void value not ignored as it ought to be\n  350 | static int oracle_case_candidate_3(void) { if (oracle_candidate_fibonacci(10) != 55) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-2ztg4vg0/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-2ztg4vg0/oracle.c:356:48: error: void value not ignored as it ought to be\n  356 | static int oracle_case_candidate_4(void) { if (oracle_candidate_fibonacci(2) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-2ztg4vg0/oracle.c: In function \u2018oracle_case_candidate_5\u2019:\n/tmp/fission-oracle-2ztg4vg0/oracle.c:362:48: error: void value not ignored as it ought to be\n  362 | static int oracle_case_candidate_5(void) { if (oracle_candidate_fibonacci(15) != 610) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 6,
@@ -12116,7 +12116,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmps2nrcu19/bare.c: In function \u2018proc_140001530\u2019: /tmp/tmps2nrcu19/bare.c:31:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019? 31 | __size32 eax_1; // r24{5} | ^~~~~~~~ | __ssize_t /tmp/tmps2nrcu19/bare.c:32:24: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token 32 | union { int; void *; } ebp; // r29 | ^ /tmp/tmps2nrcu19/bare.c:33:5: error: unknown type name \u2018__size32\u2019; did y",
+        "error": "/tmp/tmpkmwhv8b8/bare.c: In function \u2018proc_140001530\u2019: /tmp/tmpkmwhv8b8/bare.c:31:5: error: unknown type name \u2018__size32\u2019; did you mean \u2018__ssize_t\u2019? 31 | __size32 eax_1; // r24{5} | ^~~~~~~~ | __ssize_t /tmp/tmpkmwhv8b8/bare.c:32:24: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token 32 | union { int; void *; } ebp; // r29 | ^ /tmp/tmpkmwhv8b8/bare.c:33:5: error: unknown type name \u2018__size32\u2019; did y",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -12136,7 +12136,7 @@
       "source_similarity": 0.3128,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 601,
+      "time_ms": 630,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -12288,7 +12288,7 @@
       "source_similarity": 0.5974,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 1776,
+      "time_ms": 1778,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -12442,10 +12442,10 @@
       "source_similarity": 0.1104,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 937,
+      "time_ms": 769,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-t8pho6ez/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-t8pho6ez/oracle.c:323:48: error: too few arguments to function \u2018oracle_candidate_fibonacci\u2019\n  323 | static int oracle_case_candidate_0(void) { if (oracle_candidate_fibonacci(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-t8pho6ez/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_fibonacci(int32_t ecx, int64_t rdx) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-t8pho6ez/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-t8pho6ez/oracle.c:329:48: error: too few arguments to function \u2018oracle_candidate_fibonacci\u2019\n  329 | static int oracle_case_candidate_1(void) { if (oracle_candidate_fibonacci(1) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-t8pho6ez/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_fibonacci(int32_t ecx, int64_t rdx) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-t8pho6ez/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-t8pho6ez/oracle.c:335:48: error: too few arguments to function \u2018oracle_candidate_fibonacci\u2019\n  335 | static int oracle_case_candidate_2(void) { if (oracle_candidate_fibonacci(5) != 5) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-t8pho6ez/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_fibonacci(int32_t ecx, int64_t rdx) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-t8pho6ez/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-t8pho6ez/oracle.c:341:48: error: too few arguments to function \u2018oracle_candidate_fibonacci\u2019\n  341 | static int oracle_case_candidate_3(void) { if (oracle_candidate_fibonacci(10) != 55) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-t8pho6ez/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_fibonacci(int32_t ecx, int64_t rdx) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-t8pho6ez/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-t8pho6ez/oracle.c:347:48: error: too few arguments to function \u2018oracle_candidate_fibonacci\u2019\n  347 | static int oracle_case_candidate_4(void) { if (oracle_candidate_fibonacci(2) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-t8pho6ez/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_fibonacci(int32_t ecx, int64_t rdx) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-t8pho6ez/oracle.c: In function \u2018oracle_case_candidate_5\u2019:\n/tmp/fission-oracle-t8pho6ez/oracle.c:353:48: error: too few arguments to function \u2018oracle_candidate_fibonacci\u2019\n  353 | static int oracle_case_candidate_5(void) { if (oracle_candidate_fibonacci(15) != 610) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-t8pho6ez/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_fibonacci(int32_t ecx, int64_t rdx) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-add1jm2o/oracle.c: In function \u2018oracle_case_candidate_0\u2019:\n/tmp/fission-oracle-add1jm2o/oracle.c:323:48: error: too few arguments to function \u2018oracle_candidate_fibonacci\u2019\n  323 | static int oracle_case_candidate_0(void) { if (oracle_candidate_fibonacci(0) != 0) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-add1jm2o/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_fibonacci(int32_t ecx, int64_t rdx) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-add1jm2o/oracle.c: In function \u2018oracle_case_candidate_1\u2019:\n/tmp/fission-oracle-add1jm2o/oracle.c:329:48: error: too few arguments to function \u2018oracle_candidate_fibonacci\u2019\n  329 | static int oracle_case_candidate_1(void) { if (oracle_candidate_fibonacci(1) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-add1jm2o/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_fibonacci(int32_t ecx, int64_t rdx) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-add1jm2o/oracle.c: In function \u2018oracle_case_candidate_2\u2019:\n/tmp/fission-oracle-add1jm2o/oracle.c:335:48: error: too few arguments to function \u2018oracle_candidate_fibonacci\u2019\n  335 | static int oracle_case_candidate_2(void) { if (oracle_candidate_fibonacci(5) != 5) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-add1jm2o/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_fibonacci(int32_t ecx, int64_t rdx) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-add1jm2o/oracle.c: In function \u2018oracle_case_candidate_3\u2019:\n/tmp/fission-oracle-add1jm2o/oracle.c:341:48: error: too few arguments to function \u2018oracle_candidate_fibonacci\u2019\n  341 | static int oracle_case_candidate_3(void) { if (oracle_candidate_fibonacci(10) != 55) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-add1jm2o/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_fibonacci(int32_t ecx, int64_t rdx) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-add1jm2o/oracle.c: In function \u2018oracle_case_candidate_4\u2019:\n/tmp/fission-oracle-add1jm2o/oracle.c:347:48: error: too few arguments to function \u2018oracle_candidate_fibonacci\u2019\n  347 | static int oracle_case_candidate_4(void) { if (oracle_candidate_fibonacci(2) != 1) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-add1jm2o/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_fibonacci(int32_t ecx, int64_t rdx) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-add1jm2o/oracle.c: In function \u2018oracle_case_candidate_5\u2019:\n/tmp/fission-oracle-add1jm2o/oracle.c:353:48: error: too few arguments to function \u2018oracle_candidate_fibonacci\u2019\n  353 | static int oracle_case_candidate_5(void) { if (oracle_candidate_fibonacci(15) != 610) return 1; return 0; }\n      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/fission-oracle-add1jm2o/oracle.c:305:9: note: declared here\n  305 | int32_t oracle_candidate_fibonacci(int32_t ecx, int64_t rdx) {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 6,
@@ -12596,10 +12596,10 @@
       "source_similarity": 0.0395,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 112455,
+      "time_ms": 101014,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-6uo8aubt/oracle.c:305:54: error: unknown type name \u2018struct_220\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_fibonacci(generic64_t register_rcx, struct_220 stack_arguments /**/) {\n      |                                                      ^~~~~~~~~~\n      |                                                      struct\n",
+      "semantic_error": "/tmp/fission-oracle-kwfszsxt/oracle.c:305:54: error: unknown type name \u2018struct_220\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_fibonacci(generic64_t register_rcx, struct_220 stack_arguments /**/) {\n      |                                                      ^~~~~~~~~~\n      |                                                      struct\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 6,
@@ -12722,7 +12722,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpe9pzxj_1/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001530(generic64_t register_rcx _REG(rcx_x86_64), struct_220 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmpe9pzxj_1/bare.c:27:65: error: unknown type name \u2018struct_220\u2019; did you mean \u2018struct\u2019? 27 | function_0x140001530(generic64_t register_rcx _REG(rcx_x86_64), struct_220 stack_arguments /*_STACK*/) { | ^",
+        "error": "/tmp/tmpp10qohv7/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001530(generic64_t register_rcx _REG(rcx_x86_64), struct_220 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmpp10qohv7/bare.c:27:65: error: unknown type name \u2018struct_220\u2019; did you mean \u2018struct\u2019? 27 | function_0x140001530(generic64_t register_rcx _REG(rcx_x86_64), struct_220 stack_arguments /*_STACK*/) { | ^",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -12742,7 +12742,7 @@
       "source_similarity": 0.2895,
       "goto_count": 0,
       "nesting_depth": 1,
-      "time_ms": 4912,
+      "time_ms": 4149,
       "error": null,
       "semantic_score": 0.3333333333333333,
       "semantic_error": "candidate passed 2/6 cases",
@@ -12865,7 +12865,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpkqtgtmn4/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 fibonacci(int32 ecx) | ^~~~~~ | word /tmp/tmpkqtgtmn4/bare.c:26:18: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019? 26 | word32 fibonacci(int32 ecx) | ^~~~~ | int32_t",
+        "error": "/tmp/tmp_lvbz06e/bare.c:26:1: error: unknown type name \u2018word32\u2019; did you mean \u2018word\u2019? 26 | word32 fibonacci(int32 ecx) | ^~~~~~ | word /tmp/tmp_lvbz06e/bare.c:26:18: error: unknown type name \u2018int32\u2019; did you mean \u2018int32_t\u2019? 26 | word32 fibonacci(int32 ecx) | ^~~~~ | int32_t",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -12885,7 +12885,7 @@
       "source_similarity": 0.3158,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 917,
+      "time_ms": 1131,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -13039,7 +13039,7 @@
       "source_similarity": 0.0999,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 4440,
+      "time_ms": 4204,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -13238,7 +13238,7 @@
       "source_similarity": 0.251,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 28323,
+      "time_ms": 33058,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -13387,10 +13387,10 @@
       "source_similarity": 0.0665,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 159,
+      "time_ms": 102,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-xeajuqty/oracle.c:306:59: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token\n  306 | void proc_0x00001530(union { unsigned int; unsigned char *; } param1, union { unsigned int; unsigned char *; } param2)\n      |                                                           ^\n/tmp/fission-oracle-xeajuqty/oracle.c:306:108: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token\n  306 | void proc_0x00001530(union { unsigned int; unsigned char *; } param1, union { unsigned int; unsigned char *; } param2)\n      |                                                                                                            ^\n/tmp/fission-oracle-xeajuqty/oracle.c: In function \u2018proc_0x00001530\u2019:\n/tmp/fission-oracle-xeajuqty/oracle.c:310:42: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token\n  310 |     union { unsigned int; unsigned char *; } local0;            // m[esp - 12]\n      |                                          ^\n/tmp/fission-oracle-xeajuqty/oracle.c:311:42: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token\n  311 |     union { unsigned int; unsigned char *; } local1;            // m[esp - 20]\n      |                                          ^\n/tmp/fission-oracle-xeajuqty/oracle.c:313:45: error: invalid operands to binary != (have \u2018union <anonymous>\u2019 and \u2018int\u2019)\n  313 |     oracle_candidate_reverse_string (param2 != 0) {\n      |                                             ^~\n/tmp/fission-oracle-xeajuqty/oracle.c:313:50: error: expected \u2018;\u2019 before \u2018{\u2019 token\n  313 |     oracle_candidate_reverse_string (param2 != 0) {\n      |                                                  ^~\n      |                                                  ;\n",
+      "semantic_error": "/tmp/fission-oracle-__q7l2dn/oracle.c:306:59: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token\n  306 | void proc_0x00001530(union { unsigned int; unsigned char *; } param1, union { unsigned int; unsigned char *; } param2)\n      |                                                           ^\n/tmp/fission-oracle-__q7l2dn/oracle.c:306:108: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token\n  306 | void proc_0x00001530(union { unsigned int; unsigned char *; } param1, union { unsigned int; unsigned char *; } param2)\n      |                                                                                                            ^\n/tmp/fission-oracle-__q7l2dn/oracle.c: In function \u2018proc_0x00001530\u2019:\n/tmp/fission-oracle-__q7l2dn/oracle.c:310:42: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token\n  310 |     union { unsigned int; unsigned char *; } local0;            // m[esp - 12]\n      |                                          ^\n/tmp/fission-oracle-__q7l2dn/oracle.c:311:42: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token\n  311 |     union { unsigned int; unsigned char *; } local1;            // m[esp - 20]\n      |                                          ^\n/tmp/fission-oracle-__q7l2dn/oracle.c:313:45: error: invalid operands to binary != (have \u2018union <anonymous>\u2019 and \u2018int\u2019)\n  313 |     oracle_candidate_reverse_string (param2 != 0) {\n      |                                             ^~\n/tmp/fission-oracle-__q7l2dn/oracle.c:313:50: error: expected \u2018;\u2019 before \u2018{\u2019 token\n  313 |     oracle_candidate_reverse_string (param2 != 0) {\n      |                                                  ^~\n      |                                                  ;\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -13510,7 +13510,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmp7pgi0hic/bare.c:28:59: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token 28 | void proc_0x00001530(union { unsigned int; unsigned char *; } param1, union { unsigned int; unsigned char *; } param2) | ^ /tmp/tmp7pgi0hic/bare.c:28:108: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token 28 | void proc_0x00001530(union { unsigned int; unsigned char *; } param1, union { unsigned int; unsigned c",
+        "error": "/tmp/tmpsnyxx3hm/bare.c:28:59: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token 28 | void proc_0x00001530(union { unsigned int; unsigned char *; } param1, union { unsigned int; unsigned char *; } param2) | ^ /tmp/tmpsnyxx3hm/bare.c:28:108: error: expected identifier or \u2018(\u2019 before \u2018;\u2019 token 28 | void proc_0x00001530(union { unsigned int; unsigned char *; } param1, union { unsigned int; unsigned c",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -13530,10 +13530,10 @@
       "source_similarity": 0.2367,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 427,
+      "time_ms": 595,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/usr/bin/x86_64-w64-mingw32-ld: /tmp/cc531UZc.o:oracle.c:(.text+0x9e4): undefined reference to `CONCAT44'\n/usr/bin/x86_64-w64-mingw32-ld: /tmp/cc531UZc.o:oracle.c:(.text+0x9f6): undefined reference to `CONCAT44'\ncollect2: error: ld returned 1 exit status\n",
+      "semantic_error": "/usr/bin/x86_64-w64-mingw32-ld: /tmp/ccdHExD9.o:oracle.c:(.text+0x9e4): undefined reference to `CONCAT44'\n/usr/bin/x86_64-w64-mingw32-ld: /tmp/ccdHExD9.o:oracle.c:(.text+0x9f6): undefined reference to `CONCAT44'\ncollect2: error: ld returned 1 exit status\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -13682,7 +13682,7 @@
       "source_similarity": 0.2103,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 2023,
+      "time_ms": 1864,
       "error": null,
       "semantic_score": 0.0,
       "semantic_error": "oracle emitted 0/5 cases",
@@ -13836,10 +13836,10 @@
       "source_similarity": 0.0605,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 937,
+      "time_ms": 693,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-99o_2sgk/oracle.c: In function \u2018oracle_candidate_reverse_string\u2019:\n/tmp/fission-oracle-99o_2sgk/oracle.c:314:32: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n  314 |         v4 = ((unsigned char*)(reinterpret_cast<uint64_t>(rcx)) + (rdx - 1));\n      |                                ^~~~~~~~~~~~~~~~\n/tmp/fission-oracle-99o_2sgk/oracle.c:314:32: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-99o_2sgk/oracle.c:314:49: error: expected expression before \u2018uint64_t\u2019\n  314 |         v4 = ((unsigned char*)(reinterpret_cast<uint64_t>(rcx)) + (rdx - 1));\n      |                                                 ^~~~~~~~\n",
+      "semantic_error": "/tmp/fission-oracle-sb7bxbpj/oracle.c: In function \u2018oracle_candidate_reverse_string\u2019:\n/tmp/fission-oracle-sb7bxbpj/oracle.c:314:32: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function)\n  314 |         v4 = ((unsigned char*)(reinterpret_cast<uint64_t>(rcx)) + (rdx - 1));\n      |                                ^~~~~~~~~~~~~~~~\n/tmp/fission-oracle-sb7bxbpj/oracle.c:314:32: note: each undeclared identifier is reported only once for each function it appears in\n/tmp/fission-oracle-sb7bxbpj/oracle.c:314:49: error: expected expression before \u2018uint64_t\u2019\n  314 |         v4 = ((unsigned char*)(reinterpret_cast<uint64_t>(rcx)) + (rdx - 1));\n      |                                                 ^~~~~~~~\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -13959,7 +13959,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpz2024usq/bare.c: In function \u2018fun_140001530\u2019: /tmp/tmpz2024usq/bare.c:36:14: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function) 36 | v4 = reinterpret_cast<unsigned char*>(reinterpret_cast<uint64_t>(rcx) + (rdx - 1)); | ^~~~~~~~~~~~~~~~ /tmp/tmpz2024usq/bare.c:36:14: note: each undeclared identifier is reported only once for each function it appears in /tmp/tmpz2024usq/bare.c",
+        "error": "/tmp/tmpigzndspy/bare.c: In function \u2018fun_140001530\u2019: /tmp/tmpigzndspy/bare.c:36:14: error: \u2018reinterpret_cast\u2019 undeclared (first use in this function) 36 | v4 = reinterpret_cast<unsigned char*>(reinterpret_cast<uint64_t>(rcx) + (rdx - 1)); | ^~~~~~~~~~~~~~~~ /tmp/tmpigzndspy/bare.c:36:14: note: each undeclared identifier is reported only once for each function it appears in /tmp/tmpigzndspy/bare.c",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -13979,10 +13979,10 @@
       "source_similarity": 0.0507,
       "goto_count": 0,
       "nesting_depth": 4,
-      "time_ms": 75525,
+      "time_ms": 68832,
       "error": null,
       "semantic_score": 0.0,
-      "semantic_error": "/tmp/fission-oracle-28imc6vk/oracle.c:305:85: error: unknown type name \u2018struct_208\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_reverse_string(generic64_t register_rcx, generic64_t register_rdx, struct_208 stack_arguments /**/) {\n      |                                                                                     ^~~~~~~~~~\n      |                                                                                     struct\n",
+      "semantic_error": "/tmp/fission-oracle-n98hc67b/oracle.c:305:85: error: unknown type name \u2018struct_208\u2019; did you mean \u2018struct\u2019?\n  305 | oracle_candidate_reverse_string(generic64_t register_rcx, generic64_t register_rdx, struct_208 stack_arguments /**/) {\n      |                                                                                     ^~~~~~~~~~\n      |                                                                                     struct\n",
       "fail_category": "compile_error",
       "cases_passed": 0,
       "cases_total": 5,
@@ -14105,7 +14105,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmpiqqtkhig/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001530(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_208 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmpiqqtkhig/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001530(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx",
+        "error": "/tmp/tmp5xx2wgek/bare.c:27:22: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001530(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx _REG(rdx_x86_64), struct_208 stack_arguments /*_STACK*/) { | ^~~~~~~~~~~ /tmp/tmp5xx2wgek/bare.c:27:65: error: unknown type name \u2018generic64_t\u2019 27 | function_0x140001530(generic64_t register_rcx _REG(rcx_x86_64), generic64_t register_rdx",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -14125,7 +14125,7 @@
       "source_similarity": 0.132,
       "goto_count": 0,
       "nesting_depth": 3,
-      "time_ms": 3196,
+      "time_ms": 3327,
       "error": null,
       "semantic_score": 1.0,
       "semantic_error": null,
@@ -14248,7 +14248,7 @@
       "bare_compile": {
         "ok": false,
         "category": "compile_error",
-        "error": "/tmp/tmp27nwl23z/bare.c:26:33: error: unknown type name \u2018uint64\u2019; did you mean \u2018uint\u2019? 26 | void reverse_string(byte * rcx, uint64 rdx) | ^~~~~~ | uint",
+        "error": "/tmp/tmpfng8xskd/bare.c:26:33: error: unknown type name \u2018uint64\u2019; did you mean \u2018uint\u2019? 26 | void reverse_string(byte * rcx, uint64 rdx) | ^~~~~~ | uint",
         "compiler": "gcc",
         "mode": "gcc -c -w -O0"
       },
@@ -14268,7 +14268,7 @@
       "source_similarity": 0.093,
       "goto_count": 0,
       "nesting_depth": 2,
-      "time_ms": 742,
+      "time_ms": 670,
       "error": null,
       "semantic_score": 0.6,
       "semantic_error": "candidate passed 3/5 cases",
@@ -14850,7 +14850,7 @@
             "other": 0
           },
           "runtime": {
-            "mean_ms": 1183.9,
+            "mean_ms": 1006.6,
             "rows_with_time": 10
           }
         },
@@ -14891,7 +14891,7 @@
             "other": 0
           },
           "runtime": {
-            "mean_ms": 110.5,
+            "mean_ms": 65.5,
             "rows_with_time": 10
           }
         },
@@ -14932,7 +14932,7 @@
             "other": 0
           },
           "runtime": {
-            "mean_ms": 7209.9,
+            "mean_ms": 7207.5,
             "rows_with_time": 10
           }
         },
@@ -14973,7 +14973,7 @@
             "other": 0
           },
           "runtime": {
-            "mean_ms": 24526.7,
+            "mean_ms": 23067.5,
             "rows_with_time": 10
           }
         },
@@ -15014,7 +15014,7 @@
             "other": 0
           },
           "runtime": {
-            "mean_ms": 518.4,
+            "mean_ms": 498.9,
             "rows_with_time": 10
           }
         },
@@ -15055,7 +15055,7 @@
             "other": 0
           },
           "runtime": {
-            "mean_ms": 1959.2,
+            "mean_ms": 1881.6,
             "rows_with_time": 10
           }
         },
@@ -15096,7 +15096,7 @@
             "other": 0
           },
           "runtime": {
-            "mean_ms": 487.9,
+            "mean_ms": 488.1,
             "rows_with_time": 10
           }
         },
@@ -15137,7 +15137,7 @@
             "other": 0
           },
           "runtime": {
-            "mean_ms": 46955.6,
+            "mean_ms": 43436.2,
             "rows_with_time": 10
           }
         },
@@ -15178,7 +15178,7 @@
             "other": 0
           },
           "runtime": {
-            "mean_ms": 1057.4,
+            "mean_ms": 1019.8,
             "rows_with_time": 10
           }
         }
@@ -15537,161 +15537,161 @@
           "by_decompiler": {
             "fission": {
               "n": 10,
-              "mean_ms": 7209.9,
-              "p50_ms": 7050.0,
-              "p95_ms": 8491.0,
-              "min_ms": 4440.0,
-              "max_ms": 8491.0,
-              "sum_ms": 72099.0
+              "mean_ms": 7207.5,
+              "p50_ms": 6916.0,
+              "p95_ms": 8651.0,
+              "min_ms": 4204.0,
+              "max_ms": 8651.0,
+              "sum_ms": 72075.0
             },
             "angr": {
               "n": 10,
-              "mean_ms": 1183.9,
-              "p50_ms": 1291.0,
-              "p95_ms": 1911.85,
-              "min_ms": 719.0,
-              "max_ms": 2023.0,
-              "sum_ms": 11839.0
+              "mean_ms": 1006.6,
+              "p50_ms": 946.0,
+              "p95_ms": 1825.3,
+              "min_ms": 660.0,
+              "max_ms": 1864.0,
+              "sum_ms": 10066.0
             },
             "boomerang": {
               "n": 10,
-              "mean_ms": 110.5,
-              "p50_ms": 102.0,
-              "p95_ms": 217.85,
-              "min_ms": 68.0,
-              "max_ms": 266.0,
-              "sum_ms": 1105.0
+              "mean_ms": 65.5,
+              "p50_ms": 55.0,
+              "p95_ms": 130.05,
+              "min_ms": 45.0,
+              "max_ms": 153.0,
+              "sum_ms": 655.0
             },
             "ghidra": {
               "n": 10,
-              "mean_ms": 24526.7,
-              "p50_ms": 21591.0,
-              "p95_ms": 43549.75,
-              "min_ms": 18643.0,
-              "max_ms": 56008.0,
-              "sum_ms": 245267.0
+              "mean_ms": 23067.5,
+              "p50_ms": 19202.0,
+              "p95_ms": 44642.65,
+              "min_ms": 16672.0,
+              "max_ms": 54121.0,
+              "sum_ms": 230675.0
             },
             "radare2": {
               "n": 9,
-              "mean_ms": 495.889,
-              "p50_ms": 427.0,
-              "p95_ms": 721.0,
-              "min_ms": 318.0,
-              "max_ms": 721.0,
-              "sum_ms": 4463.0
+              "mean_ms": 480.778,
+              "p50_ms": 595.0,
+              "p95_ms": 662.0,
+              "min_ms": 279.0,
+              "max_ms": 662.0,
+              "sum_ms": 4327.0
             },
             "reko": {
               "n": 10,
-              "mean_ms": 1959.2,
-              "p50_ms": 1620.0,
-              "p95_ms": 4139.8,
-              "min_ms": 1251.0,
-              "max_ms": 4912.0,
-              "sum_ms": 19592.0
+              "mean_ms": 1881.6,
+              "p50_ms": 1712.0,
+              "p95_ms": 3779.1,
+              "min_ms": 1123.0,
+              "max_ms": 4149.0,
+              "sum_ms": 18816.0
             },
             "retdec": {
               "n": 10,
-              "mean_ms": 487.9,
-              "p50_ms": 514.0,
-              "p95_ms": 838.25,
-              "min_ms": 291.0,
-              "max_ms": 917.0,
-              "sum_ms": 4879.0
+              "mean_ms": 488.1,
+              "p50_ms": 504.0,
+              "p95_ms": 923.55,
+              "min_ms": 266.0,
+              "max_ms": 1131.0,
+              "sum_ms": 4881.0
             },
             "revng": {
               "n": 10,
-              "mean_ms": 46955.6,
-              "p50_ms": 36781.0,
-              "p95_ms": 95836.5,
-              "min_ms": 33613.0,
-              "max_ms": 112455.0,
-              "sum_ms": 469556.0
+              "mean_ms": 43436.2,
+              "p50_ms": 34435.0,
+              "p95_ms": 86532.1,
+              "min_ms": 31694.0,
+              "max_ms": 101014.0,
+              "sum_ms": 434362.0
             },
             "snowman": {
               "n": 10,
-              "mean_ms": 1057.4,
-              "p50_ms": 1053.0,
-              "p95_ms": 1122.0,
-              "min_ms": 937.0,
-              "max_ms": 1122.0,
-              "sum_ms": 10574.0
+              "mean_ms": 1019.8,
+              "p50_ms": 948.0,
+              "p95_ms": 1236.0,
+              "min_ms": 693.0,
+              "max_ms": 1236.0,
+              "sum_ms": 10198.0
             }
           },
           "fission_vs_ghidra": {
             "paired_n": 10,
-            "median_speedup": 2.6444,
-            "geometric_mean_speedup": 3.2536,
+            "median_speedup": 2.4106,
+            "geometric_mean_speedup": 3.0159,
             "fission_faster_share": 1.0,
             "pairs_head": [
               {
                 "function_name": "count_bits",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 8491.0,
-                "ghidra_ms": 21591.0,
-                "speedup": 2.5428
+                "fission_ms": 8651.0,
+                "ghidra_ms": 19202.0,
+                "speedup": 2.2196
               },
               {
                 "function_name": "clamp",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 8491.0,
-                "ghidra_ms": 21591.0,
-                "speedup": 2.5428
+                "fission_ms": 8651.0,
+                "ghidra_ms": 19202.0,
+                "speedup": 2.2196
               },
               {
                 "function_name": "signum",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 8491.0,
-                "ghidra_ms": 21591.0,
-                "speedup": 2.5428
+                "fission_ms": 8651.0,
+                "ghidra_ms": 19202.0,
+                "speedup": 2.2196
               },
               {
                 "function_name": "saturating_add",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 8491.0,
-                "ghidra_ms": 21591.0,
-                "speedup": 2.5428
+                "fission_ms": 8651.0,
+                "ghidra_ms": 19202.0,
+                "speedup": 2.2196
               },
               {
                 "function_name": "add_ints",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 7050.0,
-                "ghidra_ms": 18643.0,
-                "speedup": 2.6444
+                "fission_ms": 6916.0,
+                "ghidra_ms": 16672.0,
+                "speedup": 2.4106
               },
               {
                 "function_name": "mul_ints",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 7050.0,
-                "ghidra_ms": 18643.0,
-                "speedup": 2.6444
+                "fission_ms": 6916.0,
+                "ghidra_ms": 16672.0,
+                "speedup": 2.4106
               },
               {
                 "function_name": "list_sum",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 7050.0,
-                "ghidra_ms": 18643.0,
-                "speedup": 2.6444
+                "fission_ms": 6916.0,
+                "ghidra_ms": 16672.0,
+                "speedup": 2.4106
               },
               {
                 "function_name": "apply_binop",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 7050.0,
-                "ghidra_ms": 18643.0,
-                "speedup": 2.6444
+                "fission_ms": 6916.0,
+                "ghidra_ms": 16672.0,
+                "speedup": 2.4106
               },
               {
                 "function_name": "fibonacci",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 5495.0,
-                "ghidra_ms": 56008.0,
-                "speedup": 10.1925
+                "fission_ms": 5603.0,
+                "ghidra_ms": 54121.0,
+                "speedup": 9.6593
               },
               {
                 "function_name": "reverse_string",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 4440.0,
-                "ghidra_ms": 28323.0,
-                "speedup": 6.3791
+                "fission_ms": 4204.0,
+                "ghidra_ms": 33058.0,
+                "speedup": 7.8635
               }
             ]
           }
@@ -15942,161 +15942,161 @@
           "by_decompiler": {
             "fission": {
               "n": 10,
-              "mean_ms": 7209.9,
-              "p50_ms": 7050.0,
-              "p95_ms": 8491.0,
-              "min_ms": 4440.0,
-              "max_ms": 8491.0,
-              "sum_ms": 72099.0
+              "mean_ms": 7207.5,
+              "p50_ms": 6916.0,
+              "p95_ms": 8651.0,
+              "min_ms": 4204.0,
+              "max_ms": 8651.0,
+              "sum_ms": 72075.0
             },
             "angr": {
               "n": 10,
-              "mean_ms": 1183.9,
-              "p50_ms": 1291.0,
-              "p95_ms": 1911.85,
-              "min_ms": 719.0,
-              "max_ms": 2023.0,
-              "sum_ms": 11839.0
+              "mean_ms": 1006.6,
+              "p50_ms": 946.0,
+              "p95_ms": 1825.3,
+              "min_ms": 660.0,
+              "max_ms": 1864.0,
+              "sum_ms": 10066.0
             },
             "boomerang": {
               "n": 10,
-              "mean_ms": 110.5,
-              "p50_ms": 102.0,
-              "p95_ms": 217.85,
-              "min_ms": 68.0,
-              "max_ms": 266.0,
-              "sum_ms": 1105.0
+              "mean_ms": 65.5,
+              "p50_ms": 55.0,
+              "p95_ms": 130.05,
+              "min_ms": 45.0,
+              "max_ms": 153.0,
+              "sum_ms": 655.0
             },
             "ghidra": {
               "n": 10,
-              "mean_ms": 24526.7,
-              "p50_ms": 21591.0,
-              "p95_ms": 43549.75,
-              "min_ms": 18643.0,
-              "max_ms": 56008.0,
-              "sum_ms": 245267.0
+              "mean_ms": 23067.5,
+              "p50_ms": 19202.0,
+              "p95_ms": 44642.65,
+              "min_ms": 16672.0,
+              "max_ms": 54121.0,
+              "sum_ms": 230675.0
             },
             "radare2": {
               "n": 9,
-              "mean_ms": 495.889,
-              "p50_ms": 427.0,
-              "p95_ms": 721.0,
-              "min_ms": 318.0,
-              "max_ms": 721.0,
-              "sum_ms": 4463.0
+              "mean_ms": 480.778,
+              "p50_ms": 595.0,
+              "p95_ms": 662.0,
+              "min_ms": 279.0,
+              "max_ms": 662.0,
+              "sum_ms": 4327.0
             },
             "reko": {
               "n": 10,
-              "mean_ms": 1959.2,
-              "p50_ms": 1620.0,
-              "p95_ms": 4139.8,
-              "min_ms": 1251.0,
-              "max_ms": 4912.0,
-              "sum_ms": 19592.0
+              "mean_ms": 1881.6,
+              "p50_ms": 1712.0,
+              "p95_ms": 3779.1,
+              "min_ms": 1123.0,
+              "max_ms": 4149.0,
+              "sum_ms": 18816.0
             },
             "retdec": {
               "n": 10,
-              "mean_ms": 487.9,
-              "p50_ms": 514.0,
-              "p95_ms": 838.25,
-              "min_ms": 291.0,
-              "max_ms": 917.0,
-              "sum_ms": 4879.0
+              "mean_ms": 488.1,
+              "p50_ms": 504.0,
+              "p95_ms": 923.55,
+              "min_ms": 266.0,
+              "max_ms": 1131.0,
+              "sum_ms": 4881.0
             },
             "revng": {
               "n": 10,
-              "mean_ms": 46955.6,
-              "p50_ms": 36781.0,
-              "p95_ms": 95836.5,
-              "min_ms": 33613.0,
-              "max_ms": 112455.0,
-              "sum_ms": 469556.0
+              "mean_ms": 43436.2,
+              "p50_ms": 34435.0,
+              "p95_ms": 86532.1,
+              "min_ms": 31694.0,
+              "max_ms": 101014.0,
+              "sum_ms": 434362.0
             },
             "snowman": {
               "n": 10,
-              "mean_ms": 1057.4,
-              "p50_ms": 1053.0,
-              "p95_ms": 1122.0,
-              "min_ms": 937.0,
-              "max_ms": 1122.0,
-              "sum_ms": 10574.0
+              "mean_ms": 1019.8,
+              "p50_ms": 948.0,
+              "p95_ms": 1236.0,
+              "min_ms": 693.0,
+              "max_ms": 1236.0,
+              "sum_ms": 10198.0
             }
           },
           "fission_vs_ghidra": {
             "paired_n": 10,
-            "median_speedup": 2.6444,
-            "geometric_mean_speedup": 3.2536,
+            "median_speedup": 2.4106,
+            "geometric_mean_speedup": 3.0159,
             "fission_faster_share": 1.0,
             "pairs_head": [
               {
                 "function_name": "count_bits",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 8491.0,
-                "ghidra_ms": 21591.0,
-                "speedup": 2.5428
+                "fission_ms": 8651.0,
+                "ghidra_ms": 19202.0,
+                "speedup": 2.2196
               },
               {
                 "function_name": "clamp",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 8491.0,
-                "ghidra_ms": 21591.0,
-                "speedup": 2.5428
+                "fission_ms": 8651.0,
+                "ghidra_ms": 19202.0,
+                "speedup": 2.2196
               },
               {
                 "function_name": "signum",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 8491.0,
-                "ghidra_ms": 21591.0,
-                "speedup": 2.5428
+                "fission_ms": 8651.0,
+                "ghidra_ms": 19202.0,
+                "speedup": 2.2196
               },
               {
                 "function_name": "saturating_add",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 8491.0,
-                "ghidra_ms": 21591.0,
-                "speedup": 2.5428
+                "fission_ms": 8651.0,
+                "ghidra_ms": 19202.0,
+                "speedup": 2.2196
               },
               {
                 "function_name": "add_ints",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 7050.0,
-                "ghidra_ms": 18643.0,
-                "speedup": 2.6444
+                "fission_ms": 6916.0,
+                "ghidra_ms": 16672.0,
+                "speedup": 2.4106
               },
               {
                 "function_name": "mul_ints",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 7050.0,
-                "ghidra_ms": 18643.0,
-                "speedup": 2.6444
+                "fission_ms": 6916.0,
+                "ghidra_ms": 16672.0,
+                "speedup": 2.4106
               },
               {
                 "function_name": "list_sum",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 7050.0,
-                "ghidra_ms": 18643.0,
-                "speedup": 2.6444
+                "fission_ms": 6916.0,
+                "ghidra_ms": 16672.0,
+                "speedup": 2.4106
               },
               {
                 "function_name": "apply_binop",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 7050.0,
-                "ghidra_ms": 18643.0,
-                "speedup": 2.6444
+                "fission_ms": 6916.0,
+                "ghidra_ms": 16672.0,
+                "speedup": 2.4106
               },
               {
                 "function_name": "fibonacci",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 5495.0,
-                "ghidra_ms": 56008.0,
-                "speedup": 10.1925
+                "fission_ms": 5603.0,
+                "ghidra_ms": 54121.0,
+                "speedup": 9.6593
               },
               {
                 "function_name": "reverse_string",
                 "compiler_variant": "gcc -O0",
-                "fission_ms": 4440.0,
-                "ghidra_ms": 28323.0,
-                "speedup": 6.3791
+                "fission_ms": 4204.0,
+                "ghidra_ms": 33058.0,
+                "speedup": 7.8635
               }
             ]
           }
@@ -16132,5 +16132,5 @@
       "final_publication_gate_required"
     ]
   },
-  "rendered_at": "2026-07-21T19:05:28Z"
+  "rendered_at": "2026-07-21T20:25:35Z"
 }
