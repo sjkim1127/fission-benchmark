@@ -7,11 +7,13 @@ import {
   extractQualityExtensions,
   pct,
 } from "@/lib/benchmark";
+import { getReleaseComparison } from "@/lib/history";
 import { SiteChrome } from "@/components/SiteChrome";
 import { ValidityBanner } from "@/components/ValidityBanner";
 import { SummaryTable } from "@/components/SummaryTable";
 import { UnavailableData } from "@/components/UnavailableData";
 import { ReadabilityDiagnosticsPanel } from "@/components/ReadabilityDiagnosticsPanel";
+import { ReleaseComparisonPanel } from "@/components/ReleaseComparisonPanel";
 import {
   MetaStrip,
   SameFunctionOverviewTiles,
@@ -33,6 +35,14 @@ async function BannerSection() {
   const data = await getLatestBenchmarkOptional();
   if (!data) return null;
   return <ValidityBanner validity={data.validity} run={data.run} />;
+}
+
+async function ReleaseComparisonSection() {
+  const data = await getLatestBenchmarkOptional();
+  if (!data) return null;
+  const comparison = await getReleaseComparison(data);
+  if (!comparison) return null;
+  return <ReleaseComparisonPanel comparison={comparison} />;
 }
 
 async function SummarySection() {
@@ -135,6 +145,10 @@ export default function Home() {
 
       <Suspense fallback={<div className={styles.bannerSkeleton} />}>
         <BannerSection />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <ReleaseComparisonSection />
       </Suspense>
 
       <Suspense fallback={<SkeletonSection rows={5} />}>

@@ -798,10 +798,17 @@ jobs:
             --require-valid \
             --require-local
 
+          # Archive this envelope under public/benchmark-history/<fission_version>.json
+          # (keyed by toolchain.fission_version) so the dashboard's release-comparison
+          # panel has a permanent, independently-fetchable "previous release" snapshot
+          # instead of relying on git history (the deployed dashboard fetches over
+          # HTTPS, not from a git checkout).
+          python scripts/archive_benchmark_history.py
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git pull --rebase --autostash origin main || true
-          git add -f results/dev_latest.json public/benchmark-latest.json
+          git add -f results/dev_latest.json public/benchmark-latest.json public/benchmark-history/
           if git diff --staged --quiet; then
             echo "Dashboard envelope unchanged — no commit"
             echo "committed=false" >> "$GITHUB_OUTPUT"
