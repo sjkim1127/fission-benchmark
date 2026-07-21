@@ -28,7 +28,7 @@ on:
       fission_version:
         description: "Fission release tag to bake into the fission image"
         type: string
-        default: "v0.1.5"
+        default: "v0.1.6"
   repository_dispatch:
     types: [fission-release]
 
@@ -37,7 +37,7 @@ env:
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/fission-benchmark
   # Published images always bake a GitHub Release Fission CLI (never local mount).
   FISSION_SOURCE: release
-  FISSION_VERSION: ${{ github.event.client_payload.fission_version || github.event.inputs.fission_version || 'v0.1.5' }}
+  FISSION_VERSION: ${{ github.event.client_payload.fission_version || github.event.inputs.fission_version || 'v0.1.6' }}
 
 permissions:
   contents: read
@@ -107,7 +107,7 @@ jobs:
         run: |
           set -euo pipefail
           svc="${{ matrix.service }}"
-          fission_version="${FISSION_VERSION:-v0.1.5}"
+          fission_version="${FISSION_VERSION:-v0.1.6}"
           if [ "$svc" = "fission" ] && [ "$fission_version" = "latest" ]; then
             fission_version="$(gh api repos/sjkim1127/Fission/releases/latest --jq .tag_name)"
           fi
@@ -174,7 +174,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ver="${{ github.event.client_payload.fission_version || github.event.inputs.fission_version || 'v0.1.5' }}"
+          ver="${{ github.event.client_payload.fission_version || github.event.inputs.fission_version || 'v0.1.6' }}"
           if [ "$ver" = "latest" ]; then
             ver="$(gh api repos/sjkim1127/Fission/releases/latest --jq .tag_name)"
           fi
