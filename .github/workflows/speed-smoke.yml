@@ -210,8 +210,13 @@ jobs:
             echo "- Fission version: \`$FISSION_VERSION\`"
             echo "- Decompilers: \`$DECOMPILERS\`"
             echo "- Trials: \`$SPEED_TRIALS\` (trial 0 = cold)"
-            echo "- Binary: \`$SPEED_BINARY\`"
-            echo "- Addrs: \`$SPEED_ADDRS\`"
+            # SPEED_BINARY/SPEED_ADDRS are only set by the "Ensure corpus
+            # binary for smoke" step; this summary step runs unconditionally
+            # (if: always()) so an earlier-step failure (e.g. adapter health
+            # check) must not also fail *this* step on an unbound variable --
+            # that masked the real failure behind a confusing secondary error.
+            echo "- Binary: \`${SPEED_BINARY:-<not set — an earlier step failed>}\`"
+            echo "- Addrs: \`${SPEED_ADDRS:-<not set — an earlier step failed>}\`"
             echo
             if [ -f results/speed/microbench_latest.json ]; then
               python - <<'PY'

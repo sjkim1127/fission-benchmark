@@ -109,14 +109,23 @@ jobs:
       - name: Dashboard must have non-empty multi-decomp data
         run: |
           set -euo pipefail
-          # Fail if multi-decomp UI would be empty or fission+ghidra-only.
-          # Prefer tracked results/dev_latest.json (or public/benchmark-latest.json).
+          # Multi-decomp UI sources only (public/ + remote). Do NOT default to
+          # results/dev_latest.json / results/latest.json here: routine
+          # "Benchmark & Deploy" runs intentionally write narrow 2-tool
+          # (fission, ghidra) envelopes to those files (see the matching
+          # comment + --local-paths/--remote-paths override in
+          # benchmark.yml's own "Dashboard data gate" step) — using this
+          # script's plain defaults, which point at those same files,
+          # false-negatives on every routine run.
           python scripts/check_dashboard_data.py \
             --min-rows 1 \
             --min-decompilers 8 \
             --require-valid \
             --require-local \
-            --check-remote
+            --check-remote \
+            --local-paths public/benchmark-latest.json \
+            --remote-paths \
+              https://raw.githubusercontent.com/sjkim1127/fission-benchmark/main/public/benchmark-latest.json
       - name: Verify tests do not generate publication artifacts
         run: git diff --exit-code -- docs/index.html results/latest.json results/latest.md results/latest-summary.json results/artifact-manifest.json
 
