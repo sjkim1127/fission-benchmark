@@ -6,10 +6,12 @@ export type DashboardPage =
   | "same-function"
   | "functions"
   | "nir-hir"
+  | "hir-ghidra"
   | "variants"
   | "quality"
   | "speed"
-  | "parity";
+  | "parity"
+  | "releases";
 
 const NAV: {
   id: DashboardPage;
@@ -42,6 +44,12 @@ const NAV: {
     blurb: "Source · dual layer",
   },
   {
+    id: "hir-ghidra",
+    href: "/hir-vs-ghidra",
+    label: "HIR vs Ghidra",
+    blurb: "Readability · side by side",
+  },
+  {
     id: "variants",
     href: "/variants",
     label: "Variants",
@@ -64,6 +72,12 @@ const NAV: {
     href: "/fission-vs-ghidra",
     label: "Fission ↔ Ghidra",
     blurb: "Shared IR",
+  },
+  {
+    id: "releases",
+    href: "/releases",
+    label: "Releases",
+    blurb: "Trend · what changed",
   },
 ];
 

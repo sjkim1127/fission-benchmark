@@ -7,13 +7,11 @@ import {
   extractQualityExtensions,
   pct,
 } from "@/lib/benchmark";
-import { getReleaseComparison } from "@/lib/history";
 import { SiteChrome } from "@/components/SiteChrome";
 import { ValidityBanner } from "@/components/ValidityBanner";
 import { SummaryTable } from "@/components/SummaryTable";
 import { UnavailableData } from "@/components/UnavailableData";
 import { ReadabilityDiagnosticsPanel } from "@/components/ReadabilityDiagnosticsPanel";
-import { ReleaseComparisonPanel } from "@/components/ReleaseComparisonPanel";
 import {
   MetaStrip,
   SameFunctionOverviewTiles,
@@ -35,14 +33,6 @@ async function BannerSection() {
   const data = await getLatestBenchmarkOptional();
   if (!data) return null;
   return <ValidityBanner validity={data.validity} run={data.run} />;
-}
-
-async function ReleaseComparisonSection() {
-  const data = await getLatestBenchmarkOptional();
-  if (!data) return null;
-  const comparison = await getReleaseComparison(data);
-  if (!comparison) return null;
-  return <ReleaseComparisonPanel comparison={comparison} />;
 }
 
 async function SummarySection() {
@@ -137,6 +127,24 @@ export default function Home() {
           </p>
           <div className={styles.cardCta}>Open parity →</div>
         </Link>
+        <Link href="/hir-vs-ghidra" className={styles.card}>
+          <div className={styles.cardKicker}>Readability</div>
+          <div className={styles.cardTitle}>HIR vs Ghidra</div>
+          <p className={styles.cardBody}>
+            Fission&apos;s readable HIR next to Ghidra&apos;s own decompiled
+            output, side by side — not ranking.
+          </p>
+          <div className={styles.cardCta}>Open comparison →</div>
+        </Link>
+        <Link href="/releases" className={styles.card}>
+          <div className={styles.cardKicker}>Trend</div>
+          <div className={styles.cardTitle}>Releases</div>
+          <p className={styles.cardBody}>
+            Fission&apos;s semantic pass rate release over release, plus
+            what changed since the last one.
+          </p>
+          <div className={styles.cardCta}>Open releases →</div>
+        </Link>
       </div>
 
       <Suspense fallback={<SkeletonMeta />}>
@@ -145,10 +153,6 @@ export default function Home() {
 
       <Suspense fallback={<div className={styles.bannerSkeleton} />}>
         <BannerSection />
-      </Suspense>
-
-      <Suspense fallback={null}>
-        <ReleaseComparisonSection />
       </Suspense>
 
       <Suspense fallback={<SkeletonSection rows={5} />}>
