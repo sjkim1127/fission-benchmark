@@ -1,3 +1,9 @@
+>[!IMPORTANT]
+>This repository has moved to **[fission-systems/fission-benchmark](https://github.com/fission-systems/fission-benchmark)**.
+>All development, releases, and issues are tracked there. This repository is archived.
+
+---
+
 <div align="center">
 
 # fission-benchmark
